@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    /* Monit：中文优先字体栈 */
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+        'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial,
+        sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+
+    /* Monit 品牌色（靛蓝紫渐变主视觉） */
+    --color-brand-50: oklch(0.97 0.014 275);
+    --color-brand-100: oklch(0.94 0.03 275);
+    --color-brand-200: oklch(0.87 0.06 275);
+    --color-brand-300: oklch(0.78 0.11 275);
+    --color-brand-400: oklch(0.70 0.16 275);
+    --color-brand-500: oklch(0.62 0.20 275);
+    --color-brand-600: oklch(0.55 0.22 275);
+    --color-brand-700: oklch(0.48 0.20 275);
+    --color-brand-800: oklch(0.40 0.16 275);
+    --color-brand-900: oklch(0.33 0.12 275);
+}
+
