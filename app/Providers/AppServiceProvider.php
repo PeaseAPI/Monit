@@ -18,11 +18,25 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+            public function boot(): void
     {
         // 网站所有权检查（路由 can:own,website）
-        Gate::define('own', function (\App\Models\User $user, \App\Models\Website $website): bool {
+        // 支持两种调用方式：
+        //   1. Route Model Binding 传入 Website 模型
+        //   2. 路由参数直接传入整数 ID（此时自动查询）
+        Gate::define('own', function (\App\Models\User $user, mixed $website): bool {
+            if (! $website instanceof \App\Models\Website) {
+                $website = \App\Models\Website::findOrFail((int) $website);
+            }
+
             return (int) $user->user_id === (int) $website->user_id || $user->isAdmin();
         });
+
+        // 启动已激活插件（规格书 §14：init.php 注册路由 / 指令 / 监听器）
+        try {
+            \App\Support\PluginManager::boot();
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }

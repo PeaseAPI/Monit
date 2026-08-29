@@ -228,8 +228,146 @@ class StatisticsService
         }
 
         return collect($rows)->map(fn ($row) => [
-            'key' => (string) ($row->k ?? '（未知）'),
+                        'key' => (string) ($row->k ?? __('stats.unknown')),
             'count' => (int) $row->total,
         ])->all();
+    }
+
+    /**
+     * 来源 + UTM 组合分析（包含 utm_* 分组）
+     *
+     * @return array<int, array{key: string, count: int, utm_source?: string, utm_medium?: string, utm_campaign?: string}>
+     */
+    public function breakdownWithUtm(string $dimension, int $limit = 50): array
+    {
+        if ($dimension !== 'referrer_host') {
+            return $this->breakdown($dimension, $limit);
+        }
+
+        if ($this->isLightweight) {
+            $rows = LightweightEvent::query()
+                ->where('website_id', $this->website->website_id)
+                ->whereBetween('date', [$this->startDate, $this->endDate])
+                ->whereIn('type', ['landing_page', 'pageview'])
+                ->groupBy('referrer_host', 'utm_source', 'utm_medium', 'utm_campaign')
+                ->selectRaw('referrer_host as k, utm_source, utm_medium, utm_campaign, count(*) as total')
+                ->orderByDesc('total')
+                ->limit($limit)
+                ->get();
+        } else {
+            $rows = SessionEvent::query()
+                ->where('website_id', $this->website->website_id)
+                ->whereBetween('date', [$this->startDate, $this->endDate])
+                ->whereIn('type', ['landing_page', 'pageview'])
+                ->groupBy('referrer_host', 'utm_source', 'utm_medium', 'utm_campaign')
+                ->selectRaw('referrer_host as k, utm_source, utm_medium, utm_campaign, count(*) as total')
+                ->orderByDesc('total')
+                ->limit($limit)
+                ->get();
+        }
+
+        return collect($rows)->map(fn ($row) => [
+                        'key' => (string) ($row->k ?: __('stats.direct_access')),
+            'count' => (int) $row->total,
+            'utm_source' => $row->utm_source,
+            'utm_medium' => $row->utm_medium,
+            'utm_campaign' => $row->utm_campaign,
+        ])->all();
+    }
+
+    /**
+     * 顶级访客列表（按访客维度聚合）
+     *
+     * @return array<int, array{visitor_id: int, visitor_uuid: string, country_code: string, device_type: string, os_name: string, browser_name: string, total_events: int, last_date: string}>
+     */
+    public function topVisitors(int $limit = 50): array
+    {
+        if ($this->isLightweight) {
+            return [];
+        }
+
+                $hexFunc = DB::getDriverName() === 'sqlite'
+            ? "LOWER(HEX(websites_visitors.visitor_uuid_binary))"
+            : "HEX(websites_visitors.visitor_uuid_binary)";
+
+        $rows = DB::table('websites_visitors')
+            ->join('sessions_events', 'websites_visitors.visitor_id', '=', 'sessions_events.visitor_id')
+            ->where('websites_visitors.website_id', $this->website->website_id)
+            ->whereBetween('sessions_events.date', [$this->startDate, $this->endDate])
+            ->groupBy('websites_visitors.visitor_id')
+            ->selectRaw("websites_visitors.visitor_id, {$hexFunc} as visitor_uuid, websites_visitors.country_code, websites_visitors.device_type, websites_visitors.os_name, websites_visitors.browser_name, COUNT(sessions_events.event_id) as total_events, MAX(sessions_events.date) as last_date")
+            ->orderByDesc('total_events')
+            ->limit($limit)
+            ->get();
+
+        return collect($rows)->map(fn ($row) => [
+            'visitor_id' => (int) $row->visitor_id,
+            'visitor_uuid' => $row->visitor_uuid,
+                        'country_code' => $row->country_code ?? __('stats.unknown'),
+            'device_type' => $row->device_type ?? __('stats.unknown'),
+            'os_name' => $row->os_name ?? __('stats.unknown'),
+            'browser_name' => $row->browser_name ?? __('stats.unknown'),
+            'total_events' => (int) $row->total_events,
+            'last_date' => $row->last_date,
+        ])->all();
+    }
+
+    /**
+     * 目标转化统计
+     *
+     * @return array<int, array{goal_id: int, goal_key: string, goal_name: string, conversions: int}>
+     */
+    public function goalsConversions(): array
+    {
+        $goals = $this->website->goals()
+            ->where('is_enabled', true)
+            ->get();
+
+        $conversions = [];
+
+        foreach ($goals as $goal) {
+            $count = GoalConversion::query()
+                ->where('website_id', $this->website->website_id)
+                ->where('goal_id', $goal->goal_id)
+                ->whereBetween('datetime', [$this->startDate, $this->endDate])
+                ->count();
+
+            $conversions[] = [
+                'goal_id' => $goal->goal_id,
+                'goal_key' => $goal->key,
+                'goal_name' => $goal->name,
+                'conversions' => $count,
+            ];
+        }
+
+        return $conversions;
+    }
+
+    /**
+     * UTM 来源分析（独立聚合）
+     *
+     * @return array<int, array{key: string, source: string, medium: string, campaign: string, count: int}>
+     */
+    public function utmAnalysis(): array
+    {
+        $dimensions = ['utm_source', 'utm_medium', 'utm_campaign'];
+        $results = [];
+
+        foreach ($dimensions as $dim) {
+            $rows = $this->breakdown($dim, 20);
+            foreach ($rows as $row) {
+                                if (! empty($row['key']) && $row['key'] !== __('stats.unknown')) {
+                    $results[] = [
+                        'key' => $row['key'],
+                        'type' => $dim,
+                        'count' => $row['count'],
+                    ];
+                }
+            }
+        }
+
+        usort($results, fn ($a, $b) => $b['count'] - $a['count']);
+
+        return array_slice($results, 0, 30);
     }
 }

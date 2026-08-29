@@ -75,6 +75,26 @@ class Website extends Model
         return $this->hasMany(OutboundClick::class, 'website_id', 'website_id');
     }
 
+    public function annotations()
+    {
+        return $this->hasMany(Annotation::class, 'website_id', 'website_id');
+    }
+
+    public function heatmaps()
+    {
+        return $this->hasMany(Heatmap::class, 'website_id', 'website_id');
+    }
+
+    public function dashboardViews()
+    {
+        return $this->hasMany(DashboardView::class, 'website_id', 'website_id');
+    }
+
+    public function domains()
+    {
+        return $this->hasMany(Domain::class, 'user_id', 'user_id');
+    }
+
     /* ---------------------------------------------------------------------
      | 辅助方法
      --------------------------------------------------------------------- */

@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class SessionReplay extends Model
 {
+    protected $table = 'sessions_replays';
+
     protected $primaryKey = 'replay_id';
 
     public $timestamps = false;
@@ -22,8 +24,13 @@ class SessionReplay extends Model
         ];
     }
 
-    public function session()
+        public function session()
     {
         return $this->belongsTo(VisitorSession::class, 'session_id', 'session_id');
+    }
+
+    public function visitor()
+    {
+        return $this->belongsTo(WebsiteVisitor::class, 'visitor_id', 'visitor_id');
     }
 }

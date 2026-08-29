@@ -19,34 +19,56 @@ class Settings
             return static::$cached;
         }
 
-        return static::$cached = Cache::remember(
+        // 缓存以数组存储（反序列化安全），读取后重建为对象，坏条目自动重建
+        $cached = Cache::remember(
             'monit.settings',
             now()->addHours(12),
             function () {
-                $object = new \stdClass;
-
-                foreach (Setting::query()->get() as $setting) {
-                    $value = $setting->value;
-
-                    // key 支持点分层级：main.title -> main:{title}
-                    $parts = explode('.', $setting->key);
-                    $node = $object;
-
-                    foreach ($parts as $i => $part) {
-                        if ($i === count($parts) - 1) {
-                            $node->{$part} = $value;
-                        } else {
-                            if (! isset($node->{$part}) || ! is_object($node->{$part})) {
-                                $node->{$part} = new \stdClass;
-                            }
-                            $node = $node->{$part};
-                        }
-                    }
-                }
-
-                return $object;
+                return static::buildArray();
             }
         );
+
+        if (! is_array($cached)) {
+            Cache::forget('monit.settings');
+            $cached = static::buildArray();
+        }
+
+        return static::$cached = static::arrayToObject($cached);
+    }
+
+    protected static function buildArray(): array
+    {
+        $settings = [];
+
+        foreach (Setting::query()->get() as $setting) {
+            $settings[$setting->key] = $setting->value;
+        }
+
+        return $settings;
+    }
+
+    protected static function arrayToObject(array $data): \stdClass
+    {
+        $object = new \stdClass;
+
+        foreach ($data as $key => $value) {
+            // key 支持点分层级：main.title -> main:{title}
+            $parts = explode('.', $key);
+            $node = $object;
+
+            foreach ($parts as $i => $part) {
+                if ($i === count($parts) - 1) {
+                    $node->{$part} = $value;
+                } else {
+                    if (! isset($node->{$part}) || ! is_object($node->{$part})) {
+                        $node->{$part} = new \stdClass;
+                    }
+                    $node = $node->{$part};
+                }
+            }
+        }
+
+        return $object;
     }
 
     /**

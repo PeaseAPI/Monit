@@ -1,23 +1,23 @@
 @extends('layouts.app', ['nav' => 'dashboard'])
 
-@section('title', '仪表盘')
+@section('title', __('dashboard.title'))
 
 @section('content')
-    {{-- 顶部：网站选择 + 时间范围 --}}
+    {{-- Top: website selector + time range --}}
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
             <h2 class="text-2xl font-bold">{{ $website->name }}</h2>
             <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
                 {{ $website->host }}
                 <span class="rounded-full px-2 py-0.5 text-xs font-medium {{ $website->isLightweight() ? 'bg-amber-100 text-amber-700' : 'bg-brand-100 text-brand-700' }}">
-                    {{ $website->isLightweight() ? '轻量模式' : '完整模式' }}
+                    {{ $website->isLightweight() ? __('websites.lightweight_mode_label') : __('websites.advanced_mode_label') }}
                 </span>
                 <span class="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
                     <span class="relative flex h-2 w-2">
                         <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                         <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                     </span>
-                    {{ $realtime }} 实时在线
+                    {{ $realtime }} {{ __('dashboard.realtime_online') }}
                 </span>
             </p>
         </div>
@@ -33,7 +33,7 @@
             @endif
 
             <div class="flex rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
-                @foreach ([1 => '今日', 7 => '7 天', 30 => '30 天'] as $r => $label)
+                @foreach ([1 => __('dashboard.today'), 7 => __('dashboard.7days'), 30 => __('dashboard.30days')] as $r => $label)
                     <a href="{{ route('dashboard', ['website_id' => $website->website_id, 'range' => $r]) }}"
                        class="rounded-lg px-3 py-1.5 text-sm font-medium transition {{ $range === $r ? 'bg-brand-600 text-white' : 'text-zinc-600 hover:bg-zinc-100' }}">
                         {{ $label }}
@@ -43,20 +43,20 @@
 
             <a href="{{ route('dashboard.install', $website->website_id) }}"
                class="rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">
-                安装代码
+                                {{ __('dashboard.install_code') }}
             </a>
         </div>
     </div>
 
-    {{-- 指标卡片 --}}
+    {{-- Metric cards --}}
     <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
         @php
             $cards = [
-                ['label' => '浏览量', 'value' => number_format($overview['pageviews']), 'hint' => '页面浏览总次数'],
-                ['label' => '独立访客', 'value' => number_format($overview['visitors']), 'hint' => '去重访客数'],
-                ['label' => '会话数', 'value' => number_format($overview['sessions']), 'hint' => '访问会话总数'],
-                ['label' => '跳出率', 'value' => $overview['bounce_rate'].'%', 'hint' => '仅浏览单页的会话'],
-                ['label' => '平均停留', 'value' => $overview['avg_duration'] > 0 ? gmdate('i:s', $overview['avg_duration']) : '-', 'hint' => '每次会话平均时长'],
+                ['label' => __('dashboard.pageviews'), 'value' => number_format($overview['pageviews']), 'hint' => __('dashboard.pageviews_hint')],
+                ['label' => __('dashboard.unique_visitors'), 'value' => number_format($overview['visitors']), 'hint' => __('dashboard.visitors_hint')],
+                ['label' => __('dashboard.sessions'), 'value' => number_format($overview['sessions']), 'hint' => __('dashboard.sessions_hint')],
+                ['label' => __('dashboard.bounce_rate'), 'value' => $overview['bounce_rate'].'%', 'hint' => __('dashboard.bounce_rate_hint')],
+                ['label' => __('dashboard.avg_duration'), 'value' => $overview['avg_duration'] > 0 ? gmdate('i:s', $overview['avg_duration']) : '-', 'hint' => __('dashboard.avg_duration_hint')],
             ];
         @endphp
         @foreach ($cards as $card)
@@ -67,9 +67,9 @@
             </div>
         @endforeach
     </div>
-    {{-- 趋势图 --}}
+    {{-- Trend chart --}}
     <div class="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h3 class="text-sm font-semibold text-zinc-700">浏览量趋势</h3>
+        <h3 class="text-sm font-semibold text-zinc-700">{{ __('dashboard.pageviews_trend') }}</h3>
         <div class="mt-4 flex h-48 items-end gap-1.5">
             @php $maxPv = max(1, max(array_column($series, 'pageviews'))); @endphp
             @foreach ($series as $day)
@@ -78,7 +78,7 @@
                          style="height: {{ max(2, (int) round($day['pageviews'] / $maxPv * 100)) }}%"></div>
                     <div class="pointer-events-none absolute -top-2 left-1/2 z-10 hidden -translate-x-1/2 -translate-y-full rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs whitespace-nowrap text-white group-hover:block">
                         <p class="font-medium">{{ $day['date'] }}</p>
-                        <p class="text-zinc-300">浏览 {{ $day['pageviews'] }} · 访客 {{ $day['visitors'] }}</p>
+                        <p class="text-zinc-300">{{ __('dashboard.pageviews') }} {{ $day['pageviews'] }} · {{ __('dashboard.visitors_short') }} {{ $day['visitors'] }}</p>
                     </div>
                 </div>
             @endforeach
@@ -89,21 +89,21 @@
         </div>
     </div>
 
-    {{-- 维度排行 --}}
+    {{-- Dimension rankings --}}
     <div class="mt-6 grid gap-4 lg:grid-cols-2">
         @php
             $panels = [
-                ['title' => '热门页面', 'items' => $topPaths],
-                ['title' => '来源网站', 'items' => $topReferrers],
-                ['title' => '国家 / 地区', 'items' => $topCountries],
-                ['title' => '设备类型', 'items' => $topDevices],
+                ['title' => __('dashboard.top_pages'), 'items' => $topPaths],
+                ['title' => __('dashboard.top_referrers'), 'items' => $topReferrers],
+                ['title' => __('dashboard.top_countries'), 'items' => $topCountries],
+                ['title' => __('dashboard.top_devices'), 'items' => $topDevices],
             ];
         @endphp
         @foreach ($panels as $panel)
             <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
                 <h3 class="text-sm font-semibold text-zinc-700">{{ $panel['title'] }}</h3>
                 @if (empty($panel['items']))
-                    <p class="mt-4 text-sm text-zinc-400">暂无数据</p>
+                    <p class="mt-4 text-sm text-zinc-400">{{ __('common.no_data') }}</p>
                 @else
                     @php $panelMax = max(1, max(array_column($panel['items'], 'count'))); @endphp
                     <ul class="mt-4 space-y-3">

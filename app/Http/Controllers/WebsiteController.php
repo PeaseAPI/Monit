@@ -39,7 +39,7 @@ class WebsiteController extends Controller
         $planSettings = $user->getPlanSettings();
         $limit = $planSettings['websites_limit'] ?? -1;
         if ($limit !== -1 && $user->websites()->count() >= $limit) {
-            return back()->withErrors(['url' => "当前套餐最多可创建 {$limit} 个网站，请升级套餐"]);
+                        return back()->withErrors(['url' => __('msg.website_limit_reached', ['limit' => $limit])]);
         }
 
         $validated = $this->validateWebsite($request);
@@ -59,20 +59,16 @@ class WebsiteController extends Controller
         ]);
 
         return redirect()->route('websites.index')
-            ->with('success', "网站「{$website->name}」创建成功，请按指引安装像素代码。");
+                        ->with('success', __('msg.website_created', ['name' => $website->name]));
     }
 
-    public function edit(Request $request, int $website)
+        public function edit(Request $request, Website $website)
     {
-        $website = $this->findOwnedWebsite($request, $website);
-
         return view('websites.edit', compact('website'));
     }
 
-    public function update(Request $request, int $website): RedirectResponse
+    public function update(Request $request, Website $website): RedirectResponse
     {
-        $website = $this->findOwnedWebsite($request, $website);
-
         $validated = $this->validateWebsite($request);
 
         $data = $this->parseWebsiteUrl($validated['url']);
@@ -89,18 +85,17 @@ class WebsiteController extends Controller
         ]);
 
         return redirect()->route('websites.index')
-            ->with('success', "网站「{$website->name}」已更新。");
+                        ->with('success', __('msg.website_updated', ['name' => $website->name]));
     }
 
-    public function destroy(Request $request, int $website): RedirectResponse
+        public function destroy(Request $request, Website $website): RedirectResponse
     {
-        $website = $this->findOwnedWebsite($request, $website);
         $name = $website->name;
 
-        $website->delete(); // 关联数据由 FK cascade 删除
+        $website->delete(); // Related data deleted by FK cascade
 
         return redirect()->route('websites.index')
-            ->with('success', "网站「{$name}」及其全部统计数据已删除。");
+                        ->with('success', __('msg.website_deleted', ['name' => $name]));
     }
 
     /* ---------------------------------------------------------------------
@@ -116,12 +111,12 @@ class WebsiteController extends Controller
             'excluded_ips' => ['nullable', 'string', 'max:2048'],
             'timezone' => ['required', 'string', 'max:64', 'timezone'],
         ], [
-            'name.required' => '请输入网站名称',
-            'url.required' => '请输入网站地址',
-            'url.url' => '网站地址格式不正确（需以 http:// 或 https:// 开头）',
-            'tracking_type.required' => '请选择跟踪模式',
-            'tracking_type.in' => '跟踪模式无效',
-            'timezone.timezone' => '时区无效',
+                        'name.required' => __('validation.website_name_required'),
+            'url.required' => __('validation.website_url_required'),
+            'url.url' => __('validation.website_url_format'),
+            'tracking_type.required' => __('validation.tracking_type_required'),
+            'tracking_type.in' => __('validation.tracking_type_invalid'),
+            'timezone.timezone' => __('validation.timezone_invalid'),
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Website;
 use App\Services\StatisticsService;
 use Illuminate\Http\Request;
 
@@ -51,10 +52,8 @@ class DashboardController extends Controller
     /**
      * 像素安装指引
      */
-    public function install(Request $request, int $website)
+        public function install(Request $request, Website $website)
     {
-        $website = $request->user()->websites()->findOrFail($website);
-
         return view('dashboard.install', ['website' => $website]);
     }
 }

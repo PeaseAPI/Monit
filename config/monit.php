@@ -32,12 +32,15 @@ return [
     | 默认套餐配额（free 套餐 seed 数据）
     |--------------------------------------------------------------------------
     */
-    'plan_defaults' => [
+        'plan_defaults' => [
         'websites_limit' => 3,
         'sessions_events_limit' => 10000,
         'events_children_limit' => 5000,
         'sessions_replays_limit' => 500,
         'websites_heatmaps_limit' => 3,
+        'websites_goals_limit' => 10,
+        'annotations_limit' => 10,
+        'domains_limit' => 1,
         'teams_is_enabled' => false,
         'websites_sessions_replays_is_enabled' => false,
         'websites_heatmaps_is_enabled' => false,
@@ -46,5 +49,28 @@ return [
         'websites_excluded_ips_is_enabled' => true,
         'websites_timezones_is_enabled' => true,
         'websites_email_reports_is_enabled' => false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | 支付配置（规格书 §11）
+    |--------------------------------------------------------------------------
+    */
+    'payment' => [
+        'offline_instructions' => '请将款项汇至以下账户，并在付款后上传凭证：<br>银行：XXX<br>账号：XXX<br>户名：XXX',
+        'supported_processors' => ['stripe', 'paypal', 'offline'],
+        'default_currency' => 'USD',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ed25519 离线 License（规格书 §15.2）
+    |--------------------------------------------------------------------------
+    | path: license.json 路径（默认 storage/app/license.json）
+    | public_key: 内置公钥（hex）；签发工具 monit:license-generate 生成密钥对后填入
+    */
+    'license' => [
+        'path' => storage_path('app/license.json'),
+        'public_key' => env('MONIT_LICENSE_PUBLIC_KEY', ''),
     ],
 ];

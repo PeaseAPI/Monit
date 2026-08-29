@@ -29,9 +29,9 @@ class AuthController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ], [
-            'email.required' => '请输入邮箱地址',
-            'email.email' => '邮箱格式不正确',
-            'password.required' => '请输入密码',
+                        'email.required' => __('validation.email_required'),
+            'email.email' => __('validation.email_email'),
+            'password.required' => __('validation.password_required'),
         ]);
 
         $remember = $request->boolean('remember');
@@ -41,13 +41,24 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             return back()
                 ->withInput($request->only('email'))
-                ->withErrors(['email' => '邮箱或密码错误']);
+                                ->withErrors(['email' => __('validation.auth_failed')]);
         }
 
         if ($user->status !== 1) {
             return back()
                 ->withInput($request->only('email'))
-                ->withErrors(['email' => '账户已被禁用或未激活']);
+                                ->withErrors(['email' => __('validation.account_disabled')]);
+        }
+
+        // 两步验证（规格书 §12.4）：已开启则进入二步验证流程
+        if ($user->twofa_is_enabled) {
+            $request->session()->put([
+                'twofa_user_id' => $user->user_id,
+                'twofa_remember' => $remember,
+                'twofa_expires_at' => now()->addMinutes(10)->timestamp,
+            ]);
+
+            return redirect()->route('login.twofa');
         }
 
         Auth::login($user, $remember);
@@ -62,25 +73,93 @@ class AuthController extends Controller
         return redirect()->intended(route('dashboard'));
     }
 
+        /**
+     * 两步验证页（规格书 §12.4）
+     */
+    public function showTwoFactor(Request $request)
+    {
+        if (! $request->session()->has('twofa_user_id')) {
+            return redirect()->route('login');
+        }
+
+        return view('auth.twofa');
+    }
+
+    /**
+     * 两步验证提交
+     */
+    public function verifyTwoFactor(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'digits:6'],
+        ], [
+            'code.required' => __('account.twofa_code_required'),
+            'code.digits' => __('account.twofa_code_invalid'),
+        ]);
+
+        $userId = $request->session()->get('twofa_user_id');
+        $expiresAt = $request->session()->get('twofa_expires_at');
+
+        if (! $userId || ($expiresAt && now()->timestamp > $expiresAt)) {
+            $request->session()->forget(['twofa_user_id', 'twofa_remember', 'twofa_expires_at']);
+
+            return redirect()->route('login')->withErrors(['email' => __('account.twofa_expired')]);
+        }
+
+        $user = User::find($userId);
+
+        if (! $user || ! $user->twofa_is_enabled
+            || ! \App\Services\TotpService::verify((string) $user->twofa_token, $validated['code'])) {
+            return back()->withErrors(['code' => __('account.twofa_code_invalid')]);
+        }
+
+        $request->session()->forget(['twofa_user_id', 'twofa_remember', 'twofa_expires_at']);
+
+        Auth::login($user, $request->session()->get('twofa_remember', false));
+
+        $user->forceFill([
+            'last_activity' => now(),
+            'total_logins' => $user->total_logins + 1,
+        ])->save();
+
+        $this->logAccount($user, 'login_2fa');
+
+        return redirect()->intended(route('dashboard'));
+    }
+
     public function showRegister(Request $request)
     {
+        // 如果 URL 中有推荐码，保存到 session
+        if ($ref = $request->query('ref')) {
+            session(['referral_key' => $ref]);
+        }
+
         return view('auth.register');
     }
 
-    public function register(Request $request): RedirectResponse
+        public function register(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:64'],
             'email' => ['required', 'email', 'max:256', 'unique:users,email'],
             'password' => ['required', 'string', Password::min(8)],
         ], [
-            'name.required' => '请输入用户名',
-            'email.required' => '请输入邮箱地址',
-            'email.email' => '邮箱格式不正确',
-            'email.unique' => '该邮箱已被注册',
-            'password.required' => '请输入密码',
-            'password.min' => '密码至少 8 位',
+                        'name.required' => __('validation.name_required'),
+            'email.required' => __('validation.email_required'),
+            'email.email' => __('validation.email_email'),
+            'email.unique' => __('validation.email_unique'),
+            'password.required' => __('validation.password_required'),
+            'password.min' => __('validation.password_min'),
         ]);
+
+        // 处理推荐码（规格书 §14.7：?ref=XXXXX 绑定推荐人）
+        $referredBy = null;
+        if ($ref = $request->input('ref') ?? session('referral_key')) {
+            $referrer = User::where('referral_key', $ref)->first();
+            if ($referrer) {
+                $referredBy = $referrer->user_id;
+            }
+        }
 
         $user = User::create([
             'type' => 0,
@@ -95,6 +174,7 @@ class AuthController extends Controller
             'status' => 1,
             'ip' => $request->ip(),
             'source' => 'direct',
+            'referred_by' => $referredBy,
         ]);
 
         Auth::login($user);
@@ -103,7 +183,7 @@ class AuthController extends Controller
         $this->logAccount($user, 'register');
 
         return redirect()->route('dashboard')
-            ->with('success', '欢迎来到 Monit！先创建一个网站开始统计吧。');
+                        ->with('success', __('msg.welcome_monit'));
     }
 
     public function logout(Request $request): RedirectResponse

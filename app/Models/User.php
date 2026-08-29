@@ -64,13 +64,72 @@ class User extends Authenticatable
         return $this->belongsTo(Plan::class, 'plan_id', 'plan_id');
     }
 
-    /* ---------------------------------------------------------------------
-     | 辅助方法
-     --------------------------------------------------------------------- */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'user_id', 'user_id');
+    }
 
-    public function isAdmin(): bool
+    public function domains()
+    {
+        return $this->hasMany(Domain::class, 'user_id', 'user_id');
+    }
+
+    public function teams()
+    {
+        return $this->hasMany(Team::class, 'user_id', 'user_id');
+    }
+
+    public function teamMembers()
+    {
+        return $this->hasMany(TeamMember::class, 'user_id', 'user_id');
+    }
+
+    public function internalNotifications()
+    {
+        return $this->hasMany(InternalNotification::class, 'user_id', 'user_id');
+    }
+
+    public function accountLogs()
+    {
+        return $this->hasMany(AccountLog::class, 'user_id', 'user_id');
+    }
+
+    public function referrals()
+    {
+        return $this->hasMany(User::class, 'referred_by', 'user_id');
+    }
+
+    public function referredBy()
+    {
+        return $this->belongsTo(User::class, 'referred_by', 'user_id');
+    }
+
+    public function dashboardViews()
+    {
+        return $this->hasMany(DashboardView::class, 'user_id', 'user_id');
+    }
+
+    public function annotations()
+    {
+        return $this->hasMany(Annotation::class, 'user_id', 'user_id');
+    }
+
+    public function redeemedCodes()
+    {
+        return $this->hasMany(RedeemedCode::class, 'user_id', 'user_id');
+    }
+
+        public function isAdmin(): bool
     {
         return $this->type === 1;
+    }
+
+    /**
+     * 用户是否为活跃状态
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 1;
     }
 
     /**
@@ -85,6 +144,26 @@ class User extends Authenticatable
         $plan = Plan::find($this->plan_id);
 
         return $plan?->settings ?? config('monit.plan_defaults');
+    }
+
+    /**
+     * 生成新的 API Token
+     */
+    public function generateApiToken(): string
+    {
+        $token = bin2hex(random_bytes(32));
+        
+        $this->update(['api_key' => $token]);
+
+        return $token;
+    }
+
+    /**
+     * 验证 API Token（Bearer Token 方式）
+     */
+    public function validateApiToken(string $token): bool
+    {
+        return $this->api_key === $token;
     }
 }
 
