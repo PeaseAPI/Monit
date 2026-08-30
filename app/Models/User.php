@@ -14,6 +14,19 @@ class User extends Authenticatable
 
     protected $primaryKey = 'user_id';
 
+    /**
+     * M23 性能优化：用户（套餐/状态）变化时联动失效名下站点的 pixel 查询缓存
+     * 关联：PixelTrackController（pixel.website.{key} 缓存）/ Website::booted
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (User $user): void {
+            foreach ($user->websites()->pluck('pixel_key') as $pixelKey) {
+                \Illuminate\Support\Facades\Cache::forget('pixel.website.'.$pixelKey);
+            }
+        });
+    }
+
     protected $fillable = [
         'type', 'name', 'email', 'password', 'billing', 'api_key',
         'email_activation_code', 'lost_password_code', 'is_newsletter_subscribed',

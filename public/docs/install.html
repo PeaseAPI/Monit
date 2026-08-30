@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monit · 安装指南 — 5 分钟完成自部署</title>
+<meta name="description" content="Monit 安装指南:Docker 一键部署、LNMP 手动安装、宝塔部署、Nginx/Apache 伪静态规则、Cron 与队列配置,5 分钟拥有自己的网站分析平台。">
+<style>
+:root{--brand:#4f46e5;--brand-dark:#4338ca;--brand-light:#eef2ff;--ink:#18181b;--muted:#71717a;--line:#e4e4e7;--bg:#fafafa;--ok:#059669;--warn:#d97706}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Segoe UI,sans-serif;color:var(--ink);background:#fff;line-height:1.75}
+a{color:var(--brand);text-decoration:none}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px}
+header{border-bottom:1px solid var(--line);background:var(--bg)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:var(--ink)}
+.logo i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#818cf8,#4f46e5);color:#fff;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:17px}
+nav{display:flex;gap:20px;font-size:14px}nav a{color:var(--muted)}nav a:hover{color:var(--ink)}
+.pagehead{padding:64px 0 8px;text-align:center}
+.pagehead h1{font-size:36px;letter-spacing:-.02em}
+.pagehead p{color:var(--muted);margin-top:12px}
+.toc{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:28px 0 8px}
+.toc a{font-size:13px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.toc a:hover{border-color:var(--brand);color:var(--brand)}
+section{padding:44px 0 8px}
+h2{font-size:24px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+h2 .no{width:30px;height:30px;border-radius:9px;background:var(--brand-light);color:var(--brand);font-size:15px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+p.lead{color:var(--muted);font-size:15px;margin-bottom:20px}
+h3{font-size:17px;margin:26px 0 10px}
+p,li{font-size:15px}
+ul,ol{padding-left:22px;margin:10px 0}
+pre{background:#0d1117;color:#e6edf3;border-radius:14px;padding:18px 20px;overflow-x:auto;font-size:13.5px;line-height:1.6;margin:14px 0}
+pre .c{color:#8b949e}code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code.inline{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:13px}
+.note{border-left:4px solid var(--brand);background:var(--brand-light);border-radius:0 12px 12px 0;padding:12px 18px;font-size:14px;margin:16px 0}
+.note.warn{border-color:var(--warn);background:#fffbeb}
+table{width:100%;border-collapse:collapse;margin:14px 0;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--line)}
+th{background:var(--bg);font-size:13px;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding:32px 0;color:var(--muted);font-size:13px;text-align:center;margin-top:56px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="logo"><i>M</i>Monit 安装指南</div>
+  <nav><a href="index.html">产品介绍</a><a href="usage.html">使用手册</a><a href="../api/docs">API</a></nav>
+</div></header>
+
+<div class="pagehead wrap">
+  <h1>安装指南</h1>
+  <p>从零到拥有自己的网站分析平台,最快 5 分钟。</p>
+</div>
+<div class="toc wrap">
+  <a href="#req">环境要求</a><a href="#docker">Docker 部署(推荐)</a><a href="#manual">手动部署</a>
+  <a href="#webserver">Nginx / Apache</a><a href="#cron">Cron 与队列</a><a href="#ssl">HTTPS</a><a href="#faq">常见问题</a>
+</div>
+
+<section id="req" class="wrap">
+  <h2><span class="no">1</span>环境要求</h2>
+  <p class="lead">Monit 基于 Laravel 12 构建,以下为生产环境最低/推荐配置。</p>
+  <table>
+    <tr><th>组件</th><th>最低</th><th>推荐</th></tr>
+    <tr><td>PHP</td><td>8.3</td><td>8.3+（fpm）</td></tr>
+    <tr><td>数据库</td><td>MySQL 8 / MariaDB 10.6 / PostgreSQL 15</td><td>MySQL 8</td></tr>
+    <tr><td>Web 服务器</td><td>Nginx 1.24 / Apache 2.4</td><td>Nginx（含 HTTP/2）</td></tr>
+    <tr><td>PHP 扩展</td><td colspan="2">ctype, curl, dom, fileinfo, json, mbstring, openssl, pcre, pdo, tokenizer, xml, gd, zip, bcmath, intl</td></tr>
+    <tr><td>Composer</td><td colspan="2">2.x</td></tr>
+  </table>
+</section>
+
+<section id="docker" class="wrap">
+  <h2><span class="no">2</span>Docker 部署（推荐）</h2>
+  <p class="lead">项目自带 docker-compose,一条命令拉起应用 + 数据库 + Nginx。</p>
+  <pre><code><span class="c"># 1. 克隆仓库</span>
+git clone https://github.com/your-org/monit.git && cd monit
+
+<span class="c"># 2. 准备环境变量</span>
+cp .env.example .env
+
+<span class="c"># 3. 启动（应用 + MySQL + Nginx）</span>
+docker compose up -d
+
+<span class="c"># 4. 初始化（依赖、密钥、建表、初始数据）</span>
+docker compose exec app composer install --no-dev
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate --seed
+
+<span class="c"># 5. 前端资源（镜像已预构建则可跳过）</span>
+docker compose exec app npm ci && npm run build</code></pre>
+  <p>访问 <code class="inline">http://服务器IP</code> 即进入安装向导/登录页。默认管理员账号在 <code class="inline">.env</code> 的 <code class="inline">ADMIN_EMAIL / ADMIN_PASSWORD</code> 中设置。</p>
+</section>
+
+<section id="manual" class="wrap">
+  <h2><span class="no">3</span>手动部署（LNMP）</h2>
+  <h3>3.1 获取代码与依赖</h3>
+  <pre><code>git clone https://github.com/your-org/monit.git /var/www/monit
+cd /var/www/monit
+composer install --no-dev --optimize-autoloader
+cp .env.example .env
+php artisan key:generate</code></pre>
+
+  <h3>3.2 配置 .env</h3>
+  <pre><code>APP_URL=https://your-domain.com
+APP_LOCALE=zh_CN
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=monit
+DB_USERNAME=monit
+DB_PASSWORD=强密码
+
+<span class="c"># 邮件（用于注册验证 / 报告 / 通知）</span>
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com
+MAIL_PORT=465
+MAIL_USERNAME=no-reply@example.com
+MAIL_PASSWORD=***
+MAIL_ENCRYPTION=ssl</code></pre>
+
+  <h3>3.3 初始化</h3>
+  <pre><code>php artisan migrate --seed      <span class="c"># 建表 + 内置套餐/设置</span>
+php artisan storage:link         <span class="c"># 公开磁盘软链</span>
+npm ci && npm run build          <span class="c"># 构建前端资源</span>
+
+<span class="c"># 生产缓存优化</span>
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache</code></pre>
+
+  <div class="note">也可以直接访问 <code class="inline">https://your-domain.com/install</code> 使用网页安装向导,可视化完成数据库与初始管理员配置。</div>
+</section>
+
+<section id="webserver" class="wrap">
+  <h2><span class="no">4</span>Nginx / Apache 伪静态</h2>
+  <p class="lead">规则已内置于仓库 <code class="inline">deploy/</code> 目录,无需自行编写。</p>
+
+  <h3>Nginx</h3>
+  <pre><code>sudo cp deploy/nginx/monit.conf /etc/nginx/sites-available/monit.conf
+sudo ln -s /etc/nginx/sites-available/monit.conf /etc/nginx/sites-enabled/
+<span class="c"># 编辑 server_name 与 root（指向 public/）后</span>
+sudo nginx -t && sudo systemctl reload nginx</code></pre>
+  <p>核心伪静态规则（已包含在上述配置中）：</p>
+  <pre><code>root /var/www/monit/public;
+location / {
+    try_files $uri $uri/ /index.php?$query_string;
+}</code></pre>
+
+  <h3>Apache</h3>
+  <pre><code>sudo a2enmod rewrite headers expires
+sudo cp deploy/apache/monit.conf /etc/apache2/sites-available/monit.conf
+sudo a2ensite monit && sudo systemctl reload apache2</code></pre>
+  <p>Apache 伪静态由项目自带 <code class="inline">public/.htaccess</code> 处理,只需确保虚拟主机中 <code class="inline">AllowOverride All</code>。</p>
+</section>
+
+<section id="cron" class="wrap">
+  <h2><span class="no">5</span>Cron 定时任务与队列</h2>
+  <h3>调度器（必须）</h3>
+  <pre><code><span class="c"># crontab -e 添加：</span>
+* * * * * cd /var/www/monit && php artisan schedule:run >> /dev/null 2>&1</code></pre>
+  <p>调度器驱动 15 个内置任务:数据保留清理、邮件报告、配额提醒、会话聚合等。可用 <code class="inline">php artisan schedule:list</code> 查看全部任务。</p>
+
+  <h3>队列 Worker（启用队列时）</h3>
+  <pre><code>php artisan queue:work --tries=3 --max-time=3600
+<span class="c"># 生产建议配合 Supervisor 守护</span></code></pre>
+</section>
+
+<section id="ssl" class="wrap">
+  <h2><span class="no">6</span>启用 HTTPS</h2>
+  <pre><code>sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com -d www.your-domain.com</code></pre>
+  <p>证书自动续期已由 certbot 定时任务处理。像素采集端点默认支持跨域 HTTPS 上报,无需额外配置。</p>
+</section>
+
+<section id="faq" class="wrap">
+  <h2><span class="no">7</span>常见问题</h2>
+  <h3>Q：安装后页面 500 / 白屏？</h3>
+  <p>检查 <code class="inline">storage/</code> 与 <code class="inline">bootstrap/cache/</code> 目录权限（web 用户可写）：<code class="inline">chown -R www-data:www-data storage bootstrap/cache</code>。</p>
+  <h3>Q：像素已嵌入但没有数据？</h3>
+  <ol>
+    <li>确认网站"已启用"且域名 host 与嵌入页面一致；</li>
+    <li>浏览器控制台查看 <code class="inline">/pixel-track/</code> 请求是否 204；</li>
+    <li>若开启了 IP 排除 / 爬虫过滤,核对自身是否被过滤。</li>
+  </ol>
+  <h3>Q：忘记管理员密码？</h3>
+  <pre><code>php artisan tinker
+&gt; \App\Models\User::where('type','admin')-&gt;first()-&gt;update(['password' =&gt; bcrypt('新密码')]);</code></pre>
+  <h3>Q：如何升级版本？</h3>
+  <pre><code>git pull
+composer install --no-dev
+php artisan migrate --force
+php artisan config:cache &amp;&amp; php artisan route:cache &amp;&amp; php artisan view:cache</code></pre>
+</section>
+
+<footer class="wrap">© 2026 Monit · MIT Open Source · <a href="index.html">产品介绍</a> · <a href="usage.html">使用手册</a></footer>
+</body>
+</html>
+

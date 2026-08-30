@@ -82,14 +82,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Monit 路由表（依据规格书 §2）
 |--------------------------------------------------------------------------
+| 像素采集端点已迁移至 routes/track.php（无中间件高频优化，M23）
 */
-
-// ========================================
-// 像素采集端点（公开，CORS 全开）
-// ========================================
-Route::match(['get', 'post'], '/pixel-track/{pixel_key}', PixelTrackController::class)
-    ->name('pixel.track');
-Route::options('/pixel-track/{pixel_key}', [PixelTrackController::class, 'preflight']);
 
 // 支付网关 Webhook（无需 CSRF，外部服务回调）
 Route::post('/webhooks/stripe', [PaymentController::class, 'stripeWebhook'])->name('webhooks.stripe');
@@ -135,6 +129,16 @@ Route::get('/api-documentation', [IndexController::class, 'apiDocs'])->name('api
 
 // 站点地图 / Cookie 同意 / 退订 / 维护页（规格书 §6.1）
 Route::get('/sitemap', [IndexController::class, 'sitemap'])->name('sitemap');
+
+// M23 静态文档页兜道路由：Nginx/Apache 通常直接服务 public/docs/*.html，
+// 该路由保证未配置静态直服（或测试）环境同样可访问。
+Route::get('/docs/{page}', function (string $page) {
+    $file = public_path('docs/'.basename($page));
+    abort_unless(is_file($file), 404);
+    abort_unless(str_ends_with($file, '.html'), 404);
+
+    return response()->file($file, ['Content-Type' => 'text/html; charset=UTF-8']);
+})->where('page', '[A-Za-z0-9_-]+\.html')->name('docs.static');
 Route::post('/cookie-consent', [IndexController::class, 'cookieConsent'])->name('cookie.consent');
 Route::get('/unsubscribe', [IndexController::class, 'unsubscribe'])->name('unsubscribe');
 Route::post('/unsubscribe', [IndexController::class, 'unsubscribePost'])->name('unsubscribe.post');

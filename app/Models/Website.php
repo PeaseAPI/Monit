@@ -8,6 +8,25 @@ class Website extends Model
 {
     protected $primaryKey = 'website_id';
 
+    /**
+     * M23 性能优化：pixel_key 查询缓存主动失效
+     * 关联：PixelTrackController（写入缓存 'pixel.website.{key}'）
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (Website $website): void {
+            if ($website->pixel_key) {
+                \Illuminate\Support\Facades\Cache::forget('pixel.website.'.$website->pixel_key);
+            }
+        });
+
+        static::deleted(function (Website $website): void {
+            if ($website->pixel_key) {
+                \Illuminate\Support\Facades\Cache::forget('pixel.website.'.$website->pixel_key);
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id', 'domain_id', 'pixel_key', 'name', 'scheme', 'host', 'path',
         'tracking_type', 'is_enabled', 'bot_exclusion_is_enabled',

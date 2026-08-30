@@ -4,16 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>@yield('title', __('admin.admin_panel')) · Monit</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+        <title>@yield('title', __('admin.admin_panel')) · {{ \App\Support\Brand::name() }}</title>
+    @include('parts.brand_head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
     <div class="flex min-h-screen">
         <aside class="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-zinc-950 md:flex">
             <a href="{{ route('admin.index') }}" class="flex items-center gap-2.5 border-b border-zinc-800 px-5 py-5">
-                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-red-700 text-lg font-bold text-white">M</span>
-                <span class="text-lg font-semibold text-white">Monit</span>
+                <x-brand-logo dark class="h-9 w-9" text-class="text-lg" />
                 <span class="ml-auto rounded bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">{{ __('admin.admin_label') }}</span>
             </a>
 

@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>@yield('title', 'Monit') · {{ __('app.tagline') }}</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+        <title>@yield('title', \App\Support\Brand::name()) · {{ __('app.tagline') }}</title>
+    @include('parts.brand_head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
@@ -15,10 +15,7 @@
             <div class="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-600/30 blur-[120px]"></div>
             <div class="pointer-events-none absolute -bottom-40 -right-20 h-[420px] w-[420px] rounded-full bg-brand-400/20 blur-[120px]"></div>
 
-            <a href="{{ route('index') }}" class="relative flex items-center gap-2.5">
-                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-lg font-bold text-white">M</span>
-                <span class="text-xl font-semibold text-white">Monit</span>
-            </a>
+            <x-brand-logo dark href="{{ route('index') }}" />
 
                         <div class="relative">
                 <h1 class="text-4xl leading-tight font-bold text-white">
@@ -31,7 +28,7 @@
                 </p>
             </div>
 
-            <p class="relative text-sm text-zinc-500">© {{ date('Y') }} Monit · {{ __('guest.self_hosted_oss') }}</p>
+            <p class="relative text-sm text-zinc-500">© {{ date('Y') }} {{ \App\Support\Brand::name() }} · {{ __('guest.self_hosted_oss') }}</p>
         </aside>
 
         {{-- Form main area --}}
@@ -43,5 +40,6 @@
     </div>
 
     @include('parts.cookie_consent')
+    @include('parts.brand_footer_scripts')
 </body>
 </html>

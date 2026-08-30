@@ -17,6 +17,8 @@ return [
     'pixel' => [
         // 会话空闲超时（秒）：超过该时间无事件则开启新会话
         'session_timeout' => 1800,
+        // M23：pixel_key → Website 查询缓存 TTL（秒）；0 = 关闭缓存
+        'website_cache_ttl' => 60,
         // 单页最大自定义参数键值对
         'max_custom_parameters' => 10,
         // 事件过期天数（数据保留）

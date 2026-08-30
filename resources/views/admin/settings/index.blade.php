@@ -26,6 +26,7 @@
             'internal_notifications' => __('admin.settings_internal_notifications'),
             'webhooks' => __('admin.settings_webhooks'),
             'theme' => __('admin.settings_theme'),
+            'branding' => __('admin.settings_branding'),
             'custom' => __('admin.settings_custom'),
             'custom_images' => __('admin.settings_custom_images'),
             'content' => __('admin.settings_content'),
@@ -54,7 +55,7 @@
     $currentTab = old('group', request()->query('tab', 'main'));
 @endphp
 
-@foreach(['main','users','payment','analytics','smtp','sms','ai','captcha','socials','cookie_consent','ads','announcements','email_notifications','internal_notifications','webhooks','theme','custom','custom_images','content','cron','plan_free','plan_guest','plan_custom','affiliate','pwa','push_notifications','offload','image_optimizer','dynamic_og_images'] as $tab)
+@foreach(['main','users','payment','analytics','smtp','sms','ai','captcha','socials','cookie_consent','ads','announcements','email_notifications','internal_notifications','webhooks','theme','branding','custom','custom_images','content','cron','plan_free','plan_guest','plan_custom','affiliate','pwa','push_notifications','offload','image_optimizer','dynamic_og_images'] as $tab)
 <div class="settings-panel hidden" id="panel-{{ $tab }}">
     <form method="POST" action="{{ route('admin.settings.update') }}" class="max-w-3xl space-y-6">
         @csrf @method('PUT')

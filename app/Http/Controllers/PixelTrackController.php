@@ -24,9 +24,16 @@ class PixelTrackController extends Controller
             $reason = $r;
         });
 
-        $website = Website::where('pixel_key', $pixel_key)
-            ->with('user')
-            ->first();
+        // M23 性能优化：pixel_key → Website 查询走缓存（默认 60s，TTL 由 config/monit.php 控制），
+        // 高频采集下将每次请求的 DB 查询降为缓存命中；写入侧 Website::saved 钩子主动失效。
+        $cacheTtl = (int) config('monit.pixel.website_cache_ttl', 60);
+        $website = $cacheTtl > 0
+            ? \Illuminate\Support\Facades\Cache::remember(
+                'pixel.website.'.$pixel_key,
+                $cacheTtl,
+                fn () => Website::where('pixel_key', $pixel_key)->with('user')->first(),
+            )
+            : Website::where('pixel_key', $pixel_key)->with('user')->first();
 
         if ($website) {
             $tracker->handle($website, $request);

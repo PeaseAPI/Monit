@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        // M23 性能优化：高频像素采集走无中间件路由组（无 Session/Cookie 开销）
+        then: function (): void {
+            Route::middleware([])->group(__DIR__.'/../routes/track.php');
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
                 // 像素采集端点：跨站公开 POST，必须免 CSRF（规格书 §4.1）

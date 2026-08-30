@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monit · 使用手册 — 从接入像素到洞察增长</title>
+<meta name="description" content="Monit 使用手册:添加网站、接入像素 SDK、查看实时统计、会话回放、热图、转化目标、团队协作、后台品牌设置与 API 集成全流程指引。">
+<style>
+:root{--brand:#4f46e5;--brand-dark:#4338ca;--brand-light:#eef2ff;--ink:#18181b;--muted:#71717a;--line:#e4e4e7;--bg:#fafafa;--ok:#059669}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Segoe UI,sans-serif;color:var(--ink);background:#fff;line-height:1.75}
+a{color:var(--brand);text-decoration:none}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px}
+header{border-bottom:1px solid var(--line);background:var(--bg)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:var(--ink)}
+.logo i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#818cf8,#4f46e5);color:#fff;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:17px}
+nav{display:flex;gap:20px;font-size:14px}nav a{color:var(--muted)}nav a:hover{color:var(--ink)}
+.pagehead{padding:64px 0 8px;text-align:center}
+.pagehead h1{font-size:36px;letter-spacing:-.02em}
+.pagehead p{color:var(--muted);margin-top:12px}
+.toc{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:28px 0 8px}
+.toc a{font-size:13px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.toc a:hover{border-color:var(--brand);color:var(--brand)}
+section{padding:44px 0 8px}
+h2{font-size:24px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+h2 .no{width:30px;height:30px;border-radius:9px;background:var(--brand-light);color:var(--brand);font-size:15px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+p.lead{color:var(--muted);font-size:15px;margin-bottom:20px}
+h3{font-size:17px;margin:26px 0 10px}
+p,li{font-size:15px}
+ul,ol{padding-left:22px;margin:10px 0}
+pre{background:#0d1117;color:#e6edf3;border-radius:14px;padding:18px 20px;overflow-x:auto;font-size:13.5px;line-height:1.6;margin:14px 0}
+pre .c{color:#8b949e}code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code.inline{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:13px}
+.note{border-left:4px solid var(--brand);background:var(--brand-light);border-radius:0 12px 12px 0;padding:12px 18px;font-size:14px;margin:16px 0}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps li{counter-increment:s;position:relative;padding:0 0 22px 52px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:32px;height:32px;border-radius:10px;background:var(--brand-light);color:var(--brand);font-weight:700;display:flex;align-items:center;justify-content:center}
+footer{border-top:1px solid var(--line);padding:32px 0;color:var(--muted);font-size:13px;text-align:center;margin-top:56px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="logo"><i>M</i>Monit 使用手册</div>
+  <nav><a href="index.html">产品介绍</a><a href="install.html">安装指南</a><a href="../api/docs">API</a></nav>
+</div></header>
+
+<div class="pagehead wrap">
+  <h1>使用手册</h1>
+  <p>从接入第一个网站,到用数据驱动增长。</p>
+</div>
+<div class="toc wrap">
+  <a href="#quick">快速上手</a><a href="#pixel">接入像素</a><a href="#stats">数据洞察</a>
+  <a href="#replay">回放与热图</a><a href="#goals">转化目标</a><a href="#branding">品牌定制</a><a href="#team">团队与套餐</a>
+</div>
+
+<section id="quick" class="wrap">
+  <h2><span class="no">1</span>快速上手（3 步）</h2>
+  <p class="lead">注册 → 添加网站 → 嵌入一行代码,数据即刻开始流入。</p>
+  <ol class="steps">
+    <li><b>注册账户</b><p>在首页点击"免费开始"完成注册;免费版即可完整分析 1 个网站。</p></li>
+    <li><b>添加网站</b><p>进入控制台 → 网站 → 添加网站,填写域名并选择采集模式(高级/轻量),保存后获得唯一的像素 Key。</p></li>
+    <li><b>嵌入像素</b><p>把系统生成的一行 <code class="inline">&lt;script&gt;</code> 标签复制到目标页面 <code class="inline">&lt;/body&gt;</code> 前,完成。</p></li>
+  </ol>
+</section>
+
+<section id="pixel" class="wrap">
+  <h2><span class="no">2</span>接入像素 SDK</h2>
+  <h3>标准接入（一行代码）</h3>
+  <pre><code>&lt;script defer src="https://你的分析域名/assets/pixel/monit.js"
+        data-monit-key="你的像素Key"&gt;&lt;/script&gt;</code></pre>
+  <h3>高级模式 vs 轻量模式</h3>
+  <ul>
+    <li><b>高级模式（advanced）</b>：完整会话/访客/事件体系,支持回放、热图、自定义参数与转化目标。推荐默认。</li>
+    <li><b>轻量模式（lightweight）</b>：无 Cookie、无访客标识,仅聚合浏览事件,适合隐私极端敏感或超高频站点。</li>
+  </ul>
+  <h3>上报转化目标</h3>
+  <pre><code>monit('goal', { key: 'signup', value: 0 });</code></pre>
+  <h3>SPA 单页应用</h3>
+  <pre><code>monit('pageview', { url: location.pathname + location.search });</code></pre>
+  <div class="note">SDK 自动尊重 Do-Not-Track 设置;上报使用 sendBeacon,页面卸载不丢数据。</div>
+</section>
+
+<section id="stats" class="wrap">
+  <h2><span class="no">3</span>数据洞察</h2>
+  <p class="lead">统计中心提供 30+ 维度,支持今日/7 天/30 天/自定义区间切换。</p>
+  <ul>
+    <li><b>概览</b>:浏览量、访客数、会话时长、跳出率、增长曲线;</li>
+    <li><b>来源</b>:引荐网站、渠道、搜索引擎关键词、UTM 参数;</li>
+    <li><b>地理与设备</b>:国家/城市、大洲、时区、语言、浏览器/OS/设备;</li>
+    <li><b>行为</b>:落地页、退出页、热门页面、进出路径;</li>
+    <li><b>人群</b>:新回访、活跃时段(星期×小时热力格)、自定义参数;</li>
+    <li><b>标注</b>:在时间轴上标记活动/发版,对比前后效果。</li>
+  </ul>
+</section>
+
+<section id="replay" class="wrap">
+  <h2><span class="no">4</span>会话回放与热图</h2>
+  <h3>会话回放</h3>
+  <p>访客列表 → 选择会话 → 播放:鼠标轨迹、滚动深度、点击与输入(脱敏)逐帧还原。支持倍速与关键事件跳转。</p>
+  <h3>点击热图</h3>
+  <p>热图页面输入目标 URL,系统渲染点击密度叠加层;移动端与桌面端分开统计。可设置采集时长与样本量。</p>
+</section>
+
+<section id="goals" class="wrap">
+  <h2><span class="no">5</span>转化目标与漏斗</h2>
+  <ol>
+    <li>网站 → 目标 → 添加目标,选择类型(访问页面/事件/停留时长);</li>
+    <li>前端在关键行为处调用 <code class="inline">monit('goal', …)</code>;</li>
+    <li>目标报表查看触发次数、转化率与带来的浏览量,评估渠道质量。</li>
+  </ol>
+</section>
+
+<section id="branding" class="wrap">
+  <h2><span class="no">6</span>品牌定制（后台零代码）</h2>
+  <p class="lead">管理员后台 → 系统设置 → 品牌与外观。</p>
+  <ul>
+    <li><b>站点名称 / Logo（亮色/深色）/ Favicon</b>:全站替换品牌元素;</li>
+    <li><b>品牌主色</b>:一个色值运行时生成整阶主题色(按钮/链接/图表);</li>
+    <li><b>落地页模板</b>:内置 Default 大气模板,二开可上传自定义模板;</li>
+    <li><b>页脚 ICP 备案号</b>:自动链接到工信部备案系统;</li>
+    <li><b>页脚自定义 HTML/JS</b>:挂载统计代码、客服组件、公安备案图标等;</li>
+    <li><b>自定义 HEAD CSS/JS 与 FOOTER JS</b>:全站注入任意代码。</li>
+  </ul>
+</section>
+
+<section id="team" class="wrap">
+  <h2><span class="no">7</span>团队协作与套餐</h2>
+  <ul>
+    <li><b>团队成员</b>:邀请成员并授予只读/编辑权限,共享网站数据;</li>
+    <li><b>套餐与配额</b>:免费/专业/自定义套餐,限制网站数、事件量、回放与热图配额,超额自动提醒;</li>
+    <li><b>账单与发票</b>:支持 20+ 支付网关(支付宝/微信/Stripe/PayPal…),多货币定价与税率配置;</li>
+    <li><b>联盟计划</b>:可开启推荐返佣,追踪注册转化与提现;</li>
+    <li><b>API</b>:账户 → API 密钥,REST 全量数据读写,详见 <a href="../api/docs">API 文档</a>。</li>
+  </ul>
+  <div class="note">需要深度定制?阅读仓库内 <code class="inline">docs/二次开发指南.md</code>,含完整代码逻辑讲解与扩展点说明。</div>
+</section>
+
+<footer class="wrap">© 2026 Monit · MIT Open Source · <a href="index.html">产品介绍</a> · <a href="install.html">安装指南</a></footer>
+</body>
+</html>
+

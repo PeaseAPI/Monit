@@ -4,18 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>@yield('title', __('Dashboard')) · Monit</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+        <title>@yield('title', __('Dashboard')) · {{ \App\Support\Brand::name() }}</title>
+    @include('parts.brand_head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
     <div class="flex min-h-screen">
         {{-- Sidebar --}}
         <aside class="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col bg-zinc-950 md:flex">
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 px-5 py-5">
-                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-lg font-bold text-white">M</span>
-                <span class="text-lg font-semibold text-white">Monit</span>
-            </a>
+            <x-brand-logo dark href="{{ route('dashboard') }}" text-class="text-lg" />
 
             <nav class="mt-2 flex-1 space-y-1 px-3">
                 {{--
@@ -76,8 +73,7 @@
             {{-- Top bar (mobile) --}}
             <header class="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-200 bg-white/80 px-4 py-3 backdrop-blur md:hidden">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-sm font-bold text-white">M</span>
-                    <span class="font-semibold">Monit</span>
+                    <x-brand-logo class="h-8 w-8" text-class="text-base" />
                 </a>
                 <div class="flex items-center gap-3">
                                         <a href="{{ route('websites.index') }}" class="text-sm text-zinc-600">{{ __('Websites') }}</a>
@@ -111,5 +107,6 @@
     </div>
 
     @include('parts.cookie_consent')
+    @include('parts.brand_footer_scripts')
 </body>
 </html>

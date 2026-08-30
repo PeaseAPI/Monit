@@ -10,8 +10,16 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Monit 统计聚合服务
+ * Monit 统计聚合服务（42K，核心只读服务）
  * 实现规格书 §5 统计指标（advanced 多表 join / lightweight 单表）
+ *
+ * 关联：
+ * - 上游：StatsController（Web 统计中心）/ Api\v1\AnalyticsController（REST）/
+ *   PublicStatisticsController（公开分享页）/ EmailReportsCommand（邮件报表）
+ * - 下游：SessionEvent / VisitorSession / WebsiteVisitor / LightweightEvent 模型；
+ *   全部查询吃 sessions_events 复合索引（website_id,type,date / website_id,date…）
+ * - 口径：星期按 ISO 存储（源 dow 0=周日入库转 ISO 7），展示层再转 locale（M22）
+ * - 过滤：AnalyticsFilters（§5.3）country/browser/os/device… 透传至各维度方法
  */
 class StatisticsService
 {

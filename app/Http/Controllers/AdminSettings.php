@@ -133,6 +133,7 @@ class AdminSettings extends Controller
             'email_notifications' => $this->getGroup('email_notifications'),
             'webhooks' => $this->getGroup('webhooks'),
             'theme' => $this->getGroup('theme'),
+            'branding' => $this->getGroup('branding'),
             'custom' => $this->getGroup('custom'),
             'custom_images' => $this->getGroup('custom_images'),
             'content' => $this->getGroup('content'),
@@ -349,6 +350,19 @@ class AdminSettings extends Controller
             ],
             'cron' => [
                 'cron_key' => 'nullable|string|max:64',
+            ],
+            'branding' => [
+                'site_name' => 'nullable|string|max:128',
+                'logo_url' => 'nullable|string|max:512',
+                'logo_dark_url' => 'nullable|string|max:512',
+                'favicon_url' => 'nullable|string|max:512',
+                'primary_color' => 'nullable|string|max:7|regex:/^#[0-9a-fA-F]{6}$/',
+                'landing_theme' => 'nullable|string|max:32|alpha_dash',
+                'show_landing_plans' => 'boolean',
+                'landing_hero_title' => 'nullable|string|max:256',
+                'landing_hero_subtitle' => 'nullable|string|max:512',
+                'footer_icp' => 'nullable|string|max:256',
+                'footer_custom_html' => 'nullable|string|max:8192',
             ],
             'custom' => [
                 'custom_head_js' => 'nullable|string',

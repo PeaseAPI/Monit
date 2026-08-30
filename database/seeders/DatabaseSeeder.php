@@ -75,6 +75,19 @@ class DatabaseSeeder extends Seeder
             'email_notices_is_enabled' => true,
             'auto_delete_inactive_users' => 0,   // 0 = 关闭；>0 = 天数
             'user_deletion_reminder' => 7,       // 删除前提醒天数
+
+            // M23：品牌与外观（规格书 §15 品牌可控——logo/备案/页脚代码全部后台设置，免改代码）
+            'branding.site_name' => 'Monit',
+            'branding.logo_url' => '',
+            'branding.logo_dark_url' => '',
+            'branding.favicon_url' => '',
+            'branding.primary_color' => '#4f46e5',
+            'branding.landing_theme' => 'default',
+            'branding.show_landing_plans' => 'true',
+            'branding.landing_hero_title' => '',
+            'branding.landing_hero_subtitle' => '',
+            'branding.footer_icp' => '',
+            'branding.footer_custom_html' => '',
         ];
 
         foreach ($settings as $key => $value) {

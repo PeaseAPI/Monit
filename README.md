@@ -92,9 +92,12 @@ php artisan test        # 112 tests / 374 assertions 全绿
 ## 文档
 
 - `Monit-完整开发规格书.md` — 完整功能规格（位于仓库上级文档目录）
-- `TASKS.md` — M0–M21 分段开发记录与验收清单
-- `lang/zh_CN.json`、`lang/en.json` — 中/英双语 1211 键
+- `TASKS.md` — M0–M23 分段开发记录与验收清单
+- `lang/` — 六语言 1356 键（zh_CN / zh_TW / en / ru / be / ms，键集强一致）
 - REST API：`/api-documentation` 页面；`Authorization: Bearer <api_key>` 鉴权，17 类资源端点
+- `docs/二次开发指南.md` — 架构/生命周期/扩展点/6 个二开实操场景
+- `public/docs/` — 产品介绍 / 安装指南 / 使用手册（HTML，线上 `/docs/index.html`）
+- `deploy/nginx/monit.conf`、`deploy/apache/monit.conf` — 生产伪静态与缓存规则（无需手写）
 
 ## 项目结构（关键目录）
 
@@ -104,12 +107,18 @@ app/
 ├── Http/Controllers/        # 前台 ~30 + Admin 34 + Api/v1 控制器
 ├── Http/Middleware/         # Admin / API Key / 维护模式 / 封禁守卫 / 计划限额
 ├── Models/                  # 28 张表对应模型
-├── Services/                # 统计 / 回放 / 热图 / 支付 / 短信 / TOTP / License / 插件
-└── Support/                 # Settings 动态配置
+├── Services/                # 统计 / 采集 / 回放 / 热图 / 支付 / 短信 / TOTP / License / 插件
+└── Support/                 # Settings 动态配置 / Brand 品牌出口 / Currency 多货币
 plugins/                     # 7 个内置插件（PWA/推送/联盟/CDN转存/图片优化/OG图/邮件防护）
-public/assets/js/monit.js    # 采集脚本
+resources/views/themes/      # 落地页主题（默认 default，后台可切换，模板机制）
+public/assets/pixel/monit.js # 采集 SDK（sendBeacon + keepalive）
+deploy/                      # Nginx / Apache 生产配置
 ```
+
+## 许可证
+
+本项目采用 [MIT License](LICENSE) 开源协议 —— 可自由使用、修改、分发与商用，仅需保留版权声明。
 
 ---
 
-> Monit 为规格书驱动的完整实现项目（M0–M21），持续迭代中。
+> Monit 为规格书驱动的完整实现项目（M0–M23），持续迭代中。

@@ -37,7 +37,15 @@ class IndexController extends Controller
             return $plan;
         });
 
-        return view('index', [
+        // M23 模板机制：落地页主题由后台 branding.landing_theme 控制，
+        // 视图解析 themes/{theme}/index.blade.php，不存在时回退 default 主题。
+        // 二开新增主题：只需新建 resources/views/themes/{name}/index.blade.php 并在后台切换。
+        $theme = \App\Support\Brand::landingTheme();
+        $view = view()->exists("themes.{$theme}.index")
+            ? "themes.{$theme}.index"
+            : 'themes.default.index';
+
+        return view($view, [
             'plans' => $plans,
             'currency' => $currency,
             'currencies' => $currencies,

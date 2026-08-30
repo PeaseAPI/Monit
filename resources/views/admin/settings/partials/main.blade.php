@@ -7,7 +7,11 @@
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.default_language') }}</label>
         <select name="default_language" class="mt-1 w-full rounded-xl border px-4 py-2.5 text-sm">
             <option value="zh_CN" {{ ($settings['main.default_language'] ?? 'zh_CN') === 'zh_CN' ? 'selected' : ''}}>简体中文</option>
+            <option value="zh_TW" {{ ($settings['main.default_language'] ?? '') === 'zh_TW' ? 'selected' : ''}}>繁體中文</option>
             <option value="en" {{ ($settings['main.default_language'] ?? '') === 'en' ? 'selected' : ''}}>English</option>
+            <option value="ru" {{ ($settings['main.default_language'] ?? '') === 'ru' ? 'selected' : ''}}>Русский</option>
+            <option value="be" {{ ($settings['main.default_language'] ?? '') === 'be' ? 'selected' : ''}}>Беларуская</option>
+            <option value="ms" {{ ($settings['main.default_language'] ?? '') === 'ms' ? 'selected' : ''}}>Bahasa Melayu</option>
         </select></div>
     <div class="flex items-center gap-3"><input type="checkbox" name="registration_is_enabled" value="1" {{ ($settings['main.registration_is_enabled'] ?? 'true') !== 'false' ? 'checked' : '' }}><label class="text-sm">{{ __('admin.registration_enabled') }}</label></div>
     <div class="flex items-center gap-3"><input type="checkbox" name="email_verification_is_enabled" value="1" {{ ($settings['main.email_verification_is_enabled'] ?? 'true') !== 'false' ? 'checked' : '' }}><label class="text-sm">{{ __('admin.email_verification_enabled') }}</label></div>

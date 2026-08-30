@@ -8,6 +8,12 @@ use Illuminate\Support\Facades\Cache;
 /**
  * Monit 系统设置（settings 表 key-value + 缓存）
  * 对应原系统 settings() 函数与 Settings 模型
+ *
+ * 关联：
+ * - 上游：全项目业务代码（Settings::get('group.key')）/ AdminSettings::update()（后台保存）
+ * - 下游：Setting 模型 + Cache('monit.settings') + 进程内静态数组（双缓存）
+ * - 失效：保存后必须调用 Settings::flush()（AdminSettings 已内置）
+ * - 规范：业务代码禁止直接 config() 读平台配置（见 docs/二次开发指南.md §5）
  */
 class Settings
 {

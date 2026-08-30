@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "monit/monit",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Monit — 开源自部署网站监控与分析系统 (Self-hosted Web Analytics)",
+    "keywords": ["analytics", "web-analytics", "self-hosted", "laravel", "php", "monitoring"],
     "license": "MIT",
     "require": {
         "php": "^8.3",
