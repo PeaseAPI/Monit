@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Plan;
 use App\Models\User;
 use App\Models\Website;
 use Illuminate\Http\Request;
@@ -13,14 +14,53 @@ use Illuminate\View\View;
  */
 class IndexController extends Controller
 {
-    public function index()
+    /**
+     * 落地页支持的展示货币（规格书 §6.1 货币切换器 / §7 currency_switcher）
+     */
+    public const CURRENCIES = [
+        'CNY' => ['symbol' => '¥', 'label' => 'CNY ¥'],
+        'USD' => ['symbol' => '$', 'label' => 'USD $'],
+        'EUR' => ['symbol' => '€', 'label' => 'EUR €'],
+        'GBP' => ['symbol' => '£', 'label' => 'GBP £'],
+        'JPY' => ['symbol' => '¥', 'label' => 'JPY ¥'],
+    ];
+
+    public function index(Request $request)
     {
         if (auth()->check()) {
             return redirect()->route('dashboard');
         }
 
+        // 货币切换器（规格书 §6.1 /index：定价卡 + 货币切换）
+        $currency = strtoupper((string) $request->query('currency', ''));
+        if ($currency !== '' && isset(self::CURRENCIES[$currency])) {
+            session(['landing_currency' => $currency]);
+        }
+        $currency = session('landing_currency', 'CNY');
+        if (! isset(self::CURRENCIES[$currency])) {
+            $currency = 'CNY';
+        }
+
+        // 从 prices JSON（{USD: {monthly, annual, lifetime}}）提取所选货币月付价
+        $plans = Plan::where('is_enabled', true)->orderBy('order')->get()->map(function (Plan $plan) use ($currency) {
+            $prices = $plan->prices ?? [];
+
+            $entry = $prices[$currency] ?? null;
+            if ($entry === null) {
+                // 回退：该套餐配置的任意一种货币
+                $entry = $prices ? reset($prices) : null;
+            }
+
+            $plan->landing_price = is_array($entry) ? ($entry['monthly'] ?? null) : $entry;
+            $plan->landing_currency = $currency;
+
+            return $plan;
+        });
+
         return view('index', [
-            'plans' => \App\Models\Plan::where('is_enabled', true)->orderBy('order')->get(),
+            'plans' => $plans,
+            'currency' => $currency,
+            'currencies' => self::CURRENCIES,
         ]);
     }
 

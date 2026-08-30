@@ -1,58 +1,114 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Monit — 自托管网站分析平台
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Monit 是一款基于 Laravel 的**自托管、隐私优先的网站统计分析平台**（Self-hosted Web Analytics），按《66Analytics 完整开发规格书》全量实现，提供访客统计、会话回放、热图、目标转化、出站点击等 Advanced/Lightweight 双模式分析能力，并内置计费、套餐、团队协作与本土化能力（短信验证、22 家支付处理器、阿里云 OSS/腾讯 COS 转存、13 家社交登录）。
 
-## About Laravel
+## 核心特性
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**数据采集与分析**
+- `/pixel/{key}` 轻量采集端点：会话 / 页面浏览 / 事件子项（click·scroll·form·resize）/ 出站点击 / 目标转化
+- Advanced 模式：访客 → 会话 → 事件三级模型，支持会话回放（gzip 分块存储 + S3/OSS/COS 冷转存）
+- Lightweight 模式：单表聚合，低资源场景
+- 热图：桌面/平板/手机三档快照 + 归一化点击坐标 + 滚动深度分布
+- 统计指标：实时在线、PV/UV、跳出率、停留时长、来源/UTM、地域、设备/OS/浏览器，支持多维护滤（AnalyticsFilters）
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**用户中心**
+- 仪表盘 / 实时统计 / 页面浏览 / 访客 / 会话 / 热图 / 回放 / 标注 / 目标
+- 网站 CRUD 与批量导入、自定义域名
+- 团队协作（邀请 / 网站级授权）、仪表盘视图
+- 账户：资料、API Key、偏好、日志、支付、套餐、兑换码、TOTP 两步验证、账户删除
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**管理后台（34 个控制器）**
+- 系统设置（主站 / 认证 / 社交登录 / 短信验证 / 分析 / 支付 / 计划任务 / 域名 / 存储…）
+- 用户 / 网站 / 套餐 / 支付 / 税费 / 兑换码 / 页面 CMS / 博客 / 广播 / 推送 / 语言 / 插件 / 日志（CSV 导出）/ 统计
+- 计划任务 7 组 + 3 子任务（套餐过期、未激活清理、回放清理与转存、数据保留、到期提醒、广播、邮件报表）
 
-## Learning Laravel
+**认证与安全**
+- 邮箱 + 密码登录、邮箱激活、找回密码
+- 手机号登录（手机号+密码 / 手机号+短信验证码免密）、短信找回密码、短信绑定手机（4 场景）
+- 短信服务商：阿里云 dysmsapi / 腾讯云 TC3 / log 调试；验证码 Cache 存储、60s 节流、防爆破（5 次作废）
+- 13 家社交登录（8 海外 + QQ/微信/微博/Gitee/飞书）
+- TOTP 两步验证（RFC 6238 纯 PHP 实现）
+- Ed25519 离线 License（多域名 + 过期校验）
+- 封禁用户会话即时终止（`EnsureUserActive` 中间件）
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+**计费生态**
+- 22 家支付处理器 + 21 条 Webhook 回调
+- 套餐（多货币多周期定价）、试用、税费、发票、信用票据、兑换码、推荐返佣、联盟提现
+- 落地页货币切换器（CNY/USD/EUR/GBP/JPY）
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**插件系统（7 个）**
+PWA / 推送通知 / 联盟返佣 / CDN 转存（S3/阿里云 OSS/腾讯 COS）/ 图片优化 / 动态 OG 图 / 邮件防护 —— 统一安装/激活/停用/卸载生命周期 + Admin 设置页
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
 
-## Agentic Development
+## 技术栈
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+| 层 | 选型 |
+|---|---|
+| 后端 | PHP 8.2+ / Laravel 12（Blade + Tailwind CSS v4） |
+| 数据库 | MySQL 8（28 张迁移表，兼容 MariaDB/PostgreSQL 常规用法） |
+| 缓存/队列 | Redis（会话回放分块、验证码、限流） |
+| 采集脚本 | 原生 JS `monit.js`（无第三方依赖） |
+| 部署 | Docker / docker-compose / 传统 LNMP |
+
+## 快速开始
 
 ```bash
-composer require laravel/boost --dev
+# 1. 安装依赖
+composer install
 
-php artisan boost:install
+# 2. 环境配置
+cp .env.example .env
+php artisan key:generate
+
+# 3. 数据库（MySQL：先建库，再改 .env 中 DB_* 配置）
+php artisan migrate
+php artisan db:seed --class=DemoDataSeeder   # 演示数据（可选）
+
+# 4. 启动
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+演示账号：`admin@monit.dev` / `password`（管理员），`pro@monit.dev`、`free@monit.dev`（普通用户）。
 
-## Contributing
+## Docker 部署
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+docker compose up -d --build
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate --seed
+```
 
-## Code of Conduct
+详见 `docker-compose.yml` 与 `Dockerfile`。
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 测试
 
-## Security Vulnerabilities
+```bash
+php artisan test        # 95 tests / 287 assertions 全绿
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+覆盖范围：像素采集、统计聚合、认证（含短信 4 场景）、对象存储多驱动、支付 Webhook、Cron 任务、计划限额、插件、License、封禁守卫、日志下载、货币切换等。
 
-## License
+## 文档
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- `66Analytics-完整开发规格书.md` — 完整功能规格（位于仓库上级文档目录）
+- `TASKS.md` — M0–M19 分段开发记录与验收清单
+- `lang/zh_CN.json`、`lang/en.json` — 中/英双语 1154 键
+- REST API：`/api-documentation` 页面；`Authorization: Bearer <api_key>` 鉴权，17 类资源端点
+
+## 项目结构（关键目录）
+
+```
+app/
+├── Console/Commands/        # 安装向导、License 生成等 Artisan 命令
+├── Http/Controllers/        # 前台 ~30 + Admin 34 + Api/v1 控制器
+├── Http/Middleware/         # Admin / API Key / 维护模式 / 封禁守卫 / 计划限额
+├── Models/                  # 28 张表对应模型
+├── Services/                # 统计 / 回放 / 热图 / 支付 / 短信 / TOTP / License / 插件
+└── Support/                 # Settings 动态配置
+plugins/                     # 7 个内置插件（PWA/推送/联盟/CDN转存/图片优化/OG图/邮件防护）
+public/assets/js/monit.js    # 采集脚本
+```
+
+---
+
+> Monit 为规格书驱动的完整实现项目（M0–M19），持续迭代中。

@@ -31,8 +31,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // 维护模式（规格书 §6.1）：settings main.maintenance_is_enabled 开启时非管理员跳转维护页
+        // 封禁用户登出（规格书 §2）：status != 1 的已登录会话在下一个请求立即终止
         $middleware->web(append: [
             \App\Http\Middleware\CheckMaintenance::class,
+            \App\Http\Middleware\EnsureUserActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

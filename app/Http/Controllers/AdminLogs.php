@@ -14,22 +14,35 @@ class AdminLogs extends Controller
 {
     public function index(Request $request)
     {
-        $query = AccountLog::with('user')
+        $query = $this->buildQuery($request);
+
+        return view('admin.logs.index', [
+            'logs' => $query->paginate(50),
+            'types' => AccountLog::distinct()->pluck('type')->filter()->values(),
+        ])->with('adminNav', 'logs');
+    }
+
+    /**
+     * 独立下载路由（规格书 §6.3.5 / 附B：AdminLogDownload）
+     * GET /admin/logs/download，支持与列表相同的过滤参数，导出 CSV（上限 10000 条）
+     */
+    public function download(Request $request): StreamedResponse
+    {
+        return $this->downloadCsv($this->buildQuery($request)->limit(10000)->get());
+    }
+
+    /**
+     * 列表/下载共用的过滤查询构造
+     */
+    private function buildQuery(Request $request)
+    {
+        return AccountLog::with('user')
             ->when($request->input('user_id'), fn ($q, $v) => $q->where('user_id', (int) $v))
             ->when($request->filled('type'), fn ($q, $v) => $q->where('type', $v))
             ->when($request->filled('email'), function ($q) use ($request): void {
                 $q->whereHas('user', fn ($u) => $u->where('email', 'like', '%'.$request->input('email').'%'));
             })
             ->orderByDesc('log_id');
-
-        if ($request->input('download')) {
-            return $this->downloadCsv($query->limit(10000)->get());
-        }
-
-        return view('admin.logs.index', [
-            'logs' => $query->paginate(50),
-            'types' => AccountLog::distinct()->pluck('type')->filter()->values(),
-        ])->with('adminNav', 'logs');
     }
 
     private function downloadCsv($logs): StreamedResponse

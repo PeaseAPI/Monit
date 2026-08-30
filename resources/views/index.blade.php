@@ -9,10 +9,32 @@
     </div>
 </section>
 <section class="mx-auto max-w-7xl px-6 py-16">
-    <h2 class="text-2xl font-bold text-center text-zinc-900">{{ __('landing.plans') }}</h2>
+    <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-zinc-900">{{ __('landing.plans') }}</h2>
+        {{-- 货币切换器（规格书 §6.1：定价卡 + 货币切换） --}}
+        <form method="GET" action="{{ route('index') }}" class="flex items-center gap-2">
+            <label for="landing-currency" class="text-sm text-zinc-500">{{ __('landing.currency') }}</label>
+            <select id="landing-currency" name="currency" onchange="this.form.submit()"
+                class="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-700">
+                @foreach ($currencies ?? [] as $code => $meta)
+                    <option value="{{ $code }}" @selected($code === ($currency ?? 'CNY'))>{{ $meta['label'] }}</option>
+                @endforeach
+            </select>
+        </form>
+    </div>
     <div class="mt-8 grid gap-6 md:grid-cols-3">
         @forelse($plans ?? [] as $plan)
-        <div class="rounded-2xl border border-zinc-200 bg-white p-6 text-center"><h3 class="text-lg font-semibold">{{ $plan->name }}</h3><p class="mt-2 text-3xl font-bold">¥{{ number_format($plan->price, 2) }}</p></div>
+        @php($symbol = $currencies[$plan->landing_currency ?? ($currency ?? 'CNY')]['symbol'] ?? '¥')
+        <div class="rounded-2xl border border-zinc-200 bg-white p-6 text-center">
+            <h3 class="text-lg font-semibold">{{ $plan->name }}</h3>
+            <p class="mt-2 text-3xl font-bold">
+                @if ($plan->landing_price !== null)
+                    {{ $symbol }}{{ number_format((float) $plan->landing_price, 2) }}<span class="text-sm font-normal text-zinc-400">/{{ __('landing.per_month') }}</span>
+                @else
+                    {{ __('common.no_plans') }}
+                @endif
+            </p>
+        </div>
         @empty<p class="text-zinc-500">{{ __('common.no_plans') }}</p>@endforelse
     </div>
 </section>
