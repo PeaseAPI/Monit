@@ -14,13 +14,17 @@ class WebhookPaystackController extends Controller
     public function __invoke(Request $request, PaymentService $paymentService): JsonResponse
     {
         $secretKey = config('services.paystack.secret_key');
-        $signature = $request->header('x-paystack-signature');
+        $signature = (string) $request->header('x-paystack-signature', '');
 
-        if ($secretKey && $signature) {
-            $computedSignature = hash_hmac('sha512', $request->getContent(), $secretKey);
-            if (! hash_equals($computedSignature, $signature)) {
-                return response()->json(['error' => 'Invalid signature'], 400);
-            }
+        // fail-closed：密钥未配置或签名缺失/不符一律拒绝（原实现未配置时放行）
+        if (empty($secretKey) || $signature === '') {
+            return response()->json(['error' => 'Not configured'], 400);
+        }
+
+        $computedSignature = hash_hmac('sha512', $request->getContent(), $secretKey);
+
+        if (! hash_equals($computedSignature, $signature)) {
+            return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         $event = $request->input('event', '');

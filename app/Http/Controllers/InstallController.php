@@ -162,10 +162,16 @@ class InstallController extends Controller
 
     /**
      * 修改/追加 .env 键
+     * 值经转义后写入：含空白/引号/井号/换行的值（如数据库密码）用双引号包裹并转义，
+     * 防止通过密码字段注入额外 env 键（如伪造 APP_KEY）
      */
     protected function setEnv(string $key, string $value): void
     {
         $envPath = base_path('.env');
+
+        if ($value !== '' && preg_match('/[\s"\'#\\\\]/', $value)) {
+            $value = '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $value) . '"';
+        }
 
         if (! file_exists($envPath)) {
             file_put_contents($envPath, $key . '=' . $value . "\n");

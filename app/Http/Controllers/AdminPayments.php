@@ -40,11 +40,11 @@ class AdminPayments extends Controller
     {
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,user_id'],
-            'total_amount' => ['required', 'numeric'],
-            'currency' => ['required', 'string', 'max:3'],
+            'total_amount' => ['required', 'numeric', 'min:0', 'max:99999999'],
+            'currency' => ['required', 'string', 'size:3'],
             'payment_processor' => ['required', 'string', 'max:64'],
             'type' => ['required', 'in:one_time,subscription'],
-            'plan_id' => ['nullable', 'string'],
+            'plan_id' => ['nullable', 'string', 'max:64', 'exists:plans,plan_id'],
         ]);
 
         $user = User::find($validated['user_id']);

@@ -69,7 +69,11 @@ class StripeProcessor
     }
 
     /**
-     * 验证 Webhook 签名
+     * 验证 Webhook 签名（Stripe 官方 HMAC-SHA256 方案，fail-closed）
+     *
+     * Stripe-Signature: t=<timestamp>,v1=<hmac>
+     * 期望值 = HMAC-SHA256(webhook_secret, "{t}.{rawBody}")，恒时比较 + 5 分钟重放容差。
+     * 未配置 webhook_secret、缺头、签名不符、时间戳超差 → 一律拒绝。
      */
     public function verifyWebhook(Request $request): bool
     {
@@ -77,16 +81,11 @@ class StripeProcessor
             return false;
         }
 
-        $payload = $request->getContent();
-        $sigHeader = $request->header('Stripe-Signature');
-
-        if (! $sigHeader) {
-            return false;
-        }
-
-        // 简化验证 - 生产环境应使用 Stripe SDK 验证
-        // \Stripe\Webhook::constructEvent($payload, $sigHeader, $this->webhookSecret);
-        return true;
+        return \App\Support\WebhookSignature::verifyStripeSignature(
+            $request->getContent(),
+            $request->header('Stripe-Signature'),
+            $this->webhookSecret
+        );
     }
 
     /**

@@ -21,9 +21,10 @@ class InvoiceController extends Controller
      */
     public function index(): View
     {
+        // status 为 tinyint（1=paid）；datetime 为下单时间列（无 created_at 时间戳列）
         $payments = Payment::where('user_id', auth()->id())
-            ->where('status', 'completed')
-            ->orderBy('created_at', 'desc')
+            ->where('status', 1)
+            ->orderByDesc('datetime')
             ->paginate(15);
 
         return view('invoices.index', compact('payments'));
@@ -45,7 +46,7 @@ class InvoiceController extends Controller
 
         $data = [
             'invoice_number' => 'INV-' . str_pad($payment->payment_id, 6, '0', STR_PAD_LEFT),
-            'date' => $payment->created_at->format('Y-m-d'),
+            'date' => $payment->datetime?->format('Y-m-d') ?? now()->format('Y-m-d'),
             'user' => $user,
             'payment' => $payment,
             'plan' => $plan,
@@ -65,7 +66,7 @@ class InvoiceController extends Controller
     {
         $creditNotes = Payment::where('user_id', auth()->id())
             ->where('type', 'refund')
-            ->orderBy('created_at', 'desc')
+            ->orderByDesc('datetime')
             ->paginate(15);
 
         return view('invoices.credit_notes', compact('creditNotes'));

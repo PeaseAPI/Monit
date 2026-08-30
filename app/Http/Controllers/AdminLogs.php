@@ -56,14 +56,39 @@ class AdminLogs extends Controller
             fputcsv($out, ['log_id', 'user_id', 'email', 'type', 'ip', 'device_type', 'os_name', 'browser_name', 'country_code', 'city_name', 'datetime']);
             foreach ($logs as $log) {
                 fputcsv($out, [
-                    $log->log_id, $log->user_id, $log->user?->email, $log->type, $log->ip,
-                    $log->device_type, $log->os_name, $log->browser_name,
-                    $log->country_code, $log->city_name,
+                    $log->log_id, $log->user_id,
+                    $this->sanitizeCsvCell($log->user?->email),
+                    $this->sanitizeCsvCell($log->type),
+                    $this->sanitizeCsvCell($log->ip),
+                    $this->sanitizeCsvCell($log->device_type),
+                    $this->sanitizeCsvCell($log->os_name),
+                    $this->sanitizeCsvCell($log->browser_name),
+                    $this->sanitizeCsvCell($log->country_code),
+                    $this->sanitizeCsvCell($log->city_name),
                     $log->datetime?->format('Y-m-d H:i:s'),
                 ]);
             }
             fclose($out);
                 }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
+     * CSV 公式注入防御：以 = + - @ 制表符/回车开头的单元格前置单引号，
+     * 防止导出文件在 Excel/WPS 中被解释为公式执行
+     */
+    private function sanitizeCsvCell(mixed $value): mixed
+    {
+        if (! is_string($value) || $value === '') {
+            return $value;
+        }
+
+        if (str_starts_with($value, '=') || str_starts_with($value, '+')
+            || str_starts_with($value, '-') || str_starts_with($value, '@')
+            || str_starts_with($value, "\t") || str_starts_with($value, "\r")) {
+            return "'" . $value;
+        }
+
+        return $value;
     }
 
     /**

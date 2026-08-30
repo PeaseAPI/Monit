@@ -9,7 +9,7 @@
         **{{ __('msg.user') }}**: {{ $payment->user_id }}
         **{{ __('msg.plan') }}**: {{ $payment->plan_id }}
         **{{ __('msg.amount') }}**: {{ $payment->total_amount }} {{ $payment->currency }}
-        **{{ __('msg.processor') }}**: {{ $payment->processor }}
+        **{{ __('msg.processor') }}**: {{ $payment->payment_processor }}
     </x-mail::message>
 
     <x-mail::footer>

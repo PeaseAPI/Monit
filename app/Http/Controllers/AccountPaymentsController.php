@@ -14,9 +14,10 @@ class AccountPaymentsController extends Controller
 {
     public function index(): View
     {
+        // datetime 为下单时间列（payments 无 created_at 时间戳列）
         $payments = Payment::where('user_id', auth()->id())
             ->with('plan')
-            ->orderBy('created_at', 'desc')
+            ->orderByDesc('datetime')
             ->paginate(15);
 
         return view('account.payments', compact('payments'));

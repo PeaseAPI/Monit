@@ -126,11 +126,27 @@ class PayPalProcessor
     }
 
     /**
-     * 验证 Webhook
+     * 验证 Webhook 签名（PayPal 官方 verify-webhook-signature API，fail-closed）
+     *
+     * 将 PayPal 传输头 + webhook_id 提交 PayPal 验签接口，
+     * verification_status === 'SUCCESS' 才放行；
+     * 未配置 webhook_id / 取 token 失败 / 网络异常 → 一律拒绝。
      */
     public function verifyWebhook(Request $request): bool
     {
-        // 生产环境应验证 PayPal webhook 签名
-        return true;
+        $webhookId = config('services.paypal.webhook_id');
+
+        if (empty($webhookId) || ! $this->isConfigured()) {
+            return false;
+        }
+
+        $accessToken = $this->getAccessToken();
+
+        return \App\Support\WebhookSignature::verifyPayPalSignature(
+            $request,
+            $this->baseUrl,
+            $accessToken,
+            $webhookId
+        );
     }
 }

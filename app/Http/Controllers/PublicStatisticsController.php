@@ -74,9 +74,10 @@ class PublicStatisticsController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $publicPassword = $website->settings['public_statistics_password'] ?? null;
+        $publicPassword = (string) ($website->settings['public_statistics_password'] ?? '');
 
-        if ($publicPassword && $validated['password'] === $publicPassword) {
+        // 恒时比较防时序侧信道；配合路由层 throttle 防爆破
+        if ($publicPassword !== '' && hash_equals($publicPassword, (string) $validated['password'])) {
             $request->session()->put('public_stats_auth_' . $website->website_id, true);
 
             return redirect()->route('statistics.public', ['pixel_key' => $pixel_key]);

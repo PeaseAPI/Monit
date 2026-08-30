@@ -17,7 +17,7 @@
                 @forelse($payments as $payment)
                 <tr class="hover:bg-zinc-50">
                     <td class="px-4 py-3 font-mono text-xs">INV-{{ str_pad($payment->payment_id, 6, '0', STR_PAD_LEFT) }}</td>
-                    <td class="px-4 py-3 text-zinc-500">{{ $payment->created_at->format('Y-m-d') }}</td>
+                    <td class="px-4 py-3 text-zinc-500">{{ $payment->datetime?->format('Y-m-d') }}</td>
                     <td class="px-4 py-3">{{ $payment->total_amount }} {{ $payment->currency }}</td>
                     <td class="px-4 py-3">
                         <a href="{{ route('invoices.download', $payment) }}" class="text-brand-600 hover:underline text-xs">{{ __('invoices.download') }}</a>

@@ -153,7 +153,7 @@ Route::post('/sso', [SsoController::class, 'login'])->name('sso.login.post');
 
 // 公开统计页（规格书 §6.2.2：/statistics/{key}）
 Route::get('/statistics/{pixel_key}', [PublicStatisticsController::class, 'show'])->name('statistics.public');
-Route::post('/statistics/{pixel_key}/auth', [PublicStatisticsController::class, 'authenticate'])->name('statistics.public.auth');
+Route::post('/statistics/{pixel_key}/auth', [PublicStatisticsController::class, 'authenticate'])->middleware('throttle:5,1')->name('statistics.public.auth');
 
 // ========================================
 // 短信验证码发送（M17 §12.5；guest/auth 通用，phone_bind 场景内部校验登录态）

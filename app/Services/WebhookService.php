@@ -34,7 +34,8 @@ class WebhookService
 
         $url = trim((string) Settings::get("webhooks.webhook_{$event}_url", ''));
 
-        if ($url === '' || ! filter_var($url, FILTER_VALIDATE_URL)) {
+        // 仅允许 http/https（拒绝 file://、ftp:// 等 SSRF 向量）
+        if ($url === '' || ! \App\Support\WebhookSignature::isSafeHttpUrl($url)) {
             return;
         }
 

@@ -37,6 +37,7 @@ class AccountController extends Controller
 
     /**
      * 更新个人资料
+     * 邮箱变更时重置 email_verified_at：防止「已验证身份」随邮箱漂移到他人地址
      */
     public function update(Request $request)
     {
@@ -45,7 +46,9 @@ class AccountController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $request->user()->user_id . ',user_id'],
         ]);
 
-        $request->user()->update($validated);
+        $emailChanged = strtolower((string) $validated['email']) !== strtolower((string) $request->user()->email);
+
+        $request->user()->update(array_merge($validated, $emailChanged ? ['email_verified_at' => null] : []));
 
         return back()->with('success', __('msg.profile_updated'));
     }
@@ -225,7 +228,11 @@ class AccountController extends Controller
             return back()->withErrors(['code' => __($issue)]);
         }
 
-        $code->recordRedemption($request->user());
+        // 并发窗口内计数被打满时拒绝
+        if (! $code->recordRedemption($request->user())) {
+            return back()->withErrors(['code' => __('account.code_fully_redeemed')]);
+        }
+
         $code->applyToUser($request->user());
 
         return back()->with('success', __('account.code_redeemed_successfully'));

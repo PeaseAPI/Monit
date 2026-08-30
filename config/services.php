@@ -55,6 +55,8 @@ return [
         'client_id' => env('PAYPAL_CLIENT_ID'),
         'client_secret' => env('PAYPAL_CLIENT_SECRET'),
         'sandbox' => env('PAYPAL_SANDBOX', true),
+        // Webhook 验签（fail-closed）：未配置 webhook_id 时回调一律拒绝
+        'webhook_id' => env('PAYPAL_WEBHOOK_ID'),
     ],
 
     /*
@@ -156,11 +158,15 @@ return [
         'vendor_id' => env('PADDLE_VENDOR_ID'),
         'vendor_auth_code' => env('PADDLE_VENDOR_AUTH_CODE'),
         'public_key' => env('PADDLE_PUBLIC_KEY'),
+        // Paddle Billing Webhook HMAC 验签（fail-closed）
+        'webhook_secret' => env('PADDLE_WEBHOOK_SECRET'),
     ],
 
     // 其他支付处理器（规格书 §11）
     'mercadopago' => [
         'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
+        // Webhook x-signature 验签（fail-closed）
+        'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET'),
     ],
 
     // WeChat Pay 支付（规格书 §11：中国，Native 扫码，API v2）
@@ -185,6 +191,8 @@ return [
     'flutterwave' => [
         'public_key' => env('FLUTTERWAVE_PUBLIC_KEY'),
         'secret_key' => env('FLUTTERWAVE_SECRET_KEY'),
+        // Webhook verif-hash 验签（fail-closed）
+        'secret_hash' => env('FLUTTERWAVE_SECRET_HASH'),
     ],
 
     'lemonsqueezy' => [
@@ -207,36 +215,50 @@ return [
         'api_key' => env('IYZICO_API_KEY'),
         'secret_key' => env('IYZICO_SECRET_KEY'),
         'base_url' => env('IYZICO_BASE_URL', 'sandbox-api.iyzipay.com'),
+        // Webhook HMAC 守门（fail-closed）
+        'webhook_secret' => env('IYZICO_WEBHOOK_SECRET'),
     ],
 
     'cryptocom' => [
         'merchant_id' => env('CRYPTOCOM_MERCHANT_ID'),
         'secret_key' => env('CRYPTOCOM_SECRET_KEY'),
+        // Webhook HMAC 守门（fail-closed）
+        'webhook_secret' => env('CRYPTOCOM_WEBHOOK_SECRET'),
     ],
 
     'myfatoorah' => [
         'api_key' => env('MYFATOORAH_API_KEY'),
         'is_test' => env('MYFATOORAH_IS_TEST', true),
+        // Webhook HMAC 守门（fail-closed）
+        'webhook_secret' => env('MYFATOORAH_WEBHOOK_SECRET'),
     ],
 
     'klarna' => [
         'username' => env('KLARNA_USERNAME'),
         'password' => env('KLARNA_PASSWORD'),
         'region' => env('KLARNA_REGION', 'eu'),
+        // Webhook HMAC 守门（fail-closed）
+        'webhook_secret' => env('KLARNA_WEBHOOK_SECRET'),
     ],
 
     'plisio' => [
         'api_key' => env('PLISIO_API_KEY'),
+        // Webhook HMAC 守门（fail-closed）
+        'webhook_secret' => env('PLISIO_WEBHOOK_SECRET'),
     ],
 
     'revolut' => [
         'api_key' => env('REVOLUT_API_KEY'),
         'public_id' => env('REVOLUT_PUBLIC_ID'),
+        // Webhook HMAC 守门（fail-closed）
+        'webhook_secret' => env('REVOLUT_WEBHOOK_SECRET'),
     ],
 
     'onepay' => [
         'merchant_code' => env('ONEPAY_MERCHANT_CODE'),
         'merchant_key' => env('ONEPAY_MERCHANT_KEY'),
+        // Webhook HMAC 守门（fail-closed）
+        'webhook_secret' => env('ONEPAY_WEBHOOK_SECRET'),
     ],
 
     /*

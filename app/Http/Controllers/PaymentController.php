@@ -177,9 +177,12 @@ class PaymentController extends Controller
 
     /**
      * 上传离线支付凭证
+     * 归属校验（防 IDOR）：仅订单本人可上传，防止污染他人订单 billing 快照
      */
     public function uploadProof(Request $request, Payment $payment): RedirectResponse
     {
+        abort_unless($payment->user_id === $request->user()->user_id, 403);
+
         $offlineProcessor = new OfflinePaymentProcessor();
         $result = $offlineProcessor->uploadProof($request, $payment);
 

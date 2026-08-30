@@ -70,16 +70,34 @@ class Code extends Model
 
     /**
      * 记录一次兑换：redeemed_codes 关联 + codes.redeemed 计数（§3.1 双轨）
+     *
+     * 并发安全：事务内 lockForUpdate 锁定 codes 行并重检 max_redemptions，
+     * 防止「两个请求同时通过 redemptionIssue 预检」导致的超卖窗口。
+     * 返回 false 表示并发窗口内计数已打满，调用方应按兑换失败处理。
      */
-    public function recordRedemption(User $user): void
+    public function recordRedemption(User $user): bool
     {
-        RedeemedCode::create([
-            'code_id' => $this->code_id,
-            'user_id' => $user->user_id,
-            'datetime' => now(),
-        ]);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($user): bool {
+            $locked = self::where('code_id', $this->code_id)->lockForUpdate()->first();
 
-        $this->increment('redeemed');
+            if (! $locked) {
+                return false;
+            }
+
+            if ($this->max_redemptions && $locked->redeemed >= $this->max_redemptions) {
+                return false;
+            }
+
+            RedeemedCode::create([
+                'code_id' => $this->code_id,
+                'user_id' => $user->user_id,
+                'datetime' => now(),
+            ]);
+
+            $locked->increment('redeemed');
+
+            return true;
+        });
     }
 
     /**

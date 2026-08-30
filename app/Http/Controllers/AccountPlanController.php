@@ -42,7 +42,11 @@ class AccountPlanController extends Controller
             return back()->withErrors(['code' => __($issue)]);
         }
 
-        $code->recordRedemption($request->user());
+        // 并发窗口内计数被打满时拒绝
+        if (! $code->recordRedemption($request->user())) {
+            return back()->withErrors(['code' => __('msg.code_fully_redeemed')]);
+        }
+
         $code->applyToUser($request->user());
 
         return back()->with('success', __('msg.code_redeemed_successfully'));

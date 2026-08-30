@@ -31,28 +31,28 @@ class PaymentService
             throw new \RuntimeException("plan_price_missing:{$plan->plan_id}:{$frequency}");
         }
 
-        // 计算折扣
+        // 计算折扣（完整走 redemptionIssue 校验：启用/有效期/次数/单用户一次，
+        // 与结账页兑换口径一致，防止过期或超兑折扣码绕过）
         $discountAmount = 0;
         $codeId = null;
         if ($code) {
-            $codeModel = \App\Models\Code::where('code', $code)
-                ->where('is_enabled', true)
-                ->first();
+            $codeModel = \App\Models\Code::where('code', $code)->first();
 
-            if ($codeModel && $codeModel->type === 'discount') {
-                $discountAmount = $amount * ($codeModel->discount / 100);
+            if ($codeModel && $codeModel->type === 'discount' && ! $codeModel->redemptionIssue($user)) {
+                $discountAmount = $amount * ((float) $codeModel->discount / 100);
                 $codeId = $codeModel->code_id;
             }
         }
 
         $totalAmount = max(0, $amount - $discountAmount);
 
-        // 创建支付记录
+        // 创建支付记录（plan_id 固化本次购买套餐，激活/发票均以此为准）
         $payment = Payment::create([
             'user_id' => $user->user_id,
             'name' => $user->name,
             'email' => $user->email,
             'external_id' => null,
+            'plan_id' => $plan->plan_id,
             'payment_processor' => $processor,
             'type' => $frequency === 'monthly' || $frequency === 'annual' ? 'recurring' : 'one_time',
             'frequency' => $frequency,
@@ -75,11 +75,17 @@ class PaymentService
     }
 
     /**
-     * 支付成功回调处理
+     * 支付成功回调处理（幂等：重复回调不重复累计/续期/派发）
      */
     public function handlePaymentSuccess(int $paymentId, string $externalId, ?string $subscriptionId = null): Payment
     {
         $payment = Payment::findOrFail($paymentId);
+
+        // 幂等守卫：已入账订单直接返回，防止网关重复通知导致
+        // payment_total_amount 重复累计、套餐重复续期、webhook 重复派发
+        if ($payment->status === 1) {
+            return $payment;
+        }
 
         $payment->update([
             'external_id' => $externalId,
@@ -88,7 +94,6 @@ class PaymentService
         ]);
 
         $user = $payment->user;
-        $plan = Plan::find($user->plan_id);
 
         // 更新用户支付信息
         $user->update([
@@ -149,10 +154,11 @@ class PaymentService
 
     /**
      * 激活套餐
+     * 套餐来源优先级：payment->plan_id（本次购买快照）> user->plan_id（历史订单兜底）
      */
     public function activatePlan(User $user, Payment $payment): void
     {
-        $plan = Plan::find($user->plan_id);
+        $plan = Plan::find($payment->plan_id ?: $user->plan_id);
         if (! $plan) {
             return;
         }
@@ -190,7 +196,11 @@ class PaymentService
             return ['success' => false, 'message' => __($key)];
         }
 
-        $codeModel->recordRedemption($user);
+        // 并发窗口内计数被打满时（recordRedemption 事务内重检）拒绝兑换
+        if (! $codeModel->recordRedemption($user)) {
+            return ['success' => false, 'message' => __('msg.code_fully_redeemed')];
+        }
+
         $codeModel->applyToUser($user);
 
         return ['success' => true, 'message' => __('msg.code_redeemed')];
