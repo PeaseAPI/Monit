@@ -18,6 +18,9 @@ class Website extends Model
         'current_month_sessions_replays', 'last_24_hours_pageviews',
         'last_7_days_pageviews', 'timezone', 'email_reports_is_enabled',
         'email_reports_last_date', 'settings',
+        // M22：配额通知标志（原版 plan_*_limit_notice，规格书 §13.1）
+        'plan_sessions_events_limit_notice', 'plan_events_children_limit_notice',
+        'plan_sessions_replays_limit_notice', 'stats_month',
     ];
 
     protected function casts(): array
@@ -31,6 +34,9 @@ class Website extends Model
             'websites_heatmaps_is_enabled' => 'boolean',
             'ip_tracking_is_enabled' => 'boolean',
             'email_reports_is_enabled' => 'boolean',
+            'plan_sessions_events_limit_notice' => 'boolean',
+            'plan_events_children_limit_notice' => 'boolean',
+            'plan_sessions_replays_limit_notice' => 'boolean',
             'settings' => 'array',
             'email_reports_last_date' => 'datetime',
         ];

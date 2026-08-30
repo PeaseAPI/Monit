@@ -29,6 +29,8 @@ class StatisticsService
         'path', 'referrer_host', 'utm_source', 'utm_medium', 'utm_campaign',
         'country_code', 'continent_code', 'device_type', 'os_name', 'browser_name',
         'browser_language', 'goal_id',
+        // M22：对齐原版 AnalyticsFilters 访客维度
+        'city_name', 'browser_timezone', 'screen_resolution', 'theme', 'ip',
     ];
 
     public function __construct(protected Website $website)
@@ -62,7 +64,9 @@ class StatisticsService
      */
     protected function applyFilters($query, string $model): void
     {
-        $visitorDimensions = ['country_code', 'continent_code', 'device_type', 'os_name', 'browser_name', 'browser_language'];
+        $visitorDimensions = ['country_code', 'continent_code', 'device_type', 'os_name', 'browser_name', 'browser_language',
+            // M22：原版 AnalyticsFilters 访客维度补齐
+            'city_name', 'browser_timezone', 'screen_resolution', 'theme', 'ip'];
 
         foreach ($this->filters as $dimension => $value) {
             if ($dimension === 'goal_id') {
@@ -257,7 +261,9 @@ class StatisticsService
     {
         $allowed = ['path', 'referrer_host', 'utm_source', 'utm_medium', 'utm_campaign',
             'continent_code', 'country_code', 'city_name', 'device_type', 'os_name',
-            'browser_name', 'browser_language', 'screen_resolution', 'theme'];
+            'browser_name', 'browser_language', 'screen_resolution', 'theme',
+            // M22：原版 browser-timezones 页
+            'browser_timezone'];
 
         if (! in_array($dimension, $allowed, true)) {
             return [];
@@ -277,7 +283,7 @@ class StatisticsService
                 ->get();
         } else {
             // 访客维度信息在 websites_visitors 表
-            $visitorDimensions = ['continent_code', 'country_code', 'city_name', 'device_type', 'os_name', 'browser_name', 'browser_language', 'screen_resolution', 'theme'];
+            $visitorDimensions = ['continent_code', 'country_code', 'city_name', 'device_type', 'os_name', 'browser_name', 'browser_language', 'screen_resolution', 'theme', 'browser_timezone'];
 
             if (in_array($dimension, $visitorDimensions, true)) {
                 $rows = DB::table('sessions_events')
@@ -800,5 +806,263 @@ class StatisticsService
             'depth' => $toItems($depthBuckets),
             'duration' => $toItems($durationBuckets),
         ];
+    }
+
+    /* ---------------------------------------------------------------------
+     | M22 原版对齐扩展：星期分布 / 引荐分类 / 钻取（规格书 §5.5）
+     --------------------------------------------------------------------- */
+
+    /**
+     * M22 星期分布（原版 weekdays 页）：周一至周日 PV 与访客分布
+     * 兼容 sqlite（strftime %w：0=周日）与 mysql（DAYOFWEEK：1=周日）→ 统一为 0=周日
+     *
+     * @return array<int, array{dow: int, label: string, pageviews: int, visitors: int}>
+     */
+    public function weekdaySeries(): array
+    {
+        $dowExpr = DB::getDriverName() === 'sqlite'
+            ? "CAST(strftime('%w', date) AS INTEGER)"
+            : '(DAYOFWEEK(date) - 1)';
+
+        if ($this->isLightweight) {
+            $rows = LightweightEvent::query()
+                ->where('website_id', $this->website->website_id)
+                ->whereBetween('date', [$this->startDate, $this->endDate])
+                ->whereIn('type', ['landing_page', 'pageview'])
+                ->groupBy('dow')
+                ->selectRaw("{$dowExpr} as dow, count(*) as pageviews, count(*) as visitors")
+                ->get();
+        } else {
+            $rows = SessionEvent::query()
+                ->where('website_id', $this->website->website_id)
+                ->whereBetween('date', [$this->startDate, $this->endDate])
+                ->whereIn('type', ['landing_page', 'pageview'])
+                ->groupBy('dow')
+                ->selectRaw("{$dowExpr} as dow, count(*) as pageviews, count(distinct visitor_id) as visitors")
+                ->get();
+        }
+
+        $byDow = [];
+        foreach ($rows as $row) {
+            $srcDow = (int) $row->dow;          // 源：0=周日（sqlite %w / mysql DAYOFWEEK-1 一致）
+            $iso = $srcDow === 0 ? 7 : $srcDow;  // ISO：1=周一…7=周日
+            $byDow[$iso] = ['pageviews' => (int) $row->pageviews, 'visitors' => (int) $row->visitors];
+        }
+
+        // ISO 顺序：周一(1)…周日(7)
+        $labels = [1 => 'stats.weekday_mon', 2 => 'stats.weekday_tue', 3 => 'stats.weekday_wed',
+            4 => 'stats.weekday_thu', 5 => 'stats.weekday_fri', 6 => 'stats.weekday_sat', 7 => 'stats.weekday_sun'];
+
+        $series = [];
+        foreach ($labels as $iso => $labelKey) {
+            $data = $byDow[$iso] ?? ['pageviews' => 0, 'visitors' => 0];
+            $series[] = [
+                'dow' => $iso,
+                'label' => __($labelKey),
+                'pageviews' => $data['pageviews'],
+                'visitors' => $data['visitors'],
+            ];
+        }
+
+        return $series;
+    }
+
+    /** AI 引荐域名归一表（原版 ai_referrers，扩展 gemini）：子域/别名 → 规范域 */
+    protected const AI_HOSTS = [
+        'chat.openai.com' => 'openai.com',
+        'openai.com' => 'openai.com',
+        'chatgpt.com' => 'openai.com',
+        'claude.ai' => 'claude.ai',
+        'perplexity.ai' => 'perplexity.ai',
+        'www.perplexity.ai' => 'perplexity.ai',
+        'copilot.microsoft.com' => 'copilot.microsoft.com',
+        'gemini.google.com' => 'gemini.google.com',
+    ];
+
+    /** 社交域名归一表（原版 social_media_referrers CASE 映射，子域归一 + 国内补充） */
+    protected const SOCIAL_HOST_MAP = [
+        'l.threads.com' => 'threads.com',
+        'l.facebook.com' => 'facebook.com', 'lm.facebook.com' => 'facebook.com',
+        'm.facebook.com' => 'facebook.com', 'www.facebook.com' => 'facebook.com',
+        'staticxx.facebook.com' => 'facebook.com',
+        'l.instagram.com' => 'instagram.com', 'www.instagram.com' => 'instagram.com',
+        'www.pinterest.com' => 'pinterest.com',
+        't.co' => 'x.com', 'twitter.com' => 'x.com',
+        'www.youtube.com' => 'youtube.com', 'm.youtube.com' => 'youtube.com', 'youtube.com' => 'youtube.com',
+        'www.tiktok.com' => 'tiktok.com', 'm.tiktok.com' => 'tiktok.com',
+        'www.reddit.com' => 'reddit.com', 'reddit.com' => 'reddit.com',
+        'www.linkedin.com' => 'linkedin.com', 'linkedin.com' => 'linkedin.com',
+        'story.snapchat.com' => 'snapchat.com', 'www.snapchat.com' => 'snapchat.com',
+        't.me' => 'telegram.org', 'telegram.me' => 'telegram.org', 'web.telegram.org' => 'telegram.org',
+        'weibo.com' => 'weibo.com', 'www.weibo.com' => 'weibo.com',
+        'zhihu.com' => 'zhihu.com', 'www.zhihu.com' => 'zhihu.com',
+        'douyin.com' => 'douyin.com', 'www.douyin.com' => 'douyin.com',
+        'bilibili.com' => 'bilibili.com', 'www.bilibili.com' => 'bilibili.com',
+        'xiaohongshu.com' => 'xiaohongshu.com',
+        'mp.weixin.qq.com' => 'mp.weixin.qq.com',
+    ];
+
+    /** 搜索引擎域名归一表（原版 search_engines_referrers CASE 映射） */
+    protected const SEARCH_HOST_MAP = [
+        'www.bing.com' => 'bing.com', 'bing.com' => 'bing.com',
+        'www.baidu.com' => 'baidu.com', 'baidu.com' => 'baidu.com',
+        'yandex.com' => 'yandex.com', 'www.yandex.com' => 'yandex.com',
+        'sogou.com' => 'sogou.com', 'www.sogou.com' => 'sogou.com',
+        'so.com' => 'so.com', 'www.so.com' => 'so.com',
+        'duckduckgo.com' => 'duckduckgo.com',
+    ];
+
+    /**
+     * M22 引荐分类榜（原版 social_media/search_engines/ai_referrers 三页合一，规格书 §5.5）
+     *
+     * @return array{social: array<int, array{key: string, count: int}>, search: array<int, array{key: string, count: int}>, ai: array<int, array{key: string, count: int}>}
+     */
+    public function referralCategories(int $limit = 30): array
+    {
+        $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
+
+        $rows = $base
+            ->where('website_id', $this->website->website_id)
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->whereIn('type', ['landing_page', 'pageview'])
+            ->whereNotNull('referrer_host')
+            ->where('referrer_host', '!=', '')
+            ->groupBy('referrer_host')
+            ->selectRaw('referrer_host as k, count(*) as total')
+            ->orderByDesc('total')
+            ->limit(500)
+            ->get();
+
+        $social = $search = $ai = [];
+
+        foreach ($rows as $row) {
+            $host = strtolower((string) $row->k);
+            $count = (int) $row->total;
+
+            // AI 引荐（openai/claude/perplexity/copilot/gemini）
+            if (isset(static::AI_HOSTS[$host])) {
+                $canonical = static::AI_HOSTS[$host];
+                $ai[$canonical] = ($ai[$canonical] ?? 0) + $count;
+                continue;
+            }
+
+            // 社交：精确映射 → SOCIAL_HOSTS 后缀匹配
+            if (isset(static::SOCIAL_HOST_MAP[$host])) {
+                $canonical = static::SOCIAL_HOST_MAP[$host];
+                $social[$canonical] = ($social[$canonical] ?? 0) + $count;
+                continue;
+            }
+            foreach (static::SOCIAL_HOSTS as $suffix) {
+                if (str_ends_with($host, '.'.$suffix)) {
+                    $social[$suffix] = ($social[$suffix] ?? 0) + $count;
+                    continue 2;
+                }
+            }
+
+            // 搜索引擎：精确映射 → google/yahoo/baidu TLD 通配
+            if (isset(static::SEARCH_HOST_MAP[$host])) {
+                $canonical = static::SEARCH_HOST_MAP[$host];
+                $search[$canonical] = ($search[$canonical] ?? 0) + $count;
+                continue;
+            }
+            if (preg_match('/^(?:www\.)?google\.[a-z.]+$/', $host)) {
+                $search['google.com'] = ($search['google.com'] ?? 0) + $count;
+                continue;
+            }
+            if (str_ends_with($host, '.yahoo.com')) {
+                $search['yahoo.com'] = ($search['yahoo.com'] ?? 0) + $count;
+                continue;
+            }
+            if (preg_match('/^(?:m\.)?baidu\.[a-z.]+$/', $host)) {
+                $search['baidu.com'] = ($search['baidu.com'] ?? 0) + $count;
+            }
+        }
+
+        $toItems = function (array $map) use ($limit) {
+            arsort($map);
+
+            return array_slice(array_map(
+                fn ($k, $v) => ['key' => (string) $k, 'count' => (int) $v],
+                array_keys($map),
+                $map
+            ), 0, $limit);
+        };
+
+        return [
+            'social' => $toItems($social),
+            'search' => $toItems($search),
+            'ai' => $toItems($ai),
+        ];
+    }
+
+    /**
+     * M22 引荐路径钻取（原版 referrer_paths_modal）：指定引荐主机下按路径聚合
+     *
+     * @return array<int, array{key: string, count: int}>
+     */
+    public function referrerPaths(string $host, int $limit = 50): array
+    {
+        $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
+
+        $rows = $base
+            ->where('website_id', $this->website->website_id)
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->whereIn('type', ['landing_page', 'pageview'])
+            ->where('referrer_host', $host)
+            ->groupBy('referrer_path')
+            ->selectRaw("COALESCE(NULLIF(referrer_path, ''), '/') as k, count(*) as total")
+            ->orderByDesc('total')
+            ->limit($limit)
+            ->get();
+
+        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => (int) $row->total])->all();
+    }
+
+    /**
+     * M22 UTM 钻取（原版 utms_medium_campaign_modal）：指定 utm_source 下 medium×campaign 聚合
+     *
+     * @return array<int, array{key: string, medium: string, campaign: string, count: int}>
+     */
+    public function utmDrilldown(string $source, int $limit = 50): array
+    {
+        $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
+
+        $rows = $base
+            ->where('website_id', $this->website->website_id)
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->whereIn('type', ['landing_page', 'pageview'])
+            ->where('utm_source', $source)
+            ->groupBy('utm_medium', 'utm_campaign')
+            ->selectRaw("COALESCE(NULLIF(utm_medium, ''), '—') as m, COALESCE(NULLIF(utm_campaign, ''), '—') as c, count(*) as total")
+            ->orderByDesc('total')
+            ->limit($limit)
+            ->get();
+
+        return collect($rows)->map(fn ($row) => [
+            'key' => $row->m.' × '.$row->c,
+            'medium' => (string) $row->m,
+            'campaign' => (string) $row->c,
+            'count' => (int) $row->total,
+        ])->all();
+    }
+
+    /**
+     * M22 出站路径钻取（原版 outbound_clicks_paths_modal）：指定出站主机下按路径聚合
+     *
+     * @return array<int, array{key: string, count: int}>
+     */
+    public function outboundClickPaths(string $host, int $limit = 50): array
+    {
+        $rows = \App\Models\OutboundClick::query()
+            ->where('website_id', $this->website->website_id)
+            ->whereBetween('datetime', [$this->startDate, $this->endDate])
+            ->where('host', $host)
+            ->groupBy('path')
+            ->selectRaw("COALESCE(NULLIF(path, ''), '/') as k, count(*) as total")
+            ->orderByDesc('total')
+            ->limit($limit)
+            ->get();
+
+        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => (int) $row->total])->all();
     }
 }

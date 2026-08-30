@@ -24,6 +24,19 @@
         <x-bar-chart :series="$hourSeries" />
     </div>
 
+    {{-- M22 星期分布（原版 weekdays 页） --}}
+    <div class="mt-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h3 class="text-sm font-semibold text-zinc-700">{{ __('stats.weekday_distribution') }}</h3>
+        @php
+            $weekdaySeries = collect($weekdays)->map(fn ($d) => [
+                'date' => $d['label'],
+                'pageviews' => $d['pageviews'],
+                'visitors' => $d['visitors'],
+            ])->all();
+        @endphp
+        <x-bar-chart :series="$weekdaySeries" />
+    </div>
+
     {{-- M21 忠诚度（CNZZ 忠诚度 / GA 新访回访） --}}
     <div class="mt-6 grid grid-cols-2 gap-4">
         <x-stat-card :label="__('stats.new_visitors')" :value="number_format($loyalty['new_visitors'])" :hint="__('stats.loyalty_frequency')" />

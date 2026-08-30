@@ -71,6 +71,10 @@ class DatabaseSeeder extends Seeder
             'last_cron_execution' => now()->toISOString(),
             'items_per_page' => 25,
             'email_reports_is_enabled' => false,
+            // M22：原版 Cron 任务开关（规格书 §13.1）
+            'email_notices_is_enabled' => true,
+            'auto_delete_inactive_users' => 0,   // 0 = 关闭；>0 = 天数
+            'user_deletion_reminder' => 7,       // 删除前提醒天数
         ];
 
         foreach ($settings as $key => $value) {

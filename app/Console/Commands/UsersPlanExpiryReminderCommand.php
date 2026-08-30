@@ -41,8 +41,12 @@ class UsersPlanExpiryReminderCommand extends Command
 
         $sent = 0;
         foreach ($users as $user) {
-            // TODO: 发送到期提醒邮件
-            // Mail::to($user)->queue(new PlanExpiryReminderMail($user));
+            // M22：真实发送到期提醒邮件（Mailable 早已存在，此前为 TODO）
+            try {
+                \Illuminate\Support\Facades\Mail::to($user->email)->queue(new \App\Mail\PlanExpiryReminder($user));
+            } catch (\Throwable $e) {
+                // 邮件失败不阻断标志位更新
+            }
 
             $user->update(['plan_expiry_reminder' => true]);
             $sent++;

@@ -138,10 +138,72 @@ class StatsController extends Controller
 
         $stats = StatisticsService::for($website)->lastDays($range);
 
+        // M22 访客导出（原版 Visitors.php process_export_json，规格书 §6.2.2）
+        if (in_array($request->query('export'), ['json', 'csv'], true)) {
+            return $this->exportVisitors($website, $stats, $request->query('export'));
+        }
+
         return view('stats.visitors', [
             'website' => $website,
             'range' => $range,
             'visitors' => $stats->topVisitors(50),
+        ]);
+    }
+
+    /**
+     * M22 访客列表导出：JSON / CSV（最近 90 天，LIMIT 5000 对齐原版）
+     * 需套餐 export 功能（规格书 §10.2 export；-1/1 视为启用，0 视为关闭）
+     */
+    protected function exportVisitors(Website $website, StatisticsService $stats, string $format)
+    {
+        $user = request()->user();
+
+        if (! $user || (int) ($user->getPlanSettings()['export'] ?? 1) === 0) {
+            abort(403, __('stats.export_not_allowed'));
+        }
+
+        $visitors = \App\Models\WebsiteVisitor::query()
+            ->where('website_id', $website->website_id)
+            ->where('last_date', '>=', now()->subDays(90))
+            ->orderByDesc('last_date')
+            ->limit(5000)
+            ->get([
+                'visitor_id', 'website_id', 'ip', 'custom_parameters',
+                'continent_code', 'country_code', 'city_name',
+                'os_name', 'os_version', 'browser_name', 'browser_version',
+                'browser_language', 'browser_timezone', 'screen_resolution', 'device_type',
+                'total_sessions', 'total_goals_conversions', 'date', 'last_date',
+            ]);
+
+        $filename = 'visitors_'.$website->website_id.'_'.now()->format('Ymd_His');
+
+        if ($format === 'csv') {
+            $callback = function () use ($visitors) {
+                $out = fopen('php://output', 'w');
+                fputcsv($out, array_keys($visitors->first()?->getAttributes() ?? ['visitor_id' => '']));
+
+                foreach ($visitors as $v) {
+                    fputcsv($out, array_map(
+                        fn ($val) => is_string($val) ? mb_substr($val, 0, 2000) : $val,
+                        $v->getAttributes()
+                    ));
+                }
+
+                fclose($out);
+            };
+
+            return response()->streamDownload($callback, $filename.'.csv', [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+            ]);
+        }
+
+        return response()->json([
+            'website_id' => $website->website_id,
+            'generated_at' => now()->toISOString(),
+            'count' => $visitors->count(),
+            'visitors' => $visitors,
+        ], 200, [
+            'Content-Disposition' => 'attachment; filename="'.$filename.'.json"',
         ]);
     }
 
@@ -357,6 +419,7 @@ class StatsController extends Controller
             'website' => $website,
             'range' => $range,
             'hourly' => $stats->hourlySeries(),
+            'weekdays' => $stats->weekdaySeries(),
             'channels' => $stats->channels(),
             'landingPages' => $stats->landingPages(10),
             'exitPages' => $stats->exitPages(10),
@@ -419,6 +482,141 @@ class StatsController extends Controller
             'website' => $website,
             'range' => $range,
             'topResolutions' => $stats->breakdown('screen_resolution', 50),
+        ]);
+    }
+
+    /**
+     * M22 热门浏览器时区（原版 browser-timezones 页，规格书 §5.1.1）
+     */
+    public function topTimezones(Request $request, Website $website)
+    {
+        $range = (int) ($request->query('range') ?: 7);
+        if (! in_array($range, [1, 7, 30, 90], true)) {
+            $range = 7;
+        }
+
+        $stats = StatisticsService::for($website)->lastDays($range);
+
+        return view('stats.top_timezones', [
+            'website' => $website,
+            'range' => $range,
+            'topTimezones' => $stats->breakdown('browser_timezone', 50),
+        ]);
+    }
+
+    /**
+     * M22 大洲分布（原版 continents 页，规格书 §5.1.1）
+     */
+    public function topContinents(Request $request, Website $website)
+    {
+        $range = (int) ($request->query('range') ?: 7);
+        if (! in_array($range, [1, 7, 30, 90], true)) {
+            $range = 7;
+        }
+
+        $stats = StatisticsService::for($website)->lastDays($range);
+
+        return view('stats.top_continents', [
+            'website' => $website,
+            'range' => $range,
+            'topContinents' => $stats->breakdown('continent_code', 10),
+        ]);
+    }
+
+    /**
+     * M22 明暗主题偏好（原版 themes 页，规格书 §5.1.1）
+     */
+    public function topThemes(Request $request, Website $website)
+    {
+        $range = (int) ($request->query('range') ?: 7);
+        if (! in_array($range, [1, 7, 30, 90], true)) {
+            $range = 7;
+        }
+
+        $stats = StatisticsService::for($website)->lastDays($range);
+
+        return view('stats.top_themes', [
+            'website' => $website,
+            'range' => $range,
+            'topThemes' => $stats->breakdown('theme', 10),
+        ]);
+    }
+
+    /**
+     * M22 引荐分类页（原版 social/search/ai_referrers 三页合一，规格书 §5.5）
+     */
+    public function referralCategories(Request $request, Website $website)
+    {
+        $range = (int) ($request->query('range') ?: 7);
+        if (! in_array($range, [1, 7, 30, 90], true)) {
+            $range = 7;
+        }
+
+        $stats = StatisticsService::for($website)->lastDays($range);
+
+        return view('stats.referral_categories', array_merge([
+            'website' => $website,
+            'range' => $range,
+        ], $stats->referralCategories()));
+    }
+
+    /**
+     * M22 引荐路径钻取（原版 referrer_paths_modal，规格书 §5.5）
+     */
+    public function referrerPaths(Request $request, Website $website, string $host)
+    {
+        $range = (int) ($request->query('range') ?: 7);
+        if (! in_array($range, [1, 7, 30, 90], true)) {
+            $range = 7;
+        }
+
+        $stats = StatisticsService::for($website)->lastDays($range);
+
+        return view('stats.referrer_paths', [
+            'website' => $website,
+            'range' => $range,
+            'host' => $host,
+            'paths' => $stats->referrerPaths($host, 100),
+        ]);
+    }
+
+    /**
+     * M22 UTM 钻取（原版 utms_medium_campaign_modal，规格书 §5.5）
+     */
+    public function utmDrilldown(Request $request, Website $website, string $source)
+    {
+        $range = (int) ($request->query('range') ?: 7);
+        if (! in_array($range, [1, 7, 30, 90], true)) {
+            $range = 7;
+        }
+
+        $stats = StatisticsService::for($website)->lastDays($range);
+
+        return view('stats.utm_drilldown', [
+            'website' => $website,
+            'range' => $range,
+            'source' => $source,
+            'items' => $stats->utmDrilldown($source, 100),
+        ]);
+    }
+
+    /**
+     * M22 出站路径钻取（原版 outbound_clicks_paths_modal，规格书 §5.5）
+     */
+    public function outboundClickPaths(Request $request, Website $website, string $host)
+    {
+        $range = (int) ($request->query('range') ?: 7);
+        if (! in_array($range, [1, 7, 30, 90], true)) {
+            $range = 7;
+        }
+
+        $stats = StatisticsService::for($website)->lastDays($range);
+
+        return view('stats.outbound_click_paths', [
+            'website' => $website,
+            'range' => $range,
+            'host' => $host,
+            'paths' => $stats->outboundClickPaths($host, 100),
         ]);
     }
 

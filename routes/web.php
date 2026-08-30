@@ -270,6 +270,21 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('can:own,website')->name('stats.top_resolutions');
     Route::get('/stats/{website}/top-operating-systems', [StatsController::class, 'topOperatingSystems'])
         ->middleware('can:own,website')->name('stats.top_os');
+    // M22：原版对齐统计页（规格书 §5.1.1 / §5.5）
+    Route::get('/stats/{website}/top-timezones', [StatsController::class, 'topTimezones'])
+        ->middleware('can:own,website')->name('stats.top_timezones');
+    Route::get('/stats/{website}/top-continents', [StatsController::class, 'topContinents'])
+        ->middleware('can:own,website')->name('stats.top_continents');
+    Route::get('/stats/{website}/top-themes', [StatsController::class, 'topThemes'])
+        ->middleware('can:own,website')->name('stats.top_themes');
+    Route::get('/stats/{website}/referral-categories', [StatsController::class, 'referralCategories'])
+        ->middleware('can:own,website')->name('stats.referral_categories');
+    Route::get('/stats/{website}/referrer-paths/{host}', [StatsController::class, 'referrerPaths'])
+        ->middleware('can:own,website')->name('stats.referrer_paths');
+    Route::get('/stats/{website}/utm-drilldown/{source}', [StatsController::class, 'utmDrilldown'])
+        ->middleware('can:own,website')->name('stats.utm_drilldown');
+    Route::get('/stats/{website}/outbound-click-paths/{host}', [StatsController::class, 'outboundClickPaths'])
+        ->middleware('can:own,website')->name('stats.outbound_click_paths');
 
     // 目标转化
     Route::get('/stats/{website}/goals', [GoalController::class, 'index'])

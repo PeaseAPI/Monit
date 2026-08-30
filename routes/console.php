@@ -46,3 +46,17 @@ Schedule::command('monit:websites-replays-offload')->hourly();
 
 // 每小时：清理过期/太短会话回放（规格书 §13.1）
 Schedule::command('monit:websites-replays-cleanup')->hourly();
+
+// ---------- M22：原版 Cron 任务补齐（规格书 §13.1） ----------
+
+// 每日 05:00：不活跃用户删除提醒（原版 users_deletion_reminder）
+Schedule::command('monit:users-deletion-reminder')->dailyAt('05:00');
+
+// 每日 06:00：自动删除不活跃用户（原版 auto_delete_inactive_users）
+Schedule::command('monit:auto-delete-inactive-users')->dailyAt('06:00');
+
+// 每日 03:30：账户日志/内部通知/日志文件清理（原版 users_logs_cleanup + internal_notifications_cleanup + logs_cleanup）
+Schedule::command('monit:housekeeping-cleanup')->dailyAt('03:30');
+
+// 每小时：站点配额超限通知（原版 websites_*_notice ×3）
+Schedule::command('monit:websites-limit-notice')->hourly();
