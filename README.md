@@ -1,6 +1,6 @@
 # Monit — 自托管网站分析平台
 
-Monit 是一款基于 Laravel 的**自托管、隐私优先的网站统计分析平台**（Self-hosted Web Analytics），按《66Analytics 完整开发规格书》全量实现，提供访客统计、会话回放、热图、目标转化、出站点击等 Advanced/Lightweight 双模式分析能力，并内置计费、套餐、团队协作与本土化能力（短信验证、22 家支付处理器、阿里云 OSS/腾讯 COS 转存、13 家社交登录）。
+Monit 是一款基于 Laravel 的**自托管、隐私优先的网站统计分析平台**（Self-hosted Web Analytics），按《Monit 完整开发规格书》全量实现，提供访客统计、会话回放、热图、目标转化、出站点击等 Advanced/Lightweight 双模式分析能力，并内置计费、套餐、团队协作与本土化能力（短信验证、22 家支付处理器、阿里云 OSS/腾讯 COS 转存、13 家社交登录）。
 
 ## 核心特性
 
@@ -10,6 +10,7 @@ Monit 是一款基于 Laravel 的**自托管、隐私优先的网站统计分析
 - Lightweight 模式：单表聚合，低资源场景
 - 热图：桌面/平板/手机三档快照 + 归一化点击坐标 + 滚动深度分布
 - 统计指标：实时在线、PV/UV、跳出率、停留时长、来源/UTM、地域、设备/OS/浏览器，支持多维护滤（AnalyticsFilters）
+- GA/CNZZ 对标扩展（M21）：24 小时时段分析、渠道分组（直接/自然/社交/引荐/广告活动）、入口页/离开页、搜索词（百度/Google/Bing/搜狗/360 等解析）、忠诚度（新老访客 + 访问频次/深度/时长）、热门城市/语言/分辨率
 
 **用户中心**
 - 仪表盘 / 实时统计 / 页面浏览 / 访客 / 会话 / 热图 / 回放 / 标注 / 目标
@@ -53,8 +54,8 @@ PWA / 推送通知 / 联盟返佣 / CDN 转存（S3/阿里云 OSS/腾讯 COS）/
 ## 快速开始
 
 ```bash
-# 1. 安装依赖
-composer install
+# 1. 依赖已随仓库内置（vendor/ 已提交，composer.lock 锁定版本）
+#    离线/内网环境无需 composer install 即可运行；如需更新依赖再执行 composer install
 
 # 2. 环境配置
 cp .env.example .env
@@ -83,16 +84,16 @@ docker compose exec app php artisan migrate --seed
 ## 测试
 
 ```bash
-php artisan test        # 95 tests / 287 assertions 全绿
+php artisan test        # 112 tests / 374 assertions 全绿
 ```
 
 覆盖范围：像素采集、统计聚合、认证（含短信 4 场景）、对象存储多驱动、支付 Webhook、Cron 任务、计划限额、插件、License、封禁守卫、日志下载、货币切换等。
 
 ## 文档
 
-- `66Analytics-完整开发规格书.md` — 完整功能规格（位于仓库上级文档目录）
-- `TASKS.md` — M0–M19 分段开发记录与验收清单
-- `lang/zh_CN.json`、`lang/en.json` — 中/英双语 1154 键
+- `Monit-完整开发规格书.md` — 完整功能规格（位于仓库上级文档目录）
+- `TASKS.md` — M0–M21 分段开发记录与验收清单
+- `lang/zh_CN.json`、`lang/en.json` — 中/英双语 1211 键
 - REST API：`/api-documentation` 页面；`Authorization: Bearer <api_key>` 鉴权，17 类资源端点
 
 ## 项目结构（关键目录）
@@ -111,4 +112,4 @@ public/assets/js/monit.js    # 采集脚本
 
 ---
 
-> Monit 为规格书驱动的完整实现项目（M0–M19），持续迭代中。
+> Monit 为规格书驱动的完整实现项目（M0–M21），持续迭代中。

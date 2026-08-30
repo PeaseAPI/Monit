@@ -342,6 +342,87 @@ class StatsController extends Controller
     }
 
     /**
+     * M21 行为分析（GA/CNZZ 对标）：时段 + 渠道 + 入口页 + 离开页 + 搜索词 + 忠诚度
+     */
+    public function behavior(Request $request, Website $website)
+    {
+        $range = (int) ($request->query('range') ?: 7);
+        if (! in_array($range, [1, 7, 30, 90], true)) {
+            $range = 7;
+        }
+
+        $stats = StatisticsService::for($website)->lastDays($range);
+
+        return view('stats.behavior', [
+            'website' => $website,
+            'range' => $range,
+            'hourly' => $stats->hourlySeries(),
+            'channels' => $stats->channels(),
+            'landingPages' => $stats->landingPages(10),
+            'exitPages' => $stats->exitPages(10),
+            'searchTerms' => $stats->searchTerms(10),
+            'loyalty' => $stats->loyalty(),
+        ]);
+    }
+
+    /**
+     * M21 热门城市（GA「位置」/CNZZ「地域分布」）
+     */
+    public function topCities(Request $request, Website $website)
+    {
+        $range = (int) ($request->query('range') ?: 7);
+        if (! in_array($range, [1, 7, 30, 90], true)) {
+            $range = 7;
+        }
+
+        $stats = StatisticsService::for($website)->lastDays($range);
+
+        return view('stats.top_cities', [
+            'website' => $website,
+            'range' => $range,
+            'topCities' => $stats->breakdown('city_name', 50),
+        ]);
+    }
+
+    /**
+     * M21 热门语言（GA「用户语言」）
+     */
+    public function topLanguages(Request $request, Website $website)
+    {
+        $range = (int) ($request->query('range') ?: 7);
+        if (! in_array($range, [1, 7, 30, 90], true)) {
+            $range = 7;
+        }
+
+        $stats = StatisticsService::for($website)->lastDays($range);
+
+        return view('stats.top_languages', [
+            'website' => $website,
+            'range' => $range,
+            'topLanguages' => $stats->breakdown('browser_language', 50),
+        ]);
+    }
+
+    /**
+     * M21 热门分辨率（CNZZ「分辨率」）
+     */
+    public function topResolutions(Request $request, Website $website)
+    {
+        $range = (int) ($request->query('range') ?: 7);
+        if (! in_array($range, [1, 7, 30, 90], true)) {
+            $range = 7;
+        }
+
+        $stats = StatisticsService::for($website)->lastDays($range);
+
+        return view('stats.top_resolutions', [
+            'website' => $website,
+            'range' => $range,
+            'topResolutions' => $stats->breakdown('screen_resolution', 50),
+        ]);
+    }
+
+    /**
      * 单访客详情（规格书 §6.2.2：/visitor）
      */
     public function visitorDetail(Request $request, Website $website, int $visitorId)

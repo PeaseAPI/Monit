@@ -257,7 +257,7 @@ class StatisticsService
     {
         $allowed = ['path', 'referrer_host', 'utm_source', 'utm_medium', 'utm_campaign',
             'continent_code', 'country_code', 'city_name', 'device_type', 'os_name',
-            'browser_name', 'browser_language', 'theme'];
+            'browser_name', 'browser_language', 'screen_resolution', 'theme'];
 
         if (! in_array($dimension, $allowed, true)) {
             return [];
@@ -277,7 +277,7 @@ class StatisticsService
                 ->get();
         } else {
             // 访客维度信息在 websites_visitors 表
-            $visitorDimensions = ['continent_code', 'country_code', 'city_name', 'device_type', 'os_name', 'browser_name', 'browser_language', 'theme'];
+            $visitorDimensions = ['continent_code', 'country_code', 'city_name', 'device_type', 'os_name', 'browser_name', 'browser_language', 'screen_resolution', 'theme'];
 
             if (in_array($dimension, $visitorDimensions, true)) {
                 $rows = DB::table('sessions_events')
@@ -447,5 +447,358 @@ class StatisticsService
         usort($results, fn ($a, $b) => $b['count'] - $a['count']);
 
         return array_slice($results, 0, 30);
+    }
+
+    /* ---------------------------------------------------------------------
+     | M21 GA/CNZZ 对标扩展：搜索引擎/社交识别表
+     --------------------------------------------------------------------- */
+
+    /** 搜索引擎域名后缀 => 搜索词 query 参数名（按序尝试） */
+    protected const SEARCH_ENGINES = [
+        'baidu.com' => ['wd', 'word', 'kw'],
+        'google.com' => ['q'],
+        'google.com.hk' => ['q'],
+        'bing.com' => ['q'],
+        'sogou.com' => ['query', 'keyword'],
+        'so.com' => ['q'],
+        '360.cn' => ['q'],
+        'sm.cn' => ['q'],
+        'yandex.com' => ['text'],
+        'yahoo.com' => ['p', 'q'],
+        'duckduckgo.com' => ['q'],
+    ];
+
+    /** 社交平台域名后缀（渠道分组 social） */
+    protected const SOCIAL_HOSTS = [
+        'weibo.com', 'zhihu.com', 'douyin.com', 'kuaishou.com', 'xiaohongshu.com',
+        'bilibili.com', 'tieba.baidu.com', 'mp.weixin.qq.com', 'x.com', 'twitter.com',
+        't.co', 'facebook.com', 'instagram.com', 'linkedin.com', 'pinterest.com',
+        'reddit.com', 'youtube.com', 'vk.com', 't.me', 'telegram.me', 'douban.com',
+    ];
+
+    /** 判定 host 是否属于搜索引擎；返回参数名列表或 null */
+    protected function searchEngineParams(?string $host): ?array
+    {
+        if (! $host) {
+            return null;
+        }
+
+        $host = strtolower($host);
+
+        foreach (static::SEARCH_ENGINES as $suffix => $params) {
+            if ($host === $suffix || str_ends_with($host, '.'.$suffix)) {
+                return $params;
+            }
+        }
+
+        return null;
+    }
+
+    /** 判定 host 是否属于社交平台 */
+    protected function isSocialHost(?string $host): bool
+    {
+        if (! $host) {
+            return false;
+        }
+
+        $host = strtolower($host);
+
+        foreach (static::SOCIAL_HOSTS as $suffix) {
+            if ($host === $suffix || str_ends_with($host, '.'.$suffix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * M21 时段分析（CNZZ「时段分析」/GA「按小时」）：0-23 时 PV 与访客分布
+     *
+     * @return array<int, array{hour: int, label: string, pageviews: int, visitors: int}>
+     */
+    public function hourlySeries(): array
+    {
+        $hourExpr = DB::getDriverName() === 'sqlite'
+            ? "strftime('%H', date)"
+            : "date_format(date, '%H')";
+
+        if ($this->isLightweight) {
+            $rows = LightweightEvent::query()
+                ->where('website_id', $this->website->website_id)
+                ->whereBetween('date', [$this->startDate, $this->endDate])
+                ->whereIn('type', ['landing_page', 'pageview'])
+                ->groupBy('h')
+                ->selectRaw("{$hourExpr} as h, count(*) as pageviews, count(*) as visitors")
+                ->get();
+        } else {
+            $rows = SessionEvent::query()
+                ->where('website_id', $this->website->website_id)
+                ->whereBetween('date', [$this->startDate, $this->endDate])
+                ->whereIn('type', ['landing_page', 'pageview'])
+                ->groupBy('h')
+                ->selectRaw("{$hourExpr} as h, count(*) as pageviews, count(distinct visitor_id) as visitors")
+                ->get();
+        }
+
+        $byHour = [];
+        foreach ($rows as $row) {
+            $byHour[(int) $row->h] = ['pageviews' => (int) $row->pageviews, 'visitors' => (int) $row->visitors];
+        }
+
+        $series = [];
+        for ($h = 0; $h <= 23; $h++) {
+            $series[] = [
+                'hour' => $h,
+                'label' => sprintf('%02d:00', $h),
+                'pageviews' => $byHour[$h]['pageviews'] ?? 0,
+                'visitors' => $byHour[$h]['visitors'] ?? 0,
+            ];
+        }
+
+        return $series;
+    }
+
+    /**
+     * M21 入口页（GA「着陆页」）：每个会话首个事件的 path
+     *
+     * @return array<int, array{key: string, count: int}>
+     */
+    public function landingPages(int $limit = 10): array
+    {
+        $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
+
+        $rows = $base
+            ->where('website_id', $this->website->website_id)
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->where('type', 'landing_page')
+            ->groupBy('path')
+            ->selectRaw('path as k, count(*) as total')
+            ->orderByDesc('total')
+            ->limit($limit)
+            ->get();
+
+        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => (int) $row->total])->all();
+    }
+
+    /**
+     * M21 离开页（GA「退出页」）：每个会话最后一个事件的 path
+     *
+     * @return array<int, array{key: string, count: int}>
+     */
+    public function exitPages(int $limit = 10): array
+    {
+        if ($this->isLightweight) {
+            return [];
+        }
+
+        $rows = DB::table('sessions_events as e')
+            ->join(DB::raw('(select session_id, max(event_id) as max_id from sessions_events where website_id = '.(int) $this->website->website_id.' and date between ? and ? group by session_id) as m'),
+                'e.event_id', '=', 'm.max_id')
+            ->addBinding([$this->startDate, $this->endDate], 'join')
+            ->groupBy('e.path')
+            ->selectRaw('e.path as k, count(*) as total')
+            ->orderByDesc('total')
+            ->limit($limit)
+            ->get();
+
+        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => (int) $row->total])->all();
+    }
+
+    /**
+     * M21 搜索词（CNZZ「搜索词」/GA「自然搜索关键词」）：从搜索引擎 referrer 解析
+     *
+     * @return array<int, array{key: string, engines: string, count: int}>
+     */
+    public function searchTerms(int $limit = 10): array
+    {
+        $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
+
+        $rows = $base
+            ->where('website_id', $this->website->website_id)
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->where('type', 'landing_page')
+            ->whereNotNull('referrer_host')
+            ->where('referrer_host', '!=', '')
+            ->groupBy('referrer_host', 'referrer_path')
+            ->selectRaw('referrer_host, referrer_path, count(*) as total')
+            ->orderByDesc('total')
+            ->limit(500)
+            ->get();
+
+        $merged = [];
+        foreach ($rows as $row) {
+            $params = $this->searchEngineParams($row->referrer_host);
+            if (! $params) {
+                continue;
+            }
+
+            $term = $this->extractSearchTerm($row->referrer_path, $params);
+            if ($term === null || $term === '') {
+                continue;
+            }
+
+            if (! isset($merged[$term])) {
+                $merged[$term] = ['term' => $term, 'engines' => [], 'count' => 0];
+            }
+            $merged[$term]['engines'][(string) $row->referrer_host] = true;
+            $merged[$term]['count'] += (int) $row->total;
+        }
+
+        $items = array_values($merged);
+        usort($items, fn ($a, $b) => $b['count'] - $a['count']);
+
+        return array_slice(array_map(fn ($m) => [
+            'key' => $m['term'],
+            'engines' => implode(' / ', array_keys($m['engines'])),
+            'count' => $m['count'],
+        ], $items), 0, $limit);
+    }
+
+    /** 从 referrer_path 解析搜索词；解析失败返回 null */
+    protected function extractSearchTerm(?string $path, array $paramNames): ?string
+    {
+        if (! $path || ! str_contains($path, '?')) {
+            return null;
+        }
+
+        parse_str(substr($path, (int) strpos($path, '?') + 1), $query);
+
+        foreach ($paramNames as $name) {
+            if (! empty($query[$name]) && is_string($query[$name])) {
+                return mb_substr(trim($query[$name]), 0, 120);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * M21 渠道分组（GA「默认渠道分组」）：direct / organic / social / referral / campaign
+     *
+     * @return array<string, int>
+     */
+    public function channels(): array
+    {
+        $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
+
+        $rows = $base
+            ->where('website_id', $this->website->website_id)
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->where('type', 'landing_page')
+            ->groupBy('referrer_host', 'utm_source', 'utm_medium')
+            ->selectRaw('referrer_host, utm_source, utm_medium, count(*) as total')
+            ->get();
+
+        $result = ['direct' => 0, 'organic' => 0, 'social' => 0, 'referral' => 0, 'campaign' => 0];
+        $selfHost = strtolower((string) ($this->website->host ?? $this->website->domain ?? ''));
+
+        foreach ($rows as $row) {
+            $count = (int) $row->total;
+            $host = $row->referrer_host ? strtolower((string) $row->referrer_host) : '';
+            $hasUtm = ($row->utm_source && $row->utm_source !== '') || ($row->utm_medium && $row->utm_medium !== '');
+
+            if ($hasUtm) {
+                $result['campaign'] += $count;
+            } elseif ($host === '' || ($selfHost !== '' && $host === $selfHost)) {
+                $result['direct'] += $count;
+            } elseif ($this->searchEngineParams($host)) {
+                $result['organic'] += $count;
+            } elseif ($this->isSocialHost($host)) {
+                $result['social'] += $count;
+            } else {
+                $result['referral'] += $count;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * M21 忠诚度分析（CNZZ「忠诚度」/GA「新访与回访 + 行为深度」）
+     * 新老访客、访问频次、访问深度、访问时长四组分布
+     *
+     * @return array{new_visitors: int, returning_visitors: int, frequency: array<int, array{key: string, count: int}>, depth: array<int, array{key: string, count: int}>, duration: array<int, array{key: string, count: int}>}
+     */
+    public function loyalty(): array
+    {
+        if ($this->isLightweight) {
+            return ['new_visitors' => 0, 'returning_visitors' => 0, 'frequency' => [], 'depth' => [], 'duration' => []];
+        }
+
+        // 访问频次：窗口内每访客会话数（1 次 ≈ 新访客）
+        $freqRows = VisitorSession::query()
+            ->where('website_id', $this->website->website_id)
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->groupBy('visitor_id')
+            ->selectRaw('count(*) as sessions')
+            ->get();
+
+        $newVisitors = 0;
+        $returning = 0;
+        $freqBuckets = ['1' => 0, '2' => 0, '3-4' => 0, '5-9' => 0, '10+' => 0];
+
+        foreach ($freqRows as $row) {
+            $n = (int) $row->sessions;
+            $n === 1 ? $newVisitors++ : $returning++;
+
+            if ($n === 1) { $freqBuckets['1']++; }
+            elseif ($n === 2) { $freqBuckets['2']++; }
+            elseif ($n <= 4) { $freqBuckets['3-4']++; }
+            elseif ($n <= 9) { $freqBuckets['5-9']++; }
+            else { $freqBuckets['10+']++; }
+        }
+
+        // 会话集合：深度（total_events）+ 时长（最后事件时间 - 会话开始）
+        $sessions = VisitorSession::query()
+            ->where('website_id', $this->website->website_id)
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->selectRaw('session_id, date, total_events')
+            ->get();
+
+        $lastBySession = DB::table('sessions_events')
+            ->where('website_id', $this->website->website_id)
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->groupBy('session_id')
+            ->selectRaw('session_id, max(date) as last_date')
+            ->get()
+            ->pluck('last_date', 'session_id')
+            ->all();
+
+        $depthBuckets = ['1' => 0, '2-3' => 0, '4-10' => 0, '11-30' => 0, '30+' => 0];
+        $durationBuckets = ['0-10s' => 0, '11-30s' => 0, '31-60s' => 0, '1-3m' => 0, '3m+' => 0];
+
+        foreach ($sessions as $session) {
+            $events = (int) $session->total_events;
+            if ($events <= 1) { $depthBuckets['1']++; }
+            elseif ($events <= 3) { $depthBuckets['2-3']++; }
+            elseif ($events <= 10) { $depthBuckets['4-10']++; }
+            elseif ($events <= 30) { $depthBuckets['11-30']++; }
+            else { $depthBuckets['30+']++; }
+
+            if ($last = ($lastBySession[$session->session_id] ?? null)) {
+                $seconds = max(0, strtotime((string) $last) - strtotime((string) $session->date));
+
+                if ($seconds <= 10) { $durationBuckets['0-10s']++; }
+                elseif ($seconds <= 30) { $durationBuckets['11-30s']++; }
+                elseif ($seconds <= 60) { $durationBuckets['31-60s']++; }
+                elseif ($seconds <= 180) { $durationBuckets['1-3m']++; }
+                else { $durationBuckets['3m+']++; }
+            }
+        }
+
+        $toItems = fn (array $buckets) => array_map(
+            fn ($k, $v) => ['key' => (string) $k, 'count' => $v],
+            array_keys($buckets),
+            $buckets
+        );
+
+        return [
+            'new_visitors' => $newVisitors,
+            'returning_visitors' => $returning,
+            'frequency' => $toItems($freqBuckets),
+            'depth' => $toItems($depthBuckets),
+            'duration' => $toItems($durationBuckets),
+        ];
     }
 }

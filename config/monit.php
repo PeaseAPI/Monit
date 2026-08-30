@@ -1,6 +1,6 @@
 <?php
 
-// Monit 产品标识配置（替代原 66Analytics 的 app/includes/product.php）
+// Monit 产品标识配置（对应原自研 MVC 的 app/includes/product.php）
 return [
 
     'name' => 'Monit',

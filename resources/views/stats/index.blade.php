@@ -16,6 +16,10 @@
     </div>
     <div class="mt-4 flex flex-wrap gap-2">
         <a href="{{ route('stats.visitors', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.visitors') }}</a>
+        <a href="{{ route('stats.behavior', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.behavior') }}</a>
+        <a href="{{ route('stats.top_cities', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.top_cities') }}</a>
+        <a href="{{ route('stats.top_languages', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.top_languages') }}</a>
+        <a href="{{ route('stats.top_resolutions', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.top_resolutions') }}</a>
         <a href="{{ route('stats.referrers', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.referrers') }}</a>
         <a href="{{ route('goals.index', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.goals') }}</a>
         <a href="{{ route('stats.outbound-clicks', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.outbound_clicks') }}</a>

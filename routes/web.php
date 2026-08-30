@@ -260,6 +260,14 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('can:own,website')->name('stats.top_browsers');
     Route::get('/stats/{website}/top-devices', [StatsController::class, 'topDevices'])
         ->middleware('can:own,website')->name('stats.top_devices');
+    Route::get('/stats/{website}/behavior', [StatsController::class, 'behavior'])
+        ->middleware('can:own,website')->name('stats.behavior');
+    Route::get('/stats/{website}/top-cities', [StatsController::class, 'topCities'])
+        ->middleware('can:own,website')->name('stats.top_cities');
+    Route::get('/stats/{website}/top-languages', [StatsController::class, 'topLanguages'])
+        ->middleware('can:own,website')->name('stats.top_languages');
+    Route::get('/stats/{website}/top-resolutions', [StatsController::class, 'topResolutions'])
+        ->middleware('can:own,website')->name('stats.top_resolutions');
     Route::get('/stats/{website}/top-operating-systems', [StatsController::class, 'topOperatingSystems'])
         ->middleware('can:own,website')->name('stats.top_os');
 
