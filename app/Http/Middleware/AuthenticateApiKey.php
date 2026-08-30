@@ -11,11 +11,17 @@ use Symfony\Component\HttpFoundation\Response;
  * API Key 认证中间件
  * 解析 Authorization: Bearer <api_key> 头，校验用户 api_key 字段
  * 规格书 §12.2：通过 Bearer Token 鉴权
+ *
+ * main.api_is_enabled === 'false' 时 API 整体关闭（显式关闭语义：未设置默认可用）
  */
 class AuthenticateApiKey
 {
     public function handle(Request $request, Closure $next): Response
     {
+        if (\App\Support\Settings::get('main.api_is_enabled') === 'false') {
+            return response()->json(['error' => 'API is disabled'], 403);
+        }
+
         $bearer = $request->bearerToken();
 
         if (! $bearer) {

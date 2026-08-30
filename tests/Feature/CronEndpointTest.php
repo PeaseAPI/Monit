@@ -21,6 +21,17 @@ class CronEndpointTest extends TestCase
         $this->getJson('/cron?key=secret-key-123')->assertOk()->assertJson(['status' => 'ok']);
     }
 
+    public function test_cron_fail_closed_when_key_not_configured(): void
+    {
+        // 未配置 CRON_KEY（null/空）时端点必须拒绝，杜绝无鉴权触发广播/清理
+        config(['app.cron_key' => null]);
+        $this->getJson('/cron')->assertStatus(403);
+        $this->getJson('/cron?key=')->assertStatus(403);
+
+        config(['app.cron_key' => '']);
+        $this->getJson('/cron/email_reports')->assertStatus(403);
+    }
+
     public function test_cron_subtask_routing(): void
     {
         config(['app.cron_key' => 'secret-key-123']);

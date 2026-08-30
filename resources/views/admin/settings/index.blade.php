@@ -13,6 +13,7 @@
             'main' => __('admin.settings_main'),
             'users' => __('admin.settings_users'),
             'payment' => __('admin.settings_payment'),
+            'payment_gateways' => __('admin.settings_payment_gateways'),
             'analytics' => __('admin.settings_analytics'),
             'smtp' => __('admin.settings_smtp'),
             'sms' => __('admin.settings_sms'),
@@ -55,7 +56,7 @@
     $currentTab = old('group', request()->query('tab', 'main'));
 @endphp
 
-@foreach(['main','users','payment','analytics','smtp','sms','ai','captcha','socials','cookie_consent','ads','announcements','email_notifications','internal_notifications','webhooks','theme','branding','custom','custom_images','content','cron','plan_free','plan_guest','plan_custom','affiliate','pwa','push_notifications','offload','image_optimizer','dynamic_og_images'] as $tab)
+@foreach(['main','users','payment','payment_gateways','analytics','smtp','sms','ai','captcha','socials','cookie_consent','ads','announcements','email_notifications','internal_notifications','webhooks','theme','branding','custom','custom_images','content','cron','plan_free','plan_guest','plan_custom','affiliate','pwa','push_notifications','offload','image_optimizer','dynamic_og_images'] as $tab)
 <div class="settings-panel hidden" id="panel-{{ $tab }}">
     <form method="POST" action="{{ route('admin.settings.update') }}" class="max-w-3xl space-y-6">
         @csrf @method('PUT')

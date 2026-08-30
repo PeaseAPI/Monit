@@ -20,12 +20,29 @@ use Illuminate\Http\Request;
 class CronController extends Controller
 {
     /**
+     * Cron 鉴权（fail-closed）：key 未配置（null/空）一律拒绝；
+     * hash_equals 常时比较防时序侧信道
+     */
+    protected function authorized(Request $request): bool
+    {
+        $expected = (string) config('app.cron_key');
+
+        if ($expected === '') {
+            return false;
+        }
+
+        $provided = (string) $request->query('key', '');
+
+        return $provided !== '' && hash_equals($expected, $provided);
+    }
+
+    /**
      * 主 Cron 入口（规格书 §13：/cron）
      * 需要 ?key=CRON_KEY 鉴权
      */
     public function index(Request $request): JsonResponse
     {
-        if ($request->query('key') !== config('app.cron_key')) {
+        if (! $this->authorized($request)) {
             return response()->json(['error' => 'Invalid cron key'], 403);
         }
 
@@ -47,7 +64,7 @@ class CronController extends Controller
      */
     public function task(Request $request, string $task): JsonResponse
     {
-        if ($request->query('key') !== config('app.cron_key')) {
+        if (! $this->authorized($request)) {
             return response()->json(['error' => 'Invalid cron key'], 403);
         }
 

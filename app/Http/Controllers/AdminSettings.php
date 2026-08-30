@@ -22,6 +22,10 @@ class AdminSettings extends Controller
     {
         $settings = $this->allSettings();
 
+        // 「支付网关密钥」组不存 settings 表：当前值直接读 .env（EnvWriter）
+        $settings['payment_gateways'] = app(\App\Support\EnvWriter::class)
+            ->readMany(\App\Support\PaymentGatewayCatalog::keys());
+
         return view('admin.settings.index', compact('settings'))->with('adminNav', 'settings');
     }
 
@@ -35,6 +39,11 @@ class AdminSettings extends Controller
         // 校验分组是否合法（必须存在于 allSettings 清单中）
         if (!in_array($group, array_keys($this->allSettings()), true)) {
             return back()->withErrors(['error' => __('msg.invalid_settings_group')]);
+        }
+
+        // 支付网关密钥：白名单键写入 .env（而非 settings 表）
+        if ($group === 'payment_gateways') {
+            return $this->updatePaymentGateways($request);
         }
 
         // 套餐设置（plan_*）允许任意字段，宽松保存
@@ -110,6 +119,57 @@ class AdminSettings extends Controller
         return $clean;
     }
 
+    /**
+     * 「支付网关密钥」保存：白名单键安全写入 .env 并清理配置缓存
+     *
+     * 安全要点：
+     * - 只接受 PaymentGatewayCatalog::keys() 登记的键（请求中的 APP_KEY/DB_* 等一律忽略）
+     * - 值经 EnvWriter 转义（引号/井号/换行），无法注入额外 env 行
+     * - 空值 = 清除该键；布尔键归一为 true/false 字符串
+     */
+    protected function updatePaymentGateways(Request $request): RedirectResponse
+    {
+        $allowed = \App\Support\PaymentGatewayCatalog::keys();
+        $boolKeys = \App\Support\PaymentGatewayCatalog::boolKeys();
+
+        $rules = [];
+        foreach ($allowed as $key) {
+            $rules[$key] = in_array($key, $boolKeys, true)
+                ? 'nullable|in:true,false,1,0'
+                : 'nullable|string|max:4096';
+        }
+
+        $validated = $request->validate($rules);
+
+        // 只处理白名单键（validate 已按规则键过滤）
+        $writer = app(\App\Support\EnvWriter::class);
+
+        foreach ($allowed as $key) {
+            if (! array_key_exists($key, $validated)) {
+                continue; // 未提交的键不动
+            }
+
+            $value = $validated[$key];
+
+            if (in_array($key, $boolKeys, true)) {
+                $value = in_array($value, ['true', '1'], true) ? 'true' : 'false';
+            } else {
+                $value = trim((string) $value);
+            }
+
+            $writer->write($key, $value);
+        }
+
+        // 写入 .env 后清理可能存在的配置缓存，使新密钥立即生效
+        try {
+            \Illuminate\Support\Facades\Artisan::call('config:clear');
+        } catch (\Throwable) {
+            // config:clear 失败不阻断保存（无缓存环境下无害）
+        }
+
+        return back()->with('success', __('msg.settings_saved', ['group' => 'payment_gateways']));
+    }
+
     /* --------------------------------------------------------------------- */
     /* 设置分组 & 保存                                                       */
     /* --------------------------------------------------------------------- */
@@ -120,6 +180,7 @@ class AdminSettings extends Controller
             'main' => $this->getGroup('main'),
             'users' => $this->getGroup('users'),
             'payment' => $this->getGroup('payment'),
+            'payment_gateways' => [], // 当前值在 index() 中从 .env 读取（EnvWriter）
             'analytics' => $this->getGroup('analytics'),
             'smtp' => $this->getGroup('smtp'),
             'sms' => $this->getGroup('sms'),
