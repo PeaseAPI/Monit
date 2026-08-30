@@ -17,7 +17,7 @@
             <select id="landing-currency" name="currency" onchange="this.form.submit()"
                 class="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-700">
                 @foreach ($currencies ?? [] as $code => $meta)
-                    <option value="{{ $code }}" @selected($code === ($currency ?? 'CNY'))>{{ $meta['label'] }}</option>
+                    <option value="{{ $code }}" @selected($code === ($currency ?? 'CNY'))>{{ $code }} {{ $meta['symbol'] ?? '' }}</option>
                 @endforeach
             </select>
         </form>

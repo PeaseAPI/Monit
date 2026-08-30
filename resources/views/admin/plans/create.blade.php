@@ -7,7 +7,7 @@
     <div class="grid gap-4 md:grid-cols-2">
         <div><label class="block text-sm font-medium text-zinc-700">套餐 ID</label><input type="text" name="plan_id" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required placeholder="pro"></div>
         <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.plan_name_col') }}</label><input type="text" name="name" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required></div>
-        <div><label class="block text-sm font-medium text-zinc-700">月价（{{ config('monit.payment.default_currency', 'USD') }}，年价 = x12，终身 = x10）</label><input type="number" step="0.01" name="price" value="9" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required></div>
+        <div><label class="block text-sm font-medium text-zinc-700">月价（{{ \App\Support\Currency::default() }}，年价 = x12，终身 = x10）</label><input type="number" step="0.01" name="price" value="9" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required></div>
         <div><label class="block text-sm font-medium text-zinc-700">排序</label><input type="number" name="order" value="0" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm"></div>
         <div class="md:col-span-2"><label class="block text-sm font-medium text-zinc-700">描述</label><textarea name="description" rows="2" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm"></textarea></div>
     </div>

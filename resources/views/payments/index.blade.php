@@ -11,11 +11,12 @@
         <h3 class="text-sm font-semibold text-zinc-900">{{ __('payments.current_plan') }}</h3>
         <div class="mt-3 flex items-center gap-4">
             @php
-                $planCurrency = $user->payment_currency ?? config('monit.payment.default_currency');
+                $planCurrency = \App\Support\Currency::normalize($user->payment_currency ?? '');
+                $currentMonthly = $currentPlan ? \App\Support\Currency::planPrice($currentPlan, $planCurrency, 'monthly') : null;
             @endphp
             <span class="rounded-xl bg-brand-100 px-4 py-2 text-sm font-semibold text-brand-700">{{ $currentPlan->name ?? __('payments.free_plan') }}</span>
-            @if($currentPlan && ($currentPlan->prices[$planCurrency]['monthly'] ?? 0) > 0)
-            <span class="text-sm text-zinc-500">{{ $currentPlan->prices[$planCurrency]['monthly'] }} {{ $planCurrency }} / {{ __('payments.monthly') }}</span>
+            @if($currentMonthly !== null && $currentMonthly > 0)
+            <span class="text-sm text-zinc-500">{{ \App\Support\Currency::symbol($planCurrency) }}{{ number_format($currentMonthly, 2) }} {{ $planCurrency }} / {{ __('payments.monthly') }}</span>
             @endif
         </div>
         @if($user->plan_expiration_date)
@@ -30,13 +31,17 @@
         <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach($plans as $plan)
             @php
-                $currency = $user->payment_currency ?? config('monit.payment.default_currency');
-                $prices = $plan->prices[$currency] ?? [];
+                $currency = \App\Support\Currency::normalize($user->payment_currency ?? '');
+                $planPrices = [
+                    'monthly' => \App\Support\Currency::planPrice($plan, $currency, 'monthly'),
+                    'annual' => \App\Support\Currency::planPrice($plan, $currency, 'annual'),
+                    'lifetime' => \App\Support\Currency::planPrice($plan, $currency, 'lifetime'),
+                ];
             @endphp
             <div class="rounded-2xl border border-zinc-200 bg-white p-6 flex flex-col">
                 <h4 class="font-semibold text-zinc-900">{{ $plan->name }}</h4>
                 <p class="mt-1 text-2xl font-bold text-brand-600">
-                    {{ $prices['monthly'] ?? '—' }}
+                    {{ $planPrices['monthly'] !== null ? number_format($planPrices['monthly'], 2) : '—' }}
                     <span class="text-sm font-normal text-zinc-400">{{ $currency }} / {{ __('payments.monthly') }}</span>
                 </p>
                 @if($plan->description)
@@ -50,7 +55,7 @@
                                 <label class="block text-xs font-medium text-zinc-500">{{ __('payments.billing_frequency') }}</label>
                                 <select name="frequency" class="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
                                     @foreach(['monthly', 'annual', 'lifetime'] as $frequency)
-                                    <option value="{{ $frequency }}">{{ __('payments.frequency_' . $frequency) }}（{{ $prices[$frequency] ?? '—' }} {{ $currency }}）</option>
+                                    <option value="{{ $frequency }}">{{ __('payments.frequency_' . $frequency) }}（{{ $planPrices[$frequency] !== null ? number_format($planPrices[$frequency], 2) : '—' }} {{ $currency }}）</option>
                                     @endforeach
                                 </select>
                             </div>

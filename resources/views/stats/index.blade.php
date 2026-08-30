@@ -42,5 +42,46 @@
         <x-rank-panel :title="__('stats.top_browsers')" :items="$topBrowsers" />
         <x-rank-panel :title="__('stats.top_os')" :items="$topOs" />
     </div>
+
+    {{-- AI 数据洞察（规格书 §12.6）：后台启用后展示 --}}
+    @if(\App\Services\Ai\AiService::insightsEnabled())
+    <div class="mt-6 rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50 to-white p-6 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h3 class="text-sm font-semibold text-brand-700">✨ {{ __('stats.ai_insight') }}</h3>
+                <p class="mt-1 text-xs text-zinc-400">{{ __('stats.ai_insight_desc') }}</p>
+            </div>
+            <button type="button" id="ai-insight-btn" data-url="{{ route('stats.ai_insight', $website->website_id) }}" data-range="{{ $range }}"
+                class="rounded-xl bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
+                {{ __('stats.ai_insight_generate') }}
+            </button>
+        </div>
+        <div id="ai-insight-result" class="mt-4 hidden whitespace-pre-wrap rounded-xl border border-brand-100 bg-white p-4 text-sm leading-relaxed text-zinc-700"></div>
+    </div>
+    <script>
+        document.getElementById('ai-insight-btn')?.addEventListener('click', async function () {
+            const btn = this, box = document.getElementById('ai-insight-result');
+            btn.disabled = true;
+            btn.textContent = "{{ __('stats.ai_insight_loading') }}";
+            box.classList.add('hidden');
+            try {
+                const res = await fetch(btn.dataset.url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '' },
+                    body: JSON.stringify({ range: btn.dataset.range }),
+                });
+                const data = await res.json();
+                if (! res.ok) { box.textContent = data.error === 'ai_disabled' ? "{{ __('stats.ai_insight_disabled') }}" : "{{ __('stats.ai_insight_failed') }}"; }
+                else { box.textContent = data.insight; }
+            } catch (e) {
+                box.textContent = "{{ __('stats.ai_insight_failed') }}";
+            } finally {
+                box.classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = "{{ __('stats.ai_insight_generate') }}";
+            }
+        });
+    </script>
+    @endif
 </div>
 @endsection

@@ -105,7 +105,16 @@ class PaymentController extends Controller
         $processor = $validated['processor'];
         $frequency = $validated['frequency'];
 
-        $order = $this->paymentService->createOrder($user, $plan, $processor, $frequency, $validated['code'] ?? null);
+        try {
+            $order = $this->paymentService->createOrder($user, $plan, $processor, $frequency, $validated['code'] ?? null);
+        } catch (\RuntimeException $e) {
+            // 套餐在该货币下无可用定价（规格书 §10.4：无价不得下单）
+            if (str_starts_with($e->getMessage(), 'plan_price_missing')) {
+                return back()->withErrors(['processor' => __('msg.plan_price_missing')]);
+            }
+
+            throw $e;
+        }
         $payment = Payment::find($order['payment_id']);
 
         return match ($processor) {

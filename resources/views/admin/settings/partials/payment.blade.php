@@ -1,7 +1,38 @@
-{{-- 支付设置（规格书 §11：货币、税费、发票、Stripe/PayPal/Razorpay/线下付款） --}}
+{{-- 支付设置（规格书 §11：货币、税费、发票、Stripe/PayPal/Razorpay/线下付款 + §10.4 多货币汇率） --}}
 <div class="space-y-4">
-    <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.currency') }}</label>
-        <input type="text" name="currency" value="{{ old('currency', $settings['payment.currency'] ?? 'USD') }}" class="mt-1 w-full rounded-xl border px-4 py-2.5 text-sm" maxlength="3"></div>
+    <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.default_currency') }}</label>
+        <input type="text" name="currency" value="{{ old('currency', $settings['payment.currency'] ?? \App\Support\Currency::default()) }}" class="mt-1 w-full rounded-xl border px-4 py-2.5 text-sm uppercase" maxlength="3">
+        <p class="mt-1 text-xs text-zinc-400">{{ __('admin.default_currency_hint') }}</p></div>
+
+    {{-- 多货币清单：任意增删货币 + 汇率（1 默认货币 = rate 该货币） --}}
+    <div>
+        <label class="block text-sm font-medium text-zinc-700">{{ __('admin.payment_currencies') }}</label>
+        <p class="mt-1 text-xs text-zinc-400">{{ __('admin.payment_currencies_hint') }}</p>
+        @php
+            $storedCurrencies = old('currencies', null);
+            if (! is_array($storedCurrencies)) {
+                $raw = $settings['payment.currencies'] ?? '';
+                $decoded = is_string($raw) && $raw !== '' ? json_decode($raw, true) : [];
+                $storedCurrencies = is_array($decoded) ? $decoded : [];
+            }
+            $currencyRows = collect($storedCurrencies)->map(fn ($row, $code) => ['code' => $code, 'name' => $row['name'] ?? '', 'symbol' => $row['symbol'] ?? '', 'rate' => $row['rate'] ?? ''])->values()->all();
+            $currencyRows[] = ['code' => '', 'name' => '', 'symbol' => '', 'rate' => ''];
+            $currencyRows[] = ['code' => '', 'name' => '', 'symbol' => '', 'rate' => ''];
+        @endphp
+        <div class="mt-2 space-y-2" id="currency-rows">
+            @foreach($currencyRows as $row)
+            <div class="grid grid-cols-12 gap-2 currency-row">
+                <input type="text" name="currencies[{{ $row['code'] }}][code_display]" data-code-input value="{{ $row['code'] }}" placeholder="{{ __('admin.currency_code') }}" maxlength="3" class="col-span-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm uppercase" @if($row['code'] !== '')readonly title="{{ __('admin.currency_code_readonly') }}"@endif>
+                <input type="text" name="currencies[{{ $row['code'] }}][name]" value="{{ $row['name'] }}" placeholder="{{ __('admin.currency_name') }}" class="col-span-4 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+                <input type="text" name="currencies[{{ $row['code'] }}][symbol]" value="{{ $row['symbol'] }}" placeholder="{{ __('admin.currency_symbol') }}" maxlength="8" class="col-span-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+                <input type="number" step="any" min="0.000001" name="currencies[{{ $row['code'] }}][rate]" value="{{ $row['rate'] }}" placeholder="{{ __('admin.currency_rate') }}" class="col-span-3 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+                <button type="button" onclick="this.closest('.currency-row').remove()" class="col-span-1 rounded-lg border border-zinc-200 px-2 py-2 text-xs text-red-500 hover:bg-red-50">✕</button>
+            </div>
+            @endforeach
+        </div>
+        <button type="button" onclick="addCurrencyRow()" class="mt-2 rounded-lg border border-dashed border-zinc-300 px-4 py-2 text-xs text-zinc-500 hover:bg-zinc-50">+ {{ __('admin.add_currency') }}</button>
+    </div>
+
     <div class="flex items-center gap-3"><input type="checkbox" name="taxes_enabled" value="1" {{ old('taxes_enabled', ($settings['payment.taxes_enabled'] ?? 'false') === 'true') ? 'checked' : '' }}><label class="text-sm">{{ __('admin.taxes_enabled') }}</label></div>
     <div class="flex items-center gap-3"><input type="checkbox" name="auto_currency_detection" value="1" {{ old('auto_currency_detection', ($settings['payment.auto_currency_detection'] ?? 'false') === 'true') ? 'checked' : '' }}><label class="text-sm">{{ __('admin.auto_currency') }}</label></div>
     <div class="flex items-center gap-3"><input type="checkbox" name="invoice_is_enabled" value="1" {{ old('invoice_is_enabled', ($settings['payment.invoice_is_enabled'] ?? 'false') === 'true') ? 'checked' : '' }}><label class="text-sm">启用发票</label></div>
@@ -33,3 +64,27 @@
     <div class="flex items-center gap-3"><input type="checkbox" name="offline_is_enabled" value="1" {{ old('offline_is_enabled', ($settings['payment.offline_is_enabled'] ?? 'false') === 'true') ? 'checked' : '' }}><label class="text-sm">{{ __('admin.enabled') }}</label></div>
     <div><label class="block text-sm text-zinc-600">{{ __('admin.offline_instructions') }}</label><textarea name="offline_instructions" rows="4" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">{{ old('offline_instructions', $settings['payment.offline_instructions'] ?? '') }}</textarea></div>
 </div>
+
+<script>
+function addCurrencyRow() {
+    const html = `<div class="grid grid-cols-12 gap-2 currency-row">
+        <input type="text" data-code-input value="" placeholder="{{ __('admin.currency_code') }}" maxlength="3" class="col-span-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm uppercase">
+        <input type="text" name="currencies[__NEW__][name]" value="" placeholder="{{ __('admin.currency_name') }}" class="col-span-4 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+        <input type="text" name="currencies[__NEW__][symbol]" value="" placeholder="{{ __('admin.currency_symbol') }}" maxlength="8" class="col-span-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+        <input type="number" step="any" min="0.000001" name="currencies[__NEW__][rate]" value="" placeholder="{{ __('admin.currency_rate') }}" class="col-span-3 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+        <button type="button" onclick="this.closest('.currency-row').remove()" class="col-span-1 rounded-lg border border-zinc-200 px-2 py-2 text-xs text-red-500 hover:bg-red-50">✕</button>
+    </div>`;
+    document.getElementById('currency-rows').insertAdjacentHTML('beforeend', html);
+    bindCurrencyCodeInput(document.querySelector('#currency-rows .currency-row:last-child [data-code-input]'));
+}
+function bindCurrencyCodeInput(input) {
+    input.addEventListener('change', function () {
+        const code = this.value.trim().toUpperCase();
+        if (!/^[A-Z]{3}$/.test(code)) { return; }
+        this.closest('.currency-row').querySelectorAll('input[name]').forEach(el => {
+            el.name = el.name.replace(/currencies\[[^\]]*\]/, 'currencies[' + code + ']');
+        });
+    });
+}
+document.querySelectorAll('#currency-rows [data-code-input]').forEach(bindCurrencyCodeInput);
+</script>

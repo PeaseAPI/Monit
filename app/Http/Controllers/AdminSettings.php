@@ -44,7 +44,8 @@ class AdminSettings extends Controller
                 ->toArray();
             $this->saveSettings($group, $data);
 
-            \Illuminate\Support\Facades\Cache::forget('monit_settings');
+            // 同时清 Cache 与进程内静态缓存（Settings::flush）
+            \App\Support\Settings::flush();
 
             return back()->with('success', __('msg.settings_saved', ['group' => $group]));
         }
@@ -62,12 +63,51 @@ class AdminSettings extends Controller
             $validated[$field] = $request->boolean($field);
         }
 
+        // 多货币清单：code 规范化 + 剔除默认货币行/无效汇率行（规格书 §10.4）
+        if ($group === 'payment' && array_key_exists('currencies', $validated)) {
+            $validated['currencies'] = $this->sanitizeCurrencies(
+                (array) $validated['currencies'],
+                strtoupper((string) ($validated['currency'] ?? 'CNY')),
+            );
+        }
+
         $this->saveSettings($group, $validated);
 
-        // 清除应用缓存
-        \Illuminate\Support\Facades\Cache::forget('monit_settings');
+        // 同时清 Cache 与进程内静态缓存（Settings::flush）
+        \App\Support\Settings::flush();
 
         return back()->with('success', __('msg.settings_saved', ['group' => $group]));
+    }
+
+    /**
+     * 多货币清单清洗（规格书 §10.4）：
+     * code 规范化为 3 位大写字母；剔除默认货币行（基准恒为 1）与无有效汇率的行
+     */
+    protected function sanitizeCurrencies(array $currencies, string $default): array
+    {
+        $clean = [];
+
+        foreach ($currencies as $code => $row) {
+            $code = strtoupper(trim((string) $code));
+
+            if (! preg_match('/^[A-Z]{3}$/', $code) || $code === strtoupper($default)) {
+                continue;
+            }
+
+            $rate = (float) ($row['rate'] ?? 0);
+
+            if ($rate <= 0) {
+                continue;
+            }
+
+            $clean[$code] = [
+                'name' => trim((string) ($row['name'] ?? '')),
+                'symbol' => trim((string) ($row['symbol'] ?? '')),
+                'rate' => $rate,
+            ];
+        }
+
+        return $clean;
     }
 
     /* --------------------------------------------------------------------- */
@@ -83,6 +123,7 @@ class AdminSettings extends Controller
             'analytics' => $this->getGroup('analytics'),
             'smtp' => $this->getGroup('smtp'),
             'sms' => $this->getGroup('sms'),
+            'ai' => $this->getGroup('ai'),
             'captcha' => $this->getGroup('captcha'),
             'socials' => $this->getGroup('socials'),
             'cookie_consent' => $this->getGroup('cookie_consent'),
@@ -121,7 +162,10 @@ class AdminSettings extends Controller
                 $fullKey = "{$group}.{$key}";
                 Setting::updateOrCreate(
                     ['key' => $fullKey],
-                    ['value' => is_bool($value) ? ($value ? 'true' : 'false') : (json_encode($value, JSON_UNESCAPED_UNICODE))]
+                    // Setting 模型 value 列带 json cast：字符串/数组直接赋值由 cast 编码；
+                    // 此前手动 json_encode 会双重编码（读回带引号），已修复。
+                    // bool 保持 'true'/'false' 字符串（视图判断约定）。
+                    ['value' => is_bool($value) ? ($value ? 'true' : 'false') : $value]
                 );
             }
         });
@@ -158,7 +202,11 @@ class AdminSettings extends Controller
                 'user_registration_require_consent' => 'boolean',
             ],
             'payment' => [
-                'currency' => 'required|string|max:3',
+                'currency' => 'required|string|size:3',
+                'currencies' => 'nullable|array',
+                'currencies.*.name' => 'nullable|string|max:64',
+                'currencies.*.symbol' => 'nullable|string|max:8',
+                'currencies.*.rate' => 'nullable|numeric|min:0.000001',
                 'auto_currency_detection' => 'boolean',
                 'user_plan_expiry_reminder' => 'boolean',
                 'taxes_enabled' => 'boolean',
@@ -213,6 +261,17 @@ class AdminSettings extends Controller
                 'sms_phone_login_is_enabled' => 'boolean',
                 'sms_forgot_password_is_enabled' => 'boolean',
                 'sms_phone_bind_is_enabled' => 'boolean',
+            ],
+            'ai' => [
+                'ai_is_enabled' => 'boolean',
+                'ai_provider' => 'nullable|string|in:aliyun_bailian,tencent_hunyuan,volcengine_ark,openai_compatible,log',
+                'ai_api_key' => 'nullable|string|max:512',
+                'ai_model' => 'nullable|string|max:128',
+                'ai_base_url' => 'nullable|string|max:512',
+                'ai_temperature' => 'nullable|numeric|min:0|max:2',
+                'ai_max_tokens' => 'nullable|integer|min:16|max:32768',
+                'ai_timeout' => 'nullable|integer|min:5|max:300',
+                'ai_insights_is_enabled' => 'boolean',
             ],
             'captcha' => [
                 'captcha_type' => 'nullable|string|in:recaptcha,recaptcha_v3,hcaptcha,turnstile,none',

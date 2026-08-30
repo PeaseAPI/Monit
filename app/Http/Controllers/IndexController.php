@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Plan;
 use App\Models\User;
 use App\Models\Website;
+use App\Support\Currency;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -14,44 +15,23 @@ use Illuminate\View\View;
  */
 class IndexController extends Controller
 {
-    /**
-     * 落地页支持的展示货币（规格书 §6.1 货币切换器 / §7 currency_switcher）
-     */
-    public const CURRENCIES = [
-        'CNY' => ['symbol' => '¥', 'label' => 'CNY ¥'],
-        'USD' => ['symbol' => '$', 'label' => 'USD $'],
-        'EUR' => ['symbol' => '€', 'label' => 'EUR €'],
-        'GBP' => ['symbol' => '£', 'label' => 'GBP £'],
-        'JPY' => ['symbol' => '¥', 'label' => 'JPY ¥'],
-    ];
-
     public function index(Request $request)
     {
         if (auth()->check()) {
             return redirect()->route('dashboard');
         }
 
-        // 货币切换器（规格书 §6.1 /index：定价卡 + 货币切换）
+        // 货币切换器（规格书 §6.1 /index + §10.4 多货币）：清单来自后台支付设置
+        $currencies = Currency::all();
         $currency = strtoupper((string) $request->query('currency', ''));
-        if ($currency !== '' && isset(self::CURRENCIES[$currency])) {
+        if ($currency !== '' && isset($currencies[$currency])) {
             session(['landing_currency' => $currency]);
         }
-        $currency = session('landing_currency', 'CNY');
-        if (! isset(self::CURRENCIES[$currency])) {
-            $currency = 'CNY';
-        }
+        $currency = Currency::normalize((string) session('landing_currency', ''));
 
-        // 从 prices JSON（{USD: {monthly, annual, lifetime}}）提取所选货币月付价
+        // 定价卡：优先 prices 直配价，无则按默认货币价 × 汇率换算（规格书 §10.4）
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get()->map(function (Plan $plan) use ($currency) {
-            $prices = $plan->prices ?? [];
-
-            $entry = $prices[$currency] ?? null;
-            if ($entry === null) {
-                // 回退：该套餐配置的任意一种货币
-                $entry = $prices ? reset($prices) : null;
-            }
-
-            $plan->landing_price = is_array($entry) ? ($entry['monthly'] ?? null) : $entry;
+            $plan->landing_price = Currency::planPrice($plan, $currency, 'monthly');
             $plan->landing_currency = $currency;
 
             return $plan;
@@ -60,7 +40,7 @@ class IndexController extends Controller
         return view('index', [
             'plans' => $plans,
             'currency' => $currency,
-            'currencies' => self::CURRENCIES,
+            'currencies' => $currencies,
         ]);
     }
 

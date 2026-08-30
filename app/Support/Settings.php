@@ -41,7 +41,17 @@ class Settings
         $settings = [];
 
         foreach (Setting::query()->get() as $setting) {
-            $settings[$setting->key] = $setting->value;
+            $value = $setting->value;
+
+            // 自愈历史双重编码值：'"foo"' → 'foo'（saveSettings 修复前经后台保存的字符串）
+            if (is_string($value) && strlen($value) >= 2 && str_starts_with($value, '"') && str_ends_with($value, '"')) {
+                $decoded = json_decode($value, true);
+                if (is_string($decoded)) {
+                    $value = $decoded;
+                }
+            }
+
+            $settings[$setting->key] = $value;
         }
 
         return $settings;

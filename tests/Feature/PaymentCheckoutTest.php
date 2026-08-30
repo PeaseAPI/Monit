@@ -39,7 +39,8 @@ class PaymentCheckoutTest extends TestCase
         $response = $this->actingAs($user)->get('/payments');
 
         $response->assertOk();
-        $response->assertSee('9.99');
+        // 默认货币 CNY 下按汇率换算自 USD 直配价（规格 §10.4：9.99 / 0.14 = 71.36）
+        $response->assertSee('71.36');
         // 22 个处理器全部出现在选项中（规格 §11）
         foreach (config('monit.payment.supported_processors') as $processor) {
             $response->assertSee('value="'.$processor.'"', false);
@@ -86,7 +87,8 @@ class PaymentCheckoutTest extends TestCase
         $this->assertDatabaseHas('payments', [
             'payment_processor' => 'paddle',
             'status' => 0,
-            'total_amount' => 9.99,
+            'total_amount' => 71.36,
+            'currency' => 'CNY',
         ]);
     }
 

@@ -16,6 +16,7 @@
             'analytics' => __('admin.settings_analytics'),
             'smtp' => __('admin.settings_smtp'),
             'sms' => __('admin.settings_sms'),
+            'ai' => __('admin.settings_ai'),
             'captcha' => __('admin.settings_captcha'),
             'socials' => __('admin.settings_socials'),
             'cookie_consent' => __('admin.settings_cookie_consent'),
@@ -53,7 +54,7 @@
     $currentTab = old('group', request()->query('tab', 'main'));
 @endphp
 
-@foreach(['main','users','payment','analytics','smtp','sms','captcha','socials','cookie_consent','ads','announcements','email_notifications','internal_notifications','webhooks','theme','custom','custom_images','content','cron','plan_free','plan_guest','plan_custom','affiliate','pwa','push_notifications','offload','image_optimizer','dynamic_og_images'] as $tab)
+@foreach(['main','users','payment','analytics','smtp','sms','ai','captcha','socials','cookie_consent','ads','announcements','email_notifications','internal_notifications','webhooks','theme','custom','custom_images','content','cron','plan_free','plan_guest','plan_custom','affiliate','pwa','push_notifications','offload','image_optimizer','dynamic_og_images'] as $tab)
 <div class="settings-panel hidden" id="panel-{{ $tab }}">
     <form method="POST" action="{{ route('admin.settings.update') }}" class="max-w-3xl space-y-6">
         @csrf @method('PUT')

@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Currency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -20,15 +21,15 @@ class PaymentService
     public function createOrder(User $user, Plan $plan, string $processor, string $frequency = 'one_time', ?string $code = null): array
     {
         $prices = $plan->prices ?? [];
-        $currency = $user->payment_currency ?? 'USD';
+        // 货币：用户历史支付货币，否则后台默认货币（默认 CNY，规格书 §10.4）
+        $currency = Currency::normalize($user->payment_currency ?? '');
 
-        // 获取定价
-        $amount = match ($frequency) {
-            'monthly' => $prices[$currency]['monthly'] ?? 0,
-            'annual' => $prices[$currency]['annual'] ?? 0,
-            'lifetime' => $prices[$currency]['lifetime'] ?? 0,
-            default => $prices[$currency]['monthly'] ?? 0,
-        };
+        // 获取定价：优先直配价，无则按默认货币价 × 汇率换算；无价不得下单（修复 0 元订单）
+        $amount = Currency::planPrice($prices, $currency, $frequency);
+
+        if ($amount === null) {
+            throw new \RuntimeException("plan_price_missing:{$plan->plan_id}:{$frequency}");
+        }
 
         // 计算折扣
         $discountAmount = 0;

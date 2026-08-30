@@ -238,6 +238,8 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('can:own,website')->name('stats.realtime');
     Route::get('/stats/{website}/realtime/data', [StatsController::class, 'realtimeData'])
         ->middleware('can:own,website')->name('stats.realtime.data');
+    Route::post('/stats/{website}/ai-insight', [StatsController::class, 'aiInsight'])
+        ->middleware(['can:own,website', 'throttle:10,1'])->name('stats.ai_insight');
     Route::get('/stats/{website}', [StatsController::class, 'index'])
         ->middleware('can:own,website')->name('stats.index');
     Route::get('/stats/{website}/visitors', [StatsController::class, 'visitors'])

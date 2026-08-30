@@ -65,7 +65,62 @@ return [
             'midtrans', 'flutterwave', 'lemonsqueezy', 'myfatoorah', 'klarna',
             'plisio', 'revolut', 'onepay',
         ],
-        'default_currency' => 'USD',
+        // 默认支付货币（规格书 §10.4：默认 CNY，可后台改为任意 3 字母代码）
+        'default_currency' => 'CNY',
+
+        /*
+         |----------------------------------------------------------------------
+         | 预设货币表（规格书 §10.4：多货币与汇率）
+         |----------------------------------------------------------------------
+         | rate 含义：1 默认货币 = rate 该货币（基准恒为 1）。
+         | 后台「支付」组可覆盖任意行 / 新增任意货币（存 settings payment.currencies）。
+         */
+        'currencies' => [
+            'CNY' => ['name' => '人民币', 'symbol' => '¥', 'rate' => 1],
+            'USD' => ['name' => '美元', 'symbol' => '$', 'rate' => 0.14],
+            'EUR' => ['name' => '欧元', 'symbol' => '€', 'rate' => 0.13],
+            'GBP' => ['name' => '英镑', 'symbol' => '£', 'rate' => 0.11],
+            'JPY' => ['name' => '日元', 'symbol' => '¥', 'rate' => 21.5],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI 接入（规格书 §12.6：国内大模型统一接入）
+    |--------------------------------------------------------------------------
+    | provider 预设：三家国内厂商均提供 OpenAI 兼容 chat/completions 端点，
+    | 统一走 Bearer 认证；openai_compatible 可接 DeepSeek/Kimi/GLM 等任意兼容网关。
+    | 凭据在管理后台「AI 助手」组配置（settings ai.*），不落 .env。
+    */
+    'ai' => [
+        'default_provider' => 'log',
+        'providers' => [
+            'aliyun_bailian' => [
+                'label' => '阿里百炼（通义千问 DashScope）',
+                'base_url' => 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+                'default_model' => 'qwen-plus',
+            ],
+            'tencent_hunyuan' => [
+                'label' => '腾讯混元',
+                'base_url' => 'https://api.hunyuan.cloud.tencent.com/v1',
+                'default_model' => 'hunyuan-turbos-latest',
+            ],
+            'volcengine_ark' => [
+                'label' => '火山方舟（豆包）',
+                'base_url' => 'https://ark.cn-beijing.volces.com/api/v3',
+                'default_model' => 'doubao-1-5-pro-32k-250115',
+            ],
+            'openai_compatible' => [
+                'label' => '自定义 OpenAI 兼容端点（DeepSeek/Kimi/GLM 等）',
+                'base_url' => '',
+                'default_model' => '',
+            ],
+            'log' => [
+                'label' => 'log（开发调试，不发真实请求）',
+                'base_url' => '',
+                'default_model' => 'debug',
+            ],
+        ],
     ],
 
     /*
