@@ -37,3 +37,12 @@ Schedule::command('monit:send-email-reports')->dailyAt('02:00');
 
 // 每分钟：广播邮件发送
 Schedule::command('monit:process-broadcasts')->everyMinute();
+
+// 每分钟：Push Campaign 发送（插件 push-notifications 启用时，规格书 §13.1）
+Schedule::command('monit:push-notifications-campaigns')->everyMinute();
+
+// 每小时：会话回放 S3 Offload（插件 offload 启用时，规格书 §13.1）
+Schedule::command('monit:websites-replays-offload')->hourly();
+
+// 每小时：清理过期/太短会话回放（规格书 §13.1）
+Schedule::command('monit:websites-replays-cleanup')->hourly();

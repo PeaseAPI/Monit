@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\Sms\SmsService;
 use App\Services\TotpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -87,6 +88,40 @@ class AccountController extends Controller
     }
 
     /**
+     * 绑定手机号（M17 §12.5）：验证码校验通过后写入 phone + phone_verified_at
+     */
+    public function phoneBind(Request $request)
+    {
+        if (! \App\Services\Sms\SmsService::scenarioEnabled('phone_bind')) {
+            return back()->withErrors(['phone' => __('auth.sms_not_enabled')]);
+        }
+
+        $validated = $request->validate([
+            'phone' => ['required', 'string', 'regex:/^1[3-9]\d{9}$/', 'unique:users,phone'],
+            'sms_code' => ['required', 'digits:6'],
+        ], [
+            'phone.required' => __('validation.phone_required'),
+            'phone.regex' => __('validation.phone_invalid'),
+            'phone.unique' => __('auth.phone_taken'),
+            'sms_code.required' => __('validation.sms_code_required'),
+            'sms_code.digits' => __('auth.sms_code_invalid'),
+        ]);
+
+        $phone = SmsService::normalizePhone($validated['phone']);
+
+        if (! SmsService::verify($phone, 'phone_bind', (string) $validated['sms_code'])) {
+            return back()->withInput()->withErrors(['sms_code' => __('auth.sms_code_invalid')]);
+        }
+
+        $request->user()->forceFill([
+            'phone' => $phone,
+            'phone_verified_at' => now(),
+        ])->save();
+
+        return back()->with('success', __('account.phone_bound'));
+    }
+
+    /**
      * 两步验证（规格书 §12.4）：开始设置 —— 生成新密钥，待确认后启用
      */
     public function twofaSetup(Request $request)
@@ -151,6 +186,51 @@ class AccountController extends Controller
         return back()->with('success', __('account.twofa_disabled'));
     }
 
+        /**
+     * 删除账户表单页面（规格书 §6.2.5：/account-delete）
+     */
+    public function deleteForm(Request $request)
+    {
+        return view('account.delete', [
+            'user' => $request->user(),
+        ]);
+    }
+
+    /**
+     * 兑换码表单页面（规格书 §6.2.5：/account-redeem-code）
+     */
+    public function redeemCodeForm(Request $request)
+    {
+        return view('account.redeem-code', [
+            'user' => $request->user(),
+        ]);
+    }
+
+    /**
+     * 提交兑换码（规格书 §6.2.5：/account-redeem-code POST）
+     */
+    public function redeemCodeSubmit(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:64'],
+        ]);
+
+        $code = \App\Models\Code::where('code', $validated['code'])->first();
+
+        if (! $code) {
+            return back()->withErrors(['code' => __('account.invalid_code')]);
+        }
+
+        if ($issue = $code->redemptionIssue($request->user())) {
+            return back()->withErrors(['code' => __($issue)]);
+        }
+
+        $code->recordRedemption($request->user());
+        $code->applyToUser($request->user());
+
+        return back()->with('success', __('account.code_redeemed_successfully'));
+    }
+
     /**
      * 删除账户（数据导出+永久删除）
      */
@@ -160,8 +240,15 @@ class AccountController extends Controller
             'password' => ['required', 'current_password'],
         ]);
 
-        $request->user()->websites()->delete();
-        $request->user()->delete();
+        // 先留存快照再删除（Webhook 载荷需要）
+        $user = $request->user();
+        $snapshot = ['user_id' => $user->user_id, 'email' => $user->email];
+
+        $user->websites()->delete();
+        $user->delete();
+
+        // 平台 Webhook：用户删除（规格 §6.3.1：webhooks.webhook_user_delete_url）
+        app(\App\Services\WebhookService::class)->userDelete($snapshot);
 
         // TODO: 发送数据导出邮件
 

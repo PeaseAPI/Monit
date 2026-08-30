@@ -39,6 +39,57 @@
         @endif
     </div>
 
+    {{-- 手机号绑定（M17 §12.5） --}}
+    @php($smsBindEnabled = \App\Services\Sms\SmsService::scenarioEnabled('phone_bind'))
+    @if($smsBindEnabled)
+    <div class="mt-6 max-w-xl rounded-2xl border border-zinc-200 bg-white p-6">
+        <h3 class="text-sm font-semibold text-zinc-900">{{ __('account.phone_title') }}</h3>
+        <p class="mt-1 text-sm text-zinc-500">{{ __('account.phone_desc') }}</p>
+
+        @if($user->phone)
+            <div class="mt-3 flex items-center gap-2">
+                <span class="rounded-xl bg-zinc-100 px-3 py-2 text-sm text-zinc-600">+86 {{ $user->phone }}</span>
+                @if($user->phone_verified_at)
+                    <span class="text-xs text-emerald-600">{{ __('account.phone_verified') }}</span>
+                @endif
+            </div>
+            <p class="mt-2 text-xs text-zinc-400">{{ __('account.phone_rebind_hint') }}</p>
+        @endif
+
+        {{-- 第一步：向新手机号发送验证码 --}}
+        <form method="POST" action="{{ route('sms.send') }}" class="mt-4 flex gap-2">
+            @csrf
+            <input type="hidden" name="purpose" value="phone_bind">
+            <input type="tel" name="phone" value="{{ old('phone') }}" maxlength="20" required
+                   placeholder="{{ __('auth.phone_placeholder') }}"
+                   class="w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm @error('phone') border-red-400 @enderror">
+            <button class="whitespace-nowrap rounded-xl border border-brand-600 px-4 py-2.5 text-sm font-medium text-brand-600 hover:bg-brand-50">
+                {{ __('auth.send_sms_code') }}
+            </button>
+            @error('phone')
+                <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </form>
+
+        {{-- 第二步：提交验证码完成绑定 --}}
+        <form method="POST" action="{{ route('account.phone.bind') }}" class="mt-3 space-y-3">
+            @csrf
+            <input type="hidden" name="phone" value="{{ old('phone', $user->phone) }}">
+            <div>
+                <label class="block text-sm font-medium text-zinc-700">{{ __('auth.sms_code') }}</label>
+                <input type="text" inputmode="numeric" maxlength="6" name="sms_code" required
+                       placeholder="{{ __('auth.sms_code_placeholder') }}"
+                       class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm @error('sms_code') border-red-400 @enderror">
+                @error('sms_code')
+                    <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+            <p class="text-xs text-zinc-400">{{ __('account.phone_bind_form_hint') }}</p>
+            <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('account.phone_bind_btn') }}</button>
+        </form>
+    </div>
+    @endif
+
     {{-- 两步验证（规格书 §12.4） --}}
     <div class="mt-6 max-w-xl rounded-2xl border border-zinc-200 bg-white p-6">
         <h3 class="text-sm font-semibold text-zinc-900">{{ __('account.twofa_title') }}</h3>

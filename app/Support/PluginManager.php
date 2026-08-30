@@ -177,6 +177,15 @@ class PluginManager
 
     public static function boot(): void
     {
+        // 守卫：全新部署（迁移前）/ 测试库未迁移时 plugins 表可能不存在
+        try {
+            if (! \Illuminate\Support\Facades\Schema::hasTable('plugins')) {
+                return;
+            }
+        } catch (\Throwable) {
+            return;
+        }
+
         $activeIds = Plugin::query()->where('is_active', true)->pluck('plugin_id');
 
         foreach ($activeIds as $id) {

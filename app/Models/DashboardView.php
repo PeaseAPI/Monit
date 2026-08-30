@@ -6,16 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class DashboardView extends Model
 {
+    public $timestamps = false;
+
     protected $primaryKey = 'dashboard_view_id';
 
     protected $fillable = [
-        'website_id', 'user_id', 'name', 'settings', 'datetime',
+        'website_id', 'user_id', 'name', 'settings', 'order', 'datetime',
     ];
 
     protected function casts(): array
     {
         return [
             'settings' => 'array',
+            'order' => 'integer',
             'datetime' => 'datetime',
         ];
     }

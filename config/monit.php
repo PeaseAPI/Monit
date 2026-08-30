@@ -58,8 +58,52 @@ return [
     */
     'payment' => [
         'offline_instructions' => '请将款项汇至以下账户，并在付款后上传凭证：<br>银行：XXX<br>账号：XXX<br>户名：XXX',
-        'supported_processors' => ['stripe', 'paypal', 'offline'],
+        'supported_processors' => [
+            'stripe', 'paypal', 'razorpay', 'mollie', 'paystack', 'offline',
+            'wechat', 'alipay',
+            'payu', 'iyzico', 'yookassa', 'cryptocom', 'paddle', 'mercadopago',
+            'midtrans', 'flutterwave', 'lemonsqueezy', 'myfatoorah', 'klarna',
+            'plisio', 'revolut', 'onepay',
+        ],
         'default_currency' => 'USD',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | 套餐可售功能项（规格书 §10.2 available_plan_features.php）
+    |--------------------------------------------------------------------------
+    | type: bool 开关 / int 数值配额；default 仅用于表单初始值。
+    | 套餐编辑器按此矩阵渲染，结果存入 plans.settings JSON。
+    */
+    'plan_features' => [
+        'websites_limit' => ['label' => '网站数量上限', 'type' => 'int', 'default' => 10],
+        'sessions_events_limit' => ['label' => '会话事件配额', 'type' => 'int', 'default' => 100000],
+        'sessions_events_retention' => ['label' => '会话事件留存（天）', 'type' => 'int', 'default' => 90],
+        'events_children_limit' => ['label' => '事件子项配额', 'type' => 'int', 'default' => 250000],
+        'events_children_retention' => ['label' => '事件子项留存（天）', 'type' => 'int', 'default' => 90],
+        'websites_goals_limit' => ['label' => '每站目标数上限', 'type' => 'int', 'default' => 10],
+        'annotations_limit' => ['label' => '标注数上限', 'type' => 'int', 'default' => 100],
+        'dashboard_views_limit' => ['label' => '仪表盘视图上限', 'type' => 'int', 'default' => 10],
+        'sessions_replays_limit' => ['label' => '回放配额', 'type' => 'int', 'default' => 1000],
+        'sessions_replays_retention' => ['label' => '回放留存（天）', 'type' => 'int', 'default' => 30],
+        'websites_heatmaps_limit' => ['label' => '热图数上限', 'type' => 'int', 'default' => 10],
+        'domains_limit' => ['label' => '自定义域名上限', 'type' => 'int', 'default' => 3],
+        'additional_domains' => ['label' => '额外域名数', 'type' => 'int', 'default' => 0],
+        'affiliate_commission_percentage' => ['label' => '联盟佣金比例（%，插件启用时）', 'type' => 'int', 'default' => 20],
+        'email_reports_is_enabled' => ['label' => '邮件报表', 'type' => 'bool', 'default' => false],
+        'teams_is_enabled' => ['label' => '团队功能', 'type' => 'bool', 'default' => false],
+        'no_ads' => ['label' => '去广告', 'type' => 'bool', 'default' => false],
+        'api_is_enabled' => ['label' => 'API 权限', 'type' => 'bool', 'default' => true],
+        'white_labeling_is_enabled' => ['label' => '白标', 'type' => 'bool', 'default' => false],
+        'export' => ['label' => '数据导出', 'type' => 'bool', 'default' => true],
+        'push_notifications_is_enabled' => ['label' => 'Push 通知（插件）', 'type' => 'bool', 'default' => false],
+        'push_notifications_subscribers_limit' => ['label' => 'Push 订阅者限制', 'type' => 'int', 'default' => 1000],
+        'push_notifications_campaigns_limit' => ['label' => 'Push Campaign 限制', 'type' => 'int', 'default' => 10],
+        'pwa_is_enabled' => ['label' => 'PWA（插件）', 'type' => 'bool', 'default' => false],
+        'offload_is_enabled' => ['label' => 'Offload（插件）', 'type' => 'bool', 'default' => false],
+        'image_optimizer_is_enabled' => ['label' => '图片优化（插件）', 'type' => 'bool', 'default' => false],
+        'email_shield_is_enabled' => ['label' => '邮件防爬（插件）', 'type' => 'bool', 'default' => true],
+        'dynamic_og_images_is_enabled' => ['label' => '动态 OG 图片（插件）', 'type' => 'bool', 'default' => true],
     ],
 
     /*

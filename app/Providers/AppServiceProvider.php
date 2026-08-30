@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -38,5 +39,13 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Throwable $e) {
             report($e);
         }
+
+        // Email Shield 插件（规格 §14.9）：@email_shield 指令输出混淆邮箱
+        Blade::directive('email_shield', function (string $expression): string {
+            return "<?php echo app(\\App\\Services\\EmailShieldService::class)->obfuscate({$expression}); ?>";
+        });
+        Blade::directive('email_shield_link', function (string $expression): string {
+            return "<?php echo app(\\App\\Services\\EmailShieldService::class)->link({$expression}); ?>";
+        });
     }
 }

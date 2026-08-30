@@ -49,7 +49,7 @@ return new class extends Migration
             $table->increments('code_id');
             $table->string('name', 256);
             $table->string('code', 64)->unique();
-            $table->enum('type', ['discount', 'redeemable'])->default('redeemable');
+            $table->enum('type', ['discount', 'plan'])->default('plan');
             $table->string('plan_id', 64)->nullable();
             $table->integer('days')->nullable();
             $table->decimal('discount', 5, 2)->nullable();

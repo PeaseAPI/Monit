@@ -25,9 +25,14 @@ class GoalController extends Controller
         return view('stats.goals', compact('website', 'goals'));
     }
 
-    public function create(Request $request, Website $website)
+        public function create(Request $request, Website $website)
     {
         return view('stats.goal_create', compact('website'));
+    }
+
+    public function edit(Request $request, Website $website, WebsiteGoal $goal)
+    {
+        return view('goals.edit', compact('website', 'goal'));
     }
 
     public function store(Request $request): RedirectResponse

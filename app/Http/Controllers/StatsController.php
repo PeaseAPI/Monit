@@ -22,7 +22,10 @@ class StatsController extends Controller
             $range = 7;
         }
 
-        $stats = StatisticsService::for($website)->lastDays($range);
+        // 规格 §5.3 AnalyticsFilters：path/utm/来源/地域/设备等过滤
+        $filters = $request->only(StatisticsService::FILTER_DIMENSIONS);
+
+        $stats = StatisticsService::for($website)->lastDays($range)->filters($filters);
 
         return view('stats.index', [
             'website' => $website,
@@ -272,10 +275,38 @@ class StatsController extends Controller
         $stats = StatisticsService::for($website)->lastDays($range);
         $topOs = $stats->breakdown('os_name', 50);
 
-        return view('stats.top_operating_systems', [
+                return view('stats.top_operating_systems', [
             'website' => $website,
             'range' => $range,
             'topOs' => $topOs,
         ]);
+    }
+
+    /**
+     * 单访客详情（规格书 §6.2.2：/visitor）
+     */
+    public function visitorDetail(Request $request, Website $website, int $visitorId)
+    {
+        $visitor = \App\Models\WebsiteVisitor::where('website_id', $website->website_id)
+            ->findOrFail($visitorId);
+
+        $sessions = \App\Models\VisitorSession::where('visitor_id', $visitorId)
+            ->with('events')
+            ->orderByDesc('date')
+            ->get();
+
+        return view('stats.visitor', compact('website', 'visitor', 'sessions'));
+    }
+
+    /**
+     * 单会话详情（规格书 §6.2.2：/session-ajax）
+     */
+    public function sessionDetail(Request $request, Website $website, int $sessionId)
+    {
+        $session = \App\Models\VisitorSession::where('website_id', $website->website_id)
+            ->with(['visitor', 'events'])
+            ->findOrFail($sessionId);
+
+        return view('stats.session', compact('website', 'session'));
     }
 }

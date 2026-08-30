@@ -88,7 +88,32 @@ class HeatmapController extends Controller
         $websiteId = $heatmap->website_id;
         $heatmap->delete();
 
-        return redirect()->route('stats.heatmaps', ['website' => $websiteId])
+                return redirect()->route('stats.heatmaps', ['website' => $websiteId])
                         ->with('success', __('msg.heatmap_deleted'));
+    }
+
+    /**
+     * 热图AJAX数据（规格书 §6.2.2：/heatmaps-ajax）
+     */
+    public function ajax(Request $request, Website $website, int $heatmapId)
+    {
+        $heatmap = Heatmap::where('website_id', $website->website_id)
+            ->findOrFail($heatmapId);
+
+        $clicks = HeatmapSnapshotClick::where('heatmap_id', $heatmapId)
+            ->selectRaw('x, y, count(*) as count')
+            ->groupBy('x', 'y')
+            ->get();
+
+        $scrolls = HeatmapSnapshotScroll::where('heatmap_id', $heatmapId)
+            ->selectRaw('depth, count(*) as count')
+            ->groupBy('depth')
+            ->get();
+
+        return response()->json([
+            'heatmap' => $heatmap,
+            'clicks' => $clicks,
+            'scrolls' => $scrolls,
+        ]);
     }
 }

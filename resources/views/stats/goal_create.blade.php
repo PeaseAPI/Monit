@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('content')
 <div class="p-8">
-    <div class="mb-6"><a href="{{ route('stats.goals', $website->website_id) }}" class="text-sm text-zinc-500 hover:underline">&larr; {{ __('stats.back_to_goals') }}</a><h1 class="mt-2 text-2xl font-bold text-zinc-900">{{ __('stats.create_goal_title') }} - {{ $website->name }}</h1></div>
+    <div class="mb-6"><a href="{{ route('goals.index', $website->website_id) }}" class="text-sm text-zinc-500 hover:underline">&larr; {{ __('stats.back_to_goals') }}</a><h1 class="mt-2 text-2xl font-bold text-zinc-900">{{ __('stats.create_goal_title') }} - {{ $website->name }}</h1></div>
     <div class="max-w-xl rounded-2xl border border-zinc-200 bg-white p-6">
         <form method="POST" action="{{ route('stats.goals.store') }}">@csrf
         <input type="hidden" name="website_id" value="{{ $website->website_id }}">

@@ -1,150 +1,394 @@
 /*!
- * Monit Analytics Pixel SDK v1.0.0
- * 隐私优先：无 Cookie（sessionStorage/localStorage UUID）、无指纹采集
- * 用法：<script src="https://your-domain/assets/pixel/monit.js" data-monit="PIXEL_KEY" async></script>
+ * Monit Analytics Pixel SDK（规格书 §4.5）
+ * 无依赖轻量采集脚本。用法：
+ *   <script src="https://your-host/js/monit.js" data-website-id="PIXEL_KEY" data-mode="advanced|lightweight"></script>
+ * 可选属性：data-manual / data-respect-dnt="1" / data-heatmap-id / data-replay="1" / data-custom-parameters(JSON)
+ * 存储键：__{pixel_key}__visitor_uuid（localStorage）/ __{pixel_key}__visitor_session_uuid（sessionStorage）
+ * 全局 API：window.monitGoal('goal_key')
  */
 (function () {
     'use strict';
 
-    var script = document.currentScript;
-    if (!script) return;
+    var currentScript =
+        document.currentScript ||
+        (function () {
+            var scripts = document.getElementsByTagName('script');
+            return scripts[scripts.length - 1];
+        })();
 
-    var PIXEL_KEY = script.getAttribute('data-monit') || script.getAttribute('data-key');
-    if (!PIXEL_KEY) { console.error('[Monit] missing data-monit key'); return; }
+    var pixelKey = ((currentScript && currentScript.getAttribute('data-website-id')) || '').trim();
+    if (!pixelKey) return;
 
-    // 自动判断采集端点：与 SDK 同源
-    var ENDPOINT = (script.src ? new URL(script.src).origin : '') + '/pixel-track/' + PIXEL_KEY;
+    var scriptSrc = (currentScript && currentScript.src) || '';
+    var host = '';
+    try { host = scriptSrc ? new URL(scriptSrc, location.href).origin : ''; } catch (e) {}
+    if (!host || host === location.origin) host = '';
 
-    var SESSION_TIMEOUT = 30 * 60 * 1000; // 30 分钟
-    var LS_VISITOR = 'monit_v';
-    var SS_SESSION = 'monit_s';
-    var SS_LAST = 'monit_sl';
+    var endpoint = host + '/pixel-track/' + encodeURIComponent(pixelKey);
 
-    /* ---------- UUID（RFC4122 v4） ---------- */
+    var settings = {
+        mode: (currentScript.getAttribute('data-mode') || 'advanced').toLowerCase(),
+        manual: currentScript.hasAttribute('data-manual'),
+        respectDnt: currentScript.getAttribute('data-respect-dnt') === '1',
+        heatmapId: parseInt(currentScript.getAttribute('data-heatmap-id') || '0', 10) || 0,
+        replay: currentScript.getAttribute('data-replay') === '1'
+    };
+
+    var VISITOR_KEY = '__' + pixelKey + '__visitor_uuid';
+    var SESSION_KEY = '__' + pixelKey + '__visitor_session_uuid';
+    var LANDING_KEY = '__' + pixelKey + '__session_landed';
+
+    /* ---------------- 基础工具 ---------------- */
+
     function uuid() {
-        if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+        if (window.crypto && crypto.randomUUID) {
+            try { return crypto.randomUUID(); } catch (e) {}
+        }
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = Math.random() * 16 | 0;
-            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            var r = (Math.random() * 16) | 0;
+            return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
         });
     }
 
-    /* ---------- 无 Cookie 标识 ---------- */
+    function lsGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function lsSet(key, v) { try { localStorage.setItem(key, v); } catch (e) {} }
+    function ssGet(key) { try { return sessionStorage.getItem(key); } catch (e) { return null; } }
+    function ssSet(key, v) { try { sessionStorage.setItem(key, v); } catch (e) {} }
+
     function getVisitorUuid() {
-        try {
-            var v = localStorage.getItem(LS_VISITOR);
-            if (!v) { v = uuid(); localStorage.setItem(LS_VISITOR, v); }
-            return v;
-        } catch (e) { return uuid(); } // 隐私模式退化：每次会话新访客
+        var v = lsGet(VISITOR_KEY);
+        if (!v) { v = uuid(); lsSet(VISITOR_KEY, v); }
+        return v;
     }
 
-    function getSessionUuid(forceNew) {
-        try {
-            var last = parseInt(sessionStorage.getItem(SS_LAST) || '0', 10);
-            var s = sessionStorage.getItem(SS_SESSION);
-            if (forceNew || !s || Date.now() - last > SESSION_TIMEOUT) {
-                s = uuid();
-                sessionStorage.setItem(SS_SESSION, s);
-            }
-            sessionStorage.setItem(SS_LAST, String(Date.now()));
-            return s;
-        } catch (e) { return uuid(); }
+    function getSessionUuid() {
+        var s = ssGet(SESSION_KEY);
+        if (!s) { s = uuid(); ssSet(SESSION_KEY, s); }
+        return s;
     }
 
-    /* ---------- 发送（sendBeacon 优先） ---------- */
-    function send(payload) {
+    function isDoNotTrack() {
+        return settings.respectDnt && (navigator.doNotTrack === '1' || window.doNotTrack === '1');
+    }
+
+    /* ---------------- 发送 ---------------- */
+
+    function send(payload, useBeacon) {
         payload.visitor_uuid = getVisitorUuid();
-        payload.visitor_session_uuid = getSessionUuid(false);
-        var body = 'data=' + encodeURIComponent(JSON.stringify(payload));
-        try {
-            if (navigator.sendBeacon && navigator.sendBeacon(ENDPOINT, new Blob([body], { type: 'application/x-www-form-urlencoded' }))) {
-                return;
+        if (settings.mode === 'advanced') {
+            payload.visitor_session_uuid = getSessionUuid();
+            if (payload.type === 'landing_page' || payload.type === 'pageview') {
+                payload.visitor_session_event_uuid = uuid();
             }
-        } catch (e) { /* 降级 fetch */ }
+        }
+        payload.url = location.href;
+
+        var body = 'data=' + encodeURIComponent(JSON.stringify(payload));
+
+        if (useBeacon && navigator.sendBeacon) {
+            try {
+                navigator.sendBeacon(endpoint, new Blob([body], { type: 'application/x-www-form-urlencoded' }));
+                return;
+            } catch (e) { /* 降级 fetch */ }
+        }
+
         try {
-            fetch(ENDPOINT, {
+            fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body,
                 keepalive: true,
+                credentials: 'omit',
+                cache: 'no-store',
                 mode: 'cors'
             }).catch(function () {});
-        } catch (e) { /* 静默 */ }
+        } catch (e) {}
     }
 
-    /* ---------- 环境数据 ---------- */
-    function environmentData() {
+    /* ---------------- 页面数据 ---------------- */
+
+    function pageData() {
         return {
             url: location.href,
             title: document.title || '',
             referrer: document.referrer || '',
-            resolution: { width: screen.width, height: screen.height },
-            viewport: { width: window.innerWidth, height: window.innerHeight },
+            viewport: { width: window.innerWidth || 0, height: window.innerHeight || 0 },
+            resolution: { width: screen.width || 0, height: screen.height || 0 },
+            timezone: (Intl && Intl.DateTimeFormat().resolvedOptions().timezone) || '',
             language: navigator.language || '',
-            timezone: (Intl.DateTimeFormat().resolvedOptions().timezone || ''),
             theme: (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
         };
     }
 
-    /* ---------- 事件 API ---------- */
-    var eventUuid = uuid();
+    /* ---------------- Advanced 采集器 ---------------- */
 
-    window.Monit = {
-        // 发起访客（advanced 模式首次进入）
-        initiateVisitor: function (customParameters) {
-            var data = environmentData();
-            if (customParameters) data.custom_parameters = customParameters;
-            send({ type: 'initiate_visitor', data: data });
+    var advanced = {
+        initiate: function () {
+            if (this.initiated) return;
+            this.initiated = true;
+
+            var custom = {};
+            try { custom = JSON.parse(currentScript.getAttribute('data-custom-parameters') || '{}'); } catch (e) {}
+
+            var pd = pageData();
+            send({
+                type: 'initiate_visitor',
+                data: {
+                    custom_parameters: custom,
+                    resolution: pd.resolution,
+                    timezone: pd.timezone,
+                    language: pd.language,
+                    theme: pd.theme
+                }
+            });
         },
-        // 落地页
-        landingPage: function () {
-            eventUuid = uuid();
-            send({ type: 'landing_page', visitor_session_event_uuid: eventUuid, url: location.href, data: environmentData() });
+
+        landing: function () {
+            ssSet(LANDING_KEY, '1');
+            send({ type: 'landing_page', data: pageData() });
         },
-        // 页面浏览（SPA 路由切换手动调用）
-        pageview: function (url, title) {
-            eventUuid = uuid();
-            var data = environmentData();
-            if (url) data.url = url;
-            if (title) data.title = title;
-            send({ type: 'pageview', visitor_session_event_uuid: eventUuid, url: url || location.href, data: data });
+
+        pageview: function () {
+            send({ type: 'pageview', data: pageData() });
         },
-        // 目标转化
-        goalConversion: function (goalKey) {
-            send({ type: 'goal_conversion', goal_key: goalKey, visitor_session_event_uuid: eventUuid, url: location.href });
+
+        eventChild: function (type, data) {
+            send({ type: type, data: data || {} });
         },
-        // 出站点击
+
         outboundClick: function (url, title) {
-            send({ type: 'outbound_click', outbound_url: url, outbound_title: title || '', visitor_session_event_uuid: eventUuid, url: location.href });
+            send({ type: 'outbound_click', outbound_url: url, outbound_title: title || '', data: {} }, true);
+        },
+
+        goal: function (key) {
+            send({ type: 'goal_conversion', goal_key: key, data: {} });
         }
     };
 
-    /* ---------- 自动初始化 ---------- */
-    // 1. initiate_visitor + landing_page
-    window.Monit.initiateVisitor();
-    window.Monit.landingPage();
+    /* ---------------- 热图采集（data-heatmap-id） ---------------- */
 
-    // 2. 自动出站点击捕获
-    document.addEventListener('click', function (e) {
-        var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-        if (!a) return;
-        var href = a.getAttribute('href') || '';
-        if (href.indexOf('http') === 0 && a.hostname && a.hostname !== location.hostname) {
-            window.Monit.outboundClick(href, a.textContent || '');
+    var heatmaps = {
+        maxScroll: 0,
+
+        snapshot: function () {
+            if (!settings.heatmapId) return;
+
+            var de = document.documentElement;
+            var dom = {
+                w: de.scrollWidth,
+                h: Math.max(de.scrollHeight, document.body ? document.body.scrollHeight : 0),
+                url: location.href,
+                nodes: (document.body ? document.body.innerText || '' : '').slice(0, 4096)
+            };
+
+            send({
+                type: 'heatmap_snapshot',
+                heatmap_id: settings.heatmapId,
+                data: { dom: dom, viewport: pageData().viewport }
+            });
+        },
+
+        click: function (e) {
+            if (!settings.heatmapId) return;
+
+            var de = document.documentElement;
+            var x = (e.pageX / (de.scrollWidth || 1)) * 100;
+            var y = (e.pageY / (de.scrollHeight || 1)) * 100;
+
+            send({
+                type: 'heatmap_snapshot_click',
+                heatmap_id: settings.heatmapId,
+                x_normalized: Math.round(Math.max(0, Math.min(100, x)) * 100) / 100,
+                y_normalized: Math.round(Math.max(0, Math.min(100, y)) * 100) / 100,
+                count: 1,
+                data: {}
+            }, true);
+        },
+
+        trackScroll: function () {
+            if (!settings.heatmapId) return;
+
+            var de = document.documentElement;
+            var percent = ((window.scrollY + window.innerHeight) / (de.scrollHeight || 1)) * 100;
+            if (percent > this.maxScroll) this.maxScroll = Math.min(100, percent);
+        },
+
+        flushScroll: function () {
+            if (!settings.heatmapId || !this.maxScroll) return;
+
+            send({
+                type: 'heatmap_snapshot_scroll',
+                heatmap_id: settings.heatmapId,
+                max_scroll: Math.round(this.maxScroll),
+                data: {}
+            }, true);
         }
-    }, { passive: true });
+    };
 
-    // 3. SPA 路由变化自动 pageview（pushState/replaceState/popstate 钩子）
-    ['pushState', 'replaceState'].forEach(function (name) {
-        var original = history[name];
-        if (typeof original !== 'function') return;
-        history[name] = function () {
-            var result = original.apply(this, arguments);
-            setTimeout(function () { window.Monit.pageview(); }, 0);
-            return result;
-        };
-    });
-    window.addEventListener('popstate', function () {
-        setTimeout(function () { window.Monit.pageview(); }, 0);
-    });
+    /* ---------------- 回放采集（页面已加载 rrweb 时启用） ---------------- */
+
+    var replays = {
+        started: false,
+
+        start: function () {
+            if (!settings.replay || this.started || !window.rrweb) return;
+            this.started = true;
+
+            var self = this;
+
+            window.rrweb.record({
+                emit: function (event) {
+                    if (!self._buffer) self._buffer = [];
+                    self._buffer.push(event);
+                    if (!self._timer) {
+                        self._timer = setTimeout(function () { self.flush(); }, 1000); // 1s 间隔
+                    }
+                },
+                checkoutEveryNms: 10000
+            });
+        },
+
+        flush: function () {
+            clearTimeout(this._timer);
+            this._timer = null;
+            if (!this._buffer || !this._buffer.length) return;
+
+            send({ type: 'replays', data: { events: this._buffer.splice(0) } }, true);
+        }
+    };
+
+    /* ---------------- 事件绑定 ---------------- */
+
+    function currentHost() { return location.hostname.replace(/^www\./, ''); }
+
+    function isOutbound(url) {
+        try {
+            var u = new URL(url, location.href);
+            return u.protocol.indexOf('http') === 0 &&
+                u.hostname.replace(/^www\./, '') !== currentHost();
+        } catch (e) { return false; }
+    }
+
+    function bindAdvanced() {
+        // 出站点击 + 热图点击坐标（捕获阶段，pagehide 前完成）
+        document.addEventListener('click', function (e) {
+            var a = e.target.closest ? e.target.closest('a[href]') : null;
+            if (a && isOutbound(a.href)) {
+                advanced.outboundClick(a.href, (a.textContent || '').trim().slice(0, 512));
+            }
+            heatmaps.click(e);
+        }, true);
+
+        // 子事件：点击（2s 节流）
+        var lastClick = 0;
+        document.addEventListener('click', function (e) {
+            var now = Date.now();
+            if (now - lastClick < 2000) return;
+            lastClick = now;
+            advanced.eventChild('click', {
+                tag: (e.target.tagName || '').toLowerCase(),
+                id: e.target.id || '',
+                selector: (e.target.tagName || '').toLowerCase() + (e.target.id ? '#' + e.target.id : '')
+            });
+        });
+
+        // 子事件：滚动深度节点（25/50/75/100）
+        var scrollMarks = {};
+        window.addEventListener('scroll', function () {
+            heatmaps.trackScroll();
+
+            var de = document.documentElement;
+            var percent = ((window.scrollY + window.innerHeight) / (de.scrollHeight || 1)) * 100;
+            [25, 50, 75, 100].forEach(function (mark) {
+                if (percent >= mark && !scrollMarks[mark]) {
+                    scrollMarks[mark] = true;
+                    advanced.eventChild('scroll', { percentage: mark });
+                }
+            });
+        }, { passive: true });
+
+        // 子事件：resize（500ms 防抖）
+        var resizeTimer = null;
+        window.addEventListener('resize', function () {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function () {
+                advanced.eventChild('resize', {
+                    viewport: { width: window.innerWidth, height: window.innerHeight }
+                });
+            }, 500);
+        });
+
+        // 子事件：表单提交（捕获）
+        document.addEventListener('submit', function (e) {
+            advanced.eventChild('form', {
+                action: (e.target.getAttribute('action') || location.pathname).slice(0, 2048),
+                method: (e.target.getAttribute('method') || 'get').toLowerCase()
+            });
+        }, true);
+
+        // SPA 路由变化
+        var lastPath = location.pathname + location.search;
+        function onRouteChange() {
+            var now = location.pathname + location.search;
+            if (now === lastPath) return;
+            lastPath = now;
+            advanced.pageview();
+        }
+        ['pushState', 'replaceState'].forEach(function (fn) {
+            var orig = history[fn];
+            if (typeof orig === 'function') {
+                history[fn] = function () {
+                    var r = orig.apply(this, arguments);
+                    setTimeout(onRouteChange, 0);
+                    return r;
+                };
+            }
+        });
+        window.addEventListener('popstate', onRouteChange);
+        window.addEventListener('hashchange', onRouteChange);
+
+        // 页面卸载：滚动深度 + 回放缓冲
+        window.addEventListener('pagehide', function () {
+            heatmaps.flushScroll();
+            replays.flush();
+        });
+    }
+
+    /* ---------------- 启动 ---------------- */
+
+    window.monitGoal = function (key) {
+        if (!isDoNotTrack() && settings.mode === 'advanced') advanced.goal(key);
+    };
+
+    function init() {
+        if (isDoNotTrack()) return;
+
+        if (settings.mode === 'lightweight') {
+            // LW：仅浏览量，beacon 优先
+            send({ type: 'landing_page', data: pageData() }, true);
+            return;
+        }
+
+        advanced.initiate();
+        bindAdvanced();
+
+        if (!ssGet(LANDING_KEY)) {
+            advanced.landing();
+        } else {
+            advanced.pageview();
+        }
+
+        setTimeout(function () {
+            heatmaps.snapshot();
+            replays.start();
+        }, 300);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else if (!settings.manual) {
+        init();
+    }
+
+    window.MonitPixel = { init: init };
 })();

@@ -3,6 +3,16 @@
 use App\Http\Controllers\Api\v1\{
     AccountController,
     AnalyticsController,
+    ApiAnnotationsController,
+    ApiEventsChildrenController,
+    ApiGoalsConversionsController,
+    ApiLogsController,
+    ApiOutboundClicksController,
+    ApiPaymentsController,
+    ApiReplaysController,
+    ApiSessionsController,
+    ApiTeamMembersController,
+    ApiVisitorsController,
     DomainController,
     ResourcesController,
     WebsiteController as ApiWebsiteController,
@@ -71,6 +81,12 @@ Route::prefix('v1')->middleware('api.key')->group(function (): void {
     Route::get('/websites/{website}/goals', [AnalyticsController::class, 'goals']);
     Route::get('/websites/{website}/utm', [AnalyticsController::class, 'utm']);
 
+    // 统计聚合 / 双模式页面浏览 / 回放（规格书 §8：statistics、pageviews-*、replays）
+    Route::get('/websites/{website}/statistics', [AnalyticsController::class, 'statistics']);
+    Route::get('/websites/{website}/pageviews-advanced', [AnalyticsController::class, 'pageviewsAdvanced']);
+    Route::get('/websites/{website}/pageviews-lightweight', [AnalyticsController::class, 'pageviewsLightweight']);
+    Route::get('/websites/{website}/replays', [AnalyticsController::class, 'replays']);
+
     // 目标 CRUD（规格书 §8：/api/goals）
     Route::get('/websites/{website}/goals/list', [ResourcesController::class, 'goalsIndex']);
     Route::post('/websites/{website}/goals', [ResourcesController::class, 'goalsStore']);
@@ -84,12 +100,109 @@ Route::prefix('v1')->middleware('api.key')->group(function (): void {
     Route::put('/websites/{website}/heatmaps/{heatmap}', [WebsiteDataController::class, 'heatmapsUpdate']);
     Route::delete('/websites/{website}/heatmaps/{heatmap}', [WebsiteDataController::class, 'heatmapsDestroy']);
 
-    // 事件子项 / 出站点击（规格书 §8：/api/events-children、/api/outbound-clicks）
+        // 事件子项 / 出站点击（规格书 §8：/api/events-children、/api/outbound-clicks）
     Route::get('/websites/{website}/events-children', [WebsiteDataController::class, 'eventChildrenIndex']);
     Route::get('/websites/{website}/outbound-clicks', [WebsiteDataController::class, 'outboundClicksIndex']);
+
+        // 套餐只读（规格书 §8：/api/plans）
+    Route::get('/plans', [AccountController::class, 'plans']);
+
+    // ========================================
+    // 新增 API v1 端点（规格书 §8 扩展）
+    // ========================================
+
+    // 标注 CRUD（独立控制器版本，规格书 §8）
+    Route::get('/websites/{website}/annotations', [ApiAnnotationsController::class, 'index']);
+    Route::post('/websites/{website}/annotations', [ApiAnnotationsController::class, 'store']);
+    Route::put('/websites/{website}/annotations/{annotation}', [ApiAnnotationsController::class, 'update']);
+    Route::delete('/websites/{website}/annotations/{annotation}', [ApiAnnotationsController::class, 'destroy']);
+
+    // 事件子项（独立控制器版本，规格书 §8）
+    Route::get('/websites/{website}/events-children/list', [ApiEventsChildrenController::class, 'index']);
+
+    // 目标转化（规格书 §8：/api/goals-conversions）
+    Route::get('/websites/{website}/goals-conversions', [ApiGoalsConversionsController::class, 'index']);
+    Route::get('/websites/{website}/goals-conversions/{conversionId}', [ApiGoalsConversionsController::class, 'show']);
+
+    // 操作日志（独立控制器版本，规格书 §8）
+    Route::get('/logs/list', [ApiLogsController::class, 'index']);
+
+    // 出站点击（独立控制器版本，规格书 §8）
+    Route::get('/websites/{website}/outbound-clicks/list', [ApiOutboundClicksController::class, 'index']);
+
+    // 支付记录（独立控制器版本，规格书 §8）
+    Route::get('/payments/list', [ApiPaymentsController::class, 'index']);
+
+    // 会话回放（独立控制器版本，规格书 §8）
+    Route::get('/websites/{website}/replays/list', [ApiReplaysController::class, 'index']);
+    Route::get('/websites/{website}/replays/{replayId}', [ApiReplaysController::class, 'show']);
+
+    // 会话（独立控制器版本，规格书 §8）
+    Route::get('/websites/{website}/sessions/list', [ApiSessionsController::class, 'index']);
+    Route::get('/websites/{website}/sessions/{sessionId}', [ApiSessionsController::class, 'show']);
+
+    // 团队成员（独立控制器版本，规格书 §8）
+    Route::get('/teams/{team}/members/list', [ApiTeamMembersController::class, 'index']);
+    Route::get('/teams/{team}/members/{memberId}', [ApiTeamMembersController::class, 'show']);
+    Route::delete('/teams/{team}/members/{memberId}', [ApiTeamMembersController::class, 'destroy']);
+
+    // 访客（规格书 §8：/api/visitors）
+    Route::get('/websites/{website}/visitors/list', [ApiVisitorsController::class, 'index']);
+    Route::get('/websites/{website}/visitors/{visitorId}', [ApiVisitorsController::class, 'show']);
 });
 
 // 公开 API（需要 API Key）
 Route::prefix('v1/public')->middleware('throttle:60,1')->group(function (): void {
     Route::post('/track', [\App\Http\Controllers\Api\PublicTrackerController::class, 'track']);
+});
+
+// ========================================
+// Admin API 路由（规格书 §7：admin-api 路由组）
+// 认证方式: Bearer Token (admin api_key) + admin 中间件
+// ========================================
+Route::prefix('v1/admin')->middleware(['api.key', 'auth:api', 'admin'])->group(function (): void {
+    // 系统状态
+    Route::get('/status', function () {
+        return response()->json([
+            'version' => config('app.version', '55.0.0'),
+            'php_version' => PHP_VERSION,
+            'database' => config('database.default'),
+            'cache_driver' => config('cache.default'),
+            'queue_driver' => config('queue.default'),
+        ]);
+    });
+
+    // 用户管理（规格书 §6.3.2）
+    Route::get('/users', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'users']);
+    Route::post('/users', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'createUser']);
+    Route::get('/users/{userId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'getUser']);
+    Route::put('/users/{userId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'updateUser']);
+    Route::delete('/users/{userId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'deleteUser']);
+
+    // 网站管理（规格书 §6.3.2）
+    Route::get('/websites', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'websites']);
+    Route::get('/websites/{websiteId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'getWebsite']);
+    Route::put('/websites/{websiteId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'updateWebsite']);
+    Route::delete('/websites/{websiteId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'deleteWebsite']);
+
+    // 套餐管理（规格书 §6.3.3）
+    Route::get('/plans', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'plans']);
+    Route::post('/plans', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'createPlan']);
+    Route::put('/plans/{planId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'updatePlan']);
+    Route::delete('/plans/{planId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'deletePlan']);
+
+    // 支付记录（规格书 §6.3.3）
+    Route::get('/payments', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'payments']);
+    Route::get('/payments/{paymentId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'getPayment']);
+
+    // 系统设置（规格书 §6.3.1）
+    Route::get('/settings', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'getSettings']);
+    Route::put('/settings', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'updateSettings']);
+
+    // 统计数据（规格书 §6.3.5）
+    Route::get('/statistics', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'getStatistics']);
+
+    // 插件管理（规格书 §14）
+    Route::get('/plugins', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'plugins']);
+    Route::put('/plugins/{pluginId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'updatePlugin']);
 });

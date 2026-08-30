@@ -19,9 +19,13 @@ class PlanLimitService
         $settings = $user->getPlanSettings();
         $limit = $settings[$feature] ?? 0;
 
-        // 0 或 -1 表示不限
-        if ($limit <= 0) {
+        // -1 表示不限；0 表示功能未启用（由 isFeatureEnabled 拦截）
+        if ($limit === -1) {
             return true;
+        }
+
+        if ($limit <= 0) {
+            return false;
         }
 
         $current = $this->getCurrentUsage($user, $feature);
@@ -40,6 +44,7 @@ class PlanLimitService
             'websites_goals_limit' => $this->getWebsitesAggregate($user, 'goals'),
             'annotations_limit' => $user->annotations()->count(),
             'domains_limit' => $user->domains()->count(),
+            'dashboard_views_limit' => $user->dashboardViews()->count(),
             default => 0,
         };
     }
@@ -52,8 +57,12 @@ class PlanLimitService
         $settings = $user->getPlanSettings();
         $limit = $settings[$feature] ?? 0;
 
-        if ($limit <= 0) {
+        if ($limit === -1) {
             return -1; // 不限
+        }
+
+        if ($limit <= 0) {
+            return 0; // 未启用
         }
 
         return max(0, $limit - $this->getCurrentUsage($user, $feature));

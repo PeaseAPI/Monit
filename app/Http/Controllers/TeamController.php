@@ -104,7 +104,7 @@ class TeamController extends Controller
                         ->with('success', __('msg.member_removed'));
     }
 
-    public function destroy(Request $request, int $teamId): RedirectResponse
+        public function destroy(Request $request, int $teamId): RedirectResponse
     {
         $team = Team::findOrFail($teamId);
         $team->members()->delete();
@@ -112,5 +112,31 @@ class TeamController extends Controller
 
         return redirect()->route('teams.index')
                         ->with('success', __('msg.team_deleted'));
+    }
+
+    /**
+     * 团队AJAX数据（规格书 §6.2.4：/teams-ajax）
+     */
+    public function ajax(Request $request)
+    {
+        $teams = Team::where('user_id', $request->user()->user_id)
+            ->withCount('members')
+            ->orderByDesc('team_id')
+            ->paginate(25);
+
+        return response()->json($teams);
+    }
+
+    /**
+     * 团队关联AJAX（规格书 §6.2.4：/teams-associations-ajax）
+     */
+    public function associationsAjax(Request $request)
+    {
+        $memberId = $request->query('member_id');
+        $associations = \App\Models\TeamMemberAssociation::where('team_member_id', $memberId)
+            ->with('team', 'website')
+            ->get();
+
+        return response()->json($associations);
     }
 }

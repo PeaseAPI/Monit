@@ -64,13 +64,22 @@ class AnnotationController extends Controller
                         ->with('success', __('msg.annotation_updated'));
     }
 
-    public function delete(Request $request, int $annotationId): RedirectResponse
+        public function delete(Request $request, int $annotationId): RedirectResponse
     {
         $annotation = Annotation::findOrFail($annotationId);
         $websiteId = $annotation->website_id;
         $annotation->delete();
 
         return redirect()->route('stats.annotations', ['website' => $websiteId])
+                        ->with('success', __('msg.annotation_deleted'));
+    }
+
+    public function destroy(Request $request, Website $website, Annotation $annotation): RedirectResponse
+    {
+        $this->authorize('own', $website);
+        $annotation->delete();
+
+        return redirect()->route('annotations.index', $website)
                         ->with('success', __('msg.annotation_deleted'));
     }
 }

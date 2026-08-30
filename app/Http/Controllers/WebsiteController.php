@@ -151,11 +151,28 @@ class WebsiteController extends Controller
         return $key;
     }
 
-    protected function findOwnedWebsite(Request $request, int $websiteId): Website
+        protected function findOwnedWebsite(Request $request, int $websiteId): Website
     {
         $website = $request->user()->websites()->findOrFail($websiteId);
         abort_if(! $website, 404);
 
         return $website;
+    }
+
+    /**
+     * 网站AJAX数据（规格书 §6.2.3：/websites-ajax）
+     */
+    public function ajax(Request $request)
+    {
+        $query = Website::where('user_id', $request->user()->user_id);
+
+        if ($search = $request->query('search')) {
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhere('host', 'like', "%{$search}%");
+        }
+
+        return response()->json(
+            $query->orderByDesc('website_id')->paginate(25)
+        );
     }
 }

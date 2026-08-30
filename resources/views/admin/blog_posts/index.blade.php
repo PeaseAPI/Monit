@@ -3,7 +3,10 @@
 @section('content')
 <div class="mb-6 flex items-center justify-between">
     <div><h1 class="text-2xl font-bold text-zinc-900">{{ __('admin.blog_posts') }}</h1></div>
-    <a href="{{ route('admin.blog-posts.create') }}" class="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700">+ {{ __('common.add') }}</a>
+    <div class="flex items-center gap-3">
+        <a href="{{ route('admin.blog-posts-categories.index') }}" class="rounded-xl border border-zinc-300 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50">{{ __('admin.blog_posts_categories') }}</a>
+        <a href="{{ route('admin.blog-posts.create') }}" class="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700">+ {{ __('common.add') }}</a>
+    </div>
 </div>
 <div class="rounded-2xl border border-zinc-200 bg-white"><div class="overflow-x-auto">
     <table class="w-full text-sm"><thead class="bg-zinc-50 text-left"><tr><th class="px-6 py-3 font-medium text-zinc-500">{{ __('admin.title') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('common.status') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('admin.datetime') }}</th><th class="px-6 py-3"></th></tr></thead>

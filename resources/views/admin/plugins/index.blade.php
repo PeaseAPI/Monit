@@ -52,6 +52,12 @@
                         <form method="POST" action="{{ route('admin.plugins.uninstall', $plugin['id']) }}" onsubmit="return confirm('{{ __('admin.plugins_confirm_uninstall') }}')">@csrf @method('DELETE')
                             <button class="rounded-xl bg-red-600/80 px-4 py-2 text-xs font-medium text-white hover:bg-red-600">{{ __('admin.plugin_uninstall') }}</button>
                         </form>
+                        {{-- 插件专属管理入口 --}}
+                        @if($plugin['id'] === 'push-notifications')
+                            <a href="{{ route('admin.plugins.push-notifications.campaigns') }}" class="rounded-xl border border-zinc-700 px-4 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800">Campaign 管理 →</a>
+                        @elseif($plugin['id'] === 'image-optimizer')
+                            <a href="{{ route('admin.plugins.image-optimizer.stats') }}" class="rounded-xl border border-zinc-700 px-4 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800">压缩统计 →</a>
+                        @endif
                     @else
                         <form method="POST" action="{{ route('admin.plugins.activate', $plugin['id']) }}">@csrf
                             <button class="rounded-xl bg-green-600 px-4 py-2 text-xs font-medium text-white hover:bg-green-700">{{ __('admin.plugin_activate') }}</button>

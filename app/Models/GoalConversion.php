@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class GoalConversion extends Model
 {
+    protected $table = 'goals_conversions';
+
     protected $primaryKey = 'conversion_id';
 
     protected $fillable = [

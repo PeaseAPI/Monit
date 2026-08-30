@@ -4,12 +4,32 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\Plan;
+use App\Services\Payment\AlipayProcessor;
+use App\Services\Payment\CryptoComProcessor;
+use App\Services\Payment\FlutterwaveProcessor;
+use App\Services\Payment\IyzicoProcessor;
+use App\Services\Payment\KlarnaProcessor;
+use App\Services\Payment\LemonsqueezyProcessor;
+use App\Services\Payment\MercadoPagoProcessor;
+use App\Services\Payment\MidtransProcessor;
+use App\Services\Payment\MollieProcessor;
+use App\Services\Payment\MyFatoorahProcessor;
 use App\Services\Payment\OfflinePaymentProcessor;
-use App\Services\Payment\PayPalProcessor;
+use App\Services\Payment\OnePayProcessor;
+use App\Services\Payment\PaddleProcessor;
 use App\Services\Payment\PaymentService;
+use App\Services\Payment\PayPalProcessor;
+use App\Services\Payment\PaystackProcessor;
+use App\Services\Payment\PayUProcessor;
+use App\Services\Payment\PlisioProcessor;
+use App\Services\Payment\RazorpayProcessor;
+use App\Services\Payment\RevolutProcessor;
 use App\Services\Payment\StripeProcessor;
+use App\Services\Payment\WeChatPayProcessor;
+use App\Services\Payment\YooKassaProcessor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 /**
@@ -19,6 +39,36 @@ use Illuminate\View\View;
 class PaymentController extends Controller
 {
     protected PaymentService $paymentService;
+
+    /**
+     * 全部 22 个支付处理器（规格书 §11）
+     * 6 个专线处理器 + wechat/alipay（createOrder 型）+ 14 个通用托管结算型（createCheckout 型）
+     */
+    public const PROCESSORS = [
+        'stripe', 'paypal', 'razorpay', 'mollie', 'paystack', 'offline',
+        'wechat', 'alipay',
+        'payu', 'iyzico', 'yookassa', 'cryptocom', 'paddle', 'mercadopago',
+        'midtrans', 'flutterwave', 'lemonsqueezy', 'myfatoorah', 'klarna',
+        'plisio', 'revolut', 'onepay',
+    ];
+
+    /** 14 个 createCheckout(User, Plan, frequency) 型处理器 */
+    protected const GENERIC_PROCESSORS = [
+        'payu' => PayUProcessor::class,
+        'iyzico' => IyzicoProcessor::class,
+        'yookassa' => YooKassaProcessor::class,
+        'cryptocom' => CryptoComProcessor::class,
+        'paddle' => PaddleProcessor::class,
+        'mercadopago' => MercadoPagoProcessor::class,
+        'midtrans' => MidtransProcessor::class,
+        'flutterwave' => FlutterwaveProcessor::class,
+        'lemonsqueezy' => LemonsqueezyProcessor::class,
+        'myfatoorah' => MyFatoorahProcessor::class,
+        'klarna' => KlarnaProcessor::class,
+        'plisio' => PlisioProcessor::class,
+        'revolut' => RevolutProcessor::class,
+        'onepay' => OnePayProcessor::class,
+    ];
 
     public function __construct(PaymentService $paymentService)
     {
@@ -32,18 +82,20 @@ class PaymentController extends Controller
     {
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
         $user = $request->user();
+        $currentPlan = Plan::find($user->plan_id);
+        $recentPayments = $user->payments()->orderByDesc('datetime')->limit(5)->get();
 
-        return view('payments.index', compact('plans', 'user'));
+        return view('payments.index', compact('plans', 'user', 'currentPlan', 'recentPayments'));
     }
 
     /**
-     * 发起支付
+     * 发起支付（规格书 §11：22 处理器统一入口）
      */
-    public function checkout(Request $request): RedirectResponse
+    public function checkout(Request $request)
     {
         $validated = $request->validate([
             'plan_id' => ['required', 'string', 'exists:plans,plan_id'],
-            'processor' => ['required', 'in:stripe,paypal,offline'],
+            'processor' => ['required', 'string', 'in:'.implode(',', self::PROCESSORS)],
             'frequency' => ['required', 'in:monthly,annual,lifetime'],
             'code' => ['nullable', 'string'],
         ]);
@@ -59,8 +111,13 @@ class PaymentController extends Controller
         return match ($processor) {
             'stripe' => $this->redirectToStripe($payment),
             'paypal' => $this->redirectToPayPal($payment),
+            'razorpay' => $this->redirectToRazorpay($payment),
+            'mollie' => $this->redirectToMollie($payment),
+            'paystack' => $this->redirectToPaystack($payment),
             'offline' => $this->handleOffline($payment),
-            default => back()->withErrors(['processor' => __('payment.unsupported_processor')]),
+            'wechat' => $this->redirectToWeChatPay($payment),
+            'alipay' => $this->redirectToAlipay($payment),
+            default => $this->redirectToGenericProcessor($user, $plan, $payment, $processor, $frequency),
         };
     }
 
@@ -145,6 +202,14 @@ class PaymentController extends Controller
             );
         }
 
+        if ($event['event'] === 'payment_failure' && isset($event['payment_id'])) {
+            $this->paymentService->handlePaymentFailure(
+                (int) $event['payment_id'],
+                $event['external_id'] ?? '',
+                $event['reason'] ?? ''
+            );
+        }
+
         return response()->json(['received' => true]);
     }
 
@@ -168,6 +233,20 @@ class PaymentController extends Controller
 
             if ($paymentId) {
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, $externalId);
+            }
+        }
+
+        // 规格 §6.3.1：支付失败事件派发 webhook_payment_failure_url
+        if ($eventType === 'PAYMENT.CAPTURE.DENIED') {
+            $resource = $request->input('resource', []);
+            $paymentId = $resource['custom_id'] ?? null;
+
+            if ($paymentId) {
+                $this->paymentService->handlePaymentFailure(
+                    (int) $paymentId,
+                    (string) ($resource['id'] ?? ''),
+                    (string) ($resource['status_details']['reason'] ?? '')
+                );
             }
         }
 
@@ -237,12 +316,147 @@ class PaymentController extends Controller
         return back()->withErrors(['processor' => __('payment.paypal_order_failed')]);
     }
 
-    protected function handleOffline(Payment $payment): RedirectResponse
+        protected function handleOffline(Payment $payment): RedirectResponse
     {
         $offlineProcessor = new OfflinePaymentProcessor();
         $offlineProcessor->createOrder($payment->user, $payment);
 
         return redirect()->route('payments.offline-instructions', ['payment' => $payment->payment_id])
             ->with('success', __('payment.offline_order_created'));
+    }
+
+    protected function redirectToRazorpay(Payment $payment): RedirectResponse
+    {
+        $razorpayProcessor = new RazorpayProcessor();
+        if (! $razorpayProcessor->isConfigured()) {
+            return back()->withErrors(['processor' => __('payment.razorpay_not_configured')]);
+        }
+        $result = $razorpayProcessor->createOrder($payment,
+            route('payments.success', ['payment_id' => $payment->payment_id]),
+            route('payments.cancel')
+        );
+        if (isset($result['error'])) {
+            return back()->withErrors(['processor' => $result['error']]);
+        }
+        return view('payments.razorpay-checkout', compact('payment', 'result'));
+    }
+
+    protected function redirectToMollie(Payment $payment): RedirectResponse
+    {
+        $mollieProcessor = new MollieProcessor();
+        if (! $mollieProcessor->isConfigured()) {
+            return back()->withErrors(['processor' => __('payment.mollie_not_configured')]);
+        }
+        $result = $mollieProcessor->createOrder($payment,
+            route('payments.success', ['payment_id' => $payment->payment_id]),
+            route('payments.cancel')
+        );
+        if (isset($result['error'])) {
+            return back()->withErrors(['processor' => $result['error']]);
+        }
+        if ($result['checkout_url'] ?? null) {
+            return redirect($result['checkout_url']);
+        }
+        return back()->withErrors(['processor' => __('payment.mollie_order_failed')]);
+    }
+
+    protected function redirectToPaystack(Payment $payment): RedirectResponse
+    {
+        $paystackProcessor = new PaystackProcessor();
+        if (! $paystackProcessor->isConfigured()) {
+            return back()->withErrors(['processor' => __('payment.paystack_not_configured')]);
+        }
+        $result = $paystackProcessor->createOrder($payment,
+            route('payments.success', ['payment_id' => $payment->payment_id]),
+            route('payments.cancel')
+        );
+        if (isset($result['error'])) {
+            return back()->withErrors(['processor' => $result['error']]);
+        }
+        if ($result['authorization_url'] ?? null) {
+            return redirect($result['authorization_url']);
+        }
+        return back()->withErrors(['processor' => __('payment.paystack_order_failed')]);
+    }
+
+    /**
+     * 微信 Native 支付：返回 code_url 供扫码（规格书 §11：WeChat Pay）
+     */
+    protected function redirectToWeChatPay(Payment $payment): View|RedirectResponse
+    {
+        $processor = new WeChatPayProcessor();
+
+        if (! $processor->isConfigured()) {
+            return back()->withErrors(['processor' => __('payment.wechat_not_configured')]);
+        }
+
+        $result = $processor->createOrder($payment,
+            route('payments.success', ['payment_id' => $payment->payment_id]),
+            route('payments.cancel')
+        );
+
+        if (isset($result['error'])) {
+            return back()->withErrors(['processor' => $result['error']]);
+        }
+
+        return view('payments.wechat-pay', ['payment' => $payment, 'result' => $result]);
+    }
+
+    /**
+     * 支付宝电脑网站支付：返回自动提交表单 HTML（规格书 §11：Alipay）
+     */
+    protected function redirectToAlipay(Payment $payment): Response|RedirectResponse
+    {
+        $processor = new AlipayProcessor();
+
+        if (! $processor->isConfigured()) {
+            return back()->withErrors(['processor' => __('payment.alipay_not_configured')]);
+        }
+
+        $result = $processor->createOrder($payment,
+            route('payments.success', ['payment_id' => $payment->payment_id]),
+            route('payments.cancel')
+        );
+
+        if (isset($result['error'])) {
+            return back()->withErrors(['processor' => $result['error']]);
+        }
+
+        return response($result['redirect_html']);
+    }
+
+    /**
+     * 通用托管结算型处理器（14 个，规格书 §11）
+     * createCheckout 构造网关结算参数；生产环境由服务端向网关发起请求后跳转，
+     * 此处渲染结算确认页（支付完成后由各自 Webhook 回调 finalize）。
+     */
+    protected function redirectToGenericProcessor($user, Plan $plan, Payment $payment, string $processor, string $frequency): View|RedirectResponse
+    {
+        $class = self::GENERIC_PROCESSORS[$processor] ?? null;
+
+        if (! $class || ! class_exists($class)) {
+            return back()->withErrors(['processor' => __('payment.unsupported_processor')]);
+        }
+
+        $instance = new $class();
+
+        try {
+            $result = $instance->createCheckout($user, $plan, $frequency);
+        } catch (\Throwable $e) {
+            return back()->withErrors(['processor' => $e->getMessage()]);
+        }
+
+        // 若处理器直接给出网关跳转 URL 则跳转
+        foreach (['redirect_url', 'url', 'checkout_url', 'approve_url', 'authorization_url', 'payment_url', 'pay_url', 'hosted_checkout_url'] as $key) {
+            if (! empty($result[$key]) && is_string($result[$key])) {
+                return redirect()->away($result[$key]);
+            }
+        }
+
+        return view('payments.processor-checkout', [
+            'payment' => $payment,
+            'processor' => $processor,
+            'result' => $result,
+        ]);
     }
 }

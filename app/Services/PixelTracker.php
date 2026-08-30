@@ -255,6 +255,21 @@ class PixelTracker
 
                 break;
 
+            case 'heatmap_snapshot':
+                $this->handleHeatmapSnapshot();
+
+                break;
+
+            case 'heatmap_snapshot_click':
+                $this->handleHeatmapSnapshotClick();
+
+                break;
+
+            case 'heatmap_snapshot_scroll':
+                $this->handleHeatmapSnapshotScroll();
+
+                break;
+
             default:
                 $this->skip('unsupported_type');
         }
@@ -482,6 +497,14 @@ class PixelTracker
         // 确保 replay 主记录存在
         $exists = \App\Models\SessionReplay::where('session_id', $session->session_id)->exists();
         if (! $exists) {
+            // 回放配额（规格 §10.2：sessions_replays_limit；-1 不限）
+            $replayLimit = $this->website->user?->getPlanSettings()['sessions_replays_limit'] ?? 0;
+            if ($replayLimit > 0 && $this->website->current_month_sessions_replays >= $replayLimit) {
+                $this->skip('replays_limit');
+
+                return;
+            }
+
             \App\Models\SessionReplay::create([
                 'session_id' => $session->session_id,
                 'visitor_id' => $session->visitor_id,
@@ -499,6 +522,146 @@ class PixelTracker
         Cache::put($chunkKey, $this->payload['data'] ?? [], now()->addDays(config('monit.pixel.replays_retention_days')));
         $keys[] = $chunkKey;
         Cache::put($cacheKey, $keys, now()->addDays(config('monit.pixel.replays_retention_days')));
+    }
+
+    /**
+     * heatmap_snapshot：DOM 快照（规格 §4.4：gzencode 压缩 → heatmaps_snapshots → 更新 heatmaps 尺寸引用）
+     */
+    protected function handleHeatmapSnapshot(): void
+    {
+        $heatmap = $this->findEnabledHeatmap();
+        if (! $heatmap) {
+            return;
+        }
+
+        $device = $this->uaParser->deviceType(); // desktop / tablet / mobile
+        if (! in_array($device, ['desktop', 'tablet', 'mobile'], true)) {
+            $device = 'desktop';
+        }
+
+        $json = json_encode($this->payload['data'] ?? [], JSON_UNESCAPED_UNICODE);
+        $compressed = gzencode((string) $json, 9);
+
+        $snapshot = \App\Models\HeatmapSnapshot::create([
+            'heatmap_id' => $heatmap->heatmap_id,
+            'website_id' => $this->website->website_id,
+            'type' => $device,
+            'data' => $compressed,
+            'date' => now()->toDateString(),
+        ]);
+
+        $heatmap->forceFill([
+            "snapshot_id_{$device}" => $snapshot->snapshot_id,
+            "{$device}_size" => strlen((string) $compressed),
+        ])->save();
+
+        $this->website->increment('current_month_sessions_replays');
+    }
+
+    /**
+     * heatmap_snapshot_click：点击坐标（x/y_normalized 0-100，count 1-10 rage click）
+     */
+    protected function handleHeatmapSnapshotClick(): void
+    {
+        $heatmap = $this->findEnabledHeatmap();
+        if (! $heatmap) {
+            return;
+        }
+
+        $device = $this->currentDeviceColumn($heatmap);
+        if (! $device) {
+            $this->skip('heatmap_snapshot_missing');
+
+            return;
+        }
+
+        $x = max(0, min(100, (float) ($this->payload['x_normalized'] ?? 0)));
+        $y = max(0, min(100, (float) ($this->payload['y_normalized'] ?? 0)));
+        $count = max(1, min(10, (int) ($this->payload['count'] ?? 1)));
+
+        \App\Models\HeatmapSnapshotClick::create([
+            'website_id' => $this->website->website_id,
+            'snapshot_id' => $heatmap->{"snapshot_id_{$device}"},
+            'x_normalized' => $x,
+            'y_normalized' => $y,
+            'count' => $count,
+            'expiration_date' => now()->addDays(config('monit.pixel.events_retention_days'))->toDateString(),
+            'datetime' => now(),
+        ]);
+    }
+
+    /**
+     * heatmap_snapshot_scroll：滚动深度（max_scroll 0-100 按 10 取整，同事件取最大值）
+     */
+    protected function handleHeatmapSnapshotScroll(): void
+    {
+        $heatmap = $this->findEnabledHeatmap();
+        if (! $heatmap) {
+            return;
+        }
+
+        $device = $this->currentDeviceColumn($heatmap);
+        if (! $device) {
+            $this->skip('heatmap_snapshot_missing');
+
+            return;
+        }
+
+        $maxScroll = (int) round(max(0, min(100, (int) ($this->payload['max_scroll'] ?? 0))) / 10) * 10;
+
+        $uuidBinary = $this->uuidToBinary($this->payload['visitor_session_event_uuid'] ?? '');
+        if ($uuidBinary === null) {
+            $this->skip('invalid_uuid');
+
+            return;
+        }
+
+        \App\Models\HeatmapSnapshotScroll::upsert(
+            [[
+                'website_id' => $this->website->website_id,
+                'snapshot_id' => $heatmap->{"snapshot_id_{$device}"},
+                'event_uuid_binary' => $uuidBinary,
+                'max_scroll' => $maxScroll,
+                'expiration_date' => now()->addDays(config('monit.pixel.events_retention_days'))->toDateString(),
+                'last_datetime' => now(),
+                'datetime' => now(),
+            ]],
+            ['event_uuid_binary'],
+            ['max_scroll', 'last_datetime']
+        );
+    }
+
+    /**
+     * 查找本网站启用中的热图（payload.heatmap_id）
+     */
+    protected function findEnabledHeatmap(): ?\App\Models\Heatmap
+    {
+        $heatmapId = (int) ($this->payload['heatmap_id'] ?? 0);
+
+        $heatmap = \App\Models\Heatmap::where('website_id', $this->website->website_id)
+            ->where('heatmap_id', $heatmapId)
+            ->where('is_enabled', true)
+            ->first();
+
+        if (! $heatmap) {
+            $this->skip('heatmap_not_found');
+        }
+
+        return $heatmap;
+    }
+
+    /**
+     * 当前设备列名 + 对应 snapshot_id 是否已生成
+     * @return string|null desktop|tablet|mobile 或 null（快照未采集）
+     */
+    protected function currentDeviceColumn(\App\Models\Heatmap $heatmap): ?string
+    {
+        $device = $this->uaParser->deviceType();
+        if (! in_array($device, ['desktop', 'tablet', 'mobile'], true)) {
+            $device = 'desktop';
+        }
+
+        return $heatmap->{"snapshot_id_{$device}"} ? $device : null;
     }
 
     /* ---------------------------------------------------------------------

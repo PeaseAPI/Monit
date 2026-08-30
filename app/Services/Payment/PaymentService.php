@@ -100,6 +100,49 @@ class PaymentService
         // 激活套餐
         $this->activatePlan($user, $payment);
 
+        // 平台 Webhook 派发（规格 §6.3.1：webhooks.webhook_payment_success_url）
+        app(\App\Services\WebhookService::class)->paymentSuccess([
+            'payment_id' => $payment->payment_id,
+            'user_id' => $user->user_id,
+            'email' => $user->email,
+            'plan_id' => $payment->plan_id,
+            'amount' => $payment->total_amount,
+            'currency' => $payment->currency,
+            'processor' => $payment->payment_processor,
+        ]);
+
+        return $payment;
+    }
+
+    /**
+     * 支付失败回调处理（规格 §6.3.1：webhooks.webhook_payment_failure_url）
+     * status：0=pending 1=paid 2=failed；幂等：已支付订单不可置为失败
+     */
+    public function handlePaymentFailure(int $paymentId, string $externalId = '', string $reason = ''): ?Payment
+    {
+        $payment = Payment::find($paymentId);
+
+        if (! $payment || $payment->status === 1) {
+            return $payment;
+        }
+
+        $payment->update(array_filter([
+            'external_id' => $externalId ?: null,
+            'status' => 2, // failed
+            'last_datetime' => now(),
+        ], fn ($value) => $value !== null));
+
+        // 平台 Webhook 派发（规格 §6.3.1：webhooks.webhook_payment_failure_url）
+        app(\App\Services\WebhookService::class)->paymentFailure([
+            'payment_id' => $payment->payment_id,
+            'user_id' => $payment->user_id,
+            'email' => $payment->email,
+            'amount' => $payment->total_amount,
+            'currency' => $payment->currency,
+            'processor' => $payment->payment_processor,
+            'reason' => $reason,
+        ]);
+
         return $payment;
     }
 
@@ -129,56 +172,66 @@ class PaymentService
     }
 
     /**
-     * 兑换码处理
+     * 兑换码处理（统一走 Code::redemptionIssue/recordRedemption，规格 §10.3）
      */
     public function redeemCode(User $user, string $code): array
     {
-        $codeModel = \App\Models\Code::where('code', $code)
-            ->where('is_enabled', true)
-            ->first();
+        $codeModel = \App\Models\Code::where('code', $code)->first();
 
         if (! $codeModel) {
             return ['success' => false, 'message' => __('msg.code_not_found')];
         }
 
-        // 检查是否已兑换
-        $alreadyRedeemed = \App\Models\RedeemedCode::where('user_id', $user->user_id)
-            ->where('code_id', $codeModel->code_id)
-            ->exists();
+        if ($issue = $codeModel->redemptionIssue($user)) {
+            // 映射到 msg.* 语言键（payments/redeem-code 端点约定）
+            $key = str_replace('account.', 'msg.', $issue);
 
-        if ($alreadyRedeemed) {
-            return ['success' => false, 'message' => __('msg.code_already_redeemed')];
+            return ['success' => false, 'message' => __($key)];
         }
 
-        // 检查最大兑换次数
-        if ($codeModel->max_redemptions > 0) {
-            $totalRedemptions = \App\Models\RedeemedCode::where('code_id', $codeModel->code_id)->count();
-            if ($totalRedemptions >= $codeModel->max_redemptions) {
-                return ['success' => false, 'message' => __('msg.code_max_reached')];
-            }
-        }
-
-        // 检查有效期
-        if ($codeModel->date_end && now()->isAfter($codeModel->date_end)) {
-            return ['success' => false, 'message' => __('msg.code_expired')];
-        }
-
-        // 兑换
-        \App\Models\RedeemedCode::create([
-            'user_id' => $user->user_id,
-            'code_id' => $codeModel->code_id,
-            'datetime' => now(),
-        ]);
-
-        // 如果是兑换码，增加套餐时长
-        if ($codeModel->type === 'redeemable' && $codeModel->days) {
-            $currentExpiry = $user->plan_expiration_date;
-            $baseDate = $currentExpiry && $currentExpiry->isFuture() ? $currentExpiry : now();
-            $user->update([
-                'plan_expiration_date' => $baseDate->addDays($codeModel->days),
-            ]);
-        }
+        $codeModel->recordRedemption($user);
+        $codeModel->applyToUser($user);
 
         return ['success' => true, 'message' => __('msg.code_redeemed')];
+    }
+
+    /**
+     * 处理订阅取消（规格书 §11：Webhook 回调）
+     */
+    public function handleSubscriptionCancelled(string $subscriptionId, string $processor): void
+    {
+        $user = User::where('payment_subscription_id', $subscriptionId)
+            ->where('payment_processor', $processor)
+            ->first();
+
+        if ($user) {
+            $user->update([
+                'payment_subscription_id' => null,
+                'payment_processor' => null,
+            ]);
+        }
+    }
+
+    /**
+     * 处理外部支付通知（通过外部 ID 查找支付记录，规格书 §11）
+     * 用于无法直接获取内部 payment_id 的 Webhook
+     */
+    public function handleExternalPaymentNotification(string $processor, string $externalId): void
+    {
+        $payment = Payment::where('payment_processor', $processor)
+            ->where('external_id', $externalId)
+            ->first();
+
+        if ($payment && $payment->status !== 1) {
+            $payment->update([
+                'status' => 1,
+                'last_datetime' => now(),
+            ]);
+
+            $user = $payment->user;
+            if ($user) {
+                $this->activatePlan($user, $payment);
+            }
+        }
     }
 }

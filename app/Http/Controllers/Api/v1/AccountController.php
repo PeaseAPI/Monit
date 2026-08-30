@@ -132,12 +132,25 @@ class AccountController
         return response()->json($teamModel->members()->orderByDesc('team_member_id')->get());
     }
 
-    public function teamMembersDestroy(Request $request, int $team, int $member): JsonResponse
+        public function teamMembersDestroy(Request $request, int $team, int $member): JsonResponse
     {
         $teamModel = $request->user()->teams()->where('team_id', $team)->firstOrFail();
 
         $teamModel->members()->where('team_member_id', $member)->firstOrFail()->delete();
 
         return response()->json(['message' => __('msg.member_removed')]);
+    }
+
+    /* ---------------- 套餐（只读） ---------------- */
+
+    /**
+     * 返回可用套餐列表
+     * 规格书 §8：/api/plans
+     */
+    public function plans(): JsonResponse
+    {
+        return response()->json(
+            \App\Models\Plan::where('is_enabled', true)->orderBy('order')->get()
+        );
     }
 }

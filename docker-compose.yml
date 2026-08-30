@@ -1,0 +1,44 @@
+services:
+  monit:
+    build: .
+    container_name: monit-app
+    ports:
+      - "8080:80"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: "http://localhost:8080"
+      APP_KEY: "${APP_KEY:-}"
+      APP_CRON_KEY: "${APP_CRON_KEY:-change-me-cron-key}"
+      DB_CONNECTION: sqlite
+      # 切换 MySQL 时启用下方 mysql 服务并改：
+      # DB_CONNECTION: mysql
+      # DB_HOST: monit-db
+      # DB_DATABASE: monit
+      # DB_USERNAME: monit
+      # DB_PASSWORD: monit-secret
+      CACHE_STORE: file
+      QUEUE_CONNECTION: database
+      SESSION_DRIVER: file
+      MAIL_MAILER: log
+    volumes:
+      - monit-data:/var/www/html/storage
+      - monit-db:/var/www/html/database
+    restart: unless-stopped
+    depends_on: []
+
+  # 可选 MySQL（默认 sqlite 零依赖）
+  # monit-db:
+  #   image: mysql:8.0
+  #   environment:
+  #     MYSQL_DATABASE: monit
+  #     MYSQL_USER: monit
+  #     MYSQL_PASSWORD: monit-secret
+  #     MYSQL_ROOT_PASSWORD: root-secret
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #   restart: unless-stopped
+
+volumes:
+  monit-data:
+  monit-db:

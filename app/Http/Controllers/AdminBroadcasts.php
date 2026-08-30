@@ -105,6 +105,35 @@ class AdminBroadcasts extends Controller
             $validated['target_plan_id'] = null;
         }
 
-        return $validated;
+                return $validated;
+    }
+
+    /**
+     * 查看广播详情（含发送状态统计）
+     * 规格书 §6.3.4：/admin/broadcast-view
+     */
+    public function show(int $broadcastId)
+    {
+        $broadcast = Broadcast::with('user')->findOrFail($broadcastId);
+
+        return view('admin.broadcasts.view', compact('broadcast'))->with('adminNav', 'broadcasts');
+    }
+
+    /**
+     * 复制广播
+     * 规格书 附B：AdminBroadcasts.duplicate
+     */
+    public function duplicate(int $broadcastId): RedirectResponse
+    {
+        $broadcast = Broadcast::findOrFail($broadcastId);
+
+        $newBroadcast = $broadcast->replicate();
+        $newBroadcast->status = 'draft';
+        $newBroadcast->title = $broadcast->title . ' (' . __('msg.copy') . ')';
+        $newBroadcast->datetime = now();
+        $newBroadcast->save();
+
+        return redirect()->route('admin.broadcasts.edit', $newBroadcast->broadcast_id)
+                        ->with('success', __('msg.broadcast_duplicated'));
     }
 }

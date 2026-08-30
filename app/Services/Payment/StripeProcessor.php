@@ -108,6 +108,12 @@ class StripeProcessor
                 'event' => 'subscription_cancelled',
                 'subscription_id' => $payload['data']['object']['id'] ?? null,
             ],
+            'payment_intent.payment_failed' => [
+                'event' => 'payment_failure',
+                'external_id' => $payload['data']['object']['id'] ?? null,
+                'payment_id' => $payload['data']['object']['metadata']['payment_id'] ?? null,
+                'reason' => $payload['data']['object']['last_payment_error']['message'] ?? null,
+            ],
             default => [
                 'event' => 'unknown',
                 'type' => $type,

@@ -2,7 +2,7 @@
 @section('content')
 <div class="p-8">
     <x-stats-header :website="$website" :title="__('stats.goals_title')">
-        <a href="{{ route('stats.goals.create', $website->website_id) }}" class="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('stats.create_goal') }}</a>
+        <a href="{{ route('goals.create', $website->website_id) }}" class="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('stats.create_goal') }}</a>
     </x-stats-header>
     <div class="rounded-2xl border border-zinc-200 bg-white overflow-x-auto">
         <table class="w-full text-sm"><thead class="bg-zinc-50 text-left"><tr><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.goal_name') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.goal_type') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.goal_path') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.goal_conversions') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.goal_status') }}</th></tr></thead>

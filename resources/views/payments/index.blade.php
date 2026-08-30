@@ -10,9 +10,12 @@
     <div class="mt-6 rounded-2xl border border-zinc-200 bg-white p-6">
         <h3 class="text-sm font-semibold text-zinc-900">{{ __('payments.current_plan') }}</h3>
         <div class="mt-3 flex items-center gap-4">
+            @php
+                $planCurrency = $user->payment_currency ?? config('monit.payment.default_currency');
+            @endphp
             <span class="rounded-xl bg-brand-100 px-4 py-2 text-sm font-semibold text-brand-700">{{ $currentPlan->name ?? __('payments.free_plan') }}</span>
-            @if($currentPlan && $currentPlan->price > 0)
-            <span class="text-sm text-zinc-500">{{ $currentPlan->price }} {{ $currentPlan->currency ?? 'USD' }} / {{ __('payments.' . ($currentPlan->interval ?? 'month')) }}</span>
+            @if($currentPlan && ($currentPlan->prices[$planCurrency]['monthly'] ?? 0) > 0)
+            <span class="text-sm text-zinc-500">{{ $currentPlan->prices[$planCurrency]['monthly'] }} {{ $planCurrency }} / {{ __('payments.monthly') }}</span>
             @endif
         </div>
         @if($user->plan_expiration_date)
@@ -26,23 +29,34 @@
         <h2 class="text-lg font-semibold text-zinc-900">{{ __('payments.choose_plan') }}</h2>
         <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach($plans as $plan)
+            @php
+                $currency = $user->payment_currency ?? config('monit.payment.default_currency');
+                $prices = $plan->prices[$currency] ?? [];
+            @endphp
             <div class="rounded-2xl border border-zinc-200 bg-white p-6 flex flex-col">
                 <h4 class="font-semibold text-zinc-900">{{ $plan->name }}</h4>
-                <p class="mt-1 text-2xl font-bold text-brand-600">{{ $plan->price }} <span class="text-sm font-normal text-zinc-400">{{ $plan->currency ?? 'USD' }} / {{ __('payments.' . ($plan->interval ?? 'month')) }}</span></p>
-                @if($plan->features)
-                <ul class="mt-4 space-y-2 text-sm text-zinc-600">
-                    @foreach(json_decode($plan->features, true) ?? [] as $feature)
-                    <li class="flex items-center gap-2"><svg class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{{ $feature }}</li>
-                    @endforeach
-                </ul>
+                <p class="mt-1 text-2xl font-bold text-brand-600">
+                    {{ $prices['monthly'] ?? '—' }}
+                    <span class="text-sm font-normal text-zinc-400">{{ $currency }} / {{ __('payments.monthly') }}</span>
+                </p>
+                @if($plan->description)
+                <p class="mt-2 text-sm text-zinc-500">{{ $plan->description }}</p>
                 @endif
                 <div class="mt-auto pt-4">
                     <form method="POST" action="{{ route('payments.checkout') }}">@csrf
                         <input type="hidden" name="plan_id" value="{{ $plan->plan_id }}">
                         <div class="space-y-3">
                             <div>
+                                <label class="block text-xs font-medium text-zinc-500">{{ __('payments.billing_frequency') }}</label>
+                                <select name="frequency" class="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
+                                    @foreach(['monthly', 'annual', 'lifetime'] as $frequency)
+                                    <option value="{{ $frequency }}">{{ __('payments.frequency_' . $frequency) }}（{{ $prices[$frequency] ?? '—' }} {{ $currency }}）</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
                                 <label class="block text-xs font-medium text-zinc-500">{{ __('payments.payment_method') }}</label>
-                                <select name="payment_method" class="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
+                                <select name="processor" class="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
                                     @foreach(config('monit.payment.supported_processors') as $processor)
                                     <option value="{{ $processor }}">{{ __('payments.processor_' . $processor) }}</option>
                                     @endforeach
@@ -50,7 +64,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-zinc-500">{{ __('payments.discount_code') }}</label>
-                                <input type="text" name="discount_code" placeholder="{{ __('payments.discount_code_placeholder') }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
+                                <input type="text" name="code" placeholder="{{ __('payments.discount_code_placeholder') }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
                             </div>
                             <button class="w-full rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('payments.subscribe') }}</button>
                         </div>
@@ -77,14 +91,17 @@
         </div>
         <div class="mt-4 space-y-3">
             @forelse($recentPayments ?? [] as $payment)
+            @php
+                $statusKey = [0 => 'pending', 1 => 'completed', 2 => 'failed', 3 => 'refunded'][$payment->status] ?? 'pending';
+            @endphp
             <div class="rounded-2xl border border-zinc-200 bg-white p-4 flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-zinc-900">{{ $payment->plan->name ?? '-' }}</p>
-                    <p class="mt-1 text-xs text-zinc-400">{{ $payment->datetime->format('Y-m-d H:i') }} · {{ $payment->payment_method }}</p>
+                    <p class="text-sm font-medium text-zinc-900">{{ __('payments.processor_' . $payment->payment_processor) }}</p>
+                    <p class="mt-1 text-xs text-zinc-400">{{ $payment->datetime->format('Y-m-d H:i') }} · {{ $payment->frequency }}</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-sm font-semibold text-zinc-900">{{ $payment->amount }} {{ $payment->currency }}</p>
-                    <span class="mt-1 inline-block rounded-lg px-2 py-0.5 text-xs font-medium {{ $payment->status === 'completed' ? 'bg-emerald-100 text-emerald-700' : ($payment->status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">{{ __('payments.status_' . $payment->status) }}</span>
+                    <p class="text-sm font-semibold text-zinc-900">{{ $payment->total_amount }} {{ $payment->currency }}</p>
+                    <span class="mt-1 inline-block rounded-lg px-2 py-0.5 text-xs font-medium {{ $payment->status === 1 ? 'bg-emerald-100 text-emerald-700' : ($payment->status === 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">{{ __('payments.status_' . $statusKey) }}</span>
                 </div>
             </div>
             @empty

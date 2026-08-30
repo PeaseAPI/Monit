@@ -21,6 +21,16 @@ class StatisticsService
 
     protected Carbon $endDate;
 
+    /** §5.3 AnalyticsFilters：path 前缀 / 其余精确 */
+    protected array $filters = [];
+
+    /** 允许的过滤器维度 */
+    public const FILTER_DIMENSIONS = [
+        'path', 'referrer_host', 'utm_source', 'utm_medium', 'utm_campaign',
+        'country_code', 'continent_code', 'device_type', 'os_name', 'browser_name',
+        'browser_language', 'goal_id',
+    ];
+
     public function __construct(protected Website $website)
     {
         $this->isLightweight = $website->isLightweight();
@@ -29,6 +39,66 @@ class StatisticsService
     public static function for(Website $website): static
     {
         return new static($website);
+    }
+
+    /**
+     * 设置过滤器（规格 §5.3）：['path' => '/blog', 'country_code' => 'CN']
+     * path 与 referrer_host 为前缀匹配，其余精确匹配
+     */
+    public function filters(array $filters): static
+    {
+        foreach ($filters as $dimension => $value) {
+            if (in_array($dimension, static::FILTER_DIMENSIONS, true) && $value !== null && $value !== '') {
+                $this->filters[$dimension] = (string) $value;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * 应用过滤器到 events 级查询（sessions_events / lightweight_events）
+     * 访客维度（country/device/os/browser/language）通过子查询限定 visitor_id
+     */
+    protected function applyFilters($query, string $model): void
+    {
+        $visitorDimensions = ['country_code', 'continent_code', 'device_type', 'os_name', 'browser_name', 'browser_language'];
+
+        foreach ($this->filters as $dimension => $value) {
+            if ($dimension === 'goal_id') {
+                // 目标过滤（规格 §5.3）：限定为已转化该目标的访客（仅 Advanced；LW 无访客关联）
+                if ($model === 'advanced') {
+                    $query->whereIn('visitor_id', function ($q) use ($value) {
+                        $q->select('visitor_id')
+                            ->from('goals_conversions')
+                            ->where('goal_id', (int) $value)
+                            ->whereNotNull('visitor_id');
+                    });
+                }
+
+                continue;
+            }
+
+            if (in_array($dimension, $visitorDimensions, true)) {
+                if ($model === 'lightweight') {
+                    // LW 单表自带部分维度列
+                    if (in_array($dimension, ['country_code', 'continent_code', 'device_type', 'os_name', 'browser_name', 'browser_language'], true)) {
+                        $query->where($dimension, '=', $value);
+                    }
+                } else {
+                    $query->whereIn('visitor_id', function ($q) use ($dimension, $value) {
+                        $q->select('visitor_id')
+                            ->from('websites_visitors')
+                            ->where('website_id', $this->website->website_id)
+                            ->where($dimension, '=', $value);
+                    });
+                }
+            } elseif ($dimension === 'path' || $dimension === 'referrer_host') {
+                $query->where($dimension, 'like', $value.'%');
+            } else {
+                $query->where($dimension, '=', $value);
+            }
+        }
     }
 
     public function between(Carbon $start, Carbon $end): static
@@ -57,11 +127,13 @@ class StatisticsService
     public function overview(): array
     {
         if ($this->isLightweight) {
-            $pageviews = LightweightEvent::query()
+            $lwQuery = LightweightEvent::query()
                 ->where('website_id', $this->website->website_id)
                 ->whereBetween('date', [$this->startDate, $this->endDate])
-                ->whereIn('type', ['landing_page', 'pageview'])
-                ->count();
+                ->whereIn('type', ['landing_page', 'pageview']);
+            $this->applyFilters($lwQuery, 'lightweight');
+
+            $pageviews = (clone $lwQuery)->count();
 
             // 轻量模式无访客关联：以总量近似
             return [
@@ -74,6 +146,7 @@ class StatisticsService
             ->where('website_id', $this->website->website_id)
             ->whereBetween('date', [$this->startDate, $this->endDate])
             ->whereIn('type', ['landing_page', 'pageview']);
+        $this->applyFilters($events, 'advanced');
 
         $pageviews = (clone $events)->count();
         $visitors = (clone $events)->distinct('visitor_id')->count('visitor_id');
@@ -183,17 +256,20 @@ class StatisticsService
     public function breakdown(string $dimension, int $limit = 10): array
     {
         $allowed = ['path', 'referrer_host', 'utm_source', 'utm_medium', 'utm_campaign',
-            'country_code', 'device_type', 'os_name', 'browser_name'];
+            'continent_code', 'country_code', 'city_name', 'device_type', 'os_name',
+            'browser_name', 'browser_language', 'theme'];
 
         if (! in_array($dimension, $allowed, true)) {
             return [];
         }
 
         if ($this->isLightweight) {
-            $rows = LightweightEvent::query()
+            $lwB = LightweightEvent::query()
                 ->where('website_id', $this->website->website_id)
                 ->whereBetween('date', [$this->startDate, $this->endDate])
-                ->whereIn('type', ['landing_page', 'pageview'])
+                ->whereIn('type', ['landing_page', 'pageview']);
+            $this->applyFilters($lwB, 'lightweight');
+            $rows = $lwB
                 ->groupBy($dimension)
                 ->selectRaw("{$dimension} as k, count(*) as total")
                 ->orderByDesc('total')
@@ -201,7 +277,7 @@ class StatisticsService
                 ->get();
         } else {
             // 访客维度信息在 websites_visitors 表
-            $visitorDimensions = ['country_code', 'device_type', 'os_name', 'browser_name'];
+            $visitorDimensions = ['continent_code', 'country_code', 'city_name', 'device_type', 'os_name', 'browser_name', 'browser_language', 'theme'];
 
             if (in_array($dimension, $visitorDimensions, true)) {
                 $rows = DB::table('sessions_events')
@@ -215,10 +291,12 @@ class StatisticsService
                     ->limit($limit)
                     ->get();
             } else {
-                $rows = DB::table('sessions_events')
+                $evtB = DB::table('sessions_events')
                     ->where('website_id', $this->website->website_id)
                     ->whereBetween('date', [$this->startDate, $this->endDate])
-                    ->whereIn('type', ['landing_page', 'pageview'])
+                    ->whereIn('type', ['landing_page', 'pageview']);
+                $this->applyFilters($evtB, 'advanced');
+                $rows = $evtB
                     ->groupBy($dimension)
                     ->selectRaw("{$dimension} as k, count(*) as total")
                     ->orderByDesc('total')

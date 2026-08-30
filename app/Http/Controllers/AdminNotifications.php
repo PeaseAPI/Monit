@@ -69,11 +69,78 @@ class AdminNotifications extends Controller
                         ->with('success', __('msg.notification_sent', ['count' => $count]));
     }
 
-    public function destroy(int $notificationId): RedirectResponse
+        public function destroy(int $notificationId): RedirectResponse
     {
         InternalNotification::findOrFail($notificationId)->delete();
 
         return redirect()->route('admin.notifications.index')
                         ->with('success', __('msg.notification_deleted'));
+    }
+
+    // ========================================
+    // Push Notification Campaign 管理（规格书 §14.5）
+    // ========================================
+
+    public function pushIndex()
+    {
+        $campaigns = \App\Models\PushNotificationCampaign::orderByDesc('push_notification_campaign_id')->paginate(25);
+
+        return view('admin.push-notifications.index', compact('campaigns'))->with('adminNav', 'push-notifications');
+    }
+
+    public function pushCreate()
+    {
+        return view('admin.push-notifications.create')->with('adminNav', 'push-notifications');
+    }
+
+    public function pushStore(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:256'],
+            'title' => ['required', 'string', 'max:256'],
+            'body' => ['required', 'string', 'max:2048'],
+            'url' => ['nullable', 'url', 'max:2048'],
+        ]);
+
+        \App\Models\PushNotificationCampaign::create([
+            ...$validated,
+            'status' => 'pending',
+            'datetime' => now(),
+        ]);
+
+        return redirect()->route('admin.push-notifications.index')
+                        ->with('success', __('msg.campaign_created'));
+    }
+
+    public function pushEdit(int $campaign)
+    {
+        $campaign = \App\Models\PushNotificationCampaign::findOrFail($campaign);
+
+        return view('admin.push-notifications.edit', compact('campaign'))->with('adminNav', 'push-notifications');
+    }
+
+    public function pushUpdate(Request $request, int $campaign): RedirectResponse
+    {
+        $campaign = \App\Models\PushNotificationCampaign::findOrFail($campaign);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:256'],
+            'title' => ['required', 'string', 'max:256'],
+            'body' => ['required', 'string', 'max:2048'],
+            'url' => ['nullable', 'url', 'max:2048'],
+        ]);
+
+        $campaign->update($validated);
+
+        return redirect()->route('admin.push-notifications.index')
+                        ->with('success', __('msg.campaign_updated'));
+    }
+
+    public function pushDestroy(int $campaign): RedirectResponse
+    {
+        \App\Models\PushNotificationCampaign::findOrFail($campaign)->delete();
+
+        return redirect()->route('admin.push-notifications.index')
+                        ->with('success', __('msg.campaign_deleted'));
     }
 }

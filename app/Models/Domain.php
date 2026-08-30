@@ -11,12 +11,13 @@ class Domain extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'user_id', 'scheme', 'host', 'is_enabled', 'datetime',
+        'user_id', 'scheme', 'host', 'type', 'is_enabled', 'datetime',
     ];
 
     protected function casts(): array
     {
         return [
+            'type' => 'integer', // 0=用户自定义域名 / 1=平台主域名（§3.1）
             'is_enabled' => 'boolean',
             'datetime' => 'datetime',
         ];

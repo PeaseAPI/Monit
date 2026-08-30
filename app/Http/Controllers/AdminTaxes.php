@@ -69,11 +69,56 @@ class AdminTaxes extends Controller
                         ->with('success', __('msg.tax_updated'));
     }
 
-    public function destroy(int $taxId): RedirectResponse
+        public function destroy(int $taxId): RedirectResponse
     {
         Tax::find($taxId)->delete();
 
         return redirect()->route('admin.taxes.index')
                         ->with('success', __('msg.tax_deleted'));
+    }
+
+    /**
+     * 批量导入税费（CSV）
+     * 规格书 §6.3.3：/admin/taxes-import
+     */
+    public function importForm()
+    {
+        return view('admin.taxes.import')->with('adminNav', 'taxes');
+    }
+
+    /**
+     * 处理 CSV 导入
+     * CSV 格式：name,description,value,value_type,type,billing_type,countries
+     */
+    public function import(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        $file = $request->file('file');
+        $handle = fopen($file->getRealPath(), 'r');
+        $header = fgetcsv($handle); // skip header
+        $count = 0;
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) < 6) continue;
+
+            Tax::create([
+                'name' => $row[0],
+                'description' => $row[1] ?? null,
+                'value' => (float) $row[2],
+                'value_type' => $row[3] ?? 'percentage',
+                'type' => $row[4] ?? 'exclusive',
+                'billing_type' => $row[5] ?? 'personal',
+                'countries' => $row[6] ?? null,
+            ]);
+            $count++;
+        }
+
+        fclose($handle);
+
+        return redirect()->route('admin.taxes.index')
+                        ->with('success', __('msg.taxes_imported', ['count' => $count]));
     }
 }

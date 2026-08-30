@@ -24,14 +24,17 @@
             @csrf
 
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">{{ __('auth.email') }}</label>
-                <input id="email" name="email" type="email" autocomplete="email" required
+                <label for="email" class="block text-sm font-medium text-gray-700">{{ ($smsForgotEnabled ?? false) ? __('auth.login_identifier') : __('auth.email') }}</label>
+                <input id="email" name="email" type="text" autocomplete="email" required
                     class="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="{{ __('auth.email_placeholder') }}"
+                    placeholder="{{ ($smsForgotEnabled ?? false) ? __('auth.phone_or_email_placeholder') : __('auth.email_placeholder') }}"
                     value="{{ old('email') }}">
                 @error('email')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
+                @if($smsForgotEnabled ?? false)
+                    <p class="mt-1 text-xs text-gray-400">{{ __('auth.sms_forgot_hint') }}</p>
+                @endif
             </div>
 
             <div>
@@ -39,6 +42,14 @@
                     {{ __('auth.send_reset_link') }}
                 </button>
             </div>
+
+            @if($smsForgotEnabled ?? false)
+                <div class="text-center">
+                    <a href="{{ route('password.reset_sms') }}" class="text-sm text-blue-600 hover:text-blue-500">
+                        {{ __('auth.reset_by_sms') }}
+                    </a>
+                </div>
+            @endif
 
             <div class="text-center">
                 <a href="{{ route('login') }}" class="text-sm text-blue-600 hover:text-blue-500">

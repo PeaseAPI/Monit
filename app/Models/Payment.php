@@ -12,7 +12,7 @@ class Payment extends Model
 
     protected $fillable = [
         'user_id', 'name', 'email', 'external_id', 'payment_processor', 'type',
-        'frequency', 'billing', 'status', 'code_id', 'discount_amount', 'total_amount',
+        'frequency', 'base_amount', 'billing', 'status', 'code_id', 'discount_amount', 'taxes_amount', 'total_amount',
         'currency', 'datetime', 'last_datetime',
     ];
 
@@ -20,7 +20,9 @@ class Payment extends Model
     {
         return [
             'billing' => 'array',
+            'base_amount' => 'decimal:2',
             'discount_amount' => 'decimal:2',
+            'taxes_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
             'datetime' => 'datetime',
             'last_datetime' => 'datetime',

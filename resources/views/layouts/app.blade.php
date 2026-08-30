@@ -109,5 +109,7 @@
             </main>
         </div>
     </div>
+
+    @include('parts.cookie_consent')
 </body>
 </html>

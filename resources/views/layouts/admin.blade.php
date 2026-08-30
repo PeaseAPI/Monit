@@ -42,6 +42,10 @@
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         {{ __('admin.domain_management') }}
                 </a>
+                <a href="{{ route('admin.teams.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'teams' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M16 3.13a4 4 0 010 7.75M12 7a4 4 0 11-8 0 4 4 0 018 0zm0 13v-1a4 4 0 00-4-4H7a4 4 0 00-4 4v1h9zm8-1v-1a4 4 0 00-3-3.87"/></svg>
+                                        {{ __('admin.teams') }}
+                </a>
                 <div class="mt-4 pt-4 border-t border-zinc-800">
                     <p class="px-3 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">{{ __('admin.commerce') }}</p>
                 </div>
@@ -83,6 +87,33 @@
                 <a href="{{ route('admin.notifications.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'notifications' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                                         {{ __('admin.internal_notifications') }}
+                </a>
+                <div class="mt-4 pt-4 border-t border-zinc-800">
+                    <p class="px-3 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">{{ __('admin.platform_ops') }}</p>
+                </div>
+                <a href="{{ route('admin.annotations.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'annotations' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 20l4-16m2 16l-4-16M6 9h14M4 15h14"/></svg>
+                                        {{ __('admin.annotations') }}
+                </a>
+                <a href="{{ route('admin.heatmaps.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'heatmaps' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6-9a2 2 0 012-2h2a2 2 0 012 2m0 4V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"/></svg>
+                                        {{ __('admin.heatmaps') }}
+                </a>
+                <a href="{{ route('admin.replays.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'replays' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                        {{ __('admin.replays') }}
+                </a>
+                <a href="{{ route('admin.logs.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'logs' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                        {{ __('admin.account_logs') }}
+                </a>
+                <a href="{{ route('admin.languages.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'languages' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                                        {{ __('admin.languages') }}
+                </a>
+                <a href="{{ route('admin.push-subscribers.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'push-subscribers' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                        {{ __('admin.push_subscribers') }}
                 </a>
                 <div class="mt-4 pt-4 border-t border-zinc-800">
                     <p class="px-3 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">{{ __('admin.settings') }}</p>

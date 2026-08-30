@@ -20,13 +20,14 @@ return new class extends Migration
             $table->unique(['user_id', 'host']);
         });
 
-        // dashboard_views
+                // dashboard_views
         Schema::create('dashboard_views', function (Blueprint $table) {
             $table->increments('dashboard_view_id');
-            $table->foreignId('website_id');
+            $table->foreignId('website_id')->nullable();
             $table->foreignId('user_id');
             $table->string('name', 128);
             $table->json('settings');
+            $table->unsignedInteger('order')->default(0);
             $table->dateTime('datetime');
         });
     }

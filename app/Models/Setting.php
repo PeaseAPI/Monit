@@ -22,4 +22,15 @@ class Setting extends Model
             'value' => 'json',
         ];
     }
+
+    /**
+     * Get all settings for a given group prefix
+     */
+    public static function getGroup(string $prefix): array
+    {
+        return static::where('key', 'like', "{$prefix}_%")
+            ->get()
+            ->mapWithKeys(fn ($s) => [str_replace("{$prefix}_", '', $s->key) => $s->value])
+            ->toArray();
+    }
 }

@@ -49,9 +49,35 @@ class IndexController extends Controller
         return view('page', compact('page'));
     }
 
+    /**
+     * 自定义页面索引（规格书 §6.1：/pages）
+     */
+    public function pages()
+    {
+        $pages = \App\Models\Page::where('is_published', true)->orderBy('order')->get();
+
+        return view('pages', compact('pages'));
+    }
+
     public function help()
     {
         return view('help');
+    }
+
+    /**
+     * 联盟计划公开介绍页（规格 §6.1：/affiliate，插件启用时）
+     */
+    public function affiliate()
+    {
+        if (\App\Support\Settings::get('affiliate.affiliate_is_enabled') !== 'true') {
+            abort(404);
+        }
+
+        return view('affiliate', [
+            'commission' => (float) \App\Support\Settings::get('affiliate.affiliate_commission_percentage', 20),
+            'cookieDays' => (int) \App\Support\Settings::get('affiliate.affiliate_cookie_duration_days', 30),
+            'minWithdrawal' => (float) \App\Support\Settings::get('affiliate.affiliate_minimum_withdrawal_amount', 50),
+        ]);
     }
 
     public function contact()
@@ -148,7 +174,31 @@ class IndexController extends Controller
             $user->update(['is_newsletter_subscribed' => false]);
         }
 
-        return view('unsubscribe', ['email' => $email, 'already' => $already || ! $user]);
+                return view('unsubscribe', ['email' => $email, 'already' => $already || ! $user]);
+    }
+
+    /**
+     * 邮件退订 POST 处理（规格书 §6.1：/unsubscribe POST）
+     */
+    public function unsubscribePost(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email'],
+            'sig' => ['required', 'string'],
+        ]);
+
+        $expected = hash_hmac('sha256', $validated['email'], config('app.key'));
+
+        if (! hash_equals($expected, $validated['sig'])) {
+            return redirect()->route('index')->with('error', __('msg.invalid_unsubscribe_link'));
+        }
+
+        $user = User::where('email', $validated['email'])->first();
+        if ($user && $user->is_newsletter_subscribed) {
+            $user->update(['is_newsletter_subscribed' => false]);
+        }
+
+        return redirect()->route('index')->with('success', __('msg.unsubscribed'));
     }
 
     /**

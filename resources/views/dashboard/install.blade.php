@@ -5,7 +5,8 @@
 @section('content')
     @php
         $pixelUrl = url('/assets/pixel/monit.js');
-        $snippet = '<script src="' . $pixelUrl . '" data-monit="' . $website->pixel_key . '" async></script>';
+        $mode = $website->isLightweight() ? 'lightweight' : 'advanced';
+        $snippet = '<script src="' . $pixelUrl . '" data-website-id="' . $website->pixel_key . '" data-mode="' . $mode . '" async></script>';
     @endphp
 
     <div class="mx-auto max-w-3xl">
