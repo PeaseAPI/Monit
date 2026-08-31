@@ -12,6 +12,9 @@ use Illuminate\Database\Seeder;
  *   php artisan db:seed --class=DemoDataSeeder --force
  *
  * 网页安装向导（InstallController）同样只跑 CoreDataSeeder。
+ *
+ * 生产配置导入（www_monit_cn.sql 提取的三档定价/税费/品牌备案）不随默认 seed 执行：
+ *   php artisan db:seed --class=ProductionSeeder --force
  */
 class DatabaseSeeder extends Seeder
 {

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -30,7 +31,9 @@ return new class extends Migration
             $table->unsignedInteger('heatmap_id');
             $table->unsignedInteger('website_id');
             $table->enum('type', ['desktop', 'tablet', 'mobile'])->default('desktop');
-            $table->longText('data');
+            // gzencode 压缩后的 rrweb DOM 快照（二进制，规格 §4.4）：utf8mb4 文本列存二进制
+            // 会被 MySQL 1366 拒绝；BLOB 上限 64KB 不够整页 DOM，升为 LONGBLOB（up() 末尾 ALTER）
+            $table->binary('data');
             $table->dateTime('date');
         });
 
@@ -57,6 +60,9 @@ return new class extends Migration
             $table->dateTime('last_datetime');
             $table->dateTime('datetime');
         });
+
+        // BLOB(64KB) → LONGBLOB(4GB)：整页 rrweb DOM 快照（gzip 后仍可达数百 KB）
+        DB::statement('ALTER TABLE heatmaps_snapshots MODIFY data LONGBLOB NOT NULL');
     }
 
     public function down(): void

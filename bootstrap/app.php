@@ -6,6 +6,7 @@ use App\Http\Middleware\CheckMaintenance;
 use App\Http\Middleware\EnsureInstalled;
 use App\Http\Middleware\EnforcePlanLimits;
 use App\Http\Middleware\EnsureUserActive;
+use App\Http\Middleware\SetLocale;
 use App\Models\Website;
 use App\Policies\WebsitePolicy;
 use Illuminate\Foundation\Application;
@@ -47,9 +48,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 维护模式（规格书 §6.1）：settings main.maintenance_is_enabled 开启时非管理员跳转维护页
         // 封禁用户登出（规格书 §2）：status != 1 的已登录会话在下一个请求立即终止
+        // 前台语言切换（/locale/{code} → session → 本中间件 setLocale）
         $middleware->web(append: [
             CheckMaintenance::class,
             EnsureUserActive::class,
+            SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

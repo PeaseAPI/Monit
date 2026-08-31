@@ -35,12 +35,21 @@ class IndexController extends Controller
         $currency = Currency::normalize((string) session('landing_currency', ''));
 
         // 定价卡：优先 prices 直配价，无则按默认货币价 × 汇率换算（规格书 §10.4）
+        // 定价卡：优先 prices 直配价，无则按默认货币价 × 汇率换算（规格书 §10.4）
+        // 同时输出年付价（原站定价区月/年切换 + 折扣徽章）
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get()->map(function (Plan $plan) use ($currency) {
             $plan->landing_price = Currency::planPrice($plan, $currency, 'monthly');
+            $plan->landing_price_annual = Currency::planPrice($plan, $currency, 'annual');
             $plan->landing_currency = $currency;
 
             return $plan;
         });
+
+        // 平台统计徽章（原站 hero 下方 "9 websites / 44K pageviews"）：1 分钟缓存
+        $stats = cache()->remember('landing.stats', 60, fn () => [
+            'websites' => \App\Models\Website::count(),
+            'pageviews' => \App\Models\SessionEvent::count() + \App\Models\LightweightEvent::count(),
+        ]);
 
         // M23 模板机制：落地页主题由后台 branding.landing_theme 控制，
         // 视图解析 themes/{theme}/index.blade.php，不存在时回退 default 主题。
@@ -54,6 +63,7 @@ class IndexController extends Controller
             'plans' => $plans,
             'currency' => $currency,
             'currencies' => $currencies,
+            'stats' => $stats,
         ]);
     }
 

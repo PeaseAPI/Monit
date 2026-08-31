@@ -36,7 +36,9 @@ class EnsureInstalled
         $isInstallRoute = $request->is('install', 'install/*');
 
         if (InstallState::installed()) {
-            return $isInstallRoute ? redirect('/') : $next($request);
+            // 完成页（第 5 步）是向导收尾：安装完成后仍允许访问查看汇总信息，
+            // 其余 /install* 一律失效跳首页（防重装/信息泄露）
+            return ($isInstallRoute && ! $request->is('install/finish')) ? redirect('/') : $next($request);
         }
 
         if ($isInstallRoute || $request->is(...$this->allowed)) {

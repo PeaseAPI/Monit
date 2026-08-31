@@ -33,8 +33,10 @@ class WebsiteMaintenanceCommand extends Command
         HeatmapSnapshotClick::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
         HeatmapSnapshotScroll::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
 
-        // 2. 清理过期的会话回放
-        SessionReplay::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
+        // 2. 清理过期的会话回放（sessions_replays 无 expiration_date，用 datetime + 留存期判定，
+        //    与 AnalyticsCleanupCommand 口径一致；规格 §13.1）
+        $replaysRetentionDays = (int) config('app.replays_retention_days', 30);
+        SessionReplay::where('datetime', '<', $now->copy()->subDays($replaysRetentionDays))->delete();
 
         // 3. 清理过期的轻事件
         LightweightEvent::where('expiration_date', '<', $now->format('Y-m-d'))->delete();

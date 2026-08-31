@@ -122,6 +122,16 @@ Route::post('/webhooks/alipay', [WebhookPaymentController::class, 'alipay'])->na
 // 前台公开页面（规格书 §6.1）
 // ========================================
 Route::get('/', [IndexController::class, 'index'])->name('index');
+
+// 前台语言切换（原版 settings.languages 对应物）：白名单内写入 session 后返回来路
+Route::get('/locale/{locale}', function (string $locale) {
+    if (array_key_exists($locale, (array) config('monit.locales'))) {
+        session(['locale' => $locale]);
+    }
+
+    return redirect()->back(fallback: route('index'));
+})->name('locale.switch');
+
 Route::get('/blog', [IndexController::class, 'blog'])->name('blog');
 Route::get('/blog/{url}', [IndexController::class, 'blogPost'])->name('blog.post');
 Route::get('/page/{url}', [IndexController::class, 'page'])->name('page');
@@ -524,6 +534,7 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     Route::get('/admin/statistics', [AdminStatistics::class, 'index'])->name('admin.statistics');
     Route::get('/admin/settings', [AdminSettings::class, 'index'])->name('admin.settings.index');
     Route::put('/admin/settings', [AdminSettings::class, 'update'])->name('admin.settings.update');
+    Route::post('/admin/settings/clear-cache', [AdminSettings::class, 'clearCache'])->name('admin.settings.clear_cache');
 
     // 插件管理（规格书 §14：install → activate → deactivate → uninstall）
     Route::get('/admin/plugins', [AdminPlugins::class, 'index'])->name('admin.plugins.index');

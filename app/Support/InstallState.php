@@ -30,7 +30,7 @@ class InstallState
         }
 
         // 兜底：数据库已有管理员账户视为已安装
-        // （sqlite 文件不存在 / MySQL 未配好时连接会抛异常，此时视为未安装）
+        // （MySQL 未配好时连接会抛异常，此时视为未安装）
         try {
             return Schema::hasTable('users') && User::where('type', 1)->exists();
         } catch (\Throwable) {

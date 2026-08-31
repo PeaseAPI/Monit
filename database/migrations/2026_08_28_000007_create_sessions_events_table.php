@@ -39,7 +39,9 @@ return new class extends Migration
             $table->index(['website_id', 'date']);
             $table->index(['session_id', 'date']);
             $table->index(['visitor_id', 'date']);
-            $table->index(['website_id', 'path']);
+            // MySQL InnoDB 索引上限 3072 字节：path varchar(2048) utf8mb4 无法整列建索引，
+            // 用前缀索引（URL 分组统计取前 500 字符足够区分）
+            $table->rawIndex('website_id, path(500)', 'sessions_events_web_path_prefix_idx');
             $table->index(['website_id', 'referrer_host']);
         });
     }

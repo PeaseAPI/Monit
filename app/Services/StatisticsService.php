@@ -380,9 +380,8 @@ class StatisticsService
             return [];
         }
 
-        $hexFunc = DB::getDriverName() === 'sqlite'
-            ? 'LOWER(HEX(websites_visitors.visitor_uuid_binary))'
-            : 'HEX(websites_visitors.visitor_uuid_binary)';
+        // MySQL：BINARY(16) UUID 十六进制展示（HEX 大写，前端小写化由展示层决定）
+        $hexFunc = 'HEX(websites_visitors.visitor_uuid_binary)';
 
         $rows = DB::table('websites_visitors')
             ->join('sessions_events', 'websites_visitors.visitor_id', '=', 'sessions_events.visitor_id')
@@ -535,9 +534,7 @@ class StatisticsService
      */
     public function hourlySeries(): array
     {
-        $hourExpr = DB::getDriverName() === 'sqlite'
-            ? "strftime('%H', date)"
-            : "date_format(date, '%H')";
+        $hourExpr = "date_format(date, '%H')";
 
         if ($this->isLightweight) {
             $rows = LightweightEvent::query()
@@ -842,15 +839,13 @@ class StatisticsService
 
     /**
      * M22 星期分布（原版 weekdays 页）：周一至周日 PV 与访客分布
-     * 兼容 sqlite（strftime %w：0=周日）与 mysql（DAYOFWEEK：1=周日）→ 统一为 0=周日
+     * MySQL DAYOFWEEK（1=周日）-1 → 统一为 0=周日
      *
      * @return array<int, array{dow: int, label: string, pageviews: int, visitors: int}>
      */
     public function weekdaySeries(): array
     {
-        $dowExpr = DB::getDriverName() === 'sqlite'
-            ? "CAST(strftime('%w', date) AS INTEGER)"
-            : '(DAYOFWEEK(date) - 1)';
+        $dowExpr = '(DAYOFWEEK(date) - 1)';
 
         if ($this->isLightweight) {
             $rows = LightweightEvent::query()
@@ -872,7 +867,7 @@ class StatisticsService
 
         $byDow = [];
         foreach ($rows as $row) {
-            $srcDow = (int) $row->dow;          // 源：0=周日（sqlite %w / mysql DAYOFWEEK-1 一致）
+            $srcDow = (int) $row->dow;          // 源：0=周日（mysql DAYOFWEEK-1）
             $iso = $srcDow === 0 ? 7 : $srcDow;  // ISO：1=周一…7=周日
             $byDow[$iso] = ['pageviews' => (int) $row->pageviews, 'visitors' => (int) $row->visitors];
         }

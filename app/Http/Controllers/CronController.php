@@ -130,7 +130,8 @@ class CronController extends Controller
     {
         $retentionDays = (int) config('app.replays_retention_days', 30);
         $count = 0;
-        SessionReplay::where('created_at', '<', now()->subDays($retentionDays))
+        // sessions_replays 无 created_at（timestamps=false），过期判定用 datetime 列
+        SessionReplay::where('datetime', '<', now()->subDays($retentionDays))
             ->limit(30)
             ->each(function ($replay) use (&$count): void {
                 $replay->delete();

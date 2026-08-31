@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\LicenseManager;
 use App\Support\EnvWriter;
 use App\Support\PaymentGatewayCatalog;
 use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -29,6 +31,12 @@ class AdminSettings extends Controller
         // 「支付网关密钥」组不存 settings 表：当前值直接读 .env（EnvWriter）
         $settings['payment_gateways'] = app(EnvWriter::class)
             ->readMany(PaymentGatewayCatalog::keys());
+
+        // business 为持久化设置组（allSettings 已含）；cache/health/support
+        // 为只读运维面板（原系统独立功能页），数据在控制器组装，不接受表单保存
+        $settings['cache'] = $this->cachePanel();
+        $settings['health'] = $this->healthPanel();
+        $settings['support'] = $this->supportPanel();
 
         return view('admin.settings.index', compact('settings'))->with('adminNav', 'settings');
     }
@@ -174,6 +182,83 @@ class AdminSettings extends Controller
         return back()->with('success', __('msg.settings_saved', ['group' => 'payment_gateways']));
     }
 
+    /**
+     * 「缓存」面板：清空缓存（原系统 cache 运维页）
+     *
+     * Settings::flush() 清进程静态缓存 + monit.settings 条目；
+     * cache:clear 清空整个缓存存储（业务缓存/驱动层面）。
+     */
+    public function clearCache(Request $request): RedirectResponse
+    {
+        try {
+            Artisan::call('cache:clear');
+        } catch (\Throwable) {
+            // 无缓存环境下无害
+        }
+
+        Settings::flush();
+
+        return back()->with('success', __('msg.cache_cleared'));
+    }
+
+    /**
+     * 「缓存」面板数据（只读状态）
+     */
+    protected function cachePanel(): array
+    {
+        return [
+            'driver' => (string) config('cache.default'),
+            'settings_cached' => Cache::has('monit.settings'),
+            'settings_ttl_hours' => 12,
+        ];
+    }
+
+    /**
+     * 「健康检查」面板数据（原系统 health 运维页）
+     */
+    protected function healthPanel(): array
+    {
+        $mysqlVersion = null;
+
+        try {
+            $row = DB::select('select version() as v');
+            $mysqlVersion = $row[0]->v ?? null;
+        } catch (\Throwable) {
+            // 连接失败时留空，页面标红
+        }
+
+        $diskFree = @disk_free_space(base_path());
+        $diskTotal = @disk_total_space(base_path());
+
+        return [
+            'php' => PHP_VERSION,
+            'laravel' => app()->version(),
+            'database_driver' => (string) config('database.default'),
+            'mysql_version' => $mysqlVersion,
+            'cache_driver' => (string) config('cache.default'),
+            'queue_driver' => (string) config('queue.default'),
+            'disk_free' => $diskFree === false ? null : $diskFree,
+            'disk_total' => $diskTotal === false ? null : $diskTotal,
+            'timezone' => (string) config('app.timezone'),
+            'settings_count' => Setting::count(),
+        ];
+    }
+
+    /**
+     * 「支持与授权」面板数据（原系统 support/license 组）
+     */
+    protected function supportPanel(): array
+    {
+        $status = app(LicenseManager::class)->status();
+
+        return [
+            'version' => (string) config('monit.version'),
+            'license_valid' => (bool) $status['valid'],
+            'license_reason' => (string) $status['reason'],
+            'license_data' => $status['data'],
+        ];
+    }
+
     /* --------------------------------------------------------------------- */
     /* 设置分组 & 保存 */
     /* --------------------------------------------------------------------- */
@@ -185,7 +270,9 @@ class AdminSettings extends Controller
             'users' => $this->getGroup('users'),
             'payment' => $this->getGroup('payment'),
             'payment_gateways' => [], // 当前值在 index() 中从 .env 读取（EnvWriter）
+            'business' => $this->getGroup('business'), // 发票抬头企业信息（原库 settings.business 组）
             'analytics' => $this->getGroup('analytics'),
+            'maps' => $this->getGroup('maps'),
             'smtp' => $this->getGroup('smtp'),
             'sms' => $this->getGroup('sms'),
             'ai' => $this->getGroup('ai'),
@@ -266,6 +353,26 @@ class AdminSettings extends Controller
                 'two_fa_is_enabled' => 'boolean',
                 'api_is_enabled' => 'boolean',
                 'user_registration_require_consent' => 'boolean',
+            ],
+            // 发票抬头企业信息（原库 settings.business 组 16 字段全量）
+            // 上游：后台「发票信息」选项卡；下游：AdminInvoice 发票/信用票据抬头与票号前缀
+            'business' => [
+                'brand_name' => 'nullable|string|max:128',
+                'invoice_nr_prefix' => 'nullable|string|max:16',
+                'name' => 'nullable|string|max:128',
+                'address' => 'nullable|string|max:256',
+                'city' => 'nullable|string|max:64',
+                'county' => 'nullable|string|max:64',
+                'zip' => 'nullable|string|max:16',
+                'country' => 'nullable|string|max:8',
+                'email' => 'nullable|email|max:191',
+                'phone' => 'nullable|string|max:32',
+                'tax_type' => 'nullable|string|in:VAT,GST',
+                'tax_id' => 'nullable|string|max:64',
+                'custom_key_one' => 'nullable|string|max:64',
+                'custom_value_one' => 'nullable|string|max:191',
+                'custom_key_two' => 'nullable|string|max:64',
+                'custom_value_two' => 'nullable|string|max:191',
             ],
             'payment' => [
                 'currency' => 'required|string|size:3',
@@ -438,6 +545,11 @@ class AdminSettings extends Controller
                 'logo' => 'nullable|string|max:512',
                 'favicon' => 'nullable|string|max:512',
                 'og_image' => 'nullable|string|max:512',
+            ],
+            'maps' => [
+                'provider' => 'nullable|string|in:none,google,baidu',
+                'baidu_key' => 'nullable|string|max:256',
+                'google_key' => 'nullable|string|max:256',
             ],
             'content' => [
                 'index_html' => 'nullable|string',

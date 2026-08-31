@@ -1,170 +1,203 @@
+{{--
+    管理后台布局（100% 对标原版 monit.cn/admin 结构，Tailwind UI 重写）
+    结构：admin-sidebar（品牌头/菜单/用户菜单）+ admin-content（顶栏/主区）
+    菜单顺序与分组与原版一致：仪表台→用户→设置→套餐→语言→广播→通知→推送→插件→统计
+    →资源(折叠)→博客(折叠)→API | 代码→税费→支付→推广提现 | 网站→热图→回放→批注→域名 | 用户日志
+--}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>@yield('title', __('admin.admin_panel')) · {{ \App\Support\Brand::name() }}</title>
+    <title>@yield('title', __('admin.admin_panel')) · {{ \App\Support\Brand::name() }}</title>
     @include('parts.brand_head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
-    <div class="flex min-h-screen">
-        <aside class="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-zinc-950 md:flex">
-            <a href="{{ route('admin.index') }}" class="flex items-center gap-2.5 border-b border-zinc-800 px-5 py-5">
-                <x-brand-logo dark class="h-9 w-9" text-class="text-lg" />
-                <span class="ml-auto rounded bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">{{ __('admin.admin_label') }}</span>
+<body class="min-h-screen bg-zinc-100/60 font-sans text-zinc-900 antialiased">
+<div class="flex min-h-screen">
+    <div id="admin-sidebar-overlay" class="fixed inset-0 z-30 hidden bg-zinc-900/40 backdrop-blur-sm md:hidden"></div>
+
+    <aside id="admin-sidebar" class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-zinc-200/80 bg-white transition-transform duration-200 md:translate-x-0">
+        {{-- 品牌头（对标 admin-sidebar-title）--}}
+        <div class="flex h-16 shrink-0 items-center gap-2 border-b border-zinc-200/80 px-5">
+            <a href="{{ route('admin.index') }}" class="flex min-w-0 items-center gap-2.5">
+                <x-brand-logo class="h-9 w-9" text-class="hidden" />
+                <span class="truncate text-base font-bold tracking-tight text-zinc-900">{{ \App\Support\Brand::name() }}</span>
             </a>
+            <span class="ml-auto shrink-0 rounded-md bg-brand-50 px-2 py-1 text-[11px] font-semibold text-brand-700">{{ __('admin.admin_label') }}</span>
+            <button type="button" class="ml-0.5 shrink-0 rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 md:hidden" onclick="window.adminToggleSidebar()">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
 
-                        <nav class="mt-4 flex-1 space-y-1 px-3">
-                @php($adminNav = $adminNav ?? '')
-                <a href="{{ route('admin.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'dashboard' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                                        {{ __('admin.dashboard') }}
-                </a>
-                <a href="{{ route('admin.statistics') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'statistics' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                    {{ __('admin.data_statistics') }}
-                </a>
-                <div class="mt-4 pt-4 border-t border-zinc-800">
-                    <p class="px-3 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">{{ __('admin.system_management') }}</p>
-                </div>
-                <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'users' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                                        {{ __('admin.user_management') }}
-                </a>
-                <a href="{{ route('admin.websites.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'websites' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
-                                        {{ __('admin.website_management') }}
-                </a>
-                <a href="{{ route('admin.domains.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'domains' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        {{ __('admin.domain_management') }}
-                </a>
-                <a href="{{ route('admin.teams.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'teams' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M16 3.13a4 4 0 010 7.75M12 7a4 4 0 11-8 0 4 4 0 018 0zm0 13v-1a4 4 0 00-4-4H7a4 4 0 00-4 4v1h9zm8-1v-1a4 4 0 00-3-3.87"/></svg>
-                                        {{ __('admin.teams') }}
-                </a>
-                <div class="mt-4 pt-4 border-t border-zinc-800">
-                    <p class="px-3 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">{{ __('admin.commerce') }}</p>
-                </div>
-                <a href="{{ route('admin.plans.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'plans' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                                        {{ __('admin.plan_management') }}
-                </a>
-                <a href="{{ route('admin.payments.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'payments' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                                        {{ __('admin.payment_records') }}
-                </a>
-                <a href="{{ route('admin.affiliates-withdrawals.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'affiliates' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v10m0 0l-3.5-3.5M12 13l3.5-3.5M4 15v3a3 3 0 003 3h10a3 3 0 003-3v-3"/></svg>
-                                        {{ __('admin.affiliate_withdrawals') }}
-                </a>
-                <a href="{{ route('admin.taxes.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'taxes' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
-                                        {{ __('admin.tax_config') }}
-                </a>
-                <a href="{{ route('admin.codes.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'codes' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 7a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V7zM5 15a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2zm0 0V9a4 4 0 014-4h4m-4 10h4a4 4 0 004-4V9"/></svg>
-                                        {{ __('admin.redeem_codes') }}
-                </a>
-                <div class="mt-4 pt-4 border-t border-zinc-800">
-                    <p class="px-3 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">{{ __('admin.content_management') }}</p>
-                </div>
-                <a href="{{ route('admin.blog-posts.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'blog_posts' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m0 13a2 2 0 002-2V9m-4 11a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2z"/></svg>
-                                        {{ __('admin.blog_posts') }}
-                </a>
-                <a href="{{ route('admin.pages.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'pages' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                                        {{ __('admin.pages') }}
-                </a>
-                <a href="{{ route('admin.broadcasts.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'broadcasts' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683a4.001 4.001 0 01 0-7.366M13 7a4 4 0 01-7.564 1.683"/></svg>
-                                        {{ __('admin.broadcasts') }}
-                </a>
-                <a href="{{ route('admin.notifications.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'notifications' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                                        {{ __('admin.internal_notifications') }}
-                </a>
-                <div class="mt-4 pt-4 border-t border-zinc-800">
-                    <p class="px-3 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">{{ __('admin.platform_ops') }}</p>
-                </div>
-                <a href="{{ route('admin.annotations.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'annotations' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 20l4-16m2 16l-4-16M6 9h14M4 15h14"/></svg>
-                                        {{ __('admin.annotations') }}
-                </a>
-                <a href="{{ route('admin.heatmaps.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'heatmaps' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6-9a2 2 0 012-2h2a2 2 0 012 2m0 4V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"/></svg>
-                                        {{ __('admin.heatmaps') }}
-                </a>
-                <a href="{{ route('admin.replays.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'replays' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                                        {{ __('admin.replays') }}
-                </a>
-                <a href="{{ route('admin.logs.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'logs' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                                        {{ __('admin.account_logs') }}
-                </a>
-                <a href="{{ route('admin.languages.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'languages' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
-                                        {{ __('admin.languages') }}
-                </a>
-                <a href="{{ route('admin.push-subscribers.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'push-subscribers' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                                        {{ __('admin.push_subscribers') }}
-                </a>
-                <div class="mt-4 pt-4 border-t border-zinc-800">
-                    <p class="px-3 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">{{ __('admin.settings') }}</p>
-                </div>
-                <a href="{{ route('admin.settings.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'settings' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
-                                        {{ __('admin.system_settings') }}
-                </a>
-                <a href="{{ route('admin.license.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'license' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                        {{ __('admin.license_title') }}
-                </a>
-                <a href="{{ route('admin.plugins.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $adminNav === 'plugins' ? 'bg-red-600/20 text-red-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
-                                        {{ __('admin.plugins_title') }}
-                </a>
-            </nav>
+        {{-- 菜单（对标 admin-sidebar-links，顺序/分组/折叠组与原版一致）--}}
+        @php
+            $icons = require resource_path('views/admin/partials/sidebar-icons.php');
+            // 各控制器 adminNav 值规范化（旧值 → 原版菜单 key）
+            $adminNavMap = [
+                'blog_posts' => 'blog-posts',
+                'affiliates' => 'affiliates-withdrawals',
+                'logs' => 'users-logs',
+                'push-subscribers' => 'push-notifications',
+            ];
+            $adminNav = $adminNavMap[$adminNav ?? ''] ?? ($adminNav ?? '');
+        @endphp
+        <nav class="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
+            @php
+                $navItem = function (string $key, string $icon, string $label, string $url) use ($icons, $adminNav) {
+                    $active = ($adminNav ?? '') === $key;
+                    return '<a href="'.$url.'" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition '.($active
+                        ? 'bg-brand-50 text-brand-700'
+                        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900').'">'
+                        .'<svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="'.$icons[$icon].'"/></svg>'
+                        .'<span class="truncate">'.$label.'</span></a>';
+                };
+            @endphp
+            {!! $navItem('dashboard', 'dashboard', __('admin.sidebar_dashboard'), route('admin.index')) !!}
+            {!! $navItem('users', 'users', __('admin.sidebar_users'), route('admin.users.index')) !!}
+            {!! $navItem('settings', 'settings', __('admin.sidebar_settings'), route('admin.settings.index')) !!}
+            {!! $navItem('plans', 'plans', __('admin.sidebar_plans'), route('admin.plans.index')) !!}
+            {!! $navItem('languages', 'languages', __('admin.sidebar_languages'), route('admin.languages.index')) !!}
+            {!! $navItem('broadcasts', 'broadcasts', __('admin.sidebar_broadcasts'), route('admin.broadcasts.index')) !!}
+            {!! $navItem('notifications', 'notifications', __('admin.sidebar_notifications'), route('admin.notifications.index')) !!}
+            {!! $navItem('push-notifications', 'push', __('admin.sidebar_push_notifications'), route('admin.push-notifications.index')) !!}
+            {!! $navItem('plugins', 'plugins', __('admin.sidebar_plugins'), route('admin.plugins.index')) !!}
+            {!! $navItem('statistics', 'statistics', __('admin.sidebar_statistics'), route('admin.statistics')) !!}
 
-            <div class="border-t border-zinc-800 p-3">
-                <div class="flex items-center gap-3 rounded-xl px-2 py-2">
-                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-600/30 text-sm font-semibold text-red-300">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
-                    <div class="min-w-0 flex-1">
-                        <p class="truncate text-sm font-medium text-zinc-200">{{ auth()->user()->name }}</p>
-                        <p class="truncate text-xs text-zinc-500">{{ __('admin.administrator') }}</p>
-                    </div>
-                </div>
-                <div class="mt-2 flex gap-2">
-                                        <a href="{{ route('dashboard') }}" class="flex-1 rounded-xl px-3 py-2 text-center text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200">{{ __('admin.user_view') }}</a>
-                    <form method="POST" action="{{ route('logout') }}" class="flex-1">
-                        @csrf
-                        <button type="submit" class="w-full rounded-xl px-3 py-2 text-center text-sm text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-200">{{ __('admin.logout') }}</button>
-                    </form>
+            {{-- 资源折叠组（对标 admin_sidebar_resources_container）--}}
+            @php($resourcesOpen = in_array($adminNav ?? '', ['pages-categories', 'pages']))
+            <div>
+                <button type="button" onclick="window.adminToggleGroup('admin-group-resources')" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
+                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="{{ $icons['info'] }}"/></svg>
+                    <span class="truncate">{{ __('admin.sidebar_resources') }}</span>
+                    <svg class="ml-auto h-3.5 w-3.5 shrink-0 transition-transform" id="admin-group-resources-chevron" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path class="chevron" stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div id="admin-group-resources" class="{{ $resourcesOpen ? '' : 'hidden' }} mt-0.5 space-y-0.5 pl-5">
+                    {!! $navItem('pages-categories', 'pages', __('admin.sidebar_categories'), route('admin.pages-categories.index')) !!}
+                    {!! $navItem('pages', 'pages', __('admin.sidebar_pages'), route('admin.pages.index')) !!}
                 </div>
             </div>
-        </aside>
-        <div class="flex w-full flex-col md:pl-64">
-            <header class="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-200 bg-white/80 px-4 py-3 backdrop-blur md:hidden">
-                <a href="{{ route('admin.index') }}" class="flex items-center gap-2">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-red-500 to-red-700 text-sm font-bold text-white">M</span>
-                                        <span class="font-semibold">{{ __('admin.admin_panel') }}</span>
-                </a>
+
+            {{-- 博客折叠组（对标 admin_sidebar_blog_container）--}}
+            @php($blogOpen = in_array($adminNav ?? '', ['blog-posts-categories', 'blog-posts']))
+            <div>
+                <button type="button" onclick="window.adminToggleGroup('admin-group-blog')" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
+                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="{{ $icons['blog'] }}"/></svg>
+                    <span class="truncate">{{ __('admin.sidebar_blog') }}</span>
+                    <svg class="ml-auto h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div id="admin-group-blog" class="{{ $blogOpen ? '' : 'hidden' }} mt-0.5 space-y-0.5 pl-5">
+                    {!! $navItem('blog-posts-categories', 'blog', __('admin.sidebar_categories'), route('admin.blog-posts-categories.index')) !!}
+                    {!! $navItem('blog-posts', 'blog', __('admin.sidebar_blog_posts'), route('admin.blog-posts.index')) !!}
+                </div>
+            </div>
+
+            {!! $navItem('api', 'api', __('admin.sidebar_api_docs'), route('api.docs')) !!}
+
+            <div class="my-3 border-t border-zinc-100"></div>
+
+            {!! $navItem('codes', 'codes', __('admin.sidebar_codes'), route('admin.codes.index')) !!}
+            {!! $navItem('taxes', 'taxes', __('admin.sidebar_taxes'), route('admin.taxes.index')) !!}
+            {!! $navItem('payments', 'payments', __('admin.sidebar_payments'), route('admin.payments.index')) !!}
+            {!! $navItem('affiliates-withdrawals', 'wallet', __('admin.sidebar_affiliates_withdrawals'), route('admin.affiliates-withdrawals.index')) !!}
+
+            <div class="my-3 border-t border-zinc-100"></div>
+
+            {!! $navItem('websites', 'websites', __('admin.sidebar_websites'), route('admin.websites.index')) !!}
+            {!! $navItem('heatmaps', 'heatmaps', __('admin.sidebar_heatmaps'), route('admin.heatmaps.index')) !!}
+            {!! $navItem('replays', 'replays', __('admin.sidebar_replays'), route('admin.replays.index')) !!}
+            {!! $navItem('annotations', 'annotations', __('admin.sidebar_annotations'), route('admin.annotations.index')) !!}
+            {!! $navItem('domains', 'domains', __('admin.sidebar_domains'), route('admin.domains.index')) !!}
+            {!! $navItem('teams', 'users', __('admin.sidebar_teams'), route('admin.teams.index')) !!}
+
+            <div class="my-3 border-t border-zinc-100"></div>
+
+            {!! $navItem('users-logs', 'logs', __('admin.sidebar_user_logs'), route('admin.users.logs')) !!}
+        </nav>
+
+        {{-- 侧栏底部用户菜单（对标 admin-sidebar-footer dropdown）--}}
+        <div class="relative shrink-0 border-t border-zinc-200/80 p-3">
+            <button type="button" onclick="window.adminToggleGroup('admin-user-menu')" class="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-zinc-100">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-semibold text-white">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
+                <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-medium text-zinc-900">{{ auth()->user()->name }}</span>
+                    <span class="block truncate text-xs text-zinc-500">{{ auth()->user()->email }}</span>
+                </span>
+                <svg class="h-4 w-4 shrink-0 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="admin-user-menu" class="absolute bottom-full left-3 right-3 z-50 mb-2 hidden overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg shadow-zinc-900/5">
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+                    <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l-3 3m3-3v12M4 7l8-4 8 4"/></svg>
+                    {{ __('admin.user_panel') }}</a>
+                <a href="{{ route('account.index') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+                    <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
+                    {{ __('admin.user_account') }}</a>
+                <a href="{{ route('referrals.index') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+                    <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/></svg>
+                    {{ __('admin.user_referrals') }}</a>
+                <div class="my-1 border-t border-zinc-100"></div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="text-sm text-zinc-500">{{ __('admin.logout') }}</button>
+                    <button type="submit" class="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                        {{ __('admin.logout') }}</button>
                 </form>
-            </header>
-            <main class="flex-1 p-4 md:p-8">
-                @if (session('success'))<div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ session('success') }}</div>@endif
-                @if ($errors->any())<div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"><ul class="list-inside list-disc space-y-1">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
-                @yield('content')
-            </main>
+            </div>
         </div>
+    </aside>
+
+    {{-- 主内容区（对标 admin-content）--}}
+    <div class="flex w-full min-w-0 flex-col md:pl-64">
+        <header class="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/80 backdrop-blur">
+            <div class="flex h-16 items-center gap-3 px-4 md:px-8">
+                <button type="button" class="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 md:hidden" onclick="window.adminToggleSidebar()" aria-label="{{ __('admin.toggle_menu') }}">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+                <h1 class="truncate text-base font-semibold text-zinc-900 md:text-lg">@yield('title', __('admin.admin_panel'))</h1>
+                <a href="{{ route('dashboard') }}" class="ml-auto hidden shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 sm:flex">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l-3 3m3-3v12M4 7l8-4 8 4"/></svg>
+                    {{ __('admin.user_panel') }}</a>
+            </div>
+        </header>
+
+        <main class="flex-1 p-4 md:p-8">
+            @if (session('success'))
+                <div class="mb-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                    <svg class="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {{ session('success') }}</div>
+            @endif
+            @if ($errors->any())
+                <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <ul class="list-inside list-disc space-y-1">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+                </div>
+            @endif
+            @yield('content')
+        </main>
+
+        <footer class="border-t border-zinc-200/60 px-4 py-4 text-center text-xs text-zinc-400 md:px-8">
+            © {{ now()->format('Y') }} {{ \App\Support\Brand::name() }} · {{ __('admin.admin_label') }}
+        </footer>
     </div>
+</div>
+
+<script>
+    window.adminToggleSidebar = function () {
+        document.getElementById('admin-sidebar').classList.toggle('-translate-x-full');
+        document.getElementById('admin-sidebar-overlay').classList.toggle('hidden');
+    };
+    window.adminToggleGroup = function (id) {
+        const el = document.getElementById(id);
+        if (el) { el.classList.toggle('hidden'); }
+    };
+    document.getElementById('admin-sidebar-overlay')?.addEventListener('click', () => window.adminToggleSidebar());
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('admin-user-menu');
+        if (menu && !menu.classList.contains('hidden') && !e.target.closest('#admin-user-menu') && !e.target.closest('button[onclick*="admin-user-menu"]')) {
+            menu.classList.add('hidden');
+        }
+    });
+</script>
 </body>
 </html>
+

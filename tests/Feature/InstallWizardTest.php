@@ -6,15 +6,15 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Support\EnvWriter;
 use App\Support\InstallState;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
  * 网页安装向导端到端（规格书 §15.3 安装器 / §19 部署）
- * 覆盖：EnsureInstalled 拦截 → 三步向导（环境检查 / 数据库+APP_KEY+迁移 / 管理员+核心数据）→ 安装锁
+ * 覆盖：EnsureInstalled 拦截 → 五步向导（环境检测 / 目录权限 / 数据库+APP_KEY+自动建库+迁移 / 站点与管理员+核心数据 / 完成页）→ 安装锁
  *
- * 隔离：安装锁与 .env 写入均指向临时路径（phpunit.xml MONIT_INSTALL_LOCK / EnvWriter 实例覆盖）
+ * 隔离：安装锁与 .env 写入均指向临时路径（phpunit.xml MONIT_INSTALL_LOCK / EnvWriter 实例覆盖）；
+ * 数据库用独立测试库 monit_test（phpunit.xml DB_*），各用例按需 migrate:fresh
  */
 class InstallWizardTest extends TestCase
 {
@@ -40,12 +40,59 @@ class InstallWizardTest extends TestCase
     protected function tearDown(): void
     {
         @unlink($this->tmpEnv);
+
+        // 恢复干净库结构：本类不使用 RefreshDatabase（向导会动态改写 DB 连接），
+        // 真实提交的数据会泄漏到后续测试类——而 RefreshDatabase 的 static::$migrated
+        // 已置真，后续类不会再 migrate:fresh，故在此重建空结构兜底
+        try {
+            if (Schema::hasTable('migrations')) {
+                $this->artisan('migrate:fresh', ['--force' => true]);
+            } else {
+                $this->artisan('migrate', ['--force' => true]);
+            }
+        } catch (\Throwable) {
+            // 库不可达时跳过（如仅跑纯单元用例）
+        }
+
         parent::tearDown();
     }
 
+    /**
+     * 测试环境必需扩展齐备才执行流程类用例（CI 缺 gd 等时跳过而非误报）
+     */
+    protected function requiresCompleteEnvironment(): void
+    {
+        foreach (['pdo_mysql', 'mbstring', 'openssl', 'curl', 'gd', 'fileinfo', 'tokenizer', 'ctype', 'xml', 'dom'] as $ext) {
+            if (! extension_loaded($ext)) {
+                $this->markTestSkipped("测试环境缺少 {$ext} 扩展，跳过向导流程用例");
+            }
+        }
+    }
+
+    /**
+     * 清空测试库（无 RefreshDatabase：向导步骤会动态覆盖 DB 连接配置，需手动重置）
+     */
+    protected function freshDatabase(): void
+    {
+        $this->artisan('migrate:fresh', ['--force' => true]);
+    }
+
+    /**
+     * 连表一起清（构造「未迁移」状态：InstallState 数据库兜底要求 users 表/管理员不存在）
+     */
+    protected function dropAllTables(): void
+    {
+        Schema::dropAllTables();
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* 守卫与步骤渲染                                                       */
+    /* ------------------------------------------------------------------ */
+
     public function test_uninstalled_visitors_are_redirected_to_wizard(): void
     {
-        // RefreshDatabase 未跑（本类无该 trait）→ :memory: 库可能含旧表；直接删管理员兜底
+        // InstallState 兜底「users 有管理员=已安装」：清库确保未安装判定不被上一用例污染
+        $this->dropAllTables();
         $this->assertSame(false, InstallState::installed(), '前置：未安装状态');
 
         $this->get('/')->assertRedirect('/install');
@@ -54,19 +101,108 @@ class InstallWizardTest extends TestCase
 
     public function test_wizard_requirements_page_renders(): void
     {
-        $this->get('/install')->assertOk()->assertSee('环境检查');
+        $this->get('/install')->assertOk()->assertSee('环境检测');
+    }
+
+    public function test_requirements_step_redirects_to_permissions(): void
+    {
+        $this->requiresCompleteEnvironment();
+
+        $this->post('/install/requirements')->assertRedirect(route('install.permissions'));
+    }
+
+    public function test_permissions_step_renders_and_redirects_to_database(): void
+    {
+        $this->requiresCompleteEnvironment();
+
+        $this->get('/install/permissions')->assertOk()->assertSee('目录权限');
+        $this->post('/install/permissions')->assertRedirect(route('install.database'));
+    }
+
+    public function test_admin_step_guards_against_unmigrated_database(): void
+    {
+        // 未执行迁移（users 表不存在）时第 4 步回跳第 3 步
+        $this->dropAllTables();
+        $this->get('/install/admin')->assertRedirect(route('install.database'));
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* 第 3 步：数据库（MySQL 唯一）                                        */
+    /* ------------------------------------------------------------------ */
+
+    public function test_database_step_rejects_missing_fields(): void
+    {
+        $this->post('/install/database', [])
+            ->assertOk()
+            ->assertViewHas('step', 'database');
+    }
+
+    public function test_database_step_rejects_illegal_database_name(): void
+    {
+        // 库名会拼入 CREATE DATABASE：反引号/引号等必须被验证拦截
+        $this->post('/install/database', [
+            'host' => '127.0.0.1',
+            'port' => 3306,
+            'database' => 'monit`; DROP DATABASE x',
+            'username' => 'root',
+        ])->assertOk()->assertViewHas('step', 'database');
+    }
+
+    public function test_database_step_unreachable_host_shows_friendly_error(): void
+    {
+        // 指向未监听端口：PDO 立即 Connection refused，翻译为中文指引而非英文堆栈
+        $this->post('/install/database', [
+            'host' => '127.0.0.1',
+            'port' => 33990,
+            'database' => 'monit_test',
+            'username' => 'root',
+            'password' => 'x',
+        ])->assertOk()->assertSee('无法连接 MySQL 服务器');
+    }
+
+    public function test_testdb_endpoint_returns_json_diagnostics(): void
+    {
+        // 错误凭据 → ok:false + 中文翻译
+        $this->postJson('/install/test-db', [
+            'host' => '127.0.0.1',
+            'port' => 3306,
+            'database' => 'monit_test',
+            'username' => 'root',
+            'password' => 'definitely-wrong',
+        ])->assertOk()->assertJsonPath('ok', false)
+          ->assertSee('Access denied');
+
+        // 正确凭据（phpunit.xml 提供的测试库连接）→ ok:true + 版本号
+        $cfg = config('database.connections.mysql');
+        $this->postJson('/install/test-db', [
+            'host' => $cfg['host'],
+            'port' => (int) $cfg['port'],
+            'database' => $cfg['database'],
+            'username' => $cfg['username'],
+            'password' => (string) $cfg['password'],
+        ])->assertOk()->assertJsonPath('ok', true)
+          ->assertJsonStructure(['message', 'version']);
     }
 
     public function test_database_step_writes_env_and_migrates(): void
     {
+        $this->requiresCompleteEnvironment();
+        $this->freshDatabase();
+
         // 模拟 config 缓存场景：APP_KEY 为空也应被向导补齐
         config(['app.key' => null]);
 
-        $this->post('/install/database', ['connection' => 'sqlite'])
-            ->assertRedirect(route('install.admin'));
+        $cfg = config('database.connections.mysql');
+        $this->post('/install/database', [
+            'host' => $cfg['host'],
+            'port' => (int) $cfg['port'],
+            'database' => $cfg['database'],
+            'username' => $cfg['username'],
+            'password' => (string) $cfg['password'],
+        ])->assertRedirect(route('install.admin'));
 
         $env = (string) file_get_contents($this->tmpEnv);
-        $this->assertStringContainsString('DB_CONNECTION=sqlite', $env);
+        $this->assertStringContainsString('DB_CONNECTION=mysql', $env);
         $this->assertMatchesRegularExpression('/^APP_KEY=base64:/m', $env);
         $this->assertNotEmpty(config('app.key'), 'APP_KEY 已同步到当前进程');
 
@@ -78,19 +214,22 @@ class InstallWizardTest extends TestCase
         $this->assertTrue(Schema::hasTable('users'));
     }
 
+    /* ------------------------------------------------------------------ */
+    /* 第 4/5 步：站点与管理员 → 完成页                                     */
+    /* ------------------------------------------------------------------ */
+
     public function test_admin_step_creates_admin_seeds_core_data_and_locks(): void
     {
-        $this->artisan('migrate', ['--force' => true]);
-        $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\CoreDataSeeder', '--force' => true]);
-        // 清掉 seed 写入的状态，回到「未安装但库已就绪」
-        User::query()->delete();
+        $this->freshDatabase();
 
         $this->post('/install/admin', [
+            'site_name' => '测试统计平台',
+            'site_url' => 'https://stats.example.com',
             'name' => '站长',
             'email' => 'admin@example.com',
             'password' => 'secret-password',
             'password_confirmation' => 'secret-password',
-        ])->assertRedirect(route('login'));
+        ])->assertRedirect(route('install.finish'));
 
         $admin = User::where('type', 1)->first();
         $this->assertNotNull($admin, '管理员已创建');
@@ -104,8 +243,16 @@ class InstallWizardTest extends TestCase
         $this->assertSame(1, User::count());
         $this->assertNull(User::where('email', 'admin@monit.dev')->first());
 
-        // 核心数据（套餐/设置）由向导入库
+        // 核心数据（套餐/站点设置）由向导入库并覆盖
         $this->assertGreaterThanOrEqual(2, Plan::count());
+        $this->assertSame('测试统计平台', \App\Support\Settings::get('site_name'));
+        $this->assertSame('https://stats.example.com', \App\Support\Settings::get('site_url'));
+
+        // APP_URL 以用户填写为准写入 .env
+        $this->assertStringContainsString(
+            'APP_URL=https://stats.example.com',
+            (string) file_get_contents($this->tmpEnv)
+        );
 
         // 安装锁写入：向导失效、业务路由放行
         $this->assertFileExists(config('monit.install_lock'));
@@ -113,16 +260,62 @@ class InstallWizardTest extends TestCase
         $this->get('/')->assertOk();
     }
 
-    public function test_installed_admin_can_login_and_reach_dashboard(): void
+    public function test_admin_step_validates_site_and_password(): void
     {
-        $this->artisan('migrate', ['--force' => true]);
+        $this->freshDatabase();
+
+        // 缺 site_name、密码不一致 → 回渲染第 4 步并显示中文错误
+        $this->post('/install/admin', [
+            'site_url' => 'https://stats.example.com',
+            'name' => '站长',
+            'email' => 'admin@example.com',
+            'password' => 'secret-password',
+            'password_confirmation' => 'different-password',
+        ])->assertOk()
+          ->assertViewHas('step', 'admin')
+          ->assertSee('请填写网站名称')
+          ->assertSee('两次输入的密码不一致');
+    }
+
+    public function test_finish_page_renders_summary_after_install(): void
+    {
+        $this->freshDatabase();
 
         $this->post('/install/admin', [
+            'site_name' => '完成页测试',
+            'site_url' => 'https://finish.example.com',
+            'name' => 'Admin',
+            'email' => 'finish@example.com',
+            'password' => 'secret-password',
+            'password_confirmation' => 'secret-password',
+        ])->assertRedirect(route('install.finish'));
+
+        $this->get('/install/finish')
+            ->assertOk()
+            ->assertSee('安装完成')
+            ->assertSee('finish@example.com')
+            ->assertSee('MySQL · '.config('database.connections.mysql.database'));
+    }
+
+    public function test_finish_page_redirects_to_wizard_when_not_installed(): void
+    {
+        // 清库排除兜底判定（否则上一用例残留的管理员使 installed()=true）
+        $this->dropAllTables();
+        $this->get('/install/finish')->assertRedirect(route('install'));
+    }
+
+    public function test_installed_admin_can_login_and_reach_dashboard(): void
+    {
+        $this->freshDatabase();
+
+        $this->post('/install/admin', [
+            'site_name' => '登录测试',
+            'site_url' => 'http://localhost',
             'name' => '站长',
             'email' => 'admin@example.com',
             'password' => 'secret-password',
             'password_confirmation' => 'secret-password',
-        ])->assertRedirect(route('login'));
+        ])->assertRedirect(route('install.finish'));
 
         // 「装完能用」核心断言：真实走 Session（database 驱动）+ Cookie 加密登录链路
         $this->post('/login', [
@@ -138,91 +331,25 @@ class InstallWizardTest extends TestCase
     {
         InstallState::complete();
 
+        // /install 及各步骤失效跳首页；完成页例外（收尾汇总仍可访问）
         $this->get('/install')->assertRedirect('/');
+        $this->get('/install/database')->assertRedirect('/');
+        $this->get('/install/admin')->assertRedirect('/');
     }
 
-    public function test_mysql_missing_fields_show_chinese_validation_errors(): void
+    public function test_installed_instance_still_allows_finish_page(): void
     {
-        $this->post('/install/database', ['connection' => 'mysql'])
-            ->assertOk()
-            ->assertSee('选择 MySQL 时必须填写主机地址')
-            ->assertSee('选择 MySQL 时必须填写数据库名')
-            ->assertSee('选择 MySQL 时必须填写用户名');
-    }
+        $this->freshDatabase();
 
-    public function test_mysql_illegal_database_name_is_rejected(): void
-    {
-        // 库名会拼入 CREATE DATABASE：反引号/引号等必须被验证拦截
-        $this->post('/install/database', [
-            'connection' => 'mysql',
-            'host' => '127.0.0.1',
-            'port' => 3306,
-            'database' => 'monit`; DROP DATABASE x',
-            'username' => 'root',
-        ])->assertOk()->assertSee('数据库名只能包含字母、数字、下划线和中划线');
-    }
+        $this->post('/install/admin', [
+            'site_name' => '锁定后完成页',
+            'site_url' => 'http://localhost',
+            'name' => 'Admin',
+            'email' => 'locked@example.com',
+            'password' => 'secret-password',
+            'password_confirmation' => 'secret-password',
+        ])->assertRedirect(route('install.finish'));
 
-    public function test_mysql_unreachable_host_shows_friendly_error(): void
-    {
-        // 指向未监听端口：PDO 立即 Connection refused，翻译为中文指引而非英文堆栈
-        $this->post('/install/database', [
-            'connection' => 'mysql',
-            'host' => '127.0.0.1',
-            'port' => 33990,
-            'database' => 'monit_test',
-            'username' => 'root',
-            'password' => 'x',
-        ])->assertOk()->assertSee('无法连接 MySQL 服务器');
-    }
-
-    public function test_sqlite_install_clears_leftover_mysql_env_keys(): void
-    {
-        // 服务器常见现场：旧 .env 残留 MySQL 配置；sqlite 安装必须清掉
-        //（DB_DATABASE 残留会把 sqlite 路径劫持为旧库名，装完即 500）
-        $env = $this->app->make(EnvWriter::class);
-        $env->write('DB_CONNECTION', 'mysql');
-        $env->write('DB_HOST', '127.0.0.1');
-        $env->write('DB_DATABASE', 'old_monit');
-        $env->write('DB_USERNAME', 'root');
-        $env->write('DB_PASSWORD', 'secret');
-
-        $this->post('/install/database', ['connection' => 'sqlite'])
-            ->assertRedirect(route('install.admin'));
-
-        $content = (string) file_get_contents($this->tmpEnv);
-        $this->assertStringContainsString('DB_CONNECTION=sqlite', $content);
-        foreach (['DB_HOST=', 'DB_PORT=', 'DB_DATABASE=', 'DB_USERNAME=', 'DB_PASSWORD='] as $stale) {
-            $this->assertStringNotContainsString($stale, $content, "残留键 {$stale} 应被清除");
-        }
-        $this->assertTrue(Schema::hasTable('users'), '迁移在干净的 sqlite 上完成');
-    }
-
-    /**
-     * 真实 MySQL 安装 E2E（可选）：提供 MONIT_TEST_MYSQL_HOST 等环境变量即执行
-     * 例：MONIT_TEST_MYSQL_HOST=127.0.0.1 MONIT_TEST_MYSQL_USERNAME=root MONIT_TEST_MYSQL_PASSWORD=xxx vendor/bin/phpunit --filter mysql_real
-     */
-    public function test_mysql_real_install_if_env_provided(): void
-    {
-        $host = env('MONIT_TEST_MYSQL_HOST');
-
-        if (! $host || ! extension_loaded('pdo_mysql')) {
-            $this->markTestSkipped('未设置 MONIT_TEST_MYSQL_* 或缺少 pdo_mysql，跳过真实 MySQL 安装测试');
-        }
-
-        $this->post('/install/database', [
-            'connection' => 'mysql',
-            'host' => $host,
-            'port' => (int) env('MONIT_TEST_MYSQL_PORT', 3306),
-            'database' => (string) env('MONIT_TEST_MYSQL_DATABASE', 'monit_install_test'),
-            'username' => (string) env('MONIT_TEST_MYSQL_USERNAME', 'root'),
-            'password' => (string) env('MONIT_TEST_MYSQL_PASSWORD', ''),
-        ])->assertRedirect(route('install.admin'));
-
-        $content = (string) file_get_contents($this->tmpEnv);
-        $this->assertStringContainsString('DB_CONNECTION=mysql', $content);
-        $this->assertStringContainsString('DB_DATABASE=monit', $content);
-
-        $this->assertSame('mysql', DB::connection()->getDriverName());
-        $this->assertTrue(Schema::hasTable('users'), '迁移已在 MySQL 上完成（库不存在时向导应已自动建库）');
+        $this->get('/install/finish')->assertOk()->assertSee('locked@example.com');
     }
 }

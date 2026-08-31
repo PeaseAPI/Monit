@@ -30,6 +30,18 @@ class AdminStatistics extends Controller
         $totalSessions = VisitorSession::count();
         $totalEvents = SessionEvent::count();
         $planDistribution = User::groupBy('plan_id')->selectRaw('plan_id, count(*) as count')->get();
+
+        // 用户地理分布（地图卡数据：国家计数 + 城市坐标点，对标原版 users_map）
+        $countries = User::whereNotNull('country')->where('country', '!=', '')
+            ->groupBy('country')->selectRaw('country, count(*) as count')->pluck('count', 'country')->all();
+        $points = User::whereNotNull('latitude')->whereNotNull('longitude')->where('city_name', '!=', '')
+            ->groupBy('city_name', 'latitude', 'longitude')
+            ->selectRaw('city_name, latitude, longitude, count(*) as count')
+            ->limit(200)->get()
+            ->map(fn ($row) => ['label' => $row->city_name, 'lat' => (float) $row->latitude, 'lng' => (float) $row->longitude, 'count' => (int) $row->count])
+            ->all();
+        $byCountry = User::whereNotNull('country')->where('country', '!=', '')
+            ->groupBy('country')->selectRaw('country, count(*) as count')->orderByDesc('count')->limit(20)->get();
         $dailyActiveUsers = [];
         for ($i = 29; $i >= 0; $i--) {
             $date = now()->subDays($i)->format('Y-m-d');
@@ -37,7 +49,7 @@ class AdminStatistics extends Controller
             $dailyActiveUsers[] = ['date' => $date, 'count' => $count];
         }
 
-        return view('admin.statistics.index', compact('totalUsers', 'activeUsers', 'newUsersToday', 'totalWebsites', 'enabledWebsites', 'totalPayments', 'totalRevenue', 'monthlyRevenue', 'totalVisitors', 'totalSessions', 'totalEvents', 'planDistribution', 'dailyActiveUsers'))->with('adminNav', 'statistics');
+        return view('admin.statistics.index', compact('totalUsers', 'activeUsers', 'newUsersToday', 'totalWebsites', 'enabledWebsites', 'totalPayments', 'totalRevenue', 'monthlyRevenue', 'totalVisitors', 'totalSessions', 'totalEvents', 'planDistribution', 'dailyActiveUsers', 'countries', 'points', 'byCountry'))->with('adminNav', 'statistics');
     }
 
     public function database()

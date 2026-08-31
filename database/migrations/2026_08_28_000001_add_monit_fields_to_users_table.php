@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // 0=普通用户, 1=Admin
-            $table->unsignedTinyInteger('type')->default(0)->after('id')->index();
+            $table->unsignedTinyInteger('type')->default(0)->after('user_id')->index();
             // 账单信息 JSON
             $table->json('billing')->nullable()->after('password');
             // Bearer Token API 密钥

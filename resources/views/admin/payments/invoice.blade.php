@@ -32,7 +32,11 @@
         </div>
         <div class="muted" style="text-align:right">
             <strong style="color:#18181b;font-size:15px">{{ $company['name'] }}</strong><br>
+            @if(!empty($company['legalName'])){{ $company['legalName'] }}<br>@endif
+            @if(!empty($company['address'])){{ $company['address'] }}<br>@endif
+            @if(!empty($company['phone'])){{ $company['phone'] }}<br>@endif
             {{ $company['email'] }}<br>
+            @if(!empty($company['taxId'])){{ $company['taxId'] }}<br>@endif
             {{ $company['url'] }}
         </div>
     </div>

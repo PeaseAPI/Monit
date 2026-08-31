@@ -20,7 +20,8 @@ return new class extends Migration
             $table->id('subscriber_id');
             $table->unsignedBigInteger('website_id')->index();
             $table->unsignedBigInteger('user_id')->index();
-            $table->text('endpoint')->unique();
+            // Web Push endpoint 通常 <500 字符；MySQL text 列无法直接 unique，改为 varchar(500)
+            $table->string('endpoint', 500)->unique();
             $table->text('keys_p256dh');
             $table->text('keys_auth');
             $table->string('ip', 64)->nullable();

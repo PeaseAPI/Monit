@@ -175,7 +175,7 @@ class StatsController extends Controller
                 'continent_code', 'country_code', 'city_name',
                 'os_name', 'os_version', 'browser_name', 'browser_version',
                 'browser_language', 'browser_timezone', 'screen_resolution', 'device_type',
-                'total_sessions', 'total_goals_conversions', 'date', 'last_date',
+                'total_sessions', 'goals_conversions_ids', 'date', 'last_date',
             ]);
 
         $filename = 'visitors_'.$website->website_id.'_'.now()->format('Ymd_His');

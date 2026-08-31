@@ -3,6 +3,7 @@
 .env
 .env.backup
 .env.production
+.env.testing
 .phpactor.json
 .phpunit.result.cache
 /.codex
@@ -28,3 +29,5 @@ Thumbs.db
 
 # 安装向导测试临时文件（installed.lock 隔离路径）
 /tests/tmp/
+# 本机安装状态锁（部署环境各自生成，勿提交）
+/storage/installed.lock

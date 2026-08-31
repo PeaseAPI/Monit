@@ -32,15 +32,15 @@ sudo apachectl configtest && sudo systemctl reload apache2
 
 ## 首次部署：网页安装向导（推荐）
 
-自 v1.1 起，**无需手动执行任何初始化命令**：代码上传 + 目录权限就绪后，直接浏览器访问站点域名，会自动 302 跳转到 `/install` 三步向导（环境检查 → 数据库（SQLite/MySQL 二选一，自动生成 `APP_KEY` + 迁移） → 创建管理员）。向导只写入核心数据（free/pro 套餐 + 平台设置），**不会**创建演示账号；完成后写入 `storage/installed.lock`，向导自动失效。
+自 v1.1 起，**无需手动执行任何初始化命令**：代码上传 + 目录权限就绪后，直接浏览器访问站点域名，会自动 302 跳转到 `/install` 五步向导（环境检测 → 目录权限 → 数据库配置（MySQL 连接测试 + 自动建库 + 自动生成 `APP_KEY` + 迁移） → 站点与管理员 → 完成）。向导只写入核心数据（free/pro 套餐 + 平台设置），**不会**创建演示账号；完成后写入 `storage/installed.lock`，向导自动失效。
 
 前置条件只有两条（SSH 执行一次）：
 
 ```bash
 # 1) 依赖安装（首次）：composer install --no-dev --optimize-autoloader
 # 2) 目录权限（PHP-FPM 运行用户，宝塔为 www）：
-chown -R www:www storage database bootstrap/cache
-chmod -R ug+rwX storage database bootstrap/cache
+chown -R www:www storage bootstrap/cache
+chmod -R ug+rwX storage bootstrap/cache
 ```
 
 向导完成后再执行下方清单第 5、6、7 步（storage:link / 三缓存 / cron）即可。
@@ -54,8 +54,8 @@ chmod -R ug+rwX storage database bootstrap/cache
 > 若已用网页向导完成安装，第 1-4 步可跳过，只执行 5-8 步。
 
 1. `cp .env.example .env && php artisan key:generate`（生成并写入 `APP_KEY`，缺失会导致首页 500：`MissingAppKeyException - No application encryption key has been specified`；同时确认 `APP_ENV=production`、`APP_DEBUG=false`，避免线上暴露堆栈）
-2. 目录权限（PHP-FPM 运行用户，宝塔为 `www`）：`chown -R www:www storage database bootstrap/cache && chmod -R ug+rwX storage database bootstrap/cache`（sqlite 库文件及其 `-wal`/`-shm` 附属文件都写在 `database/` 下，不可写会报 `unable to open database file` 或 `attempt to write a readonly database`）
-3. `php artisan migrate --force`（数据库结构；sqlite 模式下会**自动创建** `database/database.sqlite`——该文件被 `.gitignore` 忽略，clone 后必然不存在，未迁移时 session 查询直接 500）
+2. 目录权限（PHP-FPM 运行用户，宝塔为 `www`）：`chown -R www:www storage bootstrap/cache && chmod -R ug+rwX storage bootstrap/cache`（storage 需写缓存/会话/日志，bootstrap/cache 需写配置缓存）
+3. 准备 MySQL 数据库：`mysql -e "CREATE DATABASE monit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"` 并授权业务账户（也可直接走网页向导，由向导自动建库）；随后 `php artisan migrate --force` 建表
 4. `php artisan db:seed --force`（写入 free/pro 套餐 + 平台设置，缺套餐前台无法正常工作；**默认不含任何演示账号**——本地需要演示数据时另跑 `php artisan db:seed --class=DemoDataSeeder --force`）
 5. `php artisan storage:link`（公开磁盘软链）
 6. `php artisan config:cache && php artisan route:cache && php artisan view:cache`（⚠️ 必须在 1-4 步全部完成后执行——config 缓存会把当时的 `APP_KEY` / `DB_*` 值固化，之后改 `.env` 不生效；每次修改 `.env` 后需先 `php artisan config:clear` 再重建缓存）
@@ -67,7 +67,8 @@ chmod -R ug+rwX storage database bootstrap/cache
 | 报错 | 根因 | 修复 |
 |------|------|------|
 | `MissingAppKeyException` | `.env` 不存在或无 `APP_KEY`（`.env` 被 gitignore，服务器无此文件） | `php artisan key:generate`（或直接走网页向导） |
-| `SQLSTATE[HY000] ... unable to open database file` | `database/database.sqlite` 不存在（gitignore）或 `database/` 目录不可写 | 先 `migrate`（自动建库），再 chown（见清单第 2 步） |
-| `SQLSTATE[HY000] ... attempt to write a readonly database`（sessions UPDATE） | 用 **root** SSH 跑 migrate/seed 后，sqlite 文件属主变回 `root`，PHP-FPM（www）只读；或 CentOS 开启 SELinux 拦截 httpd 写入 | **所有 artisan 命令跑完后**再执行一次：`chown -R www:www database storage bootstrap/cache && chmod 664 database/database.sqlite`；SELinux 环境另执行 `chcon -R -t httpd_sys_rw_content_t database storage bootstrap/cache`（宝塔 PHP-FPM 重启后生效） |
+| `SQLSTATE[HY000] [1045] Access denied for user` | MySQL 用户名/密码错误或未授权 | 核对 `.env` 的 `DB_USERNAME`/`DB_PASSWORD`；`GRANT ALL ON monit.* TO 'monit'@'%'` |
+| `SQLSTATE[HY000] [2002] Connection refused` | MySQL 未运行或 host/port 错误 | 确认 MySQL 运行中、`DB_HOST`（容器/远程场景用主机名而非 127.0.0.1）、防火墙放行 3306 |
+| `SQLSTATE[HY000] [1049] Unknown database` | 目标库不存在 | 网页向导会自动建库；CLI 方式先手动 `CREATE DATABASE monit ... utf8mb4` |
 
 > 经验：**artisan 命令用站点用户执行**（`sudo -u www php artisan migrate --force`），或每次执行后重新 chown——root 创建/改动过的文件属主是 root，www 只读。

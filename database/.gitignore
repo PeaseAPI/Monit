@@ -1,1 +1,2 @@
 *.sqlite*
+# （SQLite 已移除：Monit 仅支持 MySQL，database/ 下不再生成库文件；保留此规则防御历史遗留）

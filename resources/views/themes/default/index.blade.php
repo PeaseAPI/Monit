@@ -31,6 +31,28 @@
             </nav>
 
             <div class="flex items-center gap-3">
+                {{-- 语言切换器（原站 🇨🇳/🇺🇸 下拉，/locale/{code} 切换 session；原生 details 实现，无 JS 依赖） --}}
+                @if (count((array) config('monit.locales')) > 1)
+                <details class="group relative">
+                    <summary class="flex cursor-pointer list-none items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 [&::-webkit-details-marker]:hidden">
+                        <span>{{ config('monit.locales.'.app()->getLocale().'.flag', '🌐') }}</span>
+                        <span class="hidden sm:inline">{{ config('monit.locales.'.app()->getLocale().'.label', app()->getLocale()) }}</span>
+                        <svg class="h-3.5 w-3.5 text-zinc-400 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-zinc-100 bg-white py-1 shadow-lg shadow-zinc-900/5">
+                        @foreach (config('monit.locales') as $code => $meta)
+                        <a href="{{ route('locale.switch', $code) }}"
+                            class="flex items-center justify-between px-4 py-2 text-sm {{ $code === app()->getLocale() ? 'bg-brand-50 font-medium text-brand-700' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900' }}">
+                            <span>{{ $meta['flag'] }} {{ $meta['label'] }}</span>
+                            @if ($code === app()->getLocale())
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>
+                            @endif
+                        </a>
+                        @endforeach
+                    </div>
+                </details>
+                @endif
+
                 <a href="{{ route('login') }}" class="hidden text-sm font-medium text-zinc-600 transition hover:text-zinc-900 sm:block">{{ __('landing.nav_login') }}</a>
                 <a href="{{ route('register') }}" class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700">
                     {{ __('landing.nav_get_started') }}
@@ -71,6 +93,28 @@
                 </a>
             </div>
             <p class="mt-4 text-sm text-zinc-400">{{ __('landing.no_card_required') }}</p>
+
+            {{-- 平台统计徽章（原站 hero 下方 "9 websites / 44K pageviews"，实时聚合 1 分钟缓存） --}}
+            @if (($stats['websites'] ?? 0) > 0)
+            <dl class="mx-auto mt-10 grid max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4">
+                <div class="rounded-2xl border border-zinc-100 bg-white/70 px-4 py-3 backdrop-blur">
+                    <dt class="text-xs text-zinc-400">{{ __('landing.stats_websites') }}</dt>
+                    <dd class="mt-0.5 text-xl font-bold tabular-nums text-zinc-900">{{ number_format($stats['websites']) }}+</dd>
+                </div>
+                <div class="rounded-2xl border border-zinc-100 bg-white/70 px-4 py-3 backdrop-blur">
+                    <dt class="text-xs text-zinc-400">{{ __('landing.stats_pageviews') }}</dt>
+                    <dd class="mt-0.5 text-xl font-bold tabular-nums text-zinc-900">{{ $stats['pageviews'] >= 1000 ? round($stats['pageviews'] / 1000).'K+' : number_format($stats['pageviews']) }}</dd>
+                </div>
+                <div class="rounded-2xl border border-zinc-100 bg-white/70 px-4 py-3 backdrop-blur">
+                    <dt class="text-xs text-zinc-400">{{ __('landing.stats_retention') }}</dt>
+                    <dd class="mt-0.5 text-xl font-bold tabular-nums text-zinc-900">365{{ __('landing.stats_days') }}</dd>
+                </div>
+                <div class="rounded-2xl border border-zinc-100 bg-white/70 px-4 py-3 backdrop-blur">
+                    <dt class="text-xs text-zinc-400">{{ __('landing.stats_uptime') }}</dt>
+                    <dd class="mt-0.5 text-xl font-bold tabular-nums text-zinc-900">99.9%</dd>
+                </div>
+            </dl>
+            @endif
 
             {{-- 产品界面模拟（纯 CSS，无外部资源） --}}
             <div class="relative mx-auto mt-16 max-w-5xl">
@@ -204,7 +248,7 @@
                 <h2 class="text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl">{{ __('landing.pricing_title') }}</h2>
                 <p class="mt-4 text-lg text-zinc-500">{{ __('landing.pricing_subtitle') }}</p>
                 @if (count($currencies ?? []) > 1)
-                <form method="GET" action="{{ route('index') }}" class="mt-6 inline-flex items-center gap-2" id="#pricing">
+                <form method="GET" action="{{ route('index') }}" class="mt-6 inline-flex items-center gap-2" id="landing-currency-form">
                     <label for="landing-currency" class="text-sm text-zinc-500">{{ __('landing.currency') }}</label>
                     <select id="landing-currency" name="currency" onchange="this.form.submit()"
                         class="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-700">
@@ -214,12 +258,26 @@
                     </select>
                 </form>
                 @endif
+
+                {{-- 计费周期切换（原站 Monthly / Annual toggle）：纯 JS 切换 [data-price] 显隐 --}}
+                <div id="billing-toggle" class="mt-8 inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 p-1">
+                    <button type="button" data-freq="monthly" aria-pressed="true"
+                        class="rounded-full bg-white px-5 py-1.5 text-sm font-semibold text-zinc-900 shadow-sm">{{ __('landing.billing_monthly') }}</button>
+                    <button type="button" data-freq="annual" aria-pressed="false"
+                        class="rounded-full px-5 py-1.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-900">
+                        {{ __('landing.billing_annual') }}
+                        <span class="ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">{{ __('landing.save_badge') }}</span>
+                    </button>
+                </div>
             </div>
 
             <div class="mt-16 grid gap-6 md:grid-cols-3">
                 @forelse ($plans ?? [] as $plan)
                 @php($symbol = $currencies[$plan->landing_currency ?? ($currency ?? 'CNY')]['symbol'] ?? '¥')
                 @php($featured = ($loop->count >= 3) && ($loop->middle ?? false))
+                @php($s = $plan->settings ?? [])
+                @php($annual = $plan->landing_price_annual)
+                @php($savePct = ($annual && $plan->landing_price > 0) ? max(0, (int) round((1 - $annual / ($plan->landing_price * 12)) * 100)) : 0)
                 <div class="{{ $featured ? 'relative rounded-2xl border-2 border-brand-600 bg-white p-8 shadow-xl shadow-brand-600/10 md:-translate-y-3' : 'rounded-2xl border border-zinc-200 bg-white p-8' }}">
                     @if ($featured)
                     <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">{{ __('landing.popular') }}</span>
@@ -227,13 +285,35 @@
                     <h3 class="text-lg font-semibold text-zinc-900">{{ $plan->name }}</h3>
                     <p class="mt-3">
                         @if ($plan->landing_price !== null && (float) $plan->landing_price > 0)
-                            <span class="text-4xl font-bold text-zinc-900">{{ $symbol }}{{ number_format((float) $plan->landing_price, 2) }}</span>
-                            <span class="text-sm font-normal text-zinc-400">/{{ __('landing.per_month') }}</span>
+                            <span data-price="monthly" class="text-4xl font-bold text-zinc-900">{{ $symbol }}{{ number_format((float) $plan->landing_price, 2) }}</span>
+                            <span data-price="monthly" class="text-sm font-normal text-zinc-400">/{{ __('landing.per_month') }}</span>
+                            @if ($annual !== null && (float) $annual > 0)
+                            <span data-price="annual" class="hidden text-4xl font-bold text-zinc-900">{{ $symbol }}{{ number_format((float) $annual, 2) }}</span>
+                            <span data-price="annual" class="hidden text-sm font-normal text-zinc-400">/{{ __('landing.per_year') }}</span>
+                            @if ($savePct > 0)
+                            <span data-price="annual" class="hidden ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">{{ __('landing.save_percent', ['percent' => $savePct]) }}</span>
+                            @endif
+                            @endif
                         @else
                             <span class="text-4xl font-bold text-zinc-900">{{ __('landing.free') }}</span>
                         @endif
                     </p>
+                    @if ($plan->trial_days > 0)
+                    <p class="mt-2 text-xs font-medium text-brand-600">{{ __('landing.trial_days_note', ['days' => $plan->trial_days]) }}</p>
+                    @endif
                     <p class="mt-3 text-sm leading-relaxed text-zinc-500">{{ $plan->description }}</p>
+
+                    @if (!empty($s))
+                    <ul class="mt-5 space-y-2.5 border-t border-zinc-100 pt-5 text-sm text-zinc-600">
+                        <li>{{ ($s['websites_limit'] ?? 0) === -1 ? __('landing.feat_websites_unlimited') : __('landing.feat_websites', ['count' => $s['websites_limit'] ?? 1]) }}</li>
+                        <li>{{ ($s['sessions_replays_limit'] ?? 0) === 0 ? __('landing.feat_no_replays') : __('landing.feat_replays', ['days' => $s['sessions_replays_retention'] ?? 30]) }}</li>
+                        <li>{{ __('landing.feat_retention', ['days' => $s['events_children_retention'] ?? 90]) }}</li>
+                        @if (!empty($s['teams_is_enabled']))<li>{{ __('landing.feat_teams') }}</li>@endif
+                        @if (!empty($s['api_is_enabled']))<li>{{ __('landing.feat_api') }}</li>@endif
+                        @if (!empty($s['email_reports_is_enabled']))<li>{{ __('landing.feat_email_reports') }}</li>@endif
+                    </ul>
+                    @endif
+
                     <a href="{{ route('register') }}" class="{{ $featured ? 'mt-6 block rounded-xl bg-brand-600 px-6 py-3 text-center text-sm font-semibold text-white transition hover:bg-brand-700' : 'mt-6 block rounded-xl border border-zinc-300 px-6 py-3 text-center text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50' }}">
                         {{ __('landing.get_started') }}
                     </a>
@@ -242,9 +322,68 @@
                 <p class="col-span-full text-center text-zinc-500">{{ __('common.no_plans') }}</p>
                 @endforelse
             </div>
+            <script>
+                (function () {
+                    var toggle = document.getElementById('billing-toggle');
+                    if (!toggle) return;
+                    var buttons = toggle.querySelectorAll('[data-freq]');
+                    buttons.forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            var freq = btn.dataset.freq;
+                            buttons.forEach(function (b) {
+                                var on = b === btn;
+                                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+                                b.classList.toggle('bg-white', on);
+                                b.classList.toggle('shadow-sm', on);
+                                b.classList.toggle('font-semibold', on);
+                                b.classList.toggle('text-zinc-900', on);
+                                b.classList.toggle('text-zinc-500', !on);
+                            });
+                            document.querySelectorAll('[data-price]').forEach(function (el) {
+                                el.classList.toggle('hidden', el.dataset.price !== freq);
+                            });
+                        });
+                    });
+                })();
+            </script>
         </div>
     </section>
     @endif
+
+    {{-- ===== 用户评价（原站 index testimonials 区） ===== --}}
+    <section class="border-t border-zinc-100 bg-zinc-50/50 py-24">
+        <div class="mx-auto max-w-7xl px-6">
+            <div class="mx-auto max-w-2xl text-center">
+                <p class="text-sm font-semibold tracking-widest text-brand-600 uppercase">{{ __('landing.testimonials_eyebrow') }}</p>
+                <h2 class="mt-3 text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl">{{ __('landing.testimonials_title') }}</h2>
+            </div>
+            <div class="mt-16 grid gap-6 md:grid-cols-3">
+                @foreach ([
+                    ['quote' => __('landing.testimonial_1_quote'), 'author' => __('landing.testimonial_1_author'), 'role' => __('landing.testimonial_1_role')],
+                    ['quote' => __('landing.testimonial_2_quote'), 'author' => __('landing.testimonial_2_author'), 'role' => __('landing.testimonial_2_role')],
+                    ['quote' => __('landing.testimonial_3_quote'), 'author' => __('landing.testimonial_3_author'), 'role' => __('landing.testimonial_3_role')],
+                ] as $t)
+                <figure class="flex flex-col rounded-2xl border border-zinc-200 bg-white p-8">
+                    <div class="flex gap-0.5 text-amber-400" aria-hidden="true">
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg>
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg>
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg>
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg>
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg>
+                    </div>
+                    <blockquote class="mt-4 flex-1 text-sm leading-relaxed text-zinc-600">“{{ $t['quote'] }}”</blockquote>
+                    <figcaption class="mt-6 flex items-center gap-3 border-t border-zinc-100 pt-5">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-sm font-bold text-brand-700">{{ mb_substr($t['author'], 0, 1) }}</span>
+                        <div>
+                            <p class="text-sm font-semibold text-zinc-900">{{ $t['author'] }}</p>
+                            <p class="text-xs text-zinc-400">{{ $t['role'] }}</p>
+                        </div>
+                    </figcaption>
+                </figure>
+                @endforeach
+            </div>
+        </div>
+    </section>
 
     {{-- ===== FAQ ===== --}}
     <section class="border-t border-zinc-100 bg-zinc-50/50 py-24">

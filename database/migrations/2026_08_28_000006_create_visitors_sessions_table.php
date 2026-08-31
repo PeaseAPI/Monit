@@ -21,7 +21,8 @@ return new class extends Migration
             $table->timestamp('date')->nullable();
             $table->unsignedBigInteger('total_events')->default(0);
 
-            $table->unique(['website_id', 'session_uuid_binary', 'visitor_id']);
+            // MySQL 标识符上限 64 字符：默认名 66 字符会 1059，显式命名
+            $table->unique(['website_id', 'session_uuid_binary', 'visitor_id'], 'vs_web_sid_vid_uniq');
             $table->index(['website_id', 'date']);
             $table->index(['visitor_id', 'date']);
         });

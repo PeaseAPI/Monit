@@ -39,7 +39,8 @@ return new class extends Migration
 
             $table->index(['website_id', 'type', 'date']);
             $table->index(['website_id', 'date']);
-            $table->index(['website_id', 'path']);
+            // MySQL InnoDB 索引上限 3072 字节：path varchar(2048) utf8mb4 用前缀索引（同 sessions_events）
+            $table->rawIndex('website_id, path(500)', 'lightweight_events_web_path_prefix_idx');
             $table->index(['website_id', 'country_code']);
         });
     }
