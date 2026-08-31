@@ -56,7 +56,7 @@ class GoalController extends Controller
             'is_enabled' => $request->boolean('is_enabled', true),
         ]);
 
-        return redirect()->route('stats.goals', ['website' => $website->website_id])
+        return redirect()->route('goals.index', ['website' => $website->website_id])
                         ->with('success', __('msg.goal_created'));
     }
 
@@ -76,7 +76,7 @@ class GoalController extends Controller
         $websiteId = $goal->website_id;
         $goal->update($validated);
 
-        return redirect()->route('stats.goals', ['website' => $websiteId])
+        return redirect()->route('goals.index', ['website' => $websiteId])
                         ->with('success', __('msg.goal_updated'));
     }
 
@@ -88,7 +88,7 @@ class GoalController extends Controller
 
         GoalConversion::where('goal_id', $goalId)->delete();
 
-        return redirect()->route('stats.goals', ['website' => $websiteId])
+        return redirect()->route('goals.index', ['website' => $websiteId])
                         ->with('success', __('msg.goal_deleted'));
     }
 }

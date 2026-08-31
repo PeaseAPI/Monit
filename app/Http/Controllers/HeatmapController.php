@@ -43,7 +43,7 @@ class HeatmapController extends Controller
             'is_enabled' => $request->boolean('is_enabled', true),
         ]);
 
-        return redirect()->route('stats.heatmaps', ['website' => $website->website_id])
+        return redirect()->route('heatmaps.index', ['website' => $website->website_id])
                         ->with('success', __('msg.heatmap_created'));
     }
 
@@ -78,7 +78,7 @@ class HeatmapController extends Controller
         $websiteId = $heatmap->website_id;
         $heatmap->update($validated);
 
-        return redirect()->route('stats.heatmaps', ['website' => $websiteId])
+        return redirect()->route('heatmaps.index', ['website' => $websiteId])
                         ->with('success', __('msg.heatmap_updated'));
     }
 
@@ -88,7 +88,7 @@ class HeatmapController extends Controller
         $websiteId = $heatmap->website_id;
         $heatmap->delete();
 
-                return redirect()->route('stats.heatmaps', ['website' => $websiteId])
+                return redirect()->route('heatmaps.index', ['website' => $websiteId])
                         ->with('success', __('msg.heatmap_deleted'));
     }
 

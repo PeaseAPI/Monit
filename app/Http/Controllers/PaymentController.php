@@ -281,7 +281,7 @@ class PaymentController extends Controller
      | 私有方法
      ----------------------------------------------------------------- */
 
-    protected function redirectToStripe(Payment $payment): RedirectResponse
+    protected function redirectToStripe(Payment $payment): View|RedirectResponse
     {
         $stripeProcessor = new StripeProcessor();
 
@@ -299,8 +299,11 @@ class PaymentController extends Controller
             return back()->withErrors(['processor' => $result['error']]);
         }
 
-        return redirect()->route('payments.stripe-checkout', ['payment' => $payment->payment_id])
-            ->with('stripe_session', $result);
+        return view('payments.processor-checkout', [
+            'payment' => $payment,
+            'processor' => 'stripe',
+            'result' => $result,
+        ]);
     }
 
     protected function redirectToPayPal(Payment $payment): RedirectResponse
@@ -328,13 +331,15 @@ class PaymentController extends Controller
         return back()->withErrors(['processor' => __('payment.paypal_order_failed')]);
     }
 
-        protected function handleOffline(Payment $payment): RedirectResponse
+    protected function handleOffline(Payment $payment): View
     {
         $offlineProcessor = new OfflinePaymentProcessor();
-        $offlineProcessor->createOrder($payment->user, $payment);
+        $result = $offlineProcessor->createOrder($payment->user, $payment);
 
-        return redirect()->route('payments.offline-instructions', ['payment' => $payment->payment_id])
-            ->with('success', __('payment.offline_order_created'));
+        return view('payments.offline-instructions', [
+            'payment' => $payment,
+            'instructions' => (string) ($result['instructions'] ?? ''),
+        ])->with('success', __('payment.offline_order_created'));
     }
 
     protected function redirectToRazorpay(Payment $payment): RedirectResponse

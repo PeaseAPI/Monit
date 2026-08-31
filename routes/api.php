@@ -33,7 +33,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->middleware('api.key')->group(function (): void {
 
     // 账户资源（规格书 §8：/api/user、/api/logs、/api/payments、/api/dashboard-views、/api/teams）
-    Route::get('/user', [AccountController::class, 'user']);
+    Route::get('/user', [AccountController::class, 'user'])->name('api.v1.user');
     Route::get('/logs', [AccountController::class, 'logs']);
     Route::get('/payments', [AccountController::class, 'payments']);
     Route::get('/dashboard-views', [AccountController::class, 'dashboardViewsIndex']);

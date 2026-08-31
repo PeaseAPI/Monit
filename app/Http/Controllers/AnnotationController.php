@@ -44,7 +44,7 @@ class AnnotationController extends Controller
             'user_id' => $user->user_id,
         ]);
 
-        return redirect()->route('stats.annotations', ['website' => $website->website_id])
+        return redirect()->route('annotations.index', ['website' => $website->website_id])
                         ->with('success', __('msg.annotation_created'));
     }
 
@@ -60,7 +60,7 @@ class AnnotationController extends Controller
         $websiteId = $annotation->website_id;
         $annotation->update($validated);
 
-        return redirect()->route('stats.annotations', ['website' => $websiteId])
+        return redirect()->route('annotations.index', ['website' => $websiteId])
                         ->with('success', __('msg.annotation_updated'));
     }
 
@@ -70,7 +70,7 @@ class AnnotationController extends Controller
         $websiteId = $annotation->website_id;
         $annotation->delete();
 
-        return redirect()->route('stats.annotations', ['website' => $websiteId])
+        return redirect()->route('annotations.index', ['website' => $websiteId])
                         ->with('success', __('msg.annotation_deleted'));
     }
 
