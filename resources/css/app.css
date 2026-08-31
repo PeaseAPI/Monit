@@ -227,3 +227,34 @@
 .prose td { @apply border border-zinc-200 px-3 py-2; }
 .prose-sm { @apply text-sm leading-6; }
 
+/* ---------------------------------------------------------------------------
+ * 前台动效（渐进增强）
+ * ------------------------------------------------------------------------- */
+@keyframes monit-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+.animate-float {
+    animation: monit-float 6s ease-in-out infinite;
+}
+
+@keyframes monit-fade-up {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 滚动进入动画：仅在支持 scroll-driven animations 的浏览器启用（Chrome/Edge 115+），
+ * 不支持的浏览器直接渲染最终状态，无任何降级闪烁 */
+@supports (animation-timeline: view()) {
+    .reveal {
+        animation: monit-fade-up 0.9s linear both;
+        animation-timeline: view();
+        animation-range: entry 5% entry 50%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-float { animation: none; }
+    .reveal { animation: none; }
+}
+

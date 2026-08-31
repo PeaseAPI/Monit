@@ -119,8 +119,10 @@
             @endif
 
             {{-- 产品界面模拟（纯 CSS，无外部资源） --}}
-            <div class="relative mx-auto mt-16 max-w-5xl">
-                <div class="rounded-2xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-900/10">
+            <div class="relative mx-auto mt-16 max-w-5xl pb-10 [perspective:1600px]">
+                <div class="pointer-events-none absolute -inset-x-10 -top-10 bottom-2 rounded-[2.5rem] bg-gradient-to-tr from-brand-200/50 via-brand-100/30 to-transparent blur-2xl"></div>
+                <div class="animate-float relative">
+                <div class="rounded-2xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-900/10 [transform:rotateX(5deg)] transition-transform duration-700 hover:[transform:rotateX(0deg)]">
                     <div class="flex items-center gap-2 border-b border-zinc-100 px-4 py-3">
                         <span class="h-3 w-3 rounded-full bg-red-400"></span>
                         <span class="h-3 w-3 rounded-full bg-yellow-400"></span>
@@ -152,6 +154,7 @@
                         </div>
                     </div>
                 </div>
+                </div>
             </div>
         </div>
     </section>
@@ -165,7 +168,7 @@
                 <p class="mt-4 text-lg text-zinc-500">{{ __('landing.features_subtitle') }}</p>
             </div>
 
-            <div class="mt-16 grid gap-6 md:grid-cols-3">
+            <div class="reveal mt-16 grid gap-6 md:grid-cols-3">
                 @foreach ([
                     ['icon' => 'chart', 'title' => __('landing.feature_realtime_title'), 'desc' => __('landing.feature_realtime_desc')],
                     ['icon' => 'replay', 'title' => __('landing.feature_replay_title'), 'desc' => __('landing.feature_replay_desc')],
@@ -210,7 +213,7 @@
                 <p class="mt-4 text-lg text-zinc-400">{{ __('landing.why_subtitle') }}</p>
             </div>
 
-            <div class="mt-16 grid gap-6 md:grid-cols-3">
+            <div class="reveal mt-16 grid gap-6 md:grid-cols-3">
                 @foreach ([
                     ['stat' => '< 1 KB', 'title' => __('landing.why_pixel_title'), 'desc' => __('landing.why_pixel_desc')],
                     ['stat' => '100%', 'title' => __('landing.why_data_title'), 'desc' => __('landing.why_data_desc')],
@@ -225,7 +228,7 @@
             </div>
 
             {{-- 三步上手 --}}
-            <div class="mt-20 grid gap-6 md:grid-cols-3">
+            <div class="reveal mt-20 grid gap-6 md:grid-cols-3">
                 @foreach ([
                     ['step' => '01', 'title' => __('landing.step1_title'), 'desc' => __('landing.step1_desc')],
                     ['step' => '02', 'title' => __('landing.step2_title'), 'desc' => __('landing.step2_desc')],
@@ -274,7 +277,7 @@
                 </div>
             </div>
 
-            <div class="mt-16 grid gap-6 md:grid-cols-3">
+            <div class="reveal mt-16 grid gap-6 md:grid-cols-3">
                 @forelse ($plans ?? [] as $plan)
                 @php($symbol = $currencies[$plan->landing_currency ?? ($currency ?? 'CNY')]['symbol'] ?? '¥')
                 @php($featured = ($loop->count >= 3) && ($loop->middle ?? false))
@@ -362,13 +365,13 @@
                 <p class="text-sm font-semibold tracking-widest text-brand-600 uppercase">{{ __('landing.testimonials_eyebrow') }}</p>
                 <h2 class="mt-3 text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl">{{ __('landing.testimonials_title') }}</h2>
             </div>
-            <div class="mt-16 grid gap-6 md:grid-cols-3">
+            <div class="reveal mt-16 grid gap-6 md:grid-cols-3">
                 @foreach ([
                     ['quote' => __('landing.testimonial_1_quote'), 'author' => __('landing.testimonial_1_author'), 'role' => __('landing.testimonial_1_role')],
                     ['quote' => __('landing.testimonial_2_quote'), 'author' => __('landing.testimonial_2_author'), 'role' => __('landing.testimonial_2_role')],
                     ['quote' => __('landing.testimonial_3_quote'), 'author' => __('landing.testimonial_3_author'), 'role' => __('landing.testimonial_3_role')],
                 ] as $t)
-                <figure class="flex flex-col rounded-2xl border border-zinc-200 bg-white p-8">
+                <figure class="reveal flex flex-col rounded-2xl border border-zinc-200 bg-white p-8 transition duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-xl hover:shadow-brand-600/5">
                     <div class="flex gap-0.5 text-amber-400" aria-hidden="true">
                         <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg>
                         <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg>
@@ -405,7 +408,7 @@
                     __('landing.faq_q4') => __('landing.faq_a4'),
                     __('landing.faq_q5') => __('landing.faq_a5'),
                 ] as $q => $a)
-                <details class="group rounded-2xl border border-zinc-200 bg-white p-6 open:border-brand-200">
+                <details class="group rounded-2xl border border-zinc-200 bg-white p-6 transition hover:border-zinc-300 open:border-brand-200">
                     <summary class="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-zinc-900 [&::-webkit-details-marker]:hidden">
                         {{ $q }}
                         <span class="ml-4 shrink-0 text-zinc-400 transition group-open:rotate-45">＋</span>
@@ -435,7 +438,8 @@
     </section>
 
     {{-- ===== 页脚 ===== --}}
-    <footer class="border-t border-zinc-100 bg-white">
+    <div class="h-px bg-gradient-to-r from-transparent via-brand-200/70 to-transparent"></div>
+    <footer class="bg-white">
         <div class="mx-auto max-w-7xl px-6 py-16">
             <div class="grid gap-10 md:grid-cols-5">
                 <div class="md:col-span-2">
