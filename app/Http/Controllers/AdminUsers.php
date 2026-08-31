@@ -29,6 +29,10 @@ class AdminUsers extends Controller
             $query->where('plan_id', $plan);
         }
 
+        if ($request->query('status') !== null && $request->query('status') !== '') {
+            $query->where('status', (int) $request->query('status'));
+        }
+
         $users = $query->orderByDesc('created_at')->paginate(50);
         $plans = Plan::orderBy('order')->get();
 

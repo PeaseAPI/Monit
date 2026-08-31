@@ -27,6 +27,30 @@ class AdminRedesignTest extends TestCase
         ]);
     }
 
+    public function test_admin_users_index_renders_filters_and_table(): void
+    {
+        $this->actingAs($this->adminUser());
+
+        User::create([
+            'name' => 'Filter Me', 'email' => 'filter@example.com', 'password' => bcrypt('x'),
+            'status' => 1, 'type' => 0, 'plan_id' => 'free', 'plan_settings' => [],
+        ]);
+
+        // 筛选命中
+        $this->get(route('admin.users.index', ['search' => 'filter@example.com', 'status' => 1]))
+            ->assertOk()
+            ->assertSee('name="search"', false)
+            ->assertSee('name="plan"', false)
+            ->assertSee('name="status"', false)
+            ->assertSee('Filter Me')
+            ->assertSee('filter@example.com');
+
+        // 状态筛选排除
+        $this->get(route('admin.users.index', ['status' => 0]))
+            ->assertOk()
+            ->assertDontSee('Filter Me');
+    }
+
     public function test_admin_dashboard_sidebar_matches_reference_menu(): void
     {
         $this->actingAs($this->adminUser());
