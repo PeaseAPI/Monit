@@ -36,7 +36,11 @@ class ToolRunner
      */
     public function catalog(): array
     {
-        $disabled = (array) Settings::get('seo.seo_disabled_tools', []);
+        $disabled = Settings::get('seo.seo_disabled_tools', []);
+        // 兼容后台 textarea（每行/逗号分隔 slug）与数组两种存储
+        $disabled = is_string($disabled)
+            ? array_filter(array_map('trim', preg_split('/[\r\n,]+/', $disabled)))
+            : (array) $disabled;
 
         return collect(config('seo.tools', []))
             ->reject(fn (array $meta, string $slug) => in_array($slug, $disabled, true))

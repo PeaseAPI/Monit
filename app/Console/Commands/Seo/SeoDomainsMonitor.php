@@ -5,10 +5,11 @@ namespace App\Console\Commands\Seo;
 use App\Models\Domain;
 use App\Services\Seo\DomainMonitor;
 use App\Services\Seo\NotificationDispatcher;
+use App\Support\Settings;
 use Illuminate\Console\Command;
 
 /**
- * 域名监控：whois 到期复检 + 到期预警（30/7/1 天三档通知）
+ * 域名监控：whois 到期复检 + 到期预警（默认 30/7/1 天三档通知，档位后台可配）
  */
 class SeoDomainsMonitor extends Command
 {
@@ -18,6 +19,16 @@ class SeoDomainsMonitor extends Command
 
     public function handle(DomainMonitor $monitor): int
     {
+        // 后台 seo 组开关（seo.domain_monitor_is_enabled）关闭时跳过
+        if (! filter_var(Settings::get('seo.domain_monitor_is_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $this->info('域名监控已停用（seo.domain_monitor_is_enabled），跳过本次检查。');
+
+            return self::SUCCESS;
+        }
+
+        // 预警档位：逗号分隔天数（seo.domain_monitor_alert_days，默认 30,7,1）
+        $alertDays = array_map('intval', array_filter(array_map('trim', explode(',', (string) Settings::get('seo.domain_monitor_alert_days', '30,7,1')))));
+
         $domains = Domain::where('monitor_is_enabled', true)->get();
 
         $notified = 0;
@@ -36,8 +47,8 @@ class SeoDomainsMonitor extends Command
                 continue;
             }
 
-            // 30/7/1 天三档预警（跨档当天的 0 点对齐，避免重复通知）
-            if (in_array($daysLeft, [30, 7, 1], true) || $daysLeft < 0) {
+            // 命中预警档位当天发送（跨档对齐避免重复通知；档位后台 seo.domain_monitor_alert_days 可配）
+            if (in_array($daysLeft, $alertDays, true) || $daysLeft < 0) {
                 app(NotificationDispatcher::class)->dispatchForDomain($domain, max(0, $daysLeft));
                 $notified++;
             }

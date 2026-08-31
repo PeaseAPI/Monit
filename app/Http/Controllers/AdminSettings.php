@@ -272,6 +272,7 @@ class AdminSettings extends Controller
             'payment_gateways' => [], // 当前值在 index() 中从 .env 读取（EnvWriter）
             'business' => $this->getGroup('business'), // 发票抬头企业信息（原库 settings.business 组）
             'analytics' => $this->getGroup('analytics'),
+            'seo' => $this->getGroup('seo'), // SEO 功能设置（审计/工具中心/监控，后台 seo 组）
             'maps' => $this->getGroup('maps'),
             'smtp' => $this->getGroup('smtp'),
             'sms' => $this->getGroup('sms'),
@@ -370,6 +371,23 @@ class AdminSettings extends Controller
                 'chart_cache' => 'nullable|integer|min:0|max:10080',
                 'chart_days' => 'nullable|integer|min:1|max:365',
                 'sitemap_url' => 'nullable|string|max:512',
+            ],
+            // SEO 功能设置（后台 seo 组；上游：设置页 partials/seo；下游：SeoFeatureEnabled
+            // 中间件 / AuditEngine / SeoToolController / 定时任务 Seo/* 命令）
+            'seo' => [
+                'audits_is_enabled' => 'boolean',
+                'tools_is_enabled' => 'boolean',
+                'tools_guest_access' => 'boolean',
+                'tools_guest_monthly_limit' => 'nullable|integer|min:-1|max:100000',
+                'seo_disabled_tools' => 'nullable|string|max:8192',
+                'sitemap_monitor_is_enabled' => 'boolean',
+                'domain_monitor_is_enabled' => 'boolean',
+                'seo_request_timeout' => 'nullable|integer|min:5|max:120',
+                'seo_request_user_agent' => 'nullable|string|max:256',
+                'seo_double_check' => 'boolean',
+                'seo_double_check_wait' => 'nullable|integer|min:1|max:10',
+                'domain_monitor_alert_days' => 'nullable|string|max:64|regex:/^\d+(\s*,\s*\d+)*$/',
+                'archives_retention_days' => 'nullable|integer|min:0|max:3650',
             ],
             'users' => [
                 'register_is_enabled' => 'boolean',

@@ -4,10 +4,12 @@ namespace App\Console\Commands\Seo;
 
 use App\Models\SeoAuditArchive;
 use App\Models\User;
+use App\Support\Settings;
 use Illuminate\Console\Command;
 
 /**
  * 审计归档清理：按用户套餐 seo_history_retention_days 保留期滚动删除快照
+ * 套餐未指定与游客审计按后台兜底值（seo.archives_retention_days，默认 30 天）
  */
 class SeoArchivesCleanup extends Command
 {
@@ -17,15 +19,18 @@ class SeoArchivesCleanup extends Command
 
     public function handle(): int
     {
+        // 后台兜底保留天数（0 = 永久保留）
+        $defaultRetention = (int) Settings::get('seo.archives_retention_days', 30);
+
         $deleted = 0;
 
-        // 按用户分组处理（每用户保留期可能不同；游客审计统一 30 天）
+        // 按用户分组处理（每用户保留期可能不同；游客审计统一走兜底值）
         $userIds = SeoAuditArchive::whereNotNull('user_id')->distinct()->pluck('user_id');
 
         foreach ($userIds as $userId) {
             $user = User::find($userId);
 
-            $retention = (int) ($user?->getPlanSettings()['seo_history_retention_days'] ?? 30);
+            $retention = (int) ($user?->getPlanSettings()['seo_history_retention_days'] ?? $defaultRetention);
 
             if ($retention > 0) {
                 $deleted += SeoAuditArchive::where('user_id', $userId)
@@ -34,9 +39,11 @@ class SeoArchivesCleanup extends Command
             }
         }
 
-        $deleted += SeoAuditArchive::whereNull('user_id')
-            ->where('created_at', '<', now()->subDays(30))
-            ->delete();
+        if ($defaultRetention > 0) {
+            $deleted += SeoAuditArchive::whereNull('user_id')
+                ->where('created_at', '<', now()->subDays($defaultRetention))
+                ->delete();
+        }
 
         $this->info("SEO 归档清理完成：删除 {$deleted} 条快照。");
 

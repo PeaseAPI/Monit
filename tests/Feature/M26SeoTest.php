@@ -458,6 +458,98 @@ class M26SeoTest extends TestCase
             ->assertOk();
     }
 
+    /* ---------------- 后台 seo 组开关接线 ---------------- */
+
+    public function test_seo_audits_feature_toggle_blocks_routes(): void
+    {
+        Settings::set('seo.audits_is_enabled', false);
+
+        // 公开分析 / 目录 / dashboard 审计入口全部 403
+        $this->post(route('seo.analyze'), ['url' => 'https://example.com'])->assertForbidden();
+        $this->get(route('seo.directory'))->assertForbidden();
+        $this->actingAs($this->user)->get(route('seo.audits'))->assertForbidden();
+        $this->actingAs($this->user)->get(route('seo.handlers'))->assertForbidden();
+
+        // 已生成的公开分享报告不受总开关影响
+        $audit = $this->makeAudit(['privacy' => 'public']);
+
+        $this->get(route('seo.audits.show', $audit->seo_audit_id))->assertOk();
+    }
+
+    public function test_seo_audits_feature_toggle_skips_scheduled_refresh(): void
+    {
+        Queue::fake();
+        Settings::set('seo.audits_is_enabled', false);
+
+        Website::create([
+            'user_id' => $this->user->user_id, 'pixel_key' => 'px_off',
+            'name' => 'Off', 'scheme' => 'https', 'host' => 'off.test',
+            'tracking_type' => 'lightweight', 'is_enabled' => true,
+            'excluded_ips' => '', 'datetime' => now(),
+            'seo_audit_check_interval' => 'daily',
+            'seo_next_audit_at' => now()->subHour(),
+        ]);
+
+        $this->artisan('monit:seo-audits-refresh')->assertSuccessful();
+
+        Queue::assertNotPushed(RunSeoAuditJob::class);
+    }
+
+    public function test_seo_tools_feature_toggle_blocks_tools_center(): void
+    {
+        // 访客开启时可用（对照）
+        Settings::set('seo.tools_guest_access', 'true');
+        $this->get(route('seo.tools'))->assertOk();
+
+        // 工具中心总开关关闭：访客与登录用户均 403
+        Settings::set('seo.tools_is_enabled', false);
+
+        $this->get(route('seo.tools'))->assertForbidden();
+        $this->actingAs($this->user)->get(route('seo.tools'))->assertForbidden();
+    }
+
+    public function test_seo_disabled_tools_supports_newline_separated_string(): void
+    {
+        // 后台 textarea 每行一个 slug 存储
+        Settings::set('seo.seo_disabled_tools', "md5_generator\nbase64_converter");
+
+        $catalog = app(ToolRunner::class)->catalog();
+
+        $this->assertArrayNotHasKey('md5_generator', $catalog);
+        $this->assertArrayNotHasKey('base64_converter', $catalog);
+    }
+
+    public function test_sitemap_and_domain_monitor_toggles_skip_commands(): void
+    {
+        Settings::set('seo.sitemap_monitor_is_enabled', false);
+        Settings::set('seo.domain_monitor_is_enabled', false);
+
+        $this->artisan('monit:seo-sitemaps-check')
+            ->expectsOutputToContain('Sitemap 监控已停用')
+            ->assertSuccessful();
+
+        $this->artisan('monit:seo-domains-monitor')
+            ->expectsOutputToContain('域名监控已停用')
+            ->assertSuccessful();
+    }
+
+    public function test_archives_cleanup_uses_fallback_retention_setting(): void
+    {
+        // 游客归档走兜底保留天数（seo.archives_retention_days）
+        Settings::set('seo.archives_retention_days', 10);
+
+        $audit = $this->makeAudit(['user_id' => null]);
+        $audit->archives()->create([
+            'seo_audit_id' => $audit->seo_audit_id,
+            'user_id' => null, 'score' => 50,
+            'snapshot' => [], 'created_at' => now()->subDays(20),
+        ]);
+
+        $this->artisan('monit:seo-archives-cleanup')->assertSuccessful();
+
+        $this->assertSame(0, $audit->archives()->count());
+    }
+
     /* ---------------- 语言词条 ---------------- */
 
     public function test_seo_language_keys_present_in_all_locales(): void

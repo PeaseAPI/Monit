@@ -115,6 +115,84 @@ class SettingsGroupsTest extends TestCase
         }
     }
 
+    /* ---------------- seo 组（SEO 功能设置整合） ---------------- */
+
+    public function test_settings_page_renders_seo_tab(): void
+    {
+        $admin = $this->makeUser(['email' => 'admin@taskc.dev', 'type' => 1]);
+
+        $this->actingAs($admin)->get('/admin/settings')
+            ->assertOk()
+            ->assertSee('id="panel-seo"', false)
+            ->assertSee('SEO 审计')
+            ->assertSee('SEO 工具中心')
+            ->assertSee('抓取超时（秒）')
+            ->assertSee('域名到期预警档位（天）');
+    }
+
+    public function test_seo_group_saves_and_reads_back(): void
+    {
+        $admin = $this->makeUser(['email' => 'admin@taskc.dev', 'type' => 1]);
+
+        $this->actingAs($admin)->put('/admin/settings', [
+            'group' => 'seo',
+            'audits_is_enabled' => '1',
+            'tools_is_enabled' => '1',
+            'tools_guest_access' => '1',
+            'tools_guest_monthly_limit' => '50',
+            'seo_disabled_tools' => 'md5_generator',
+            'sitemap_monitor_is_enabled' => '1',
+            'domain_monitor_is_enabled' => '1',
+            'seo_request_timeout' => '30',
+            'seo_request_user_agent' => 'MonitBot/2.0',
+            'seo_double_check' => '1',
+            'seo_double_check_wait' => '3',
+            'domain_monitor_alert_days' => '45,14,3',
+            'archives_retention_days' => '90',
+        ])->assertRedirect();
+
+        $this->assertSame('true', Settings::get('seo.audits_is_enabled'));
+        $this->assertSame('50', Settings::get('seo.tools_guest_monthly_limit'));
+        $this->assertSame('MonitBot/2.0', Settings::get('seo.seo_request_user_agent'));
+        $this->assertSame('45,14,3', Settings::get('seo.domain_monitor_alert_days'));
+        $this->assertSame('90', Settings::get('seo.archives_retention_days'));
+
+        // 保存后设置页回显
+        $this->actingAs($admin)->get('/admin/settings')
+            ->assertOk()
+            ->assertSee('MonitBot/2.0')
+            ->assertSee('45,14,3');
+    }
+
+    public function test_seo_group_unchecked_toggles_save_false(): void
+    {
+        $admin = $this->makeUser(['email' => 'admin@taskc.dev', 'type' => 1]);
+
+        Settings::set('seo.audits_is_enabled', 'true');
+
+        // 复选框未提交（未勾选）→ 保存为 false，支持取消勾选
+        $this->actingAs($admin)->put('/admin/settings', [
+            'group' => 'seo',
+            'tools_guest_monthly_limit' => '20',
+        ])->assertRedirect();
+
+        $this->assertSame('false', Settings::get('seo.audits_is_enabled'));
+    }
+
+    public function test_seo_group_validation_rejects_bad_values(): void
+    {
+        $admin = $this->makeUser(['email' => 'admin@taskc.dev', 'type' => 1]);
+
+        $this->actingAs($admin)->put('/admin/settings', [
+            'group' => 'seo',
+            'seo_request_timeout' => '999',
+            'domain_monitor_alert_days' => 'abc',
+            'archives_retention_days' => '-5',
+        ])->assertSessionHasErrors(['seo_request_timeout', 'domain_monitor_alert_days', 'archives_retention_days']);
+
+        $this->assertDatabaseMissing('settings', ['key' => 'seo.seo_request_timeout']);
+    }
+
     /* ---------------- 缓存面板 ---------------- */
 
     public function test_clear_cache_action_flushes_settings_cache(): void

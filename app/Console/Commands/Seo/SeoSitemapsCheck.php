@@ -5,6 +5,7 @@ namespace App\Console\Commands\Seo;
 use App\Models\Website;
 use App\Services\Seo\NotificationDispatcher;
 use App\Services\Seo\SitemapMonitor;
+use App\Support\Settings;
 use Illuminate\Console\Command;
 
 /**
@@ -18,6 +19,13 @@ class SeoSitemapsCheck extends Command
 
     public function handle(SitemapMonitor $monitor): int
     {
+        // 后台 seo 组开关（seo.sitemap_monitor_is_enabled）关闭时跳过
+        if (! filter_var(Settings::get('seo.sitemap_monitor_is_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $this->info('Sitemap 监控已停用（seo.sitemap_monitor_is_enabled），跳过本次检查。');
+
+            return self::SUCCESS;
+        }
+
         $websites = Website::query()
             ->whereNotIn('seo_sitemap_check_interval', ['never', ''])
             ->where('is_enabled', true)

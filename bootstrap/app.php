@@ -6,6 +6,7 @@ use App\Http\Middleware\CheckMaintenance;
 use App\Http\Middleware\EnsureInstalled;
 use App\Http\Middleware\EnforcePlanLimits;
 use App\Http\Middleware\EnsureUserActive;
+use App\Http\Middleware\SeoFeatureEnabled;
 use App\Http\Middleware\SetLocale;
 use App\Models\Website;
 use App\Policies\WebsitePolicy;
@@ -44,6 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => AdminMiddleware::class,
             'api.key' => AuthenticateApiKey::class,
             'plan_limit' => EnforcePlanLimits::class,
+            'seo.feature' => SeoFeatureEnabled::class,
         ]);
 
         // 维护模式（规格书 §6.1）：settings main.maintenance_is_enabled 开启时非管理员跳转维护页

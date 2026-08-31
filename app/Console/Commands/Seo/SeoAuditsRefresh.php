@@ -4,6 +4,7 @@ namespace App\Console\Commands\Seo;
 
 use App\Jobs\Seo\RunSeoAuditJob;
 use App\Models\Website;
+use App\Support\Settings;
 use Illuminate\Console\Command;
 
 /**
@@ -17,6 +18,13 @@ class SeoAuditsRefresh extends Command
 
     public function handle(): int
     {
+        // 后台 seo 组总开关（seo.audits_is_enabled）关闭时跳过
+        if (! filter_var(Settings::get('seo.audits_is_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $this->info('SEO 审计已停用（seo.audits_is_enabled），跳过本次复审。');
+
+            return self::SUCCESS;
+        }
+
         $due = Website::query()
             ->whereNotIn('seo_audit_check_interval', ['never', ''])
             ->whereNotNull('seo_next_audit_at')

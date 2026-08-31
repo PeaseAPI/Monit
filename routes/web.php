@@ -173,15 +173,16 @@ Route::get('/statistics/{pixel_key}', [PublicStatisticsController::class, 'show'
 Route::post('/statistics/{pixel_key}/auth', [PublicStatisticsController::class, 'authenticate'])->middleware('throttle:5,1')->name('statistics.public.auth');
 
 // SEO 公开面（M26，融合方案 §8.1：报告分享三态 / 公共目录 / 访客分析）
+// seo.feature:audits 受后台 seo 组总开关控制（分享报告页除外：已生成报告始终可访问）
 Route::get('/seo/audits/{seoAudit}', [SeoAuditController::class, 'show'])
     ->whereNumber('seoAudit')->name('seo.audits.show');
 Route::post('/seo/audits/{seoAudit}/password', [SeoAuditController::class, 'unlock'])
     ->middleware('throttle:10,1')->whereNumber('seoAudit')->name('seo.audits.password');
-Route::get('/seo/directory', [SeoAuditController::class, 'directory'])->name('seo.directory');
-Route::post('/seo/analyze', [SeoAuditController::class, 'analyze'])->middleware('throttle:10,1')->name('seo.analyze');
+Route::get('/seo/directory', [SeoAuditController::class, 'directory'])->middleware('seo.feature:audits')->name('seo.directory');
+Route::post('/seo/analyze', [SeoAuditController::class, 'analyze'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.analyze');
 
-// SEO 工具中心（访客受 seo.tools_guest_access 开关控制）
-Route::middleware(SeoGuestAccess::class)->prefix('tools')->group(function (): void {
+// SEO 工具中心（访客受 seo.tools_guest_access 开关控制；整站受 seo.tools_is_enabled 控制）
+Route::middleware('seo.feature:tools', SeoGuestAccess::class)->prefix('tools')->group(function (): void {
     Route::get('/', [SeoToolController::class, 'index'])->name('seo.tools');
     Route::get('/{slug}', [SeoToolController::class, 'show'])->name('seo.tools.show');
     Route::post('/{slug}', [SeoToolController::class, 'process'])->middleware('throttle:20,1')->name('seo.tools.process');
@@ -372,22 +373,22 @@ Route::middleware('auth')->group(function (): void {
     Route::put('/domains', [DomainController::class, 'update'])->name('domains.update');
     Route::delete('/domains/{domainId}', [DomainController::class, 'destroy'])->name('domains.destroy');
 
-    // SEO：审计（M26，融合方案 §8.1）
-    Route::get('/seo/audits', [SeoAuditController::class, 'index'])->name('seo.audits');
-    Route::post('/seo/audits', [SeoAuditController::class, 'store'])->middleware('throttle:10,1')->name('seo.audits.store');
-    Route::post('/seo/audits/{seoAudit}/share', [SeoAuditController::class, 'share'])->name('seo.audits.share');
-    Route::delete('/seo/audits/{seoAudit}', [SeoAuditController::class, 'destroy'])->name('seo.audits.destroy');
-    Route::get('/seo/audits/export', [SeoAuditController::class, 'export'])->name('seo.audits.export');
+    // SEO：审计（M26，融合方案 §8.1；seo.feature:audits 受后台 seo 组总开关控制）
+    Route::get('/seo/audits', [SeoAuditController::class, 'index'])->middleware('seo.feature:audits')->name('seo.audits');
+    Route::post('/seo/audits', [SeoAuditController::class, 'store'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.audits.store');
+    Route::post('/seo/audits/{seoAudit}/share', [SeoAuditController::class, 'share'])->middleware('seo.feature:audits')->name('seo.audits.share');
+    Route::delete('/seo/audits/{seoAudit}', [SeoAuditController::class, 'destroy'])->middleware('seo.feature:audits')->name('seo.audits.destroy');
+    Route::get('/seo/audits/export', [SeoAuditController::class, 'export'])->middleware('seo.feature:audits')->name('seo.audits.export');
 
     // SEO：通知处理器（设置面，融合方案 §11）
-    Route::get('/seo/notification-handlers', [SeoNotificationHandlerController::class, 'index'])->name('seo.handlers');
-    Route::post('/seo/notification-handlers', [SeoNotificationHandlerController::class, 'store'])->name('seo.handlers.store');
-    Route::put('/seo/notification-handlers/{handler}', [SeoNotificationHandlerController::class, 'update'])->name('seo.handlers.update');
-    Route::delete('/seo/notification-handlers/{handler}', [SeoNotificationHandlerController::class, 'destroy'])->name('seo.handlers.destroy');
+    Route::get('/seo/notification-handlers', [SeoNotificationHandlerController::class, 'index'])->middleware('seo.feature:audits')->name('seo.handlers');
+    Route::post('/seo/notification-handlers', [SeoNotificationHandlerController::class, 'store'])->middleware('seo.feature:audits')->name('seo.handlers.store');
+    Route::put('/seo/notification-handlers/{handler}', [SeoNotificationHandlerController::class, 'update'])->middleware('seo.feature:audits')->name('seo.handlers.update');
+    Route::delete('/seo/notification-handlers/{handler}', [SeoNotificationHandlerController::class, 'destroy'])->middleware('seo.feature:audits')->name('seo.handlers.destroy');
 
     // SEO：网站 SEO 标签页（can:own,website）
-    Route::get('/websites/{website}/seo', [WebsiteSeoController::class, 'show'])->middleware('can:own,website')->name('websites.seo');
-    Route::put('/websites/{website}/seo', [WebsiteSeoController::class, 'update'])->middleware('can:own,website')->name('websites.seo.update');
+    Route::get('/websites/{website}/seo', [WebsiteSeoController::class, 'show'])->middleware('can:own,website', 'seo.feature:audits')->name('websites.seo');
+    Route::put('/websites/{website}/seo', [WebsiteSeoController::class, 'update'])->middleware('can:own,website', 'seo.feature:audits')->name('websites.seo.update');
 
     // 团队协作
     Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
