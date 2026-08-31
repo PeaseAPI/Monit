@@ -96,6 +96,25 @@ docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate --seed
 ```
 
+## 📚 完整文档与部署配置
+
+**线上文档中心**（部署后即可访问，无需额外配置）：
+
+| 页面 | 地址 | 仓库文件 |
+|---|---|---|
+| 产品介绍 | `https://your-domain.com/docs/index.html` | `public/docs/index.html` |
+| 安装指南 | `https://your-domain.com/docs/install.html` | `public/docs/install.html` |
+| 使用手册 | `https://your-domain.com/docs/usage.html` | `public/docs/usage.html` |
+
+**生产部署配置（开箱即用，无需手写伪静态）：**
+
+| 文件 | 内容 |
+|---|---|
+| [`deploy/nginx/monit.conf`](deploy/nginx/monit.conf) | Nginx 完整站点配置：HTTPS 跳转 + Laravel 伪静态 + 静态资源 30 天长缓存 + Gzip + 像素端点 CORS/日志优化 + 安全响应头 |
+| [`deploy/apache/monit.conf`](deploy/apache/monit.conf) | Apache 虚拟主机：mod_rewrite 伪静态 + PHP-FPM + 静态缓存 + Gzip + 安全头 |
+| [`deploy/README.md`](deploy/README.md) | 一分钟接入命令（certbot 签证书 / a2ensite）+ 部署后必查清单（storage:link、缓存、Cron、队列） |
+| `public/.htaccess` | Laravel 标准伪静态（Apache `AllowOverride All` 后自动生效） |
+
 ## 📊 REST API
 
 `/api-documentation` 内置交互式文档，`Authorization: Bearer <api_key>` 鉴权，覆盖 17 类资源端点 —— 拿来即用的开放平台。
