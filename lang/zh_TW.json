@@ -353,6 +353,7 @@
     "admin.language_strings_count": "字串數量",
     "admin.language_updated_at": "更新時間",
     "admin.languages": "語言管理",
+    "admin.languages_subtitle": "介面語言與翻譯管理",
     "admin.last_activity": "最近活動",
     "admin.license_current_host": "當前網域",
     "admin.license_desc": "Ed25519 離線簽名 License，支援多網域授權，完全不依賴外部伺服器。",

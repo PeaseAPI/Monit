@@ -353,6 +353,7 @@
     "admin.language_strings_count": "Strings",
     "admin.language_updated_at": "Updated At",
     "admin.languages": "Languages",
+    "admin.languages_subtitle": "Interface languages and translations",
     "admin.last_activity": "Last Activity",
     "admin.license_current_host": "Current domain",
     "admin.license_desc": "Ed25519 offline-signed license with multi-domain support, no external server required.",

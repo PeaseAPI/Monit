@@ -353,6 +353,7 @@
     "admin.language_strings_count": "字符串数量",
     "admin.language_updated_at": "更新时间",
     "admin.languages": "语言管理",
+    "admin.languages_subtitle": "界面语言与翻译管理",
     "admin.last_activity": "最近活动",
     "admin.license_current_host": "当前域名",
     "admin.license_desc": "Ed25519 离线签名 License，支持多域名授权，完全不依赖外部服务器。",
