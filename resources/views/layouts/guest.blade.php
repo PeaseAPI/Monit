@@ -9,9 +9,11 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
+    @include('parts.announcement_bar')
     <div class="flex min-h-screen flex-col lg:flex-row">
         {{-- Brand sidebar --}}
         <aside class="relative hidden w-full overflow-hidden bg-zinc-950 lg:flex lg:w-[46%] lg:flex-col lg:justify-between lg:p-12">
+            <span class="grid-pattern absolute inset-0"></span>
             <div class="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-600/30 blur-[120px]"></div>
             <div class="pointer-events-none absolute -bottom-40 -right-20 h-[420px] w-[420px] rounded-full bg-brand-400/20 blur-[120px]"></div>
 
