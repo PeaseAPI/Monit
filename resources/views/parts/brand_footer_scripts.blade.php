@@ -4,6 +4,12 @@
 @if ($footerHtml = \App\Support\Brand::footerHtml())
     {!! $footerHtml !!}
 @endif
+@if ($adsEnabled = filter_var(\App\Support\Settings::get('ads.ads_is_enabled', false), FILTER_VALIDATE_BOOLEAN))
+    {{-- 广告位（原版 ads）：页头代码注入于各布局顶部锚点，页脚在此输出 --}}
+    @if ($adsFooter = \App\Support\Settings::get('ads.ads_footer'))
+        {!! $adsFooter !!}
+    @endif
+@endif
 @if ($footerJs = \App\Support\Settings::get('custom.custom_footer_js'))
     {!! $footerJs !!}
 @endif

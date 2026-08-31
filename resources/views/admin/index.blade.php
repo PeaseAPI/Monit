@@ -3,43 +3,46 @@
 @section('title', __('admin.overview'))
 
 @section('content')
-{{-- 统计卡（对标原版：图标块 + 总数 + 本月增量，整卡可点）--}}
+{{-- 统计卡 2.0（每卡独立渐变色相 + 卡面光斑装饰，整卡可点）--}}
 @php
     $statMeta = [
-        'websites' => ['icon' => 'M3 5h18v14H3zM3 9h18M7 7h.01', 'label' => __('admin.stat_websites')],
-        'replays' => ['icon' => 'M15 10.5l5-3v9l-5-3M3 6h12v12H3z', 'label' => __('admin.stat_replays')],
-        'heatmaps' => ['icon' => 'M12 3c1 3 4 4 4 8a4 4 0 11-8 0c0-2 1-3 1-5 2 1 3 2 3 3', 'label' => __('admin.stat_heatmaps')],
-        'goals' => ['icon' => 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 9v3l2 2M9 12h.01', 'label' => __('admin.stat_goals')],
-        'domains' => ['icon' => 'M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3a13 13 0 010 18 13 13 0 010-18', 'label' => __('admin.stat_domains')],
-        'users' => ['icon' => 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-3 3.6-5 8-5s8 2 8 5', 'label' => __('admin.stat_users')],
-        'payments' => ['icon' => 'M3 6h18v12H3zM3 10h18M7 15h4', 'label' => __('admin.stat_payments')],
+        'websites' => ['icon' => 'M3 5h18v14H3zM3 9h18M7 7h.01', 'label' => __('admin.stat_websites'), 'grad' => 'from-sky-500 to-blue-600', 'tint' => 'bg-sky-500/10'],
+        'replays' => ['icon' => 'M15 10.5l5-3v9l-5-3M3 6h12v12H3z', 'label' => __('admin.stat_replays'), 'grad' => 'from-violet-500 to-purple-600', 'tint' => 'bg-violet-500/10'],
+        'heatmaps' => ['icon' => 'M12 3c1 3 4 4 4 8a4 4 0 11-8 0c0-2 1-3 1-5 2 1 3 2 3 3', 'label' => __('admin.stat_heatmaps'), 'grad' => 'from-orange-500 to-red-500', 'tint' => 'bg-orange-500/10'],
+        'goals' => ['icon' => 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 9v3l2 2M9 12h.01', 'label' => __('admin.stat_goals'), 'grad' => 'from-emerald-500 to-teal-600', 'tint' => 'bg-emerald-500/10'],
+        'domains' => ['icon' => 'M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3a13 13 0 010 18 13 13 0 010-18', 'label' => __('admin.stat_domains'), 'grad' => 'from-cyan-500 to-sky-600', 'tint' => 'bg-cyan-500/10'],
+        'users' => ['icon' => 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-3 3.6-5 8-5s8 2 8 5', 'label' => __('admin.stat_users'), 'grad' => 'from-brand-400 to-brand-600', 'tint' => 'bg-brand-500/10'],
+        'payments' => ['icon' => 'M3 6h18v12H3zM3 10h18M7 15h4', 'label' => __('admin.stat_payments'), 'grad' => 'from-amber-500 to-orange-600', 'tint' => 'bg-amber-500/10'],
     ];
 @endphp
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @foreach ($statMeta as $key => $meta)
-        <a href="{{ $stats[$key]['route'] }}" class="group relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5">
+        <a href="{{ $stats[$key]['route'] }}" class="group relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl hover:shadow-zinc-900/5">
+            <span class="glow-orb -top-10 -right-10 h-28 w-28 {{ $meta['tint'] }} transition group-hover:opacity-100" style="opacity:.55"></span>
             <div class="flex items-start justify-between gap-3">
                 <p class="text-sm font-semibold text-zinc-500">{{ $meta['label'] }}</p>
-                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-100">
-                    <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="{{ $meta['icon'] }}"/></svg>
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br {{ $meta['grad'] }} text-white shadow-md shadow-zinc-900/10 transition duration-300 group-hover:scale-110">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="{{ $meta['icon'] }}"/></svg>
                 </span>
             </div>
-            <p class="mt-3 text-3xl font-bold tracking-tight text-zinc-900">{{ number_format($stats[$key]['total']) }}</p>
-            <p class="mt-1.5 text-xs text-zinc-400">
-                <span class="font-semibold text-emerald-600">+{{ number_format($stats[$key]['month']) }}</span>
+            <p class="mt-3 text-3xl font-bold tracking-tight text-zinc-900 tabular-nums">{{ number_format($stats[$key]['total']) }}</p>
+            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-zinc-400">
+                <span class="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-600">↑ {{ number_format($stats[$key]['month']) }}</span>
                 {{ __('admin.stat_this_month') }}
             </p>
         </a>
     @endforeach
-    <a href="{{ route('admin.payments.index') }}" class="group relative overflow-hidden rounded-2xl border border-brand-200/60 bg-gradient-to-br from-brand-600 to-brand-700 p-5 text-white transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand-600/25">
-        <div class="flex items-start justify-between gap-3">
+    <a href="{{ route('admin.payments.index') }}" class="group relative overflow-hidden rounded-2xl border border-brand-500/30 bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 p-5 text-white shadow-lg shadow-brand-600/20 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-600/30">
+        <span class="glow-orb -top-12 -right-8 h-36 w-36 bg-white/20"></span>
+        <span class="grid-pattern absolute inset-0 opacity-60"></span>
+        <div class="relative flex items-start justify-between gap-3">
             <p class="text-sm font-semibold text-white/80">{{ __('admin.monthly_revenue') }}</p>
-            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white">
-                <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 8c-1.5 0-3 .6-3 2s3 2 3 2 3 .6 3 2-1.5 2-3 2m0-8V6m0 12v-2M3 6h18v12H3z"/></svg>
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white ring-1 ring-inset ring-white/20 transition duration-300 group-hover:scale-110">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 8c-1.5 0-3 .6-3 2s3 2 3 2 3 .6 3 2-1.5 2-3 2m0-8V6m0 12v-2M3 6h18v12H3z"/></svg>
             </span>
         </div>
-        <p class="mt-3 text-3xl font-bold tracking-tight">¥{{ number_format($monthlyRevenue, 2) }}</p>
-        <p class="mt-1.5 text-xs text-white/70">{{ __('admin.active_users') }}: {{ number_format($activeUsers) }}</p>
+        <p class="relative mt-3 text-3xl font-bold tracking-tight tabular-nums">¥{{ number_format($monthlyRevenue, 2) }}</p>
+        <p class="relative mt-1.5 text-xs text-white/70">{{ __('admin.active_users') }}: {{ number_format($activeUsers) }}</p>
     </a>
 </div>
 

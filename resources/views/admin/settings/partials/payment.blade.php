@@ -63,6 +63,82 @@
     <h3 class="pt-4 text-base font-semibold">Offline Payment</h3>
     <div class="flex items-center gap-3"><input type="checkbox" name="offline_is_enabled" value="1" {{ old('offline_is_enabled', ($settings['payment.offline_is_enabled'] ?? 'false') === 'true') ? 'checked' : '' }}><label class="text-sm">{{ __('admin.enabled') }}</label></div>
     <div><label class="block text-sm text-zinc-600">{{ __('admin.offline_instructions') }}</label><textarea name="offline_instructions" rows="4" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">{{ old('offline_instructions', $settings['payment.offline_instructions'] ?? '') }}</textarea></div>
+    {{-- 原版对标补充：支付行为开关（AltumCode payment） --}}
+    <section class="settings-section">
+        <div class="settings-section-header">
+            <div>
+                <h3 class="settings-section-title">支付行为（原版对标）</h3>
+                <p class="settings-section-desc">支付模式、试用与税费账单开关</p>
+            </div>
+        </div>
+        <div class="settings-section-body">
+            <label class="settings-field-row">
+                <span class="min-w-0">
+                    <span class="settings-field-row-label">启用在线支付</span>
+                    <span class="settings-field-row-hint">关闭后仅保留免费套餐（原版 payment_is_enabled）</span>
+                </span>
+                <input type="checkbox" name="payment_is_enabled" value="1" class="input-toggle"
+                    {{ filter_var($settings['payment.payment_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+            </label>
+            <div class="settings-field-grid">
+                <div>
+                    <label class="form-label">默认支付模式</label>
+                    <select name="default_payment_type" class="form-select">
+                        @foreach (['recurring' => '订阅制', 'one_time' => '一次性'] as $v => $l)
+                            <option value="{{ $v }}" {{ old('default_payment_type', $settings['payment.default_payment_type'] ?? 'recurring') == $v ? 'selected' : '' }}>{{ $l }}</option>
+                        @endforeach
+                    </select>
+                    <p class="form-hint">原版 default_payment_type</p>
+                </div>
+                <div>
+                    <label class="form-label">默认周期</label>
+                    <select name="default_payment_frequency" class="form-select">
+                        @foreach (['monthly' => '月付', 'annual' => '年付', 'lifetime' => '买断'] as $v => $l)
+                            <option value="{{ $v }}" {{ old('default_payment_frequency', $settings['payment.default_payment_frequency'] ?? 'monthly') == $v ? 'selected' : '' }}>{{ $l }}</option>
+                        @endforeach
+                    </select>
+                    <p class="form-hint">原版 default_payment_frequency</p>
+                </div>
+            </div>
+            <label class="settings-field-row">
+                <span class="min-w-0">
+                    <span class="settings-field-row-label">启用优惠码</span>
+                    <span class="settings-field-row-hint">允许结账时使用优惠码（原版 codes_is_enabled）</span>
+                </span>
+                <input type="checkbox" name="codes_is_enabled" value="1" class="input-toggle"
+                    {{ filter_var($settings['payment.codes_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+            </label>
+            <label class="settings-field-row">
+                <span class="min-w-0">
+                    <span class="settings-field-row-label">税费与账单地址</span>
+                    <span class="settings-field-row-hint">结账时收集税号与账单地址（原版 taxes_and_billing）</span>
+                </span>
+                <input type="checkbox" name="taxes_and_billing_is_enabled" value="1" class="input-toggle"
+                    {{ filter_var($settings['payment.taxes_and_billing_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+            </label>
+            <label class="settings-field-row">
+                <span class="min-w-0">
+                    <span class="settings-field-row-label">试用需绑卡</span>
+                    <span class="settings-field-row-hint">开启试用仍要求填写支付方式（原版 trial_require_card）</span>
+                </span>
+                <input type="checkbox" name="trial_require_card" value="1" class="input-toggle"
+                    {{ filter_var($settings['payment.trial_require_card'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+            </label>
+            <label class="settings-field-row">
+                <span class="min-w-0">
+                    <span class="settings-field-row-label">套餐到期检查器</span>
+                    <span class="settings-field-row-hint">定时任务自动将过期用户降为免费套餐（原版）</span>
+                </span>
+                <input type="checkbox" name="user_plan_expiry_checker_is_enabled" value="1" class="input-toggle"
+                    {{ filter_var($settings['payment.user_plan_expiry_checker_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+            </label>
+            <div>
+                <label class="form-label">汇率服务 API Key</label>
+                <input type="text" name="currency_exchange_api_key" class="form-input" value="{{ old('currency_exchange_api_key', $settings['payment.currency_exchange_api_key'] ?? '') }}" placeholder="exchangerate.host / openexchangerates key">
+                <p class="form-hint">用于自动刷新多货币汇率（原版 currency_exchange_api_key）</p>
+            </div>
+        </div>
+    </section>
 </div>
 
 <script>

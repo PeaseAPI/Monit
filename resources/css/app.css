@@ -66,7 +66,144 @@
     .table-striped tbody tr:nth-child(even) {
         @apply bg-zinc-50/60;
     }
+
+    /* ---------- 设置表单 2.0（分区卡片 / 开关行 / 字段提示） ---------- */
+    .settings-section {
+        @apply rounded-2xl border border-zinc-200/80 bg-white shadow-sm;
+    }
+
+    .settings-section-header {
+        @apply flex items-start gap-3 border-b border-zinc-100 px-6 py-4;
+    }
+
+    .settings-section-title {
+        @apply text-sm font-semibold text-zinc-900;
+    }
+
+    .settings-section-desc {
+        @apply mt-0.5 text-xs text-zinc-500;
+    }
+
+    .settings-section-body {
+        @apply space-y-5 px-6 py-5;
+    }
+
+    .settings-field-grid {
+        @apply grid gap-5 sm:grid-cols-2;
+    }
+
+    .settings-field-row {
+        @apply flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-zinc-100 bg-zinc-50/50 px-4 py-3 transition hover:border-brand-200 hover:bg-brand-50/30;
+    }
+
+    .settings-field-row-label {
+        @apply text-sm font-medium text-zinc-800;
+    }
+
+    .settings-field-row-hint {
+        @apply mt-0.5 text-xs leading-5 text-zinc-500;
+    }
+
+    .form-hint {
+        @apply mt-1.5 text-xs leading-5 text-zinc-400;
+    }
+
+    /* 原生 checkbox 开关（无需 JS） */
+    .input-toggle {
+        appearance: none;
+        position: relative;
+        width: 2.75rem;
+        height: 1.5rem;
+        flex-shrink: 0;
+        border-radius: 9999px;
+        background: #d4d4d8;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.06);
+    }
+    .input-toggle::before {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 9999px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+        transition: transform 0.2s ease;
+    }
+    .input-toggle:checked {
+        background: var(--color-brand-600);
+    }
+    .input-toggle:checked::before {
+        transform: translateX(1.25rem);
+    }
+    .input-toggle:focus-visible {
+        outline: 2px solid var(--color-brand-500);
+        outline-offset: 2px;
+    }
+
+    /* ---------- 通用软徽章 ---------- */
+    .badge-soft {
+        @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium;
+    }
+
+    /* ---------- 深色管理侧栏链接 ---------- */
+    .admin-nav-link {
+        @apply relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-white/5 hover:text-zinc-100;
+    }
+    .admin-nav-link-active {
+        @apply bg-gradient-to-r from-brand-500/20 via-brand-500/10 to-transparent text-white;
+    }
+    .admin-nav-link-active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 20%;
+        bottom: 20%;
+        width: 3px;
+        border-radius: 9999px;
+        background: linear-gradient(180deg, var(--color-brand-300), var(--color-brand-600));
+    }
+    .admin-nav-group {
+        @apply flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-white/5 hover:text-zinc-100;
+    }
+    .admin-nav-heading {
+        @apply px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-widest text-zinc-600;
+    }
+
+    /* ---------- 前台装饰 ---------- */
+    .grid-pattern {
+        background-image:
+            linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+            linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+        background-size: 44px 44px;
+        mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+        -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+    }
+    .glow-orb {
+        position: absolute;
+        border-radius: 9999px;
+        filter: blur(80px);
+        pointer-events: none;
+    }
+
+    /* ---------- 数据表格 2.0 ---------- */
+    .data-table {
+        @apply w-full text-sm;
+    }
+    .data-table thead th {
+        @apply bg-zinc-50/80 px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500;
+    }
+    .data-table tbody tr {
+        @apply transition hover:bg-brand-50/30;
+    }
+    .data-table tbody td {
+        @apply px-6 py-3.5;
+    }
 }
+
 
 /* 富文本（blog / page / 广播详情渲染用户内容） */
 .prose {

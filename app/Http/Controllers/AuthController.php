@@ -8,6 +8,7 @@ use App\Services\Sms\SmsService;
 use App\Services\TotpService;
 use App\Services\UserAgentParser;
 use App\Services\WebhookService;
+use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -220,6 +221,26 @@ class AuthController extends Controller
             'sms_code.required' => __('validation.sms_code_required'),
             'sms_code.digits' => __('auth.sms_code_invalid'),
         ]);
+
+        // 注册黑名单（后台 设置→用户：域名 / IP，原版 blacklisted_*）
+        $emailDomain = strtolower(substr(strrchr($validated['email'], '@'), 1) ?: '');
+        $blacklistedDomains = array_filter(preg_split('/\r\n|\r|\n/', (string) Settings::get('users.blacklisted_domains', '')));
+        $blacklistedDomains = array_map(fn ($d) => strtolower(trim($d)), $blacklistedDomains);
+
+        if ($emailDomain && in_array($emailDomain, $blacklistedDomains, true)) {
+            return back()
+                ->withInput($request->except(['password', 'password_confirmation', 'sms_code']))
+                ->withErrors(['email' => __('auth.email_domain_blacklisted')]);
+        }
+
+        $clientIp = $request->ip();
+        $blacklistedIps = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string) Settings::get('users.blacklisted_ips', ''))));
+
+        if ($clientIp && in_array($clientIp, $blacklistedIps, true)) {
+            return back()
+                ->withInput($request->except(['password', 'password_confirmation', 'sms_code']))
+                ->withErrors(['email' => __('auth.registration_blocked')]);
+        }
 
         // 短信验证码校验（一次性）
         $phone = null;

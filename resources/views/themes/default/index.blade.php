@@ -17,6 +17,8 @@
 </head>
 <body class="bg-white font-sans text-zinc-900 antialiased">
 
+    @include('parts.announcement_bar')
+
     {{-- ===== 顶部导航 ===== --}}
     <header class="sticky top-0 z-40 border-b border-zinc-100 bg-white/80 backdrop-blur-lg">
         <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
@@ -85,7 +87,7 @@
             </p>
 
             <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <a href="{{ route('register') }}" class="w-full rounded-2xl bg-brand-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 sm:w-auto">
+                <a href="{{ route('register') }}" class="w-full rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-600/40 sm:w-auto">
                     {{ __('landing.cta_primary') }} →
                 </a>
                 <a href="#showcase" class="w-full rounded-2xl border border-zinc-200 bg-white px-8 py-4 text-base font-semibold text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 sm:w-auto">
@@ -240,8 +242,9 @@
     </section>
 
 
-    {{-- ===== 定价 ===== --}}
-    @if (\App\Support\Brand::showLandingPlans())
+    {{-- ===== 定价（后台 设置→主要→首页区块 可关闭 + Brand::showLandingPlans） ===== --}}
+    @php($showPlans = filter_var(\App\Support\Settings::get('main.display_index_plans', true), FILTER_VALIDATE_BOOLEAN))
+    @if ($showPlans && \App\Support\Brand::showLandingPlans())
     <section id="pricing" class="py-24">
         <div class="mx-auto max-w-7xl px-6">
             <div class="mx-auto max-w-2xl text-center">
@@ -350,7 +353,9 @@
     </section>
     @endif
 
-    {{-- ===== 用户评价（原站 index testimonials 区） ===== --}}
+    {{-- ===== 用户评价（原站 index testimonials 区 · 后台可关闭） ===== --}}
+    @php($showTestimonials = filter_var(\App\Support\Settings::get('main.display_index_testimonials', true), FILTER_VALIDATE_BOOLEAN))
+    @if ($showTestimonials)
     <section class="border-t border-zinc-100 bg-zinc-50/50 py-24">
         <div class="mx-auto max-w-7xl px-6">
             <div class="mx-auto max-w-2xl text-center">
@@ -384,8 +389,11 @@
             </div>
         </div>
     </section>
+    @endif
 
-    {{-- ===== FAQ ===== --}}
+    {{-- ===== FAQ（后台 设置→主要→首页区块 可关闭） ===== --}}
+    @php($showFaq = filter_var(\App\Support\Settings::get('main.display_index_faq', true), FILTER_VALIDATE_BOOLEAN))
+    @if ($showFaq)
     <section class="border-t border-zinc-100 bg-zinc-50/50 py-24">
         <div class="mx-auto max-w-3xl px-6">
             <h2 class="text-center text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl">{{ __('landing.faq_title') }}</h2>
@@ -408,6 +416,8 @@
             </div>
         </div>
     </section>
+
+    @endif
 
 
     {{-- ===== CTA ===== --}}

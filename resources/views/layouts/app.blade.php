@@ -9,6 +9,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
+    @include('parts.announcement_bar')
     <div class="flex min-h-screen">
         {{-- Sidebar --}}
         <aside class="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col bg-zinc-950 md:flex">

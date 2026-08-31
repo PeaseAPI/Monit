@@ -1,6 +1,6 @@
 {{--
-    管理后台布局（100% 对标原版 monit.cn/admin 结构，Tailwind UI 重写）
-    结构：admin-sidebar（品牌头/菜单/用户菜单）+ admin-content（顶栏/主区）
+    管理后台布局 2.0（对标原版 monit.cn/admin 菜单结构 · 深色侧栏 SaaS 视觉升级）
+    结构：admin-sidebar（品牌头/分区菜单/用户菜单）+ admin-content（顶栏/主区）
     菜单顺序与分组与原版一致：仪表台→用户→设置→套餐→语言→广播→通知→推送→插件→统计
     →资源(折叠)→博客(折叠)→API | 代码→税费→支付→推广提现 | 网站→热图→回放→批注→域名 | 用户日志
 --}}
@@ -16,22 +16,25 @@
 </head>
 <body class="min-h-screen bg-zinc-100/60 font-sans text-zinc-900 antialiased">
 <div class="flex min-h-screen">
-    <div id="admin-sidebar-overlay" class="fixed inset-0 z-30 hidden bg-zinc-900/40 backdrop-blur-sm md:hidden"></div>
+    <div id="admin-sidebar-overlay" class="fixed inset-0 z-30 hidden bg-zinc-950/60 backdrop-blur-sm md:hidden"></div>
 
-    <aside id="admin-sidebar" class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-zinc-200/80 bg-white transition-transform duration-200 md:translate-x-0">
-        {{-- 品牌头（对标 admin-sidebar-title）--}}
-        <div class="flex h-16 shrink-0 items-center gap-2 border-b border-zinc-200/80 px-5">
+    {{-- 深色侧栏 --}}
+    <aside id="admin-sidebar" class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-white/5 bg-zinc-950 transition-transform duration-200 md:translate-x-0">
+        {{-- 品牌头（渐变徽标 + 管理后台徽章）--}}
+        <div class="flex h-16 shrink-0 items-center gap-2 border-b border-white/5 bg-gradient-to-r from-brand-600/10 via-transparent to-transparent px-5">
             <a href="{{ route('admin.index') }}" class="flex min-w-0 items-center gap-2.5">
-                <x-brand-logo class="h-9 w-9" text-class="hidden" />
-                <span class="truncate text-base font-bold tracking-tight text-zinc-900">{{ \App\Support\Brand::name() }}</span>
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-700 shadow-lg shadow-brand-600/30">
+                    <x-brand-logo class="h-9 w-9" text-class="hidden" />
+                </span>
+                <span class="truncate text-base font-bold tracking-tight text-white">{{ \App\Support\Brand::name() }}</span>
             </a>
-            <span class="ml-auto shrink-0 rounded-md bg-brand-50 px-2 py-1 text-[11px] font-semibold text-brand-700">{{ __('admin.admin_label') }}</span>
-            <button type="button" class="ml-0.5 shrink-0 rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 md:hidden" onclick="window.adminToggleSidebar()">
+            <span class="ml-auto shrink-0 rounded-md bg-brand-500/15 px-2 py-1 text-[11px] font-semibold text-brand-300 ring-1 ring-inset ring-brand-400/20">{{ __('admin.admin_label') }}</span>
+            <button type="button" class="ml-0.5 shrink-0 rounded-lg p-1.5 text-zinc-500 hover:bg-white/5 md:hidden" onclick="window.adminToggleSidebar()">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
-        {{-- 菜单（对标 admin-sidebar-links，顺序/分组/折叠组与原版一致）--}}
+        {{-- 分区菜单（顺序/折叠组与原版一致）--}}
         @php
             $icons = require resource_path('views/admin/partials/sidebar-icons.php');
             // 各控制器 adminNav 值规范化（旧值 → 原版菜单 key）
@@ -43,18 +46,20 @@
             ];
             $adminNav = $adminNavMap[$adminNav ?? ''] ?? ($adminNav ?? '');
         @endphp
-        <nav class="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
+        <nav class="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4 pt-2">
             @php
                 $navItem = function (string $key, string $icon, string $label, string $url) use ($icons, $adminNav) {
                     $active = ($adminNav ?? '') === $key;
-                    return '<a href="'.$url.'" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition '.($active
-                        ? 'bg-brand-50 text-brand-700'
-                        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900').'">'
+                    return '<a href="'.$url.'" class="admin-nav-link'.($active ? ' admin-nav-link-active' : '').'">'
                         .'<svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="'.$icons[$icon].'"/></svg>'
                         .'<span class="truncate">'.$label.'</span></a>';
                 };
             @endphp
+            <p class="admin-nav-heading">{{ __('admin.nav_section_overview') }}</p>
             {!! $navItem('dashboard', 'dashboard', __('admin.sidebar_dashboard'), route('admin.index')) !!}
+            {!! $navItem('statistics', 'statistics', __('admin.sidebar_statistics'), route('admin.statistics')) !!}
+
+            <p class="admin-nav-heading">{{ __('admin.nav_section_manage') }}</p>
             {!! $navItem('users', 'users', __('admin.sidebar_users'), route('admin.users.index')) !!}
             {!! $navItem('settings', 'settings', __('admin.sidebar_settings'), route('admin.settings.index')) !!}
             {!! $navItem('plans', 'plans', __('admin.sidebar_plans'), route('admin.plans.index')) !!}
@@ -63,15 +68,14 @@
             {!! $navItem('notifications', 'notifications', __('admin.sidebar_notifications'), route('admin.notifications.index')) !!}
             {!! $navItem('push-notifications', 'push', __('admin.sidebar_push_notifications'), route('admin.push-notifications.index')) !!}
             {!! $navItem('plugins', 'plugins', __('admin.sidebar_plugins'), route('admin.plugins.index')) !!}
-            {!! $navItem('statistics', 'statistics', __('admin.sidebar_statistics'), route('admin.statistics')) !!}
 
             {{-- 资源折叠组（对标 admin_sidebar_resources_container）--}}
             @php($resourcesOpen = in_array($adminNav ?? '', ['pages-categories', 'pages']))
             <div>
-                <button type="button" onclick="window.adminToggleGroup('admin-group-resources')" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
+                <button type="button" onclick="window.adminToggleGroup('admin-group-resources')" class="admin-nav-group w-full">
                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="{{ $icons['info'] }}"/></svg>
                     <span class="truncate">{{ __('admin.sidebar_resources') }}</span>
-                    <svg class="ml-auto h-3.5 w-3.5 shrink-0 transition-transform" id="admin-group-resources-chevron" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path class="chevron" stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
+                    <svg class="ml-auto h-3.5 w-3.5 shrink-0 transition-transform {{ $resourcesOpen ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div id="admin-group-resources" class="{{ $resourcesOpen ? '' : 'hidden' }} mt-0.5 space-y-0.5 pl-5">
                     {!! $navItem('pages-categories', 'pages', __('admin.sidebar_categories'), route('admin.pages-categories.index')) !!}
@@ -82,10 +86,10 @@
             {{-- 博客折叠组（对标 admin_sidebar_blog_container）--}}
             @php($blogOpen = in_array($adminNav ?? '', ['blog-posts-categories', 'blog-posts']))
             <div>
-                <button type="button" onclick="window.adminToggleGroup('admin-group-blog')" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
+                <button type="button" onclick="window.adminToggleGroup('admin-group-blog')" class="admin-nav-group w-full">
                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="{{ $icons['blog'] }}"/></svg>
                     <span class="truncate">{{ __('admin.sidebar_blog') }}</span>
-                    <svg class="ml-auto h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
+                    <svg class="ml-auto h-3.5 w-3.5 shrink-0 transition-transform {{ $blogOpen ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div id="admin-group-blog" class="{{ $blogOpen ? '' : 'hidden' }} mt-0.5 space-y-0.5 pl-5">
                     {!! $navItem('blog-posts-categories', 'blog', __('admin.sidebar_categories'), route('admin.blog-posts-categories.index')) !!}
@@ -93,17 +97,14 @@
                 </div>
             </div>
 
+            <p class="admin-nav-heading">{{ __('admin.nav_section_monetization') }}</p>
             {!! $navItem('api', 'api', __('admin.sidebar_api_docs'), route('api.docs')) !!}
-
-            <div class="my-3 border-t border-zinc-100"></div>
-
             {!! $navItem('codes', 'codes', __('admin.sidebar_codes'), route('admin.codes.index')) !!}
             {!! $navItem('taxes', 'taxes', __('admin.sidebar_taxes'), route('admin.taxes.index')) !!}
             {!! $navItem('payments', 'payments', __('admin.sidebar_payments'), route('admin.payments.index')) !!}
             {!! $navItem('affiliates-withdrawals', 'wallet', __('admin.sidebar_affiliates_withdrawals'), route('admin.affiliates-withdrawals.index')) !!}
 
-            <div class="my-3 border-t border-zinc-100"></div>
-
+            <p class="admin-nav-heading">{{ __('admin.nav_section_data') }}</p>
             {!! $navItem('websites', 'websites', __('admin.sidebar_websites'), route('admin.websites.index')) !!}
             {!! $navItem('heatmaps', 'heatmaps', __('admin.sidebar_heatmaps'), route('admin.heatmaps.index')) !!}
             {!! $navItem('replays', 'replays', __('admin.sidebar_replays'), route('admin.replays.index')) !!}
@@ -111,35 +112,34 @@
             {!! $navItem('domains', 'domains', __('admin.sidebar_domains'), route('admin.domains.index')) !!}
             {!! $navItem('teams', 'users', __('admin.sidebar_teams'), route('admin.teams.index')) !!}
 
-            <div class="my-3 border-t border-zinc-100"></div>
-
+            <p class="admin-nav-heading">{{ __('admin.nav_section_system') }}</p>
             {!! $navItem('users-logs', 'logs', __('admin.sidebar_user_logs'), route('admin.users.logs')) !!}
         </nav>
 
         {{-- 侧栏底部用户菜单（对标 admin-sidebar-footer dropdown）--}}
-        <div class="relative shrink-0 border-t border-zinc-200/80 p-3">
-            <button type="button" onclick="window.adminToggleGroup('admin-user-menu')" class="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-zinc-100">
+        <div class="relative shrink-0 border-t border-white/5 p-3">
+            <button type="button" onclick="window.adminToggleGroup('admin-user-menu')" class="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-white/5">
                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-semibold text-white">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
                 <span class="min-w-0 flex-1">
-                    <span class="block truncate text-sm font-medium text-zinc-900">{{ auth()->user()->name }}</span>
+                    <span class="block truncate text-sm font-medium text-white">{{ auth()->user()->name }}</span>
                     <span class="block truncate text-xs text-zinc-500">{{ auth()->user()->email }}</span>
                 </span>
-                <svg class="h-4 w-4 shrink-0 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
+                <svg class="h-4 w-4 shrink-0 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div id="admin-user-menu" class="absolute bottom-full left-3 right-3 z-50 mb-2 hidden overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg shadow-zinc-900/5">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+            <div id="admin-user-menu" class="absolute bottom-full left-3 right-3 z-50 mb-2 hidden overflow-hidden rounded-xl border border-white/10 bg-zinc-900 py-1 shadow-xl shadow-black/40">
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white">
                     <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l-3 3m3-3v12M4 7l8-4 8 4"/></svg>
                     {{ __('admin.user_panel') }}</a>
-                <a href="{{ route('account.index') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+                <a href="{{ route('account.index') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white">
                     <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
                     {{ __('admin.user_account') }}</a>
-                <a href="{{ route('referrals.index') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+                <a href="{{ route('referrals.index') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white">
                     <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/></svg>
                     {{ __('admin.user_referrals') }}</a>
-                <div class="my-1 border-t border-zinc-100"></div>
+                <div class="my-1 border-t border-white/5"></div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
+                    <button type="submit" class="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
                         {{ __('admin.logout') }}</button>
                 </form>

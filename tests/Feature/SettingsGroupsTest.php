@@ -45,7 +45,7 @@ class SettingsGroupsTest extends TestCase
             ->assertSee('产品版本')
             ->assertSee('发票信息')
             ->assertSee('id="panel-email_shield"', false)
-            ->assertSee('启用邮箱防采集（Email Shield）');
+            ->assertSee('启用邮箱防护');
     }
 
     /* ---------------- business 组保存 ---------------- */
