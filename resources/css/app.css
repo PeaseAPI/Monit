@@ -22,3 +22,71 @@
     --color-brand-900: oklch(0.33 0.12 275);
 }
 
+/* ---------------------------------------------------------------------------
+ * 组件层：后台设置表单 / 通用按钮 / 富文本 / API 文档卡片
+ * （settings 各 partial、cron、blog/page、api docs 共用的类名）
+ * ------------------------------------------------------------------------- */
+@layer components {
+    .form-label {
+        @apply mb-1.5 block text-sm font-medium text-zinc-700;
+    }
+
+    .form-input {
+        @apply w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm transition placeholder:text-zinc-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 focus:outline-none;
+    }
+
+    .form-select {
+        @apply w-full appearance-none rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 focus:outline-none;
+    }
+
+    .btn {
+        @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 disabled:pointer-events-none disabled:opacity-50;
+    }
+
+    .btn-secondary {
+        @apply border border-zinc-300 bg-white text-zinc-700 shadow-sm hover:border-zinc-400 hover:bg-zinc-50 hover:text-zinc-900;
+    }
+
+    .btn-ghost {
+        @apply text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900;
+    }
+
+    .card {
+        @apply overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm;
+    }
+
+    .card-header {
+        @apply border-b border-zinc-100 bg-zinc-50/60 px-6 py-4 text-sm font-semibold text-zinc-900;
+    }
+
+    .card-body {
+        @apply p-6;
+    }
+
+    .table-striped tbody tr:nth-child(even) {
+        @apply bg-zinc-50/60;
+    }
+}
+
+/* 富文本（blog / page / 广播详情渲染用户内容） */
+.prose {
+    @apply text-[15px] leading-7 text-zinc-700;
+}
+.prose h1 { @apply mt-8 mb-3 text-2xl font-bold text-zinc-900; }
+.prose h2 { @apply mt-6 mb-3 text-xl font-bold text-zinc-900; }
+.prose h3 { @apply mt-5 mb-2 text-lg font-semibold text-zinc-900; }
+.prose p { @apply my-3; }
+.prose a { @apply font-medium text-brand-600 underline underline-offset-2 hover:text-brand-700; }
+.prose ul { @apply my-3 list-disc space-y-1 pl-6; }
+.prose ol { @apply my-3 list-decimal space-y-1 pl-6; }
+.prose blockquote { @apply my-4 border-l-4 border-zinc-200 pl-4 italic text-zinc-500; }
+.prose pre { @apply my-4 overflow-x-auto rounded-xl bg-zinc-900 p-4 text-xs leading-6 text-zinc-100; }
+.prose code { @apply rounded bg-zinc-100 px-1.5 py-0.5 text-[13px] text-brand-700; }
+.prose pre code { @apply bg-transparent p-0 text-inherit; }
+.prose img { @apply my-4 rounded-xl; }
+.prose hr { @apply my-6 border-zinc-200; }
+.prose table { @apply my-4 w-full text-sm; }
+.prose th { @apply border border-zinc-200 bg-zinc-50 px-3 py-2 text-left font-semibold; }
+.prose td { @apply border border-zinc-200 px-3 py-2; }
+.prose-sm { @apply text-sm leading-6; }
+
