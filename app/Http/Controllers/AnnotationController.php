@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Annotation;
 use App\Models\Website;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -13,6 +14,8 @@ use Illuminate\Http\Request;
  */
 class AnnotationController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request, Website $website)
     {
         $annotations = $website->annotations()

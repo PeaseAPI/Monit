@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\GoalConversion;
 use App\Models\LightweightEvent;
 use App\Models\OutboundClick;
 use App\Models\SessionEvent;

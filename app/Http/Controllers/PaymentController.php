@@ -342,7 +342,7 @@ class PaymentController extends Controller
         ])->with('success', __('payment.offline_order_created'));
     }
 
-    protected function redirectToRazorpay(Payment $payment): RedirectResponse
+    protected function redirectToRazorpay(Payment $payment): View|RedirectResponse
     {
         $razorpayProcessor = new RazorpayProcessor;
         if (! $razorpayProcessor->isConfigured()) {

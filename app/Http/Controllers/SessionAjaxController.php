@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\VisitorsSession;
+use App\Models\VisitorSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ class SessionAjaxController extends Controller
      */
     public function show(Request $request, int $sessionId): JsonResponse
     {
-        $session = VisitorsSession::with(['events', 'visitor', 'website'])
+        $session = VisitorSession::with(['events', 'visitor', 'website'])
             ->findOrFail($sessionId);
 
         // 验证权限

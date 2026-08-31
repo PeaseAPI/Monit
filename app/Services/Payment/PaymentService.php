@@ -207,7 +207,21 @@ class PaymentService
     }
 
     /**
-     * 处理订阅取消（规格书 §11：Webhook 回调）
+     * 用户侧取消订阅（规格书 §6.2.6 /pay-billing/cancel）
+     * 立即解除本地订阅标记；远端网关订阅由各处理器 Webhook 回调与到期续费流程自然终止。
+     */
+    public function cancelSubscription(User $user, string $processor): void
+    {
+        if ($user->payment_subscription_id && $user->payment_processor === $processor) {
+            $user->update([
+                'payment_subscription_id' => null,
+                'payment_processor' => null,
+            ]);
+        }
+    }
+
+    /**
+     * 处理订阅取消（Webhook 回调，规格书 §11）
      */
     public function handleSubscriptionCancelled(string $subscriptionId, string $processor): void
     {

@@ -40,7 +40,7 @@ class WeChatPayProcessor
 
             $params['sign'] = $this->sign($params);
 
-            $response = Http::asXml($params)->post(static::UNIFIED_ORDER_URL);
+            $response = Http::withBody($this->toXml($params), 'application/xml')->post(static::UNIFIED_ORDER_URL);
             $xml = simplexml_load_string((string) $response->body());
 
             if ($xml !== false && (string) $xml->return_code === 'SUCCESS' && (string) $xml->result_code === 'SUCCESS') {
@@ -86,7 +86,7 @@ class WeChatPayProcessor
             ];
             $params['sign'] = $this->sign($params);
 
-            $response = Http::asXml($params)->post('https://api.mch.weixin.qq.com/pay/orderquery');
+            $response = Http::withBody($this->toXml($params), 'application/xml')->post('https://api.mch.weixin.qq.com/pay/orderquery');
             $xml = simplexml_load_string((string) $response->body());
 
             if ($xml !== false && (string) $xml->return_code === 'SUCCESS' && (string) $xml->trade_state === 'SUCCESS') {
@@ -100,6 +100,17 @@ class WeChatPayProcessor
         }
 
         return null;
+    }
+
+    protected function toXml(array $params): string
+    {
+        $xml = '<xml>';
+        foreach ($params as $key => $value) {
+            $escaped = is_numeric($value) ? (string) $value : '<![CDATA['.str_replace(']]>', ']]&gt;', (string) $value).']]>';
+            $xml .= '<'.$key.'>'.$escaped.'</'.$key.'>';
+        }
+
+        return $xml.'</xml>';
     }
 
     protected function sign(array $params): string

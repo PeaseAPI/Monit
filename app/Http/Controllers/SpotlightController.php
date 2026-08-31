@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\VisitorsSession;
+use App\Models\VisitorSession;
 use App\Models\Website;
 use Illuminate\Http\Request;
 
@@ -44,7 +44,7 @@ class SpotlightController extends Controller
         }
 
         // 搜索会话
-        $sessions = VisitorsSession::whereHas('website', fn ($q) => $q->where('user_id', $user->id))
+        $sessions = VisitorSession::whereHas('website', fn ($q) => $q->where('user_id', $user->id))
             ->whereHas('events', fn ($q) => $q->where('path', 'like', "%{$query}%"))
             ->with('website')
             ->limit(5)

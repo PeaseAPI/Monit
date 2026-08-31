@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\PushNotificationSubscriber;
+use App\Support\PluginManager;
+
 /**
  * Web Push 推送服务（纯 PHP 实现，规格书 §14.5）
  * - VAPID 鉴权：RFC 8292（ES256 JWT，openssl 签名）
@@ -12,6 +15,22 @@ class WebPushService
 {
     /** 最近一次发送的结果状态 */
     public array $lastResults = [];
+
+    /**
+     * 向单个订阅发送推送（活动营销批量任务使用，规格书 §14.5）
+     * VAPID 密钥取自 push-notifications 插件设置。
+     */
+    public function sendOne(PushNotificationSubscriber $subscriber, string $title, string $body, string $url = '/'): bool
+    {
+        return $this->send(
+            (string) $subscriber->endpoint,
+            (string) $subscriber->keys_p256dh,
+            (string) $subscriber->keys_auth,
+            ['title' => $title, 'body' => $body, 'url' => $url],
+            (string) PluginManager::setting('push-notifications', 'vapid_public_key', ''),
+            (string) PluginManager::setting('push-notifications', 'vapid_private_key', ''),
+        );
+    }
 
     /**
      * 向单个订阅者发送推送
