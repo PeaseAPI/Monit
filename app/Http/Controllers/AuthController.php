@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ActivateUser;
 use App\Models\AccountLog;
 use App\Models\User;
 use App\Services\Sms\SmsService;
@@ -13,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
@@ -264,6 +266,10 @@ class AuthController extends Controller
             }
         }
 
+        // 邮箱激活（users.email_activation_is_enabled）：开启时注册即待激活并发送激活邮件
+        $requireActivation = filter_var(Settings::get('users.email_activation_is_enabled'), FILTER_VALIDATE_BOOLEAN);
+        $activationCode = $requireActivation ? Str::random(64) : null;
+
         $user = User::create([
             'type' => 0,
             'name' => $validated['name'],
@@ -276,15 +282,13 @@ class AuthController extends Controller
             'api_key' => Str::random(60),
             'language' => 'zh_CN',
             'timezone' => 'Asia/Shanghai',
-            'status' => 1,
+            'status' => $requireActivation ? 0 : 1,
+            'email_activation_code' => $activationCode,
             'ip' => $request->ip(),
             'source' => 'direct',
             'referred_by' => $referredBy,
         ]);
 
-        Auth::login($user);
-
-        $user->forceFill(['last_activity' => now(), 'total_logins' => 1])->save();
         $this->logAccount($user, 'register');
 
         // 平台 Webhook：用户注册（规格 §6.3.1：webhooks.webhook_user_register_url）
@@ -294,6 +298,18 @@ class AuthController extends Controller
             'name' => $user->name,
             'referred_by' => $referredBy,
         ]);
+
+        if ($requireActivation) {
+            Mail::to($user->email)->send(
+                new ActivateUser($user, route('activation.activate', $activationCode))
+            );
+
+            return redirect()->route('activation.sent');
+        }
+
+        Auth::login($user);
+
+        $user->forceFill(['last_activity' => now(), 'total_logins' => 1])->save();
 
         return redirect()->route('dashboard')
             ->with('success', __('msg.welcome_monit'));

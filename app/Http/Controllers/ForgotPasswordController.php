@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\Sms\SmsService;
+use App\Mail\ResetPassword;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
@@ -88,8 +90,9 @@ class ForgotPasswordController extends Controller
             'lost_password_code' => $code,
         ])->save();
 
-        // TODO: 发送密码重置邮件（含重置链接）
-        // Mail::to($user)->send(new ResetPasswordMail($user, $code));
+        Mail::to($user->email)->send(
+            new ResetPassword($user->email, route('password.reset', $code))
+        );
 
         return back()->with('status', __('auth.reset_link_sent'));
     }

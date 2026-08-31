@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Mail\PlanDowngraded;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * 套餐过期降级 Cron
@@ -38,6 +40,9 @@ class UsersPlanExpirationCommand extends Command
                 'payment_currency' => null,
                 'plan_expiry_reminder' => false,
             ])->save();
+
+            // 降级通知（规格 §13.1：降级后通知用户）
+            Mail::to($user->email)->queue(new PlanDowngraded($user));
 
             $expiredCount++;
         }

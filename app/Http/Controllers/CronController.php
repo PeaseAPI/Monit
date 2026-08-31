@@ -2,13 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\SendBroadcastEmail;
-use App\Jobs\SendEmailReport;
-use App\Models\Broadcast;
 use App\Models\SessionReplay;
 use App\Models\User;
 use App\Models\VisitorSession;
-use App\Models\Website;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -155,62 +151,26 @@ class CronController extends Controller
     }
 
     /**
-     * 套餐过期提醒（规格书 §13.1）
+     * 套餐过期提醒（规格书 §13.1）——委托 artisan 命令（真实发送提醒邮件）
      */
     protected function usersPlanExpiryReminder(): int
     {
-        $days = (int) config('app.plan_expiry_reminder_days', 3);
-        $count = 0;
-        User::where('plan_expiration_date', '>=', now())
-            ->where('plan_expiration_date', '<=', now()->addDays($days))
-            ->where('plan_expiry_reminder', false)
-            ->where('plan_id', '!=', 'free')
-            ->limit(25)
-            ->each(function (User $user) use (&$count): void {
-                // 发送提醒邮件（实际实现用 Mail facade）
-                $user->update(['plan_expiry_reminder' => true]);
-                $count++;
-            });
-
-        return $count;
+        return (int) Artisan::call('monit:users-plan-expiry-reminder');
     }
 
     /**
-     * 发送待发送广播邮件（规格书 §13.1）
+     * 发送待发送广播邮件（规格书 §13.1）——委托 artisan 命令（逐收件人异步派发）
      */
     protected function broadcasts(): int
     {
-        $count = 0;
-        Broadcast::where('status', 'scheduled')
-            ->where('scheduled_at', '<=', now())
-            ->limit(25)
-            ->each(function (Broadcast $broadcast) use (&$count): void {
-                $broadcast->update(['status' => 'sending']);
-                SendBroadcastEmail::dispatch($broadcast);
-                $count++;
-            });
-
-        return $count;
+        return (int) Artisan::call('monit:process-broadcasts');
     }
 
     /**
-     * 邮件报表（规格书 §13.1）
+     * 邮件报表（规格书 §13.1）——委托 artisan 命令
      */
     protected function emailReports(): int
     {
-        $count = 0;
-        Website::where('email_reports_is_enabled', 1)
-            ->where(function ($q) {
-                $q->whereNull('email_reports_last_date')
-                    ->orWhere('email_reports_last_date', '<', now()->subWeek());
-            })
-            ->limit(25)
-            ->each(function (Website $website) use (&$count): void {
-                SendEmailReport::dispatch($website);
-                $website->update(['email_reports_last_date' => now()]);
-                $count++;
-            });
-
-        return $count;
+        return (int) Artisan::call('monit:send-email-reports');
     }
 }

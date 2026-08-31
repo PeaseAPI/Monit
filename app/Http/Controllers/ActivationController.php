@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ActivateUser;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 /**
@@ -67,8 +69,9 @@ class ActivationController extends Controller
                 'email_activation_code' => $code,
             ])->save();
 
-            // TODO: 发送激活邮件
-            // Mail::to($user)->send(new ActivateAccountMail($user, $code));
+            Mail::to($user->email)->send(
+                new ActivateUser($user, route('activation.activate', $code))
+            );
         }
 
         return redirect()->route('activation.sent');

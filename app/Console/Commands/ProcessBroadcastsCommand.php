@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\SendBroadcastEmail;
 use App\Models\Broadcast;
 use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Mail;
 
 /**
  * 广播邮件发送 Cron
@@ -36,10 +36,9 @@ class ProcessBroadcastsCommand extends Command
                 $query->where('plan_id', $broadcast->target_plan_id);
             }
 
-            $users = $query->chunk(100, function ($chunk) use (&$sent) {
+            $users = $query->chunk(100, function ($chunk) use (&$sent, $broadcast) {
                 foreach ($chunk as $user) {
-                    // TODO: 使用 Mail 发送广播邮件
-                    // Mail::to($user)->queue(new BroadcastMail($broadcast, $user));
+                    SendBroadcastEmail::dispatch($broadcast, $user);
                     $sent++;
                 }
             });
