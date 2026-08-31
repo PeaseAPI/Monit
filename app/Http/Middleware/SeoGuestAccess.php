@@ -14,7 +14,7 @@ class SeoGuestAccess
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check()) {
+        if ($request->user() !== null) {
             return $next($request);
         }
 

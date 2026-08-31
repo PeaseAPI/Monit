@@ -102,13 +102,15 @@ class SeoAuditController extends Controller
      */
     public function analyze(Request $request, AuditEngine $engine)
     {
-        if (! auth()->check() && ! $this->guestAllowed()) {
+        $user = $request->user();
+
+        if ($user === null && ! $this->guestAllowed()) {
             abort(403, __('seo.guest_disabled'));
         }
 
         $validated = $request->validate(['url' => 'required|url|max:2048']);
 
-        if (auth()->check()) {
+        if ($user !== null) {
             return $this->store($request);
         }
 
@@ -205,8 +207,9 @@ class SeoAuditController extends Controller
      */
     protected function accessState(Request $request, SeoAudit $audit): string
     {
-        $isOwner = auth()->check()
-            && ((int) $audit->user_id === (int) $request->user()->user_id || $request->user()->isAdmin());
+        $user = $request->user();
+        $isOwner = $user !== null
+            && ((int) $audit->user_id === (int) $user->user_id || $user->isAdmin());
 
         if ($isOwner || $audit->privacy === 'public') {
             return 'granted';

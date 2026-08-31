@@ -68,7 +68,7 @@ class SeoToolController extends Controller
 
     protected function checkQuota(Request $request): ?string
     {
-        if (auth()->check()) {
+        if ($request->user() !== null) {
             $limit = (int) ($request->user()->getPlanSettings()['seo_tools_limit'] ?? -1);
 
             if ($limit >= 0 && SeoToolUse::monthlyCount($request->user()->user_id) >= $limit) {
@@ -91,8 +91,8 @@ class SeoToolController extends Controller
     protected function recordUse(Request $request, string $slug): void
     {
         SeoToolUse::create([
-            'user_id' => auth()->id(),
-            'uploader_key' => auth()->check() ? null : md5($request->session()->getId()),
+            'user_id' => $request->user()?->user_id,
+            'uploader_key' => $request->user() === null ? md5($request->session()->getId()) : null,
             'tool' => $slug,
             'created_at' => now(),
         ]);

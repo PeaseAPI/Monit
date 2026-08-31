@@ -15,10 +15,10 @@ class SeoNotificationHandlerController extends Controller
 {
     protected const TYPES = ['email', 'webhook', 'slack', 'discord', 'telegram', 'pushover', 'ntfy', 'gotify'];
 
-    public function index(): View
+    public function index(Request $request): View
     {
         return view('seo.handlers', [
-            'handlers' => auth()->user()->notificationHandlers()->orderByDesc('notification_handler_id')->get(),
+            'handlers' => $request->user()->notificationHandlers()->orderByDesc('notification_handler_id')->get(),
             'types' => self::TYPES,
         ]);
     }
@@ -34,13 +34,13 @@ class SeoNotificationHandlerController extends Controller
         ]);
 
         $limit = (int) ($request->user()->getPlanSettings()['seo_notifications_limit'] ?? -1);
-        $count = auth()->user()->notificationHandlers()->count();
+        $count = $request->user()->notificationHandlers()->count();
 
         if ($limit >= 0 && $count >= $limit) {
             return back()->withErrors(['name' => __('seo.quota_exceeded')]);
         }
 
-        auth()->user()->notificationHandlers()->create([
+        $request->user()->notificationHandlers()->create([
             'name' => $validated['name'],
             'type' => $validated['type'],
             'settings' => $this->settingsFor($validated['type'], $validated['settings'] ?? [])
