@@ -6,6 +6,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Support\EnvWriter;
 use App\Support\InstallState;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -138,5 +139,90 @@ class InstallWizardTest extends TestCase
         InstallState::complete();
 
         $this->get('/install')->assertRedirect('/');
+    }
+
+    public function test_mysql_missing_fields_show_chinese_validation_errors(): void
+    {
+        $this->post('/install/database', ['connection' => 'mysql'])
+            ->assertOk()
+            ->assertSee('选择 MySQL 时必须填写主机地址')
+            ->assertSee('选择 MySQL 时必须填写数据库名')
+            ->assertSee('选择 MySQL 时必须填写用户名');
+    }
+
+    public function test_mysql_illegal_database_name_is_rejected(): void
+    {
+        // 库名会拼入 CREATE DATABASE：反引号/引号等必须被验证拦截
+        $this->post('/install/database', [
+            'connection' => 'mysql',
+            'host' => '127.0.0.1',
+            'port' => 3306,
+            'database' => 'monit`; DROP DATABASE x',
+            'username' => 'root',
+        ])->assertOk()->assertSee('数据库名只能包含字母、数字、下划线和中划线');
+    }
+
+    public function test_mysql_unreachable_host_shows_friendly_error(): void
+    {
+        // 指向未监听端口：PDO 立即 Connection refused，翻译为中文指引而非英文堆栈
+        $this->post('/install/database', [
+            'connection' => 'mysql',
+            'host' => '127.0.0.1',
+            'port' => 33990,
+            'database' => 'monit_test',
+            'username' => 'root',
+            'password' => 'x',
+        ])->assertOk()->assertSee('无法连接 MySQL 服务器');
+    }
+
+    public function test_sqlite_install_clears_leftover_mysql_env_keys(): void
+    {
+        // 服务器常见现场：旧 .env 残留 MySQL 配置；sqlite 安装必须清掉
+        //（DB_DATABASE 残留会把 sqlite 路径劫持为旧库名，装完即 500）
+        $env = $this->app->make(EnvWriter::class);
+        $env->write('DB_CONNECTION', 'mysql');
+        $env->write('DB_HOST', '127.0.0.1');
+        $env->write('DB_DATABASE', 'old_monit');
+        $env->write('DB_USERNAME', 'root');
+        $env->write('DB_PASSWORD', 'secret');
+
+        $this->post('/install/database', ['connection' => 'sqlite'])
+            ->assertRedirect(route('install.admin'));
+
+        $content = (string) file_get_contents($this->tmpEnv);
+        $this->assertStringContainsString('DB_CONNECTION=sqlite', $content);
+        foreach (['DB_HOST=', 'DB_PORT=', 'DB_DATABASE=', 'DB_USERNAME=', 'DB_PASSWORD='] as $stale) {
+            $this->assertStringNotContainsString($stale, $content, "残留键 {$stale} 应被清除");
+        }
+        $this->assertTrue(Schema::hasTable('users'), '迁移在干净的 sqlite 上完成');
+    }
+
+    /**
+     * 真实 MySQL 安装 E2E（可选）：提供 MONIT_TEST_MYSQL_HOST 等环境变量即执行
+     * 例：MONIT_TEST_MYSQL_HOST=127.0.0.1 MONIT_TEST_MYSQL_USERNAME=root MONIT_TEST_MYSQL_PASSWORD=xxx vendor/bin/phpunit --filter mysql_real
+     */
+    public function test_mysql_real_install_if_env_provided(): void
+    {
+        $host = env('MONIT_TEST_MYSQL_HOST');
+
+        if (! $host || ! extension_loaded('pdo_mysql')) {
+            $this->markTestSkipped('未设置 MONIT_TEST_MYSQL_* 或缺少 pdo_mysql，跳过真实 MySQL 安装测试');
+        }
+
+        $this->post('/install/database', [
+            'connection' => 'mysql',
+            'host' => $host,
+            'port' => (int) env('MONIT_TEST_MYSQL_PORT', 3306),
+            'database' => (string) env('MONIT_TEST_MYSQL_DATABASE', 'monit_install_test'),
+            'username' => (string) env('MONIT_TEST_MYSQL_USERNAME', 'root'),
+            'password' => (string) env('MONIT_TEST_MYSQL_PASSWORD', ''),
+        ])->assertRedirect(route('install.admin'));
+
+        $content = (string) file_get_contents($this->tmpEnv);
+        $this->assertStringContainsString('DB_CONNECTION=mysql', $content);
+        $this->assertStringContainsString('DB_DATABASE=monit', $content);
+
+        $this->assertSame('mysql', DB::connection()->getDriverName());
+        $this->assertTrue(Schema::hasTable('users'), '迁移已在 MySQL 上完成（库不存在时向导应已自动建库）');
     }
 }

@@ -60,7 +60,8 @@
                     <label>端口</label><input name="port" value="3306">
                     <label>数据库名</label><input name="database" value="monit">
                     <label>用户名</label><input name="username" value="monit">
-                    <label>密码</label><input name="password" type="password">
+                    <label>密码</label><input name="password" type="password" placeholder="无密码可留空">
+                    <p class="sub" style="margin-top:10px;font-size:12px">数据库不存在时将自动创建（需账户有建库权限）；无权限请先在 MySQL 中手动建库（utf8mb4）。库名仅限字母、数字、下划线、中划线。</p>
                 </div>
                 <button type="submit">执行迁移并继续</button>
             </form>

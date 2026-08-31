@@ -60,11 +60,21 @@ class InstallController extends Controller
 
         $validated = Validator::make($request->all(), [
             'connection' => ['required', 'in:sqlite,mysql'],
-            'host' => ['required_if:connection,mysql', 'nullable', 'string'],
-            'port' => ['required_if:connection,mysql', 'nullable', 'integer'],
-            'database' => ['required_if:connection,mysql', 'nullable', 'string'],
-            'username' => ['required_if:connection,mysql', 'nullable', 'string'],
-            'password' => ['nullable', 'string'],
+            'host' => ['required_if:connection,mysql', 'nullable', 'string', 'max:255'],
+            'port' => ['required_if:connection,mysql', 'nullable', 'integer', 'between:1,65535'],
+            // 库名限制字符集：库名会拼入 CREATE DATABASE（反引号包裹 + 此处白名单双保险）
+            'database' => ['required_if:connection,mysql', 'nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9_\-]+$/'],
+            'username' => ['required_if:connection,mysql', 'nullable', 'string', 'max:255'],
+            'password' => ['nullable', 'string', 'max:255'],
+        ], [
+            'connection.required' => '请选择数据库类型',
+            'connection.in' => '数据库类型仅支持 sqlite 或 mysql',
+            'host.required_if' => '选择 MySQL 时必须填写主机地址',
+            'port.required_if' => '选择 MySQL 时必须填写端口',
+            'port.between' => 'MySQL 端口必须在 1-65535 之间',
+            'database.required_if' => '选择 MySQL 时必须填写数据库名',
+            'database.regex' => '数据库名只能包含字母、数字、下划线和中划线',
+            'username.required_if' => '选择 MySQL 时必须填写用户名',
         ]);
 
         if ($validated->fails()) {
@@ -79,7 +89,12 @@ class InstallController extends Controller
             $this->hardenEnv();
 
             // 迁移（--force：生产环境免确认）
-            Artisan::call('migrate', ['--force' => true]);
+            // Artisan::call 失败默认不抛异常（返回非 0 退出码），必须显式检查——
+            // 否则迁移失败也会跳到第 3 步，管理员创建时才炸出难懂错误
+            $exit = Artisan::call('migrate', ['--force' => true]);
+            if ($exit !== 0) {
+                throw new RuntimeException('数据库迁移失败：'.trim(Artisan::output()));
+            }
         } catch (\Throwable $e) {
             return $this->backToRequirements([$e->getMessage()]);
         }
@@ -130,24 +145,31 @@ class InstallController extends Controller
         $data = $validated->validated();
 
         // 核心初始数据先就位：free/pro 套餐 + 平台默认设置（不含任何演示账号）
-        Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\CoreDataSeeder', '--force' => true]);
+        $exit = Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\CoreDataSeeder', '--force' => true]);
+        if ($exit !== 0) {
+            return $this->backToAdmin($request, ['初始数据写入失败：'.trim(Artisan::output())]);
+        }
 
-        $admin = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $data['password'], // User::$casts password=hashed 自动加密
-            'type' => 1,
-            'status' => 1,
-            'plan_id' => 'pro',
-            // 开箱即用：API Token 与推荐返佣码（列为 nullable，但对应功能依赖它们）
-            'api_key' => Str::random(60),
-            'referral_key' => Str::random(32),
-            'language' => 'zh_CN',
-            'timezone' => 'Asia/Shanghai',
-        ]);
+        try {
+            $admin = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $data['password'], // User::$casts password=hashed 自动加密
+                'type' => 1,
+                'status' => 1,
+                'plan_id' => 'pro',
+                // 开箱即用：API Token 与推荐返佣码（列为 nullable，但对应功能依赖它们）
+                'api_key' => Str::random(60),
+                'referral_key' => Str::random(32),
+                'language' => 'zh_CN',
+                'timezone' => 'Asia/Shanghai',
+            ]);
 
-        // email_verified_at 不在 $fillable（防注册端自填已验证标记），此处显式写入
-        $admin->forceFill(['email_verified_at' => now()])->save();
+            // email_verified_at 不在 $fillable（防注册端自填已验证标记），此处显式写入
+            $admin->forceFill(['email_verified_at' => now()])->save();
+        } catch (\Throwable $e) {
+            return $this->backToAdmin($request, ['管理员写入失败：'.$e->getMessage()]);
+        }
 
         // 写入安装锁：此后向导失效
         InstallState::complete();
@@ -205,9 +227,20 @@ class InstallController extends Controller
                 'username' => $data['username'],
                 'password' => $data['password'] ?? '',
             ])]);
+
+            if (! extension_loaded('pdo_mysql')) {
+                throw new RuntimeException('PHP 缺少 pdo_mysql 扩展：请在 PHP 中安装/启用 pdo_mysql（宝塔：软件商店 → PHP → 安装扩展），或改用 SQLite');
+            }
+
+            DB::purge();
+            $this->ensureMysqlDatabase();
         } else {
-            // sqlite：config/database.php 默认即 database/database.sqlite，无需写 DB_DATABASE；
-            // .env 复制自 .env.example（该键注释状态）→ 默认值生效
+            // sqlite：清掉旧 .env 可能残留的 MySQL 配置——
+            // DB_DATABASE 残留会把 sqlite 路径劫持为旧库名（config/database.php 读该 env），装完即 500
+            foreach (['DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD'] as $staleKey) {
+                $this->env->write($staleKey, null); // EnvWriter 空值 = 删除该键
+            }
+
             $sqlite = database_path('database.sqlite');
 
             if (file_exists($sqlite) && ! is_writable($sqlite)) {
@@ -225,13 +258,96 @@ class InstallController extends Controller
             if (! file_exists($sqlite)) {
                 file_put_contents($sqlite, '');
             }
-            config(['database.default' => 'sqlite']);
+            config([
+                'database.default' => 'sqlite',
+                'database.connections.sqlite.database' => $sqlite,
+            ]);
+            DB::purge();
         }
 
-        DB::purge();
+        // 2) 连接预检：凭据错误 / 库不存在 / 目录不可写在迁移前直接暴露为可读错误
+        try {
+            DB::connection($connection)->getPdo();
+        } catch (\Throwable $e) {
+            throw new RuntimeException($this->translateDbError($e->getMessage()));
+        }
+    }
 
-        // 2) 连接预检：MySQL 凭据错误 / sqlite 目录不可写在迁移前直接暴露为可读错误
-        DB::connection($connection)->getPdo();
+    /**
+     * MySQL 就绪检查：以 server 级连接（不指定库）验证凭据可达，
+     * 目标库不存在时自动创建（utf8mb4）——无建库权限则给出明确指引
+     */
+    protected function ensureMysqlDatabase(): void
+    {
+        $cfg = config('database.connections.mysql');
+        $host = (string) ($cfg['host'] ?? '127.0.0.1');
+        $port = (string) ($cfg['port'] ?? '3306');
+        $database = (string) ($cfg['database'] ?? '');
+        $username = (string) ($cfg['username'] ?? '');
+        $password = (string) ($cfg['password'] ?? '');
+
+        try {
+            $pdo = new \PDO(
+                "mysql:host={$host};port={$port};charset=utf8mb4",
+                $username,
+                $password,
+                [
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                    \PDO::ATTR_TIMEOUT => 5,
+                ]
+            );
+        } catch (\PDOException $e) {
+            throw new RuntimeException($this->translateDbError($e->getMessage()));
+        }
+
+        // 库名已由验证规则限制为 [A-Za-z0-9_-]，反引号包裹 + 剔除双保险
+        $safeName = str_replace('`', '', $database);
+
+        try {
+            $pdo->exec(
+                "CREATE DATABASE IF NOT EXISTS `{$safeName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+            );
+        } catch (\PDOException $e) {
+            throw new RuntimeException(
+                'MySQL 账户无权创建数据库「'.$database.'」：请先在 MySQL 中手动创建该库'.
+                '（字符集 utf8mb4）并授权本账户读写，然后返回重试。原始错误：'.$e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * 常见连接/驱动错误翻译为中文指引（未匹配的原文透传，便于排查）
+     */
+    protected function translateDbError(string $raw): string
+    {
+        return match (true) {
+            str_contains($raw, 'Access denied for user')
+                => 'MySQL 用户名或密码错误（Access denied）。请核对后重试。原始错误：'.$raw,
+            str_contains($raw, '[2002]')
+                || str_contains($raw, 'Connection refused')
+                || str_contains($raw, 'server has gone away')
+                => '无法连接 MySQL 服务器：请检查主机地址与端口是否正确、MySQL 是否在运行、防火墙/安全组是否放行。原始错误：'.$raw,
+            str_contains($raw, 'Unknown database')
+                || str_contains($raw, '[1049]')
+                => '数据库不存在且无法自动创建。请先手动建库后重试。原始错误：'.$raw,
+            str_contains($raw, 'could not find driver')
+                => 'PHP 缺少对应数据库驱动扩展（pdo_mysql / pdo_sqlite）。原始错误：'.$raw,
+            default => '数据库连接失败：'.$raw,
+        };
+    }
+
+    /**
+     * 无 Session 环境：错误直接回渲染第 3 步页面
+     *
+     * @param  list<string>  $errors
+     */
+    protected function backToAdmin(Request $request, array $errors): View
+    {
+        return view('install', [
+            'step' => 'admin',
+            'old' => $request->only(['name', 'email']),
+            'errors' => $errors,
+        ]);
     }
 
     /**
