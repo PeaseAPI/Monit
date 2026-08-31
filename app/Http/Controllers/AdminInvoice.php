@@ -73,7 +73,7 @@ class AdminInvoice extends Controller
     public function creditNotesIndex()
     {
         $creditNotes = Payment::with('user')
-            ->where('payment_type', 'refund')
+            ->where('type', 'refund')
             ->orWhere('total_amount', '<', 0)
             ->orderByDesc('datetime')
             ->paginate(25);

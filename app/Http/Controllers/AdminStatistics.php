@@ -162,12 +162,14 @@ return $c;
 
     private function getGrowthData(string $model, int $days): array
     {
+        // users/websites 表用 created_at；payments 业务时间列为 datetime
+        $timeColumn = in_array($model, [User::class, Website::class], true) ? 'created_at' : 'datetime';
         $d = [];
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = now()->subDays($i)->format('Y-m-d');
-            $d[] = ['date' => $date, 'count' => $model::whereDate('created_at', '<=', $date)->count()];
+            $d[] = ['date' => $date, 'count' => $model::whereDate($timeColumn, '<=', $date)->count()];
         }
 
-return $d;
+        return $d;
     }
 }

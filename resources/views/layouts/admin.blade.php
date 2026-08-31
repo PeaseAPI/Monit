@@ -119,10 +119,10 @@
         {{-- 侧栏底部用户菜单（对标 admin-sidebar-footer dropdown）--}}
         <div class="relative shrink-0 border-t border-white/5 p-3">
             <button type="button" onclick="window.adminToggleGroup('admin-user-menu')" class="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-white/5">
-                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-semibold text-white">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-semibold text-white">{{ mb_substr(auth()->user()?->name ?? '?', 0, 1) }}</span>
                 <span class="min-w-0 flex-1">
-                    <span class="block truncate text-sm font-medium text-white">{{ auth()->user()->name }}</span>
-                    <span class="block truncate text-xs text-zinc-500">{{ auth()->user()->email }}</span>
+                    <span class="block truncate text-sm font-medium text-white">{{ auth()->user()?->name }}</span>
+                    <span class="block truncate text-xs text-zinc-500">{{ auth()->user()?->email }}</span>
                 </span>
                 <svg class="h-4 w-4 shrink-0 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
             </button>

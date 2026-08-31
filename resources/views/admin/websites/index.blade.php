@@ -60,7 +60,7 @@
                             <span class="badge-soft bg-zinc-100 text-zinc-500"><span class="h-1.5 w-1.5 rounded-full bg-zinc-400"></span>{{ __('msg.status_disabled') }}</span>
                         @endif
                     </td>
-                    <td class="text-zinc-500">{{ optional($w->datetime)->format('Y-m-d H:i') }}</td>
+                    <td class="text-zinc-500">{{ optional($w->created_at)->format('Y-m-d H:i') }}</td>
                     <td>
                         <div class="flex items-center justify-end">
                             <form method="POST" action="{{ route('admin.websites.toggle_status', $w->website_id) }}" onsubmit="return confirm(this.dataset.msg)" data-msg="{{ $w->is_enabled ? __('admin.disable_confirm') : __('admin.enable_confirm') }}">
