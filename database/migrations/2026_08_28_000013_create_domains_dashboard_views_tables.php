@@ -20,7 +20,7 @@ return new class extends Migration
             $table->unique(['user_id', 'host']);
         });
 
-                // dashboard_views
+        // dashboard_views
         Schema::create('dashboard_views', function (Blueprint $table) {
             $table->increments('dashboard_view_id');
             $table->foreignId('website_id')->nullable();

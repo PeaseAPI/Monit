@@ -19,10 +19,10 @@ class PayUProcessor
         return [
             'processor' => 'payu',
             'pos_id' => $posId,
-            'ext_order_id' => 'monit-' . $user->user_id . '-' . time(),
+            'ext_order_id' => 'monit-'.$user->user_id.'-'.time(),
             'customer_ip' => request()->ip(),
             'merchant_pos_id' => $posId,
-            'description' => $plan->name . ' 订阅',
+            'description' => $plan->name.' 订阅',
             'currency_code' => 'PLN',
             'total_amount' => (int) ($this->getPrice($plan, $frequency) * 100),
             'buyer' => [
@@ -58,7 +58,7 @@ class PayUProcessor
         $userId = $parts[1] ?? 0;
 
         $user = User::find($userId);
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -86,6 +86,7 @@ class PayUProcessor
     private function getPrice(Plan $plan, string $frequency): float
     {
         $prices = $plan->prices['PLN'] ?? $plan->prices['USD'] ?? $plan->prices;
+
         return match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,

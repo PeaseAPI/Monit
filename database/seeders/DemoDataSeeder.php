@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Annotation;
 use App\Models\Domain;
 use App\Models\Heatmap;
 use App\Models\InternalNotification;
@@ -13,9 +14,9 @@ use App\Models\User;
 use App\Models\Website;
 use App\Models\WebsiteGoal;
 use App\Models\WebsiteVisitor;
-use App\Models\Annotation;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Ramsey\Uuid\Uuid;
 
 /**
  * Monit 演示数据填充
@@ -30,7 +31,7 @@ class DemoDataSeeder extends Seeder
                 'name' => '管理员', 'password' => Hash::make('password'),
                 'type' => 1, 'plan_id' => 'pro', 'status' => 1,
                 'api_key' => bin2hex(random_bytes(32)),
-                'referral_key' => 'admin_ref_' . bin2hex(random_bytes(8)),
+                'referral_key' => 'admin_ref_'.bin2hex(random_bytes(8)),
                 'language' => 'zh_CN', 'timezone' => 'Asia/Shanghai',
                 'total_logins' => 42, 'last_activity' => now(),
             ]
@@ -43,7 +44,7 @@ class DemoDataSeeder extends Seeder
                 'type' => 0, 'plan_id' => 'pro',
                 'plan_expiration_date' => now()->addYear(),
                 'status' => 1, 'api_key' => bin2hex(random_bytes(32)),
-                'referral_key' => 'pro_ref_' . bin2hex(random_bytes(8)),
+                'referral_key' => 'pro_ref_'.bin2hex(random_bytes(8)),
                 'language' => 'zh_CN', 'timezone' => 'Asia/Shanghai',
                 'total_logins' => 18, 'last_activity' => now()->subHours(2),
                 'country' => 'China', 'city_name' => 'Shanghai',
@@ -56,7 +57,7 @@ class DemoDataSeeder extends Seeder
                 'name' => '免费用户', 'password' => Hash::make('password'),
                 'type' => 0, 'plan_id' => 'free', 'status' => 1,
                 'api_key' => bin2hex(random_bytes(32)),
-                'referral_key' => 'free_ref_' . bin2hex(random_bytes(8)),
+                'referral_key' => 'free_ref_'.bin2hex(random_bytes(8)),
                 'language' => 'zh_CN', 'timezone' => 'Asia/Shanghai',
                 'total_logins' => 5, 'last_activity' => now()->subDays(3),
                 'referred_by' => $proUser->user_id,
@@ -82,7 +83,7 @@ class DemoDataSeeder extends Seeder
                 ['host' => $data['host'], 'user_id' => $proUser->user_id],
                 [
                     'name' => $data['name'], 'scheme' => 'https',
-                    'pixel_key' => 'px_' . bin2hex(random_bytes(16)),
+                    'pixel_key' => 'px_'.bin2hex(random_bytes(16)),
                     'tracking_type' => 'advanced', 'is_enabled' => true,
                     'last_24_hours_pageviews' => rand(80, 500),
                     'last_7_days_pageviews' => rand(1000, 5000),
@@ -97,7 +98,7 @@ class DemoDataSeeder extends Seeder
             ['host' => 'mysite.test', 'user_id' => $freeUser->user_id],
             [
                 'name' => '我的小站', 'scheme' => 'https',
-                'pixel_key' => 'px_' . bin2hex(random_bytes(16)),
+                'pixel_key' => 'px_'.bin2hex(random_bytes(16)),
                 'tracking_type' => 'lightweight', 'is_enabled' => true,
                 'last_24_hours_pageviews' => rand(10, 50),
                 'last_7_days_pageviews' => rand(100, 300),
@@ -111,10 +112,10 @@ class DemoDataSeeder extends Seeder
         $this->seedGoals($websites[0], $proUser);
         $this->seedPayments($proUser, $freeUser);
         $this->seedTeams($proUser, $freeUser);
-                $this->seedMisc($proUser, $websites[0], $freeUser);
+        $this->seedMisc($proUser, $websites[0], $freeUser);
     }
 
-        protected function seedVisitors(Website $site): void
+    protected function seedVisitors(Website $site): void
     {
         $countries = ['CN', 'US', 'JP', 'DE', 'GB', 'FR', 'KR', 'SG'];
         $devices = ['desktop', 'mobile', 'tablet'];
@@ -124,7 +125,7 @@ class DemoDataSeeder extends Seeder
         for ($day = 0; $day < 7; $day++) {
             $date = now()->subDays($day)->startOfDay();
             for ($i = 0; $i < rand(50, 150); $i++) {
-                $uuid = \Ramsey\Uuid\Uuid::uuid4();
+                $uuid = Uuid::uuid4();
                 WebsiteVisitor::create([
                     'website_id' => $site->website_id,
                     'visitor_uuid_binary' => $uuid->getBytes(),
@@ -139,12 +140,12 @@ class DemoDataSeeder extends Seeder
                 ]);
             }
         }
-        $this->command?->info('✅ 访客：约 ' . WebsiteVisitor::where('website_id', $site->website_id)->count() . ' 条');
+        $this->command?->info('✅ 访客：约 '.WebsiteVisitor::where('website_id', $site->website_id)->count().' 条');
     }
 
     protected function seedGoals(Website $site, User $user): void
     {
-                $goals = [
+        $goals = [
             ['name' => '注册完成', 'type' => 'pageview', 'path' => '/register/success', 'key' => 'signup'],
             ['name' => '购买确认', 'type' => 'custom', 'path' => 'purchase_complete', 'key' => 'purchase'],
             ['name' => '联系表单提交', 'type' => 'pageview', 'path' => '/contact/thanks', 'key' => 'contact'],
@@ -168,7 +169,7 @@ class DemoDataSeeder extends Seeder
             );
         }
 
-                $outLinks = [
+        $outLinks = [
             ['host' => 'github.com', 'path' => '/'],
             ['host' => 'laravel.com', 'path' => '/docs'],
             ['host' => 'tailwindcss.com', 'path' => '/'],
@@ -190,7 +191,7 @@ class DemoDataSeeder extends Seeder
             'is_enabled' => true, 'datetime' => now(),
         ]);
 
-                $this->command?->info('✅ 目标：3 / 标注：3 / 出站点击：4 / 热图：1');
+        $this->command?->info('✅ 目标：3 / 标注：3 / 出站点击：4 / 热图：1');
     }
 
     protected function seedPayments(User $proUser, User $freeUser): void
@@ -269,4 +270,3 @@ class DemoDataSeeder extends Seeder
         $this->command?->info('免费用户: free@monit.dev / password');
     }
 }
-

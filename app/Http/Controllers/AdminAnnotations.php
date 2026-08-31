@@ -27,6 +27,6 @@ class AdminAnnotations extends Controller
         Annotation::findOrFail($annotationId)->delete();
 
         return redirect()->route('admin.annotations.index')
-                        ->with('success', __('msg.annotation_deleted'));
+            ->with('success', __('msg.annotation_deleted'));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -63,20 +64,20 @@ class PublicPagesTest extends TestCase
     public function test_affiliate_page_respects_setting(): void
     {
         // 规格 §6.1：/affiliate 仅在联盟启用时可访问
-        \App\Support\Settings::set('affiliate.affiliate_is_enabled', 'true');
+        Settings::set('affiliate.affiliate_is_enabled', 'true');
         $this->get('/affiliate')->assertOk();
 
-        \App\Support\Settings::set('affiliate.affiliate_is_enabled', 'false');
+        Settings::set('affiliate.affiliate_is_enabled', 'false');
         $this->get('/affiliate')->assertNotFound();
     }
 
     public function test_cookie_banner_renders_when_enabled(): void
     {
         // 规格 §6.1：Cookie 同意横幅（设置启用时前台展示，决策 POST /cookie-consent）
-        \App\Support\Settings::set('cookie_consent.cookie_consent_is_enabled', 'true');
+        Settings::set('cookie_consent.cookie_consent_is_enabled', 'true');
         $this->get('/')->assertOk()->assertSee('monit-cookie-banner');
 
-        \App\Support\Settings::set('cookie_consent.cookie_consent_is_enabled', 'false');
+        Settings::set('cookie_consent.cookie_consent_is_enabled', 'false');
         $this->get('/')->assertOk()->assertDontSee('monit-cookie-banner');
     }
 

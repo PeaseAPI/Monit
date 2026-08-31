@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Plugin;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * 插件管理器（规格书 §14）
@@ -34,7 +35,7 @@ class PluginManager
         $rows = Plugin::query()->get()->keyBy('plugin_id');
         $plugins = [];
 
-        foreach (glob(static::path('*' . DIRECTORY_SEPARATOR . 'config.php')) ?: [] as $file) {
+        foreach (glob(static::path('*'.DIRECTORY_SEPARATOR.'config.php')) ?: [] as $file) {
             $meta = include $file;
 
             if (! is_array($meta) || empty($meta['id'])) {
@@ -179,7 +180,7 @@ class PluginManager
     {
         // 守卫：全新部署（迁移前）/ 测试库未迁移时 plugins 表可能不存在
         try {
-            if (! \Illuminate\Support\Facades\Schema::hasTable('plugins')) {
+            if (! Schema::hasTable('plugins')) {
                 return;
             }
         } catch (\Throwable) {
@@ -230,4 +231,3 @@ class PluginManager
         return base_path(implode(DIRECTORY_SEPARATOR, array_merge(['plugins'], $parts)));
     }
 }
-

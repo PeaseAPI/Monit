@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactMessage;
+use App\Models\BlogPost;
+use App\Models\Page;
 use App\Models\Plan;
 use App\Models\User;
-use App\Models\Website;
+use App\Support\Brand;
 use App\Support\Currency;
+use App\Support\Settings;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * 公开前台控制器
@@ -40,7 +45,7 @@ class IndexController extends Controller
         // M23 模板机制：落地页主题由后台 branding.landing_theme 控制，
         // 视图解析 themes/{theme}/index.blade.php，不存在时回退 default 主题。
         // 二开新增主题：只需新建 resources/views/themes/{name}/index.blade.php 并在后台切换。
-        $theme = \App\Support\Brand::landingTheme();
+        $theme = Brand::landingTheme();
         $view = view()->exists("themes.{$theme}.index")
             ? "themes.{$theme}.index"
             : 'themes.default.index';
@@ -55,7 +60,7 @@ class IndexController extends Controller
     public function blog(Request $request)
     {
         $category = $request->query('category');
-        $posts = \App\Models\BlogPost::where('is_published', true)
+        $posts = BlogPost::where('is_published', true)
             ->when($category, fn ($q) => $q->where('category_id', $category))
             ->orderByDesc('datetime')
             ->get();
@@ -65,14 +70,14 @@ class IndexController extends Controller
 
     public function blogPost($url)
     {
-        $post = \App\Models\BlogPost::where('is_published', true)->where('url', $url)->firstOrFail();
+        $post = BlogPost::where('is_published', true)->where('url', $url)->firstOrFail();
 
         return view('blog_post', compact('post'));
     }
 
     public function page($url)
     {
-        $page = \App\Models\Page::where('is_published', true)->where('url', $url)->firstOrFail();
+        $page = Page::where('is_published', true)->where('url', $url)->firstOrFail();
 
         return view('page', compact('page'));
     }
@@ -82,7 +87,7 @@ class IndexController extends Controller
      */
     public function pages()
     {
-        $pages = \App\Models\Page::where('is_published', true)->orderBy('order')->get();
+        $pages = Page::where('is_published', true)->orderBy('order')->get();
 
         return view('pages', compact('pages'));
     }
@@ -97,14 +102,14 @@ class IndexController extends Controller
      */
     public function affiliate()
     {
-        if (\App\Support\Settings::get('affiliate.affiliate_is_enabled') !== 'true') {
+        if (Settings::get('affiliate.affiliate_is_enabled') !== 'true') {
             abort(404);
         }
 
         return view('affiliate', [
-            'commission' => (float) \App\Support\Settings::get('affiliate.affiliate_commission_percentage', 20),
-            'cookieDays' => (int) \App\Support\Settings::get('affiliate.affiliate_cookie_duration_days', 30),
-            'minWithdrawal' => (float) \App\Support\Settings::get('affiliate.affiliate_minimum_withdrawal_amount', 50),
+            'commission' => (float) Settings::get('affiliate.affiliate_commission_percentage', 20),
+            'cookieDays' => (int) Settings::get('affiliate.affiliate_cookie_duration_days', 30),
+            'minWithdrawal' => (float) Settings::get('affiliate.affiliate_minimum_withdrawal_amount', 50),
         ]);
     }
 
@@ -124,14 +129,14 @@ class IndexController extends Controller
             'message' => ['required', 'string', 'max:4096'],
         ]);
 
-        $to = \App\Support\Settings::get('main.contact_email', config('mail.from.address'));
+        $to = Settings::get('main.contact_email', config('mail.from.address'));
 
         try {
-            \Illuminate\Support\Facades\Mail::to($to)->send(
-                new \App\Mail\ContactMessage($validated)
+            Mail::to($to)->send(
+                new ContactMessage($validated)
             );
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::channel('stack')->info('contact-message', $validated + ['error' => $e->getMessage()]);
+            Log::channel('stack')->info('contact-message', $validated + ['error' => $e->getMessage()]);
         }
 
         return back()->with('success', __('msg.contact_sent'));
@@ -150,11 +155,11 @@ class IndexController extends Controller
             ['loc' => route('contact'), 'priority' => '0.6'],
         ];
 
-        foreach (\App\Models\BlogPost::where('is_published', true)->orderByDesc('datetime')->limit(500)->get() as $post) {
+        foreach (BlogPost::where('is_published', true)->orderByDesc('datetime')->limit(500)->get() as $post) {
             $urls[] = ['loc' => route('blog.post', $post->url), 'priority' => '0.7'];
         }
 
-        foreach (\App\Models\Page::where('is_published', true)->limit(200)->get() as $page) {
+        foreach (Page::where('is_published', true)->limit(200)->get() as $page) {
             $urls[] = ['loc' => route('page', $page->url), 'priority' => '0.5'];
         }
 
@@ -172,7 +177,7 @@ class IndexController extends Controller
             'consent' => ['required', 'in:accepted,rejected'],
         ]);
 
-        \Illuminate\Support\Facades\Log::channel('stack')->info('cookie-consent', [
+        Log::channel('stack')->info('cookie-consent', [
             'consent' => $validated['consent'],
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
@@ -202,7 +207,7 @@ class IndexController extends Controller
             $user->update(['is_newsletter_subscribed' => false]);
         }
 
-                return view('unsubscribe', ['email' => $email, 'already' => $already || ! $user]);
+        return view('unsubscribe', ['email' => $email, 'already' => $already || ! $user]);
     }
 
     /**
@@ -239,7 +244,7 @@ class IndexController extends Controller
 
     public function plan()
     {
-        $plans = \App\Models\Plan::where('is_enabled', true)->orderBy('order')->get();
+        $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
 
         return view('plan', compact('plans'));
     }

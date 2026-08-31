@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use Mollie\Api\MollieApiClient;
 
 /**
  * Mollie 支付处理器（规格书 §11）
@@ -17,7 +18,7 @@ class MollieProcessor
     public function createOrder(Payment $payment, string $successUrl, string $cancelUrl): array
     {
         try {
-            $mollie = new \Mollie\Api\MollieApiClient();
+            $mollie = new MollieApiClient;
             $mollie->setApiKey(config('services.mollie.key'));
 
             $order = $mollie->payments->create([
@@ -25,7 +26,7 @@ class MollieProcessor
                     'currency' => $payment->currency,
                     'value' => number_format($payment->total_amount, 2, '.', ''),
                 ],
-                'description' => config('app.name') . ' - ' . $payment->frequency,
+                'description' => config('app.name').' - '.$payment->frequency,
                 'redirectUrl' => $successUrl,
                 'cancelUrl' => $cancelUrl,
                 'metadata' => ['payment_id' => $payment->payment_id],

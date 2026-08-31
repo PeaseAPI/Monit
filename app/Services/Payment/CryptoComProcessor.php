@@ -17,7 +17,7 @@ class CryptoComProcessor
         return [
             'processor' => 'cryptocom',
             'merchant_id' => config('services.cryptocom.merchant_id'),
-            'order_id' => 'monit-' . $user->user_id . '-' . time(),
+            'order_id' => 'monit-'.$user->user_id.'-'.time(),
             'amount' => $this->getPrice($plan, $frequency),
             'currency' => 'USD',
             'description' => $plan->name,
@@ -42,7 +42,7 @@ class CryptoComProcessor
         $user = User::find($metadata['user_id'] ?? 0);
         $plan = Plan::find($metadata['plan_id'] ?? 0);
 
-        if (!$user || !$plan) {
+        if (! $user || ! $plan) {
             return null;
         }
 
@@ -67,6 +67,7 @@ class CryptoComProcessor
     private function getPrice(Plan $plan, string $frequency): float
     {
         $prices = $plan->prices['USD'] ?? $plan->prices;
+
         return match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,

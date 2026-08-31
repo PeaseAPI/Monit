@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\SessionReplay;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Redis;
 
 /**
  * 清理过期会话回放（规格书 §13.1：websites_replays_cleanup）
@@ -29,7 +30,7 @@ class WebsitesReplaysCleanupCommand extends Command
                 // 清理 Redis 中的回放 chunk（如果使用 Redis）
                 if ($replay->redis_key) {
                     try {
-                        \Illuminate\Support\Facades\Redis::del($replay->redis_key);
+                        Redis::del($replay->redis_key);
                     } catch (\Throwable) {
                         // Redis 不可用时静默跳过
                     }

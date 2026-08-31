@@ -2,10 +2,16 @@
 
 namespace App\Services;
 
+use App\Models\EventChild;
 use App\Models\GoalConversion;
+use App\Models\Heatmap;
+use App\Models\HeatmapSnapshot;
+use App\Models\HeatmapSnapshotClick;
+use App\Models\HeatmapSnapshotScroll;
 use App\Models\LightweightEvent;
 use App\Models\OutboundClick;
 use App\Models\SessionEvent;
+use App\Models\SessionReplay;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
@@ -394,7 +400,7 @@ class PixelTracker
             return;
         }
 
-        \App\Models\EventChild::create([
+        EventChild::create([
             'event_id' => $event->event_id,
             'session_id' => $event->session_id,
             'visitor_id' => $event->visitor_id,
@@ -495,7 +501,7 @@ class PixelTracker
         }
 
         // 确保 replay 主记录存在
-        $exists = \App\Models\SessionReplay::where('session_id', $session->session_id)->exists();
+        $exists = SessionReplay::where('session_id', $session->session_id)->exists();
         if (! $exists) {
             // 回放配额（规格 §10.2：sessions_replays_limit；-1 不限）
             $replayLimit = $this->website->user?->getPlanSettings()['sessions_replays_limit'] ?? 0;
@@ -505,7 +511,7 @@ class PixelTracker
                 return;
             }
 
-            \App\Models\SessionReplay::create([
+            SessionReplay::create([
                 'session_id' => $session->session_id,
                 'visitor_id' => $session->visitor_id,
                 'website_id' => $this->website->website_id,
@@ -542,7 +548,7 @@ class PixelTracker
         $json = json_encode($this->payload['data'] ?? [], JSON_UNESCAPED_UNICODE);
         $compressed = gzencode((string) $json, 9);
 
-        $snapshot = \App\Models\HeatmapSnapshot::create([
+        $snapshot = HeatmapSnapshot::create([
             'heatmap_id' => $heatmap->heatmap_id,
             'website_id' => $this->website->website_id,
             'type' => $device,
@@ -579,7 +585,7 @@ class PixelTracker
         $y = max(0, min(100, (float) ($this->payload['y_normalized'] ?? 0)));
         $count = max(1, min(10, (int) ($this->payload['count'] ?? 1)));
 
-        \App\Models\HeatmapSnapshotClick::create([
+        HeatmapSnapshotClick::create([
             'website_id' => $this->website->website_id,
             'snapshot_id' => $heatmap->{"snapshot_id_{$device}"},
             'x_normalized' => $x,
@@ -616,7 +622,7 @@ class PixelTracker
             return;
         }
 
-        \App\Models\HeatmapSnapshotScroll::upsert(
+        HeatmapSnapshotScroll::upsert(
             [[
                 'website_id' => $this->website->website_id,
                 'snapshot_id' => $heatmap->{"snapshot_id_{$device}"},
@@ -634,11 +640,11 @@ class PixelTracker
     /**
      * 查找本网站启用中的热图（payload.heatmap_id）
      */
-    protected function findEnabledHeatmap(): ?\App\Models\Heatmap
+    protected function findEnabledHeatmap(): ?Heatmap
     {
         $heatmapId = (int) ($this->payload['heatmap_id'] ?? 0);
 
-        $heatmap = \App\Models\Heatmap::where('website_id', $this->website->website_id)
+        $heatmap = Heatmap::where('website_id', $this->website->website_id)
             ->where('heatmap_id', $heatmapId)
             ->where('is_enabled', true)
             ->first();
@@ -652,9 +658,10 @@ class PixelTracker
 
     /**
      * 当前设备列名 + 对应 snapshot_id 是否已生成
+     *
      * @return string|null desktop|tablet|mobile 或 null（快照未采集）
      */
-    protected function currentDeviceColumn(\App\Models\Heatmap $heatmap): ?string
+    protected function currentDeviceColumn(Heatmap $heatmap): ?string
     {
         $device = $this->uaParser->deviceType();
         if (! in_array($device, ['desktop', 'tablet', 'mobile'], true)) {

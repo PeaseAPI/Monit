@@ -34,7 +34,7 @@ class PublicStatisticsController extends Controller
 
         // 密码保护检查
         if ($website->settings && ! empty($website->settings['public_statistics_password'])) {
-            $sessionKey = 'public_stats_auth_' . $website->website_id;
+            $sessionKey = 'public_stats_auth_'.$website->website_id;
             $authenticated = $request->session()->get($sessionKey, false);
 
             if (! $authenticated) {
@@ -78,7 +78,7 @@ class PublicStatisticsController extends Controller
 
         // 恒时比较防时序侧信道；配合路由层 throttle 防爆破
         if ($publicPassword !== '' && hash_equals($publicPassword, (string) $validated['password'])) {
-            $request->session()->put('public_stats_auth_' . $website->website_id, true);
+            $request->session()->put('public_stats_auth_'.$website->website_id, true);
 
             return redirect()->route('statistics.public', ['pixel_key' => $pixel_key]);
         }

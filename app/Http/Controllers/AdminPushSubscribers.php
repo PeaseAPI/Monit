@@ -17,7 +17,7 @@ class AdminPushSubscribers extends Controller
         // 插件未启用时引导到插件页
         if (! PluginManager::isActive('push-notifications')) {
             return redirect()->route('admin.plugins.index')
-                            ->with('error', __('admin.push_subscribers_plugin_required'));
+                ->with('error', __('admin.push_subscribers_plugin_required'));
         }
 
         $subscribers = PushNotificationSubscriber::with('website')
@@ -32,6 +32,6 @@ class AdminPushSubscribers extends Controller
         PushNotificationSubscriber::findOrFail($subscriberId)->delete();
 
         return redirect()->route('admin.push-subscribers.index')
-                        ->with('success', __('msg.push_subscriber_deleted'));
+            ->with('success', __('msg.push_subscriber_deleted'));
     }
 }

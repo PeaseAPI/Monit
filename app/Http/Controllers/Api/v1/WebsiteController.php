@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Models\Website;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 /**
  * API v1 - 网站管理接口
@@ -30,7 +31,7 @@ class WebsiteController
 
         $pixelKey = '';
         do {
-            $pixelKey = \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(32));
+            $pixelKey = Str::lower(Str::random(32));
         } while (Website::where('pixel_key', $pixelKey)->exists());
 
         $website = Website::create([
@@ -43,12 +44,12 @@ class WebsiteController
         ]);
 
         return response()->json([
-                        'message' => __('msg.website_created_api'),
+            'message' => __('msg.website_created_api'),
             'website' => $website,
         ], 201);
     }
 
-        public function show(Request $request, Website $website): JsonResponse
+    public function show(Request $request, Website $website): JsonResponse
     {
         return response()->json($website);
     }
@@ -65,13 +66,13 @@ class WebsiteController
 
         $website->update($validated);
 
-                return response()->json(['message' => __('msg.website_updated_api'), 'website' => $website]);
+        return response()->json(['message' => __('msg.website_updated_api'), 'website' => $website]);
     }
 
     public function destroy(Request $request, Website $website): JsonResponse
     {
         $website->delete();
 
-                return response()->json(['message' => __('msg.website_deleted_api')]);
+        return response()->json(['message' => __('msg.website_deleted_api')]);
     }
 }

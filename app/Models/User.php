@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
 
 class User extends Authenticatable
 {
@@ -22,7 +23,7 @@ class User extends Authenticatable
     {
         static::saved(function (User $user): void {
             foreach ($user->websites()->pluck('pixel_key') as $pixelKey) {
-                \Illuminate\Support\Facades\Cache::forget('pixel.website.'.$pixelKey);
+                Cache::forget('pixel.website.'.$pixelKey);
             }
         });
     }
@@ -144,7 +145,7 @@ class User extends Authenticatable
         return $this->hasMany(RedeemedCode::class, 'user_id', 'user_id');
     }
 
-        public function isAdmin(): bool
+    public function isAdmin(): bool
     {
         return $this->type === 1;
     }
@@ -177,7 +178,7 @@ class User extends Authenticatable
     public function generateApiToken(): string
     {
         $token = bin2hex(random_bytes(32));
-        
+
         $this->update(['api_key' => $token]);
 
         return $token;
@@ -191,4 +192,3 @@ class User extends Authenticatable
         return $this->api_key === $token;
     }
 }
-

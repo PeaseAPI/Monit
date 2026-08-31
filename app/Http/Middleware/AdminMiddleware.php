@@ -14,12 +14,12 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login');
         }
 
         if (auth()->user()->type !== 1) {
-                        abort(403, __('msg.forbidden_admin'));
+            abort(403, __('msg.forbidden_admin'));
         }
 
         return $next($request);

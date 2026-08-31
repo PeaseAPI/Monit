@@ -15,17 +15,16 @@ class S3Client
         protected string $bucket,
         protected string $region = 'us-east-1',
         protected string $endpoint = '',   // 自定义端点（MinIO 等）；空则 AWS
-    ) {
-    }
+    ) {}
 
     /** 构建 API 端点（path-style） */
     protected function baseUrl(): string
     {
         if ($this->endpoint !== '') {
-            return rtrim($this->endpoint, '/') . '/' . $this->bucket;
+            return rtrim($this->endpoint, '/').'/'.$this->bucket;
         }
 
-        return 'https://s3.' . $this->region . '.amazonaws.com/' . $this->bucket;
+        return 'https://s3.'.$this->region.'.amazonaws.com/'.$this->bucket;
     }
 
     public function put(string $key, string $content, string $contentType = 'application/octet-stream'): array
@@ -54,7 +53,7 @@ class S3Client
 
     protected function request(string $method, string $key, ?string $body = null, array $headers = []): array
     {
-        $url = $this->baseUrl() . '/' . ltrim($key, '/');
+        $url = $this->baseUrl().'/'.ltrim($key, '/');
         $host = (string) parse_url($url, PHP_URL_HOST);
 
         $amzDate = now()->setTimezone('UTC')->format('Ymd\THis\Z');
@@ -71,20 +70,20 @@ class S3Client
 
         $canonicalHeaders = '';
         foreach ($allHeaders as $h => $v) {
-            $canonicalHeaders .= strtolower($h) . ':' . trim((string) $v) . "\n";
+            $canonicalHeaders .= strtolower($h).':'.trim((string) $v)."\n";
         }
         $signedHeaders = implode(';', array_keys($allHeaders));
 
         $canonicalRequest = implode("\n", [
             $method,
-            '/' . $this->bucket . '/' . ltrim($key, '/'),
+            '/'.$this->bucket.'/'.ltrim($key, '/'),
             '',
             $canonicalHeaders,
             $signedHeaders,
             $payloadHash,
         ]);
 
-        $scope = $dateStamp . '/' . $this->region . '/s3/aws4_request';
+        $scope = $dateStamp.'/'.$this->region.'/s3/aws4_request';
         $stringToSign = implode("\n", [
             'AWS4-HMAC-SHA256',
             $amzDate,
@@ -92,19 +91,19 @@ class S3Client
             hash('sha256', $canonicalRequest),
         ]);
 
-        $kDate = hash_hmac('sha256', $dateStamp, 'AWS4' . $this->secretKey, true);
+        $kDate = hash_hmac('sha256', $dateStamp, 'AWS4'.$this->secretKey, true);
         $kRegion = hash_hmac('sha256', $this->region, $kDate, true);
         $kService = hash_hmac('sha256', 's3', $kRegion, true);
         $kSigning = hash_hmac('sha256', 'aws4_request', $kService, true);
         $signature = hash_hmac('sha256', $stringToSign, $kSigning);
 
-        $auth = 'AWS4-HMAC-SHA256 Credential=' . $this->accessKey . '/' . $scope
-            . ', SignedHeaders=' . $signedHeaders . ', Signature=' . $signature;
+        $auth = 'AWS4-HMAC-SHA256 Credential='.$this->accessKey.'/'.$scope
+            .', SignedHeaders='.$signedHeaders.', Signature='.$signature;
 
-        $curlHeaders = ['Authorization: ' . $auth];
+        $curlHeaders = ['Authorization: '.$auth];
         foreach ($allHeaders as $h => $v) {
             if ($h !== 'host') {
-                $curlHeaders[] = ucwords($h, '-') . ': ' . $v;
+                $curlHeaders[] = ucwords($h, '-').': '.$v;
             }
         }
 

@@ -47,7 +47,7 @@ class ApiTeamMembersController extends Controller
 
     protected function authorizeTeam(Team $team): void
     {
-        if ((int) $team->user_id !== (int) auth()->id() && !auth()->user()->isAdmin()) {
+        if ((int) $team->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

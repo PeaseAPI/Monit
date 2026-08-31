@@ -67,7 +67,7 @@ class AdminDomains extends Controller
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,user_id'],
             'scheme' => ['required', 'in:http,https'],
-            'host' => ['required', 'string', 'max:256', 'unique:domains,host,' . $domainId . ',domain_id'],
+            'host' => ['required', 'string', 'max:256', 'unique:domains,host,'.$domainId.',domain_id'],
             'type' => ['required', 'in:0,1'],
             'is_enabled' => ['boolean'],
         ]);

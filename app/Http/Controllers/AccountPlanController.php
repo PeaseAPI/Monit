@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Plan;
 use App\Models\Code;
-use Illuminate\Http\Request;
+use App\Models\Plan;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**

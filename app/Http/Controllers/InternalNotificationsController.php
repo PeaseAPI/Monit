@@ -26,7 +26,7 @@ class InternalNotificationsController extends Controller
         $notification = InternalNotification::findOrFail($notificationId);
         $notification->update(['is_read' => true]);
 
-                return back()->with('success', __('msg.notification_read'));
+        return back()->with('success', __('msg.notification_read'));
     }
 
     public function markAllAsRead(Request $request): RedirectResponse
@@ -35,7 +35,7 @@ class InternalNotificationsController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
-                return back()->with('success', __('msg.all_notifications_read'));
+        return back()->with('success', __('msg.all_notifications_read'));
     }
 
     public function destroy(int $notificationId): RedirectResponse
@@ -43,6 +43,6 @@ class InternalNotificationsController extends Controller
         $notification = InternalNotification::findOrFail($notificationId);
         $notification->delete();
 
-                return back()->with('success', __('msg.notification_deleted'));
+        return back()->with('success', __('msg.notification_deleted'));
     }
 }

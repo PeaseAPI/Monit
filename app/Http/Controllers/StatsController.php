@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\VisitorSession;
 use App\Models\Website;
+use App\Models\WebsiteVisitor;
+use App\Services\Ai\AiService;
 use App\Services\StatisticsService;
 use Illuminate\Http\Request;
 
@@ -18,7 +21,7 @@ class StatsController extends Controller
      */
     public function aiInsight(Request $request, Website $website)
     {
-        $ai = app(\App\Services\Ai\AiService::class);
+        $ai = app(AiService::class);
 
         if (! $ai->insightsEnabled()) {
             return response()->json(['error' => 'ai_disabled'], 403);
@@ -37,10 +40,10 @@ class StatsController extends Controller
             ->implode('、');
 
         $prompt = sprintf(
-            "网站「%s」（%s）最近 %d 天统计：浏览量 %d、访客 %d、会话 %d、跳出率 %s%%、平均停留 %s 秒。"."\n".
-            "热门页面：%s。"."\n".
-            "主要来源：%s。"."\n".
-            "访客地区：%s。",
+            '网站「%s」（%s）最近 %d 天统计：浏览量 %d、访客 %d、会话 %d、跳出率 %s%%、平均停留 %s 秒。'."\n".
+            '热门页面：%s。'."\n".
+            '主要来源：%s。'."\n".
+            '访客地区：%s。',
             $website->name,
             $website->host ?? $website->domain,
             $range,
@@ -162,7 +165,7 @@ class StatsController extends Controller
             abort(403, __('stats.export_not_allowed'));
         }
 
-        $visitors = \App\Models\WebsiteVisitor::query()
+        $visitors = WebsiteVisitor::query()
             ->where('website_id', $website->website_id)
             ->where('last_date', '>=', now()->subDays(90))
             ->orderByDesc('last_date')
@@ -261,7 +264,7 @@ class StatsController extends Controller
         ]);
     }
 
-        /**
+    /**
      * 统计概览（别名路由，复用 index 逻辑）
      */
     public function overview(Request $request, Website $website)
@@ -396,7 +399,7 @@ class StatsController extends Controller
         $stats = StatisticsService::for($website)->lastDays($range);
         $topOs = $stats->breakdown('os_name', 50);
 
-                return view('stats.top_operating_systems', [
+        return view('stats.top_operating_systems', [
             'website' => $website,
             'range' => $range,
             'topOs' => $topOs,
@@ -625,10 +628,10 @@ class StatsController extends Controller
      */
     public function visitorDetail(Request $request, Website $website, int $visitorId)
     {
-        $visitor = \App\Models\WebsiteVisitor::where('website_id', $website->website_id)
+        $visitor = WebsiteVisitor::where('website_id', $website->website_id)
             ->findOrFail($visitorId);
 
-        $sessions = \App\Models\VisitorSession::where('visitor_id', $visitorId)
+        $sessions = VisitorSession::where('visitor_id', $visitorId)
             ->with('events')
             ->orderByDesc('date')
             ->get();
@@ -641,7 +644,7 @@ class StatsController extends Controller
      */
     public function sessionDetail(Request $request, Website $website, int $sessionId)
     {
-        $session = \App\Models\VisitorSession::where('website_id', $website->website_id)
+        $session = VisitorSession::where('website_id', $website->website_id)
             ->with(['visitor', 'events'])
             ->findOrFail($sessionId);
 

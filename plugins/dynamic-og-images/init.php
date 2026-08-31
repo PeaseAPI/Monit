@@ -4,20 +4,22 @@
  * Dynamic OG Images 启动入口：注册 /og-image 路由（GD 生成 1200x630 PNG）
  */
 
+use App\Support\PluginManager;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/og-image', function (\Illuminate\Http\Request $request) {
-    if (! \App\Support\PluginManager::isActive('dynamic-og-images')
-        || ! \App\Support\PluginManager::setting('dynamic-og-images', 'is_enabled', true)) {
+Route::get('/og-image', function (Request $request) {
+    if (! PluginManager::isActive('dynamic-og-images')
+        || ! PluginManager::setting('dynamic-og-images', 'is_enabled', true)) {
         abort(404);
     }
 
     $title = mb_substr($request->query('title', config('app.name', 'Monit')), 0, 80);
     $description = mb_substr($request->query('description', ''), 0, 120);
 
-    $bg = \App\Support\PluginManager::setting('dynamic-og-images', 'background', '0f172a');
-    $fg = \App\Support\PluginManager::setting('dynamic-og-images', 'foreground', 'ffffff');
-    $brand = (string) \App\Support\PluginManager::setting('dynamic-og-images', 'brand_text', 'Monit');
+    $bg = PluginManager::setting('dynamic-og-images', 'background', '0f172a');
+    $fg = PluginManager::setting('dynamic-og-images', 'foreground', 'ffffff');
+    $brand = (string) PluginManager::setting('dynamic-og-images', 'brand_text', 'Monit');
 
     $width = 1200;
     $height = 630;

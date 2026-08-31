@@ -34,7 +34,7 @@ class CheckMaintenance
         $path = $request->path() === '/' ? '' : $request->path();
 
         foreach ($this->except as $prefix) {
-            if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
+            if ($path === $prefix || str_starts_with($path, $prefix.'/')) {
                 return $next($request);
             }
         }

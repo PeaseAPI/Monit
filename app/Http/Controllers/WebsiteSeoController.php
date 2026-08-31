@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SeoToolUse;
 use App\Models\Website;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -23,7 +24,7 @@ class WebsiteSeoController extends Controller
             'website' => $website,
             'audits' => $audits,
             'intervals' => self::INTERVALS,
-            'topTools' => \App\Models\SeoToolUse::topTools(5),
+            'topTools' => SeoToolUse::topTools(5),
         ]);
     }
 

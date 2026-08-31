@@ -77,6 +77,6 @@ class AdminPlugins extends Controller
 
         $action();
 
-        return back()->with('success', __('admin.plugins_state_' . $state));
+        return back()->with('success', __('admin.plugins_state_'.$state));
     }
 }

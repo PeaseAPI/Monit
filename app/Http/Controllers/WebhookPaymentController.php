@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Payment\AlipayProcessor;
 use App\Services\Payment\PaymentService;
+use App\Services\Payment\WeChatPayProcessor;
 use App\Support\WebhookSignature;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -39,6 +41,7 @@ class WebhookPaymentController extends Controller
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('order_id'));
             }
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -57,6 +60,7 @@ class WebhookPaymentController extends Controller
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('data.id'));
             }
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -73,6 +77,7 @@ class WebhookPaymentController extends Controller
         if (in_array($action, ['payment.created', 'payment.updated'])) {
             $this->paymentService->handleExternalPaymentNotification('mercadopago', (string) $request->input('data.id'));
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -87,7 +92,7 @@ class WebhookPaymentController extends Controller
             return response()->json(['error' => 'Not configured'], 400);
         }
 
-        $expected = hash('sha512', $serverKey . $request->input('order_id', '') . $request->input('status_code', '') . $request->input('gross_amount', ''));
+        $expected = hash('sha512', $serverKey.$request->input('order_id', '').$request->input('status_code', '').$request->input('gross_amount', ''));
 
         if (! hash_equals($expected, (string) $request->input('signature_key', ''))) {
             return response()->json(['error' => 'Invalid signature'], 400);
@@ -96,6 +101,7 @@ class WebhookPaymentController extends Controller
         if (in_array($request->input('transaction_status'), ['capture', 'settlement'])) {
             $this->paymentService->handleExternalPaymentNotification('midtrans', $request->input('order_id', ''));
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -111,6 +117,7 @@ class WebhookPaymentController extends Controller
         if ($request->input('event.type') === 'CARD_TRANSACTION.COMPLETED') {
             $this->paymentService->handleExternalPaymentNotification('flutterwave', $request->input('data.tx_ref', ''));
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -129,6 +136,7 @@ class WebhookPaymentController extends Controller
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('data.id'));
             }
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -158,6 +166,7 @@ class WebhookPaymentController extends Controller
         if ($paymentId) {
             $this->paymentService->handlePaymentSuccess((int) $paymentId, $externalId);
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -177,7 +186,7 @@ class WebhookPaymentController extends Controller
         preg_match('/signature=([^;]+)/i', $signatureHeader, $matches);
         $provided = $matches[1] ?? '';
 
-        $expected = md5($request->getContent() . $secondKey);
+        $expected = md5($request->getContent().$secondKey);
 
         if ($provided === '' || ! hash_equals($expected, $provided)) {
             return response()->json(['error' => 'Invalid signature'], 400);
@@ -186,6 +195,7 @@ class WebhookPaymentController extends Controller
         if ($request->input('order.status') === 'COMPLETED') {
             $this->paymentService->handleExternalPaymentNotification('payu', $request->input('order.extOrderId', ''));
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -202,6 +212,7 @@ class WebhookPaymentController extends Controller
         if ($request->input('status') === 'SUCCESS') {
             $this->paymentService->handleExternalPaymentNotification('iyzico', $request->input('conversationId', ''));
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -221,6 +232,7 @@ class WebhookPaymentController extends Controller
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) ($data['id'] ?? ''));
             }
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -236,6 +248,7 @@ class WebhookPaymentController extends Controller
         if ($request->input('EventType') === 'TransactionStatusChanged') {
             $this->paymentService->handleExternalPaymentNotification('myfatoorah', (string) $request->input('Data.InvoiceId'));
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -251,6 +264,7 @@ class WebhookPaymentController extends Controller
         if ($request->input('event_type') === 'ORDER_COMPLETED') {
             $this->paymentService->handleExternalPaymentNotification('klarna', $request->input('order_id', ''));
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -266,6 +280,7 @@ class WebhookPaymentController extends Controller
         if (in_array($request->input('status'), ['completed', 'mismatched'])) {
             $this->paymentService->handleExternalPaymentNotification('plisio', $request->input('order_number', ''));
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -284,6 +299,7 @@ class WebhookPaymentController extends Controller
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('data.id'));
             }
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -302,6 +318,7 @@ class WebhookPaymentController extends Controller
             $orderId = $request->input('vnp_TxnRef', $request->input('order_id', ''));
             $this->paymentService->handleExternalPaymentNotification('onepay', $orderId);
         }
+
         return response()->json(['received' => true]);
     }
 
@@ -314,7 +331,7 @@ class WebhookPaymentController extends Controller
         $xml = simplexml_load_string((string) $request->getContent(), null, LIBXML_NONET);
         $data = $xml ? (array) $xml : [];
 
-        $processor = new \App\Services\Payment\WeChatPayProcessor();
+        $processor = new WeChatPayProcessor;
 
         if (($data['return_code'] ?? '') === 'SUCCESS'
             && ($data['result_code'] ?? '') === 'SUCCESS'
@@ -341,7 +358,7 @@ class WebhookPaymentController extends Controller
      */
     public function alipay(Request $request)
     {
-        $processor = new \App\Services\Payment\AlipayProcessor();
+        $processor = new AlipayProcessor;
 
         $data = $request->all();
 
@@ -422,4 +439,3 @@ class WebhookPaymentController extends Controller
         return false;
     }
 }
-

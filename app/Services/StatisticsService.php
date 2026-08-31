@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\LightweightEvent;
+use App\Models\OutboundClick;
 use App\Models\SessionEvent;
 use App\Models\VisitorSession;
 use App\Models\Website;
@@ -320,7 +321,7 @@ class StatisticsService
         }
 
         return collect($rows)->map(fn ($row) => [
-                        'key' => (string) ($row->k ?? __('stats.unknown')),
+            'key' => (string) ($row->k ?? __('stats.unknown')),
             'count' => (int) $row->total,
         ])->all();
     }
@@ -359,7 +360,7 @@ class StatisticsService
         }
 
         return collect($rows)->map(fn ($row) => [
-                        'key' => (string) ($row->k ?: __('stats.direct_access')),
+            'key' => (string) ($row->k ?: __('stats.direct_access')),
             'count' => (int) $row->total,
             'utm_source' => $row->utm_source,
             'utm_medium' => $row->utm_medium,
@@ -378,9 +379,9 @@ class StatisticsService
             return [];
         }
 
-                $hexFunc = DB::getDriverName() === 'sqlite'
-            ? "LOWER(HEX(websites_visitors.visitor_uuid_binary))"
-            : "HEX(websites_visitors.visitor_uuid_binary)";
+        $hexFunc = DB::getDriverName() === 'sqlite'
+            ? 'LOWER(HEX(websites_visitors.visitor_uuid_binary))'
+            : 'HEX(websites_visitors.visitor_uuid_binary)';
 
         $rows = DB::table('websites_visitors')
             ->join('sessions_events', 'websites_visitors.visitor_id', '=', 'sessions_events.visitor_id')
@@ -395,7 +396,7 @@ class StatisticsService
         return collect($rows)->map(fn ($row) => [
             'visitor_id' => (int) $row->visitor_id,
             'visitor_uuid' => $row->visitor_uuid,
-                        'country_code' => $row->country_code ?? __('stats.unknown'),
+            'country_code' => $row->country_code ?? __('stats.unknown'),
             'device_type' => $row->device_type ?? __('stats.unknown'),
             'os_name' => $row->os_name ?? __('stats.unknown'),
             'browser_name' => $row->browser_name ?? __('stats.unknown'),
@@ -448,7 +449,7 @@ class StatisticsService
         foreach ($dimensions as $dim) {
             $rows = $this->breakdown($dim, 20);
             foreach ($rows as $row) {
-                                if (! empty($row['key']) && $row['key'] !== __('stats.unknown')) {
+                if (! empty($row['key']) && $row['key'] !== __('stats.unknown')) {
                     $results[] = [
                         'key' => $row['key'],
                         'type' => $dim,
@@ -756,11 +757,17 @@ class StatisticsService
             $n = (int) $row->sessions;
             $n === 1 ? $newVisitors++ : $returning++;
 
-            if ($n === 1) { $freqBuckets['1']++; }
-            elseif ($n === 2) { $freqBuckets['2']++; }
-            elseif ($n <= 4) { $freqBuckets['3-4']++; }
-            elseif ($n <= 9) { $freqBuckets['5-9']++; }
-            else { $freqBuckets['10+']++; }
+            if ($n === 1) {
+                $freqBuckets['1']++;
+            } elseif ($n === 2) {
+                $freqBuckets['2']++;
+            } elseif ($n <= 4) {
+                $freqBuckets['3-4']++;
+            } elseif ($n <= 9) {
+                $freqBuckets['5-9']++;
+            } else {
+                $freqBuckets['10+']++;
+            }
         }
 
         // 会话集合：深度（total_events）+ 时长（最后事件时间 - 会话开始）
@@ -784,20 +791,32 @@ class StatisticsService
 
         foreach ($sessions as $session) {
             $events = (int) $session->total_events;
-            if ($events <= 1) { $depthBuckets['1']++; }
-            elseif ($events <= 3) { $depthBuckets['2-3']++; }
-            elseif ($events <= 10) { $depthBuckets['4-10']++; }
-            elseif ($events <= 30) { $depthBuckets['11-30']++; }
-            else { $depthBuckets['30+']++; }
+            if ($events <= 1) {
+                $depthBuckets['1']++;
+            } elseif ($events <= 3) {
+                $depthBuckets['2-3']++;
+            } elseif ($events <= 10) {
+                $depthBuckets['4-10']++;
+            } elseif ($events <= 30) {
+                $depthBuckets['11-30']++;
+            } else {
+                $depthBuckets['30+']++;
+            }
 
             if ($last = ($lastBySession[$session->session_id] ?? null)) {
                 $seconds = max(0, strtotime((string) $last) - strtotime((string) $session->date));
 
-                if ($seconds <= 10) { $durationBuckets['0-10s']++; }
-                elseif ($seconds <= 30) { $durationBuckets['11-30s']++; }
-                elseif ($seconds <= 60) { $durationBuckets['31-60s']++; }
-                elseif ($seconds <= 180) { $durationBuckets['1-3m']++; }
-                else { $durationBuckets['3m+']++; }
+                if ($seconds <= 10) {
+                    $durationBuckets['0-10s']++;
+                } elseif ($seconds <= 30) {
+                    $durationBuckets['11-30s']++;
+                } elseif ($seconds <= 60) {
+                    $durationBuckets['31-60s']++;
+                } elseif ($seconds <= 180) {
+                    $durationBuckets['1-3m']++;
+                } else {
+                    $durationBuckets['3m+']++;
+                }
             }
         }
 
@@ -951,6 +970,7 @@ class StatisticsService
             if (isset(static::AI_HOSTS[$host])) {
                 $canonical = static::AI_HOSTS[$host];
                 $ai[$canonical] = ($ai[$canonical] ?? 0) + $count;
+
                 continue;
             }
 
@@ -958,11 +978,13 @@ class StatisticsService
             if (isset(static::SOCIAL_HOST_MAP[$host])) {
                 $canonical = static::SOCIAL_HOST_MAP[$host];
                 $social[$canonical] = ($social[$canonical] ?? 0) + $count;
+
                 continue;
             }
             foreach (static::SOCIAL_HOSTS as $suffix) {
                 if (str_ends_with($host, '.'.$suffix)) {
                     $social[$suffix] = ($social[$suffix] ?? 0) + $count;
+
                     continue 2;
                 }
             }
@@ -971,14 +993,17 @@ class StatisticsService
             if (isset(static::SEARCH_HOST_MAP[$host])) {
                 $canonical = static::SEARCH_HOST_MAP[$host];
                 $search[$canonical] = ($search[$canonical] ?? 0) + $count;
+
                 continue;
             }
             if (preg_match('/^(?:www\.)?google\.[a-z.]+$/', $host)) {
                 $search['google.com'] = ($search['google.com'] ?? 0) + $count;
+
                 continue;
             }
             if (str_ends_with($host, '.yahoo.com')) {
                 $search['yahoo.com'] = ($search['yahoo.com'] ?? 0) + $count;
+
                 continue;
             }
             if (preg_match('/^(?:m\.)?baidu\.[a-z.]+$/', $host)) {
@@ -1061,7 +1086,7 @@ class StatisticsService
      */
     public function outboundClickPaths(string $host, int $limit = 50): array
     {
-        $rows = \App\Models\OutboundClick::query()
+        $rows = OutboundClick::query()
             ->where('website_id', $this->website->website_id)
             ->whereBetween('datetime', [$this->startDate, $this->endDate])
             ->where('host', $host)

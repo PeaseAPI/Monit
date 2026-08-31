@@ -44,7 +44,7 @@ class AdminLicense extends Controller
 
         return back()->with(
             $status['valid'] ? 'success' : 'error',
-            __('admin.license_uploaded_' . ($status['valid'] ? 'valid' : 'invalid'), ['reason' => $status['reason']]),
+            __('admin.license_uploaded_'.($status['valid'] ? 'valid' : 'invalid'), ['reason' => $status['reason']]),
         );
     }
 

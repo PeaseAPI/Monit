@@ -34,7 +34,7 @@ return [
     | 默认套餐配额（free 套餐 seed 数据）
     |--------------------------------------------------------------------------
     */
-        'plan_defaults' => [
+    'plan_defaults' => [
         'websites_limit' => 3,
         'sessions_events_limit' => 10000,
         'events_children_limit' => 5000,

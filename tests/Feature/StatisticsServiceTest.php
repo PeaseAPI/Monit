@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\LightweightEvent;
+use App\Models\SessionEvent;
 use App\Models\User;
 use App\Models\VisitorSession;
 use App\Models\Website;
@@ -60,9 +62,9 @@ class StatisticsServiceTest extends TestCase
         ]);
     }
 
-    protected function makeEvent(WebsiteVisitor $v, VisitorSession $s, string $type, string $path, bool $bounced = false): \App\Models\SessionEvent
+    protected function makeEvent(WebsiteVisitor $v, VisitorSession $s, string $type, string $path, bool $bounced = false): SessionEvent
     {
-        return \App\Models\SessionEvent::create([
+        return SessionEvent::create([
             'event_uuid_binary' => Uuid::uuid4()->getBytes(),
             'session_id' => $s->session_id, 'visitor_id' => $v->visitor_id,
             'website_id' => $this->website->website_id,
@@ -146,7 +148,7 @@ class StatisticsServiceTest extends TestCase
         $this->website->update(['tracking_type' => 'lightweight']);
 
         foreach (['/a', '/b'] as $path) {
-            \App\Models\LightweightEvent::create([
+            LightweightEvent::create([
                 'website_id' => $this->website->website_id,
                 'type' => 'landing_page', 'path' => $path,
                 'date' => now(), 'expiration_date' => now()->addDays(365)->toDateString(),

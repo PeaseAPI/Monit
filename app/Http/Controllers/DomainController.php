@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Domain;
-use App\Models\Website;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -41,7 +40,7 @@ class DomainController extends Controller
         ]);
 
         return redirect()->route('domains.index')
-                        ->with('success', __('msg.domain_created', ['host' => $host]));
+            ->with('success', __('msg.domain_created', ['host' => $host]));
     }
 
     public function update(Request $request): RedirectResponse
@@ -57,7 +56,7 @@ class DomainController extends Controller
         $domain->update(['host' => $host, 'is_enabled' => $request->boolean('is_enabled', true)]);
 
         return redirect()->route('domains.index')
-                        ->with('success', __('msg.domain_updated'));
+            ->with('success', __('msg.domain_updated'));
     }
 
     public function destroy(Request $request, int $domainId): RedirectResponse
@@ -66,6 +65,6 @@ class DomainController extends Controller
         $domain->delete();
 
         return redirect()->route('domains.index')
-                        ->with('success', __('msg.domain_deleted'));
+            ->with('success', __('msg.domain_deleted'));
     }
 }

@@ -17,7 +17,7 @@ class QQProvider implements ChineseSocialProvider
 
     public function getAuthorizationUrl(): string
     {
-        return 'https://graph.qq.com/oauth2.0/authorize?' . http_build_query([
+        return 'https://graph.qq.com/oauth2.0/authorize?'.http_build_query([
             'response_type' => 'code',
             'client_id' => $this->appId,
             'redirect_uri' => $this->redirectUri,
@@ -37,6 +37,7 @@ class QQProvider implements ChineseSocialProvider
         ]);
 
         parse_str($response->body(), $params);
+
         return $params;
     }
 

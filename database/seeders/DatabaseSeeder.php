@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Plan;
 use App\Models\Setting;
-use Database\Seeders\DemoDataSeeder;
 use Illuminate\Database\Seeder;
 
 /**
@@ -14,7 +13,7 @@ use Illuminate\Database\Seeder;
  */
 class DatabaseSeeder extends Seeder
 {
-        public function run(): void
+    public function run(): void
     {
         $defaults = config('monit.plan_defaults');
 
@@ -102,4 +101,3 @@ class DatabaseSeeder extends Seeder
         $this->call(DemoDataSeeder::class);
     }
 }
-

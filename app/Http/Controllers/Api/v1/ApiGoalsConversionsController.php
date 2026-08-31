@@ -46,7 +46,7 @@ class ApiGoalsConversionsController extends Controller
 
     protected function authorizeWebsite(Website $website): void
     {
-        if ((int) $website->user_id !== (int) auth()->id() && !auth()->user()->isAdmin()) {
+        if ((int) $website->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

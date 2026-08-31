@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Payment;
+use App\Models\Plan;
 use App\Models\User;
+use App\Models\Website;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,9 +18,9 @@ class AdminUserUpdate extends Controller
     public function index(Request $request, int $userId): View
     {
         $user = User::findOrFail($userId);
-        $plans = \App\Models\Plan::where('is_enabled', true)->orderBy('order')->get();
-        $payments = \App\Models\Payment::where('user_id', $userId)->orderByDesc('datetime')->limit(20)->get();
-        $websites = \App\Models\Website::where('user_id', $userId)->orderByDesc('datetime')->limit(20)->get();
+        $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
+        $payments = Payment::where('user_id', $userId)->orderByDesc('datetime')->limit(20)->get();
+        $websites = Website::where('user_id', $userId)->orderByDesc('datetime')->limit(20)->get();
 
         return view('admin.users.edit', compact('user', 'plans', 'payments', 'websites'))
             ->with('adminNav', 'users');
@@ -29,7 +32,7 @@ class AdminUserUpdate extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:256'],
-            'email' => ['required', 'email', 'max:256', 'unique:users,email,' . $userId . ',user_id'],
+            'email' => ['required', 'email', 'max:256', 'unique:users,email,'.$userId.',user_id'],
             'password' => ['nullable', 'string', 'min:8'],
             'type' => ['nullable', 'in:0,1'],
             'plan_id' => ['nullable', 'string', 'max:64'],
@@ -37,7 +40,7 @@ class AdminUserUpdate extends Controller
             'status' => ['nullable', 'in:0,1'],
         ]);
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $validated['password'] = bcrypt($validated['password']);
         } else {
             unset($validated['password']);
@@ -52,6 +55,7 @@ class AdminUserUpdate extends Controller
     {
         $user = User::findOrFail($userId);
         $user->update(['status' => $user->status ? 0 : 1]);
+
         return back()->with('success', __('msg.user_status_toggled'));
     }
 
@@ -59,6 +63,7 @@ class AdminUserUpdate extends Controller
     {
         $user = User::findOrFail($userId);
         auth()->login($user, true);
+
         return redirect()->route('dashboard');
     }
 }

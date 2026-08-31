@@ -6,6 +6,7 @@ use App\Models\Website;
 use App\Services\PixelTracker;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Monit 像素采集端点
@@ -28,7 +29,7 @@ class PixelTrackController extends Controller
         // 高频采集下将每次请求的 DB 查询降为缓存命中；写入侧 Website::saved 钩子主动失效。
         $cacheTtl = (int) config('monit.pixel.website_cache_ttl', 60);
         $website = $cacheTtl > 0
-            ? \Illuminate\Support\Facades\Cache::remember(
+            ? Cache::remember(
                 'pixel.website.'.$pixel_key,
                 $cacheTtl,
                 fn () => Website::where('pixel_key', $pixel_key)->with('user')->first(),

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Support\Settings;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,7 +19,7 @@ class AuthenticateApiKey
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (\App\Support\Settings::get('main.api_is_enabled') === 'false') {
+        if (Settings::get('main.api_is_enabled') === 'false') {
             return response()->json(['error' => 'API is disabled'], 403);
         }
 

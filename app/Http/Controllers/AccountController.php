@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Code;
 use App\Services\Sms\SmsService;
 use App\Services\TotpService;
+use App\Services\WebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -23,7 +24,7 @@ class AccountController extends Controller
         return view('account.index', [
             'user' => $request->user()->load('plan'),
         ]);
-        }
+    }
 
     /**
      * 账户日志（规格书 §6.2.5：/account-logs）
@@ -43,7 +44,7 @@ class AccountController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $request->user()->user_id . ',user_id'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$request->user()->user_id.',user_id'],
         ]);
 
         $emailChanged = strtolower((string) $validated['email']) !== strtolower((string) $request->user()->email);
@@ -95,7 +96,7 @@ class AccountController extends Controller
      */
     public function phoneBind(Request $request)
     {
-        if (! \App\Services\Sms\SmsService::scenarioEnabled('phone_bind')) {
+        if (! SmsService::scenarioEnabled('phone_bind')) {
             return back()->withErrors(['phone' => __('auth.sms_not_enabled')]);
         }
 
@@ -189,7 +190,7 @@ class AccountController extends Controller
         return back()->with('success', __('account.twofa_disabled'));
     }
 
-        /**
+    /**
      * 删除账户表单页面（规格书 §6.2.5：/account-delete）
      */
     public function deleteForm(Request $request)
@@ -218,7 +219,7 @@ class AccountController extends Controller
             'code' => ['required', 'string', 'max:64'],
         ]);
 
-        $code = \App\Models\Code::where('code', $validated['code'])->first();
+        $code = Code::where('code', $validated['code'])->first();
 
         if (! $code) {
             return back()->withErrors(['code' => __('account.invalid_code')]);
@@ -255,7 +256,7 @@ class AccountController extends Controller
         $user->delete();
 
         // 平台 Webhook：用户删除（规格 §6.3.1：webhooks.webhook_user_delete_url）
-        app(\App\Services\WebhookService::class)->userDelete($snapshot);
+        app(WebhookService::class)->userDelete($snapshot);
 
         // TODO: 发送数据导出邮件
 

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\VisitorsSession;
-use App\Models\Website;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -24,7 +23,7 @@ class SessionAjaxController extends Controller
             $isTeamMember = $session->website->teamMembers()
                 ->where('user_id', $request->user()->id)
                 ->exists();
-            if (!$isTeamMember) {
+            if (! $isTeamMember) {
                 abort(403, '无权访问此会话');
             }
         }

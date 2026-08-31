@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\LightweightEvent;
 use App\Models\SessionEvent;
 use App\Models\User;
 use App\Models\VisitorSession;
@@ -228,7 +229,7 @@ class M21Test extends TestCase
     {
         $this->website->update(['tracking_type' => 'lightweight']);
 
-        \App\Models\LightweightEvent::create([
+        LightweightEvent::create([
             'website_id' => $this->website->website_id,
             'type' => 'landing_page', 'path' => '/lw',
             'referrer_host' => 'www.sogou.com', 'referrer_path' => '/web?query=laravel',

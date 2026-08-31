@@ -3,6 +3,7 @@
 namespace App\Services\Seo\Tools;
 
 use App\Services\Seo\AuditEngine;
+use App\Services\Seo\DomainMonitor;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -101,7 +102,7 @@ class NetworkTools
             return ['ok' => false, 'error' => '请输入域名', 'data' => []];
         }
 
-        $result = app(\App\Services\Seo\DomainMonitor::class)->whois($domain);
+        $result = app(DomainMonitor::class)->whois($domain);
 
         if (! $result['ok']) {
             return ['ok' => false, 'error' => $result['error'] ?? '查询失败', 'data' => []];

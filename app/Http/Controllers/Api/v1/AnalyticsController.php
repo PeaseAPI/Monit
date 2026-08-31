@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Models\SessionReplay;
 use App\Models\Website;
 use App\Services\StatisticsService;
 use Illuminate\Http\Request;
@@ -238,7 +239,7 @@ class AnalyticsController
     {
         $limit = min(100, max(1, (int) $request->query('limit', 25)));
 
-        $replays = \App\Models\SessionReplay::with(['session', 'visitor'])
+        $replays = SessionReplay::with(['session', 'visitor'])
             ->where('website_id', $website->website_id)
             ->orderByDesc('replay_id')
             ->limit($limit)
@@ -267,5 +268,4 @@ class AnalyticsController
             now()->toDateString(),
         ];
     }
-
 }

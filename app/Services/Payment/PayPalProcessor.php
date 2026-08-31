@@ -3,7 +3,9 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use App\Support\WebhookSignature;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 /**
  * PayPal 支付处理器
@@ -12,7 +14,9 @@ use Illuminate\Http\Request;
 class PayPalProcessor
 {
     protected ?string $clientId;
+
     protected ?string $clientSecret;
+
     protected string $baseUrl;
 
     public function __construct()
@@ -43,7 +47,7 @@ class PayPalProcessor
 
         // 简化实现 - 生产环境应缓存 token
         try {
-            $response = \Illuminate\Support\Facades\Http::withBasicAuth($this->clientId, $this->clientSecret)
+            $response = Http::withBasicAuth($this->clientId, $this->clientSecret)
                 ->asForm()
                 ->post("{$this->baseUrl}/v1/oauth2/token", [
                     'grant_type' => 'client_credentials',
@@ -83,7 +87,7 @@ class PayPalProcessor
         ];
 
         try {
-            $response = \Illuminate\Support\Facades\Http::withToken($accessToken)
+            $response = Http::withToken($accessToken)
                 ->post("{$this->baseUrl}/v2/checkout/orders", $orderData);
 
             $data = $response->json();
@@ -110,7 +114,7 @@ class PayPalProcessor
         }
 
         try {
-            $response = \Illuminate\Support\Facades\Http::withToken($accessToken)
+            $response = Http::withToken($accessToken)
                 ->post("{$this->baseUrl}/v2/checkout/orders/{$orderId}/capture");
 
             $data = $response->json();
@@ -142,7 +146,7 @@ class PayPalProcessor
 
         $accessToken = $this->getAccessToken();
 
-        return \App\Support\WebhookSignature::verifyPayPalSignature(
+        return WebhookSignature::verifyPayPalSignature(
             $request,
             $this->baseUrl,
             $accessToken,

@@ -3,6 +3,9 @@
 namespace App\Services\Seo\Tools;
 
 use App\Services\Seo\AuditEngine;
+use App\Services\Seo\SitemapMonitor;
+use App\Services\Seo\Tests\ContentTests;
+use App\Support\Settings;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -182,7 +185,7 @@ class SeoCheckTools
         $host = (string) parse_url($url, PHP_URL_HOST);
         $scheme = (string) (parse_url($url, PHP_URL_SCHEME) ?: 'https');
 
-        $result = app(\App\Services\Seo\SitemapMonitor::class)->fetch("{$scheme}://{$host}/sitemap.xml");
+        $result = app(SitemapMonitor::class)->fetch("{$scheme}://{$host}/sitemap.xml");
 
         if (! $result['ok']) {
             return ['ok' => false, 'error' => $result['error'] ?? 'sitemap.xml 不可用', 'data' => []];
@@ -591,7 +594,7 @@ class SeoCheckTools
 
     public function keywordExtractor(array $in): array
     {
-        $top = \App\Services\Seo\Tests\ContentTests::topKeywords((string) ($in['text'] ?? ''), 20);
+        $top = ContentTests::topKeywords((string) ($in['text'] ?? ''), 20);
 
         return ['ok' => true, 'data' => ['关键词' => $top ? implode('、', $top) : '无']];
     }
@@ -660,7 +663,7 @@ class SeoCheckTools
      */
     public function seoScore(array $in): array
     {
-        $audit = app(\App\Services\Seo\AuditEngine::class)->run((string) ($in['url'] ?? ''));
+        $audit = app(AuditEngine::class)->run((string) ($in['url'] ?? ''));
 
         if ($audit->status !== 'completed') {
             return ['ok' => false, 'error' => '页面抓取失败：'.($audit->error ?: '未知'), 'data' => []];
@@ -737,7 +740,7 @@ class SeoCheckTools
      */
     public function ahrefsDomainRating(array $in): array
     {
-        $apiKey = (string) \App\Support\Settings::get('seo.ahrefs_api_key', '');
+        $apiKey = (string) Settings::get('seo.ahrefs_api_key', '');
 
         if ($apiKey === '') {
             return ['ok' => false, 'error' => 'Ahrefs API Key 尚未配置', 'data' => []];

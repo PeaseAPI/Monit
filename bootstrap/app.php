@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\AuthenticateApiKey;
+use App\Http\Middleware\CheckMaintenance;
+use App\Http\Middleware\EnforcePlanLimits;
+use App\Http\Middleware\EnsureUserActive;
 use App\Models\Website;
 use App\Policies\WebsitePolicy;
 use Illuminate\Foundation\Application;
@@ -21,24 +25,24 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-                // 像素采集端点：跨站公开 POST，必须免 CSRF（规格书 §4.1）
+        // 像素采集端点：跨站公开 POST，必须免 CSRF（规格书 §4.1）
         $middleware->validateCsrfTokens(except: [
             'pixel-track/*',
             'webhooks/*',
         ]);
 
-                        // 注册自定义中间件别名
+        // 注册自定义中间件别名
         $middleware->alias([
             'admin' => AdminMiddleware::class,
-            'api.key' => \App\Http\Middleware\AuthenticateApiKey::class,
-            'plan_limit' => \App\Http\Middleware\EnforcePlanLimits::class,
+            'api.key' => AuthenticateApiKey::class,
+            'plan_limit' => EnforcePlanLimits::class,
         ]);
 
         // 维护模式（规格书 §6.1）：settings main.maintenance_is_enabled 开启时非管理员跳转维护页
         // 封禁用户登出（规格书 §2）：status != 1 的已登录会话在下一个请求立即终止
         $middleware->web(append: [
-            \App\Http\Middleware\CheckMaintenance::class,
-            \App\Http\Middleware\EnsureUserActive::class,
+            CheckMaintenance::class,
+            EnsureUserActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

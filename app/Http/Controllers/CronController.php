@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Website;
-use App\Models\VisitorSession;
-use App\Models\SessionReplay;
-use App\Models\Broadcast;
 use App\Jobs\SendBroadcastEmail;
 use App\Jobs\SendEmailReport;
+use App\Models\Broadcast;
+use App\Models\SessionReplay;
+use App\Models\User;
+use App\Models\VisitorSession;
+use App\Models\Website;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 
 /**
  * 定时任务端点（规格书 §13）
@@ -71,7 +72,7 @@ class CronController extends Controller
         $result = match ($task) {
             'email_reports' => $this->emailReports(),
             'broadcasts' => $this->broadcasts(),
-            'push_notifications' => \Illuminate\Support\Facades\Artisan::call('monit:push-notifications-campaigns'),
+            'push_notifications' => Artisan::call('monit:push-notifications-campaigns'),
             default => null,
         };
 
@@ -100,6 +101,7 @@ class CronController extends Controller
                 ]);
                 $count++;
             });
+
         return $count;
     }
 
@@ -117,6 +119,7 @@ class CronController extends Controller
                 $user->delete();
                 $count++;
             });
+
         return $count;
     }
 
@@ -133,6 +136,7 @@ class CronController extends Controller
                 $replay->delete();
                 $count++;
             });
+
         return $count;
     }
 
@@ -145,6 +149,7 @@ class CronController extends Controller
         $count = 0;
         // 清理过期会话事件
         $count += VisitorSession::where('date', '<', now()->subDays($retentionDays))->limit(500)->delete();
+
         return $count;
     }
 
@@ -165,10 +170,11 @@ class CronController extends Controller
                 $user->update(['plan_expiry_reminder' => true]);
                 $count++;
             });
+
         return $count;
     }
 
-        /**
+    /**
      * 发送待发送广播邮件（规格书 §13.1）
      */
     protected function broadcasts(): int
@@ -182,6 +188,7 @@ class CronController extends Controller
                 SendBroadcastEmail::dispatch($broadcast);
                 $count++;
             });
+
         return $count;
     }
 
@@ -202,6 +209,7 @@ class CronController extends Controller
                 $website->update(['email_reports_last_date' => now()]);
                 $count++;
             });
+
         return $count;
     }
 }

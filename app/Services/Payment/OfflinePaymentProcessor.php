@@ -71,7 +71,7 @@ class OfflinePaymentProcessor
             'last_datetime' => now(),
         ]);
 
-        $paymentService = new PaymentService();
+        $paymentService = new PaymentService;
         $paymentService->activatePlan($payment->user, $payment);
 
         return [

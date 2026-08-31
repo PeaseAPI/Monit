@@ -27,6 +27,6 @@ class AdminReplays extends Controller
         SessionReplay::findOrFail($replayId)->delete();
 
         return redirect()->route('admin.replays.index')
-                        ->with('success', __('msg.replay_deleted'));
+            ->with('success', __('msg.replay_deleted'));
     }
 }

@@ -21,8 +21,7 @@ class AuditContext
         public readonly int $sizeBytes,
         public readonly ?string $robotsTxt = null,
         public readonly ?array $sslInfo = null,
-    ) {
-    }
+    ) {}
 
     protected ?DOMDocument $dom = null;
 

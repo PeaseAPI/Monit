@@ -20,8 +20,7 @@ class AliyunOssClient
         protected string $accessKeySecret,
         protected string $bucket,
         protected string $endpoint = 'https://oss-cn-hangzhou.aliyuncs.com',
-    ) {
-    }
+    ) {}
 
     /** 对象完整 URL（virtual-hosted style） */
     public function urlFor(string $key): string
@@ -30,7 +29,7 @@ class AliyunOssClient
         $scheme = (string) (parse_url($endpoint, PHP_URL_SCHEME) ?: 'https');
         $host = (string) parse_url($endpoint, PHP_URL_HOST);
 
-        return "{$scheme}://{$this->bucket}.{$host}/" . ltrim($key, '/');
+        return "{$scheme}://{$this->bucket}.{$host}/".ltrim($key, '/');
     }
 
     public function put(string $key, string $content, string $contentType = 'application/octet-stream'): array
@@ -74,29 +73,29 @@ class AliyunOssClient
         ksort($ossHeaders);
         $canonicalOssHeaders = '';
         foreach ($ossHeaders as $h => $v) {
-            $canonicalOssHeaders .= $h . ':' . $v . "\n";
+            $canonicalOssHeaders .= $h.':'.$v."\n";
         }
 
         // CanonicalizedResource：/{bucket}/{key}
-        $resource = '/' . $this->bucket . '/' . ltrim($key, '/');
+        $resource = '/'.$this->bucket.'/'.ltrim($key, '/');
 
         $stringToSign = implode("\n", [
             $method,
             $headers['Content-MD5'] ?? '',
             $contentType,
             $date,
-            $canonicalOssHeaders . $resource,
+            $canonicalOssHeaders.$resource,
         ]);
 
         $signature = base64_encode(hash_hmac('sha1', $stringToSign, $this->accessKeySecret, true));
 
         $curlHeaders = [
-            'Authorization: OSS ' . $this->accessKeyId . ':' . $signature,
-            'Date: ' . $date,
+            'Authorization: OSS '.$this->accessKeyId.':'.$signature,
+            'Date: '.$date,
         ];
         foreach ($headers as $h => $v) {
             if (strcasecmp((string) $h, 'host') !== 0) {
-                $curlHeaders[] = ucwords((string) $h, '-') . ': ' . $v;
+                $curlHeaders[] = ucwords((string) $h, '-').': '.$v;
             }
         }
 

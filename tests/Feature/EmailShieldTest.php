@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Setting;
 use App\Services\EmailShieldService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Blade;
@@ -16,7 +17,7 @@ class EmailShieldTest extends TestCase
 
     public function test_obfuscate_hides_plain_email_from_html(): void
     {
-        $service = new EmailShieldService();
+        $service = new EmailShieldService;
         $encoded = $service->obfuscate('contact@example.com');
 
         // 源码不含明文邮箱（爬虫无法直接提取）
@@ -30,7 +31,7 @@ class EmailShieldTest extends TestCase
 
     public function test_obfuscate_rejects_invalid_email(): void
     {
-        $service = new EmailShieldService();
+        $service = new EmailShieldService;
 
         $this->assertSame('not-an-email', html_entity_decode($service->obfuscate('not-an-email'), ENT_QUOTES | ENT_HTML5));
     }
@@ -45,9 +46,9 @@ class EmailShieldTest extends TestCase
 
     public function test_link_respects_plugin_toggle(): void
     {
-        $service = new EmailShieldService();
+        $service = new EmailShieldService;
 
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['key' => 'plugins_email_shield_is_enabled'],
             ['value' => true]
         );
@@ -55,7 +56,7 @@ class EmailShieldTest extends TestCase
         $this->assertStringContainsString('mailto:', $link);
         $this->assertStringNotContainsString('hi@example.com', $link);
 
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['key' => 'plugins_email_shield_is_enabled'],
             ['value' => false]
         );

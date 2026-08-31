@@ -3,7 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
-use App\Models\User;
+use App\Support\WebhookSignature;
 use Illuminate\Http\Request;
 
 /**
@@ -13,7 +13,9 @@ use Illuminate\Http\Request;
 class StripeProcessor
 {
     protected ?string $secretKey;
+
     protected ?string $publishableKey;
+
     protected ?string $webhookSecret;
 
     public function __construct()
@@ -53,7 +55,7 @@ class StripeProcessor
                 'quantity' => 1,
             ]],
             'mode' => $payment->type === 'recurring' ? 'subscription' : 'payment',
-            'success_url' => $successUrl . '?session_id={CHECKOUT_SESSION_ID}',
+            'success_url' => $successUrl.'?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => $cancelUrl,
             'metadata' => [
                 'payment_id' => $payment->payment_id,
@@ -81,7 +83,7 @@ class StripeProcessor
             return false;
         }
 
-        return \App\Support\WebhookSignature::verifyStripeSignature(
+        return WebhookSignature::verifyStripeSignature(
             $request->getContent(),
             $request->header('Stripe-Signature'),
             $this->webhookSecret

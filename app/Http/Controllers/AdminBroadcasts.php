@@ -25,7 +25,7 @@ class AdminBroadcasts extends Controller
     {
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
 
-        return view('admin.broadcasts.form', ['broadcast' => new Broadcast(), 'plans' => $plans])->with('adminNav', 'broadcasts');
+        return view('admin.broadcasts.form', ['broadcast' => new Broadcast, 'plans' => $plans])->with('adminNav', 'broadcasts');
     }
 
     public function store(Request $request): RedirectResponse
@@ -40,7 +40,7 @@ class AdminBroadcasts extends Controller
         ]);
 
         return redirect()->route('admin.broadcasts.index')
-                        ->with('success', __('msg.broadcast_created'));
+            ->with('success', __('msg.broadcast_created'));
     }
 
     public function edit(int $broadcastId)
@@ -57,13 +57,13 @@ class AdminBroadcasts extends Controller
 
         if ($broadcast->status === 'sent') {
             return redirect()->route('admin.broadcasts.index')
-                            ->with('error', __('msg.broadcast_already_sent'));
+                ->with('error', __('msg.broadcast_already_sent'));
         }
 
         $broadcast->update($this->validated($request));
 
         return redirect()->route('admin.broadcasts.index')
-                        ->with('success', __('msg.broadcast_updated'));
+            ->with('success', __('msg.broadcast_updated'));
     }
 
     /**
@@ -87,7 +87,7 @@ class AdminBroadcasts extends Controller
         Broadcast::findOrFail($broadcastId)->delete();
 
         return redirect()->route('admin.broadcasts.index')
-                        ->with('success', __('msg.broadcast_deleted'));
+            ->with('success', __('msg.broadcast_deleted'));
     }
 
     protected function validated(Request $request): array
@@ -105,7 +105,7 @@ class AdminBroadcasts extends Controller
             $validated['target_plan_id'] = null;
         }
 
-                return $validated;
+        return $validated;
     }
 
     /**
@@ -129,11 +129,11 @@ class AdminBroadcasts extends Controller
 
         $newBroadcast = $broadcast->replicate();
         $newBroadcast->status = 'draft';
-        $newBroadcast->title = $broadcast->title . ' (' . __('msg.copy') . ')';
+        $newBroadcast->title = $broadcast->title.' ('.__('msg.copy').')';
         $newBroadcast->datetime = now();
         $newBroadcast->save();
 
         return redirect()->route('admin.broadcasts.edit', $newBroadcast->broadcast_id)
-                        ->with('success', __('msg.broadcast_duplicated'));
+            ->with('success', __('msg.broadcast_duplicated'));
     }
 }

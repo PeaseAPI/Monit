@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
  */
 class ReplayController extends Controller
 {
-        public function index(Request $request, Website $website)
+    public function index(Request $request, Website $website)
     {
         $range = (int) ($request->query('range') ?: 7);
 

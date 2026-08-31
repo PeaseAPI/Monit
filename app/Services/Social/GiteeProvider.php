@@ -17,7 +17,7 @@ class GiteeProvider implements ChineseSocialProvider
 
     public function getAuthorizationUrl(): string
     {
-        return 'https://gitee.com/oauth/authorize?' . http_build_query([
+        return 'https://gitee.com/oauth/authorize?'.http_build_query([
             'client_id' => $this->clientId,
             'redirect_uri' => $this->redirectUri,
             'response_type' => 'code',

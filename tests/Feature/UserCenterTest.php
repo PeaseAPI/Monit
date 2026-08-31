@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\Website;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -55,7 +56,7 @@ class UserCenterTest extends TestCase
     {
         $user = $this->adminUser();
 
-        $website = \App\Models\Website::create([
+        $website = Website::create([
             'user_id' => $user->user_id,
             'pixel_key' => 'px_uc_1', 'name' => 'UC Site',
             'scheme' => 'https', 'host' => 'uc.test',

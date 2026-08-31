@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Plan;
 use App\Models\Website;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +24,7 @@ class AdminWebsites extends Controller
 
         $websites = $query->orderByDesc('website_id')->paginate(50);
 
-                return view('admin.websites.index', compact('websites'))->with('adminNav', 'websites');
+        return view('admin.websites.index', compact('websites'))->with('adminNav', 'websites');
     }
 
     public function toggleStatus(int $websiteId): RedirectResponse
@@ -33,6 +32,6 @@ class AdminWebsites extends Controller
         $website = Website::findOrFail($websiteId);
         $website->update(['is_enabled' => ! $website->is_enabled]);
 
-                return back()->with('success', __('msg.website_status_toggled', ['name' => $website->name, 'status' => $website->is_enabled ? __('msg.status_enabled') : __('msg.status_disabled')]));
+        return back()->with('success', __('msg.website_status_toggled', ['name' => $website->name, 'status' => $website->is_enabled ? __('msg.status_enabled') : __('msg.status_disabled')]));
     }
 }

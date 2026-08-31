@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -38,7 +39,7 @@ class SendBroadcastEmail implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        \Illuminate\Support\Facades\Log::error('Broadcast email failed', [
+        Log::error('Broadcast email failed', [
             'broadcast_id' => $this->broadcast->broadcast_id,
             'recipient' => $this->recipient->email,
             'error' => $exception->getMessage(),

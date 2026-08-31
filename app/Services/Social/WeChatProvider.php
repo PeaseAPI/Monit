@@ -17,13 +17,13 @@ class WeChatProvider implements ChineseSocialProvider
 
     public function getAuthorizationUrl(): string
     {
-        return 'https://open.weixin.qq.com/connect/qrconnect?' . http_build_query([
+        return 'https://open.weixin.qq.com/connect/qrconnect?'.http_build_query([
             'appid' => $this->appId,
             'redirect_uri' => $this->redirectUri,
             'response_type' => 'code',
             'scope' => 'snsapi_login',
             'state' => csrf_token(),
-        ]) . '#wechat_redirect';
+        ]).'#wechat_redirect';
     }
 
     public function getAccessToken(string $code): array

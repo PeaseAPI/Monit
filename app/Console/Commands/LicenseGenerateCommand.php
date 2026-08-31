@@ -41,8 +41,8 @@ class LicenseGenerateCommand extends Command
             ];
             file_put_contents($keypairPath, json_encode($keypair, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             chmod($keypairPath, 0600);
-            $this->info('Keypair generated: ' . $keypairPath);
-            $this->warn('Set config license.public_key = ' . $keypair['public_key']);
+            $this->info('Keypair generated: '.$keypairPath);
+            $this->warn('Set config license.public_key = '.$keypair['public_key']);
         }
 
         if (empty($keypair['secret_key'])) {
@@ -58,7 +58,7 @@ class LicenseGenerateCommand extends Command
         )));
 
         $license = [
-            'license_id' => (string) ($this->option('id') ?: 'LIC-' . strtoupper(bin2hex(random_bytes(4)))),
+            'license_id' => (string) ($this->option('id') ?: 'LIC-'.strtoupper(bin2hex(random_bytes(4)))),
             'product' => LicenseManager::PRODUCT,
             'domains' => $domains,
             'max_domains' => max(1, count($domains)),
@@ -76,9 +76,9 @@ class LicenseGenerateCommand extends Command
 
         // 4. 写出
         $out = (string) ($this->option('out') ?: LicenseManager::licensePath());
-        file_put_contents($out, json_encode($license, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+        file_put_contents($out, json_encode($license, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n");
 
-        $this->info('License written: ' . $out);
+        $this->info('License written: '.$out);
         $this->line(json_encode($license, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         return self::SUCCESS;

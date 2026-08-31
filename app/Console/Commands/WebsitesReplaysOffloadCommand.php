@@ -69,7 +69,7 @@ class WebsitesReplaysOffloadCommand extends Command
                     'date' => (string) $e->date,
                 ]);
 
-            $key = 'replays/' . $replay->website_id . '/' . $replay->session_id . '.json';
+            $key = 'replays/'.$replay->website_id.'/'.$replay->session_id.'.json';
             $payload = json_encode([
                 'replay_id' => $replay->replay_id,
                 'session_id' => $replay->session_id,
@@ -92,7 +92,7 @@ class WebsitesReplaysOffloadCommand extends Command
                 $this->line("  [OK] {$key}");
             } else {
                 $skipped++;
-                $this->warn("  [FAIL {$status}] {$key}" . ($error !== '' ? " ({$error})" : ''));
+                $this->warn("  [FAIL {$status}] {$key}".($error !== '' ? " ({$error})" : ''));
             }
         }
 

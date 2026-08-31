@@ -16,12 +16,12 @@ class AdminTaxes extends Controller
     {
         $taxes = Tax::orderBy('tax_id')->get();
 
-                return view('admin.taxes.index', compact('taxes'))->with('adminNav', 'taxes');
+        return view('admin.taxes.index', compact('taxes'))->with('adminNav', 'taxes');
     }
 
     public function create()
     {
-                return view('admin.taxes.create')->with('adminNav', 'taxes');
+        return view('admin.taxes.create')->with('adminNav', 'taxes');
     }
 
     public function store(Request $request): RedirectResponse
@@ -39,14 +39,14 @@ class AdminTaxes extends Controller
         Tax::create($validated);
 
         return redirect()->route('admin.taxes.index')
-                        ->with('success', __('msg.tax_created', ['name' => $validated['name']]));
+            ->with('success', __('msg.tax_created', ['name' => $validated['name']]));
     }
 
     public function edit(int $taxId)
     {
         $tax = Tax::findOrFail($taxId);
 
-                return view('admin.taxes.edit', compact('tax'))->with('adminNav', 'taxes');
+        return view('admin.taxes.edit', compact('tax'))->with('adminNav', 'taxes');
     }
 
     public function update(Request $request, int $taxId): RedirectResponse
@@ -66,15 +66,15 @@ class AdminTaxes extends Controller
         $tax->update($validated);
 
         return redirect()->route('admin.taxes.index')
-                        ->with('success', __('msg.tax_updated'));
+            ->with('success', __('msg.tax_updated'));
     }
 
-        public function destroy(int $taxId): RedirectResponse
+    public function destroy(int $taxId): RedirectResponse
     {
         Tax::find($taxId)->delete();
 
         return redirect()->route('admin.taxes.index')
-                        ->with('success', __('msg.tax_deleted'));
+            ->with('success', __('msg.tax_deleted'));
     }
 
     /**
@@ -102,7 +102,9 @@ class AdminTaxes extends Controller
         $count = 0;
 
         while (($row = fgetcsv($handle)) !== false) {
-            if (count($row) < 6) continue;
+            if (count($row) < 6) {
+                continue;
+            }
 
             Tax::create([
                 'name' => $row[0],
@@ -119,6 +121,6 @@ class AdminTaxes extends Controller
         fclose($handle);
 
         return redirect()->route('admin.taxes.index')
-                        ->with('success', __('msg.taxes_imported', ['count' => $count]));
+            ->with('success', __('msg.taxes_imported', ['count' => $count]));
     }
 }

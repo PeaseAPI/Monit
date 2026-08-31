@@ -164,4 +164,3 @@ class M23Test extends TestCase
         $this->assertNull(cache()->get('pixel.website.px_cache'));
     }
 }
-

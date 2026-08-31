@@ -69,7 +69,7 @@ class AdminLogs extends Controller
                 ]);
             }
             fclose($out);
-                }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     /**
@@ -85,7 +85,7 @@ class AdminLogs extends Controller
         if (str_starts_with($value, '=') || str_starts_with($value, '+')
             || str_starts_with($value, '-') || str_starts_with($value, '@')
             || str_starts_with($value, "\t") || str_starts_with($value, "\r")) {
-            return "'" . $value;
+            return "'".$value;
         }
 
         return $value;

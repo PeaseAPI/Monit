@@ -22,7 +22,7 @@ class AdminPages extends Controller
 
     public function create()
     {
-        return view('admin.pages.form', ['page' => new Page()])->with('adminNav', 'pages');
+        return view('admin.pages.form', ['page' => new Page])->with('adminNav', 'pages');
     }
 
     public function store(Request $request): RedirectResponse
@@ -37,7 +37,7 @@ class AdminPages extends Controller
         ]);
 
         return redirect()->route('admin.pages.index')
-                        ->with('success', __('msg.page_created'));
+            ->with('success', __('msg.page_created'));
     }
 
     public function edit(int $pageId)
@@ -58,7 +58,7 @@ class AdminPages extends Controller
         ]);
 
         return redirect()->route('admin.pages.index')
-                        ->with('success', __('msg.page_updated'));
+            ->with('success', __('msg.page_updated'));
     }
 
     public function destroy(int $pageId): RedirectResponse
@@ -66,7 +66,7 @@ class AdminPages extends Controller
         Page::findOrFail($pageId)->delete();
 
         return redirect()->route('admin.pages.index')
-                        ->with('success', __('msg.page_deleted'));
+            ->with('success', __('msg.page_deleted'));
     }
 
     protected function validated(Request $request): array
@@ -80,7 +80,7 @@ class AdminPages extends Controller
             'is_published' => ['boolean'],
         ]);
 
-        $validated['url'] = $validated['url'] ?: Str::slug($request->input('title') ?? '') . '-' . Str::lower(Str::random(6));
+        $validated['url'] = $validated['url'] ?: Str::slug($request->input('title') ?? '').'-'.Str::lower(Str::random(6));
         $validated['is_published'] = $request->boolean('is_published', false);
         $validated['position'] = $validated['position'] ?? 'none';
 

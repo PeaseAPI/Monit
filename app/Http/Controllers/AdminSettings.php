@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Support\EnvWriter;
+use App\Support\PaymentGatewayCatalog;
+use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -17,27 +21,27 @@ class AdminSettings extends Controller
 {
     /**
      * 设置主页面（所有分组选项卡）
-    */
+     */
     public function index(Request $request)
     {
         $settings = $this->allSettings();
 
         // 「支付网关密钥」组不存 settings 表：当前值直接读 .env（EnvWriter）
-        $settings['payment_gateways'] = app(\App\Support\EnvWriter::class)
-            ->readMany(\App\Support\PaymentGatewayCatalog::keys());
+        $settings['payment_gateways'] = app(EnvWriter::class)
+            ->readMany(PaymentGatewayCatalog::keys());
 
         return view('admin.settings.index', compact('settings'))->with('adminNav', 'settings');
     }
 
     /**
      * 通用更新入口：通过 group 参数确定分组
-    */
+     */
     public function update(Request $request): RedirectResponse
     {
         $group = $request->input('group');
 
         // 校验分组是否合法（必须存在于 allSettings 清单中）
-        if (!in_array($group, array_keys($this->allSettings()), true)) {
+        if (! in_array($group, array_keys($this->allSettings()), true)) {
             return back()->withErrors(['error' => __('msg.invalid_settings_group')]);
         }
 
@@ -54,7 +58,7 @@ class AdminSettings extends Controller
             $this->saveSettings($group, $data);
 
             // 同时清 Cache 与进程内静态缓存（Settings::flush）
-            \App\Support\Settings::flush();
+            Settings::flush();
 
             return back()->with('success', __('msg.settings_saved', ['group' => $group]));
         }
@@ -83,7 +87,7 @@ class AdminSettings extends Controller
         $this->saveSettings($group, $validated);
 
         // 同时清 Cache 与进程内静态缓存（Settings::flush）
-        \App\Support\Settings::flush();
+        Settings::flush();
 
         return back()->with('success', __('msg.settings_saved', ['group' => $group]));
     }
@@ -129,8 +133,8 @@ class AdminSettings extends Controller
      */
     protected function updatePaymentGateways(Request $request): RedirectResponse
     {
-        $allowed = \App\Support\PaymentGatewayCatalog::keys();
-        $boolKeys = \App\Support\PaymentGatewayCatalog::boolKeys();
+        $allowed = PaymentGatewayCatalog::keys();
+        $boolKeys = PaymentGatewayCatalog::boolKeys();
 
         $rules = [];
         foreach ($allowed as $key) {
@@ -142,7 +146,7 @@ class AdminSettings extends Controller
         $validated = $request->validate($rules);
 
         // 只处理白名单键（validate 已按规则键过滤）
-        $writer = app(\App\Support\EnvWriter::class);
+        $writer = app(EnvWriter::class);
 
         foreach ($allowed as $key) {
             if (! array_key_exists($key, $validated)) {
@@ -162,7 +166,7 @@ class AdminSettings extends Controller
 
         // 写入 .env 后清理可能存在的配置缓存，使新密钥立即生效
         try {
-            \Illuminate\Support\Facades\Artisan::call('config:clear');
+            Artisan::call('config:clear');
         } catch (\Throwable) {
             // config:clear 失败不阻断保存（无缓存环境下无害）
         }
@@ -171,7 +175,7 @@ class AdminSettings extends Controller
     }
 
     /* --------------------------------------------------------------------- */
-    /* 设置分组 & 保存                                                       */
+    /* 设置分组 & 保存 */
     /* --------------------------------------------------------------------- */
 
     protected function allSettings(): array
@@ -199,7 +203,7 @@ class AdminSettings extends Controller
             'custom_images' => $this->getGroup('custom_images'),
             'content' => $this->getGroup('content'),
             'cron' => $this->getGroup('cron'),
-                        'plan_free' => $this->getGroup('plan_free'),
+            'plan_free' => $this->getGroup('plan_free'),
             'plan_guest' => $this->getGroup('plan_guest'),
             'plan_custom' => $this->getGroup('plan_custom'),
             'affiliate' => $this->getGroup('affiliate'),
@@ -234,12 +238,12 @@ class AdminSettings extends Controller
     }
 
     /* --------------------------------------------------------------------- */
-    /* 验证规则                                                              */
+    /* 验证规则 */
     /* --------------------------------------------------------------------- */
 
     protected function getValidationRules(string $group): array
     {
-                $rules = match ($group) {
+        $rules = match ($group) {
             'main' => [
                 'site_title' => 'required|string|max:256',
                 'site_description' => 'nullable|string|max:1024',
@@ -435,7 +439,7 @@ class AdminSettings extends Controller
                 'favicon' => 'nullable|string|max:512',
                 'og_image' => 'nullable|string|max:512',
             ],
-                        'content' => [
+            'content' => [
                 'index_html' => 'nullable|string',
                 'terms_html' => 'nullable|string',
                 'privacy_html' => 'nullable|string',

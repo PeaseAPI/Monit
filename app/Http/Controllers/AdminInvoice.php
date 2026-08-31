@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Support\Settings;
-use Illuminate\Http\Request;
 
 /**
  * 管理后台 - 发票 / 信用票据（红冲）
@@ -39,7 +38,7 @@ class AdminInvoice extends Controller
         ]);
     }
 
-        private function companyInfo(): array
+    private function companyInfo(): array
     {
         return [
             'name' => Settings::get('main.title', 'Monit'),

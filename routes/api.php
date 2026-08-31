@@ -1,23 +1,23 @@
 <?php
 
-use App\Http\Controllers\Api\v1\{
-    AccountController,
-    AnalyticsController,
-    ApiAnnotationsController,
-    ApiEventsChildrenController,
-    ApiGoalsConversionsController,
-    ApiLogsController,
-    ApiOutboundClicksController,
-    ApiPaymentsController,
-    ApiReplaysController,
-    ApiSessionsController,
-    ApiTeamMembersController,
-    ApiVisitorsController,
-    DomainController,
-    ResourcesController,
-    WebsiteController as ApiWebsiteController,
-    WebsiteDataController
-};
+use App\Http\Controllers\Api\PublicTrackerController;
+use App\Http\Controllers\Api\v1\AccountController;
+use App\Http\Controllers\Api\v1\AdminApiController;
+use App\Http\Controllers\Api\v1\AnalyticsController;
+use App\Http\Controllers\Api\v1\ApiAnnotationsController;
+use App\Http\Controllers\Api\v1\ApiEventsChildrenController;
+use App\Http\Controllers\Api\v1\ApiGoalsConversionsController;
+use App\Http\Controllers\Api\v1\ApiLogsController;
+use App\Http\Controllers\Api\v1\ApiOutboundClicksController;
+use App\Http\Controllers\Api\v1\ApiPaymentsController;
+use App\Http\Controllers\Api\v1\ApiReplaysController;
+use App\Http\Controllers\Api\v1\ApiSessionsController;
+use App\Http\Controllers\Api\v1\ApiTeamMembersController;
+use App\Http\Controllers\Api\v1\ApiVisitorsController;
+use App\Http\Controllers\Api\v1\DomainController;
+use App\Http\Controllers\Api\v1\ResourcesController;
+use App\Http\Controllers\Api\v1\WebsiteController as ApiWebsiteController;
+use App\Http\Controllers\Api\v1\WebsiteDataController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -100,11 +100,11 @@ Route::prefix('v1')->middleware('api.key')->group(function (): void {
     Route::put('/websites/{website}/heatmaps/{heatmap}', [WebsiteDataController::class, 'heatmapsUpdate']);
     Route::delete('/websites/{website}/heatmaps/{heatmap}', [WebsiteDataController::class, 'heatmapsDestroy']);
 
-        // 事件子项 / 出站点击（规格书 §8：/api/events-children、/api/outbound-clicks）
+    // 事件子项 / 出站点击（规格书 §8：/api/events-children、/api/outbound-clicks）
     Route::get('/websites/{website}/events-children', [WebsiteDataController::class, 'eventChildrenIndex']);
     Route::get('/websites/{website}/outbound-clicks', [WebsiteDataController::class, 'outboundClicksIndex']);
 
-        // 套餐只读（规格书 §8：/api/plans）
+    // 套餐只读（规格书 §8：/api/plans）
     Route::get('/plans', [AccountController::class, 'plans']);
 
     // ========================================
@@ -153,7 +153,7 @@ Route::prefix('v1')->middleware('api.key')->group(function (): void {
 
 // 公开 API（需要 API Key）
 Route::prefix('v1/public')->middleware('throttle:60,1')->group(function (): void {
-    Route::post('/track', [\App\Http\Controllers\Api\PublicTrackerController::class, 'track']);
+    Route::post('/track', [PublicTrackerController::class, 'track']);
 });
 
 // ========================================
@@ -173,36 +173,36 @@ Route::prefix('v1/admin')->middleware(['api.key', 'auth:api', 'admin'])->group(f
     });
 
     // 用户管理（规格书 §6.3.2）
-    Route::get('/users', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'users']);
-    Route::post('/users', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'createUser']);
-    Route::get('/users/{userId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'getUser']);
-    Route::put('/users/{userId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'updateUser']);
-    Route::delete('/users/{userId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'deleteUser']);
+    Route::get('/users', [AdminApiController::class, 'users']);
+    Route::post('/users', [AdminApiController::class, 'createUser']);
+    Route::get('/users/{userId}', [AdminApiController::class, 'getUser']);
+    Route::put('/users/{userId}', [AdminApiController::class, 'updateUser']);
+    Route::delete('/users/{userId}', [AdminApiController::class, 'deleteUser']);
 
     // 网站管理（规格书 §6.3.2）
-    Route::get('/websites', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'websites']);
-    Route::get('/websites/{websiteId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'getWebsite']);
-    Route::put('/websites/{websiteId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'updateWebsite']);
-    Route::delete('/websites/{websiteId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'deleteWebsite']);
+    Route::get('/websites', [AdminApiController::class, 'websites']);
+    Route::get('/websites/{websiteId}', [AdminApiController::class, 'getWebsite']);
+    Route::put('/websites/{websiteId}', [AdminApiController::class, 'updateWebsite']);
+    Route::delete('/websites/{websiteId}', [AdminApiController::class, 'deleteWebsite']);
 
     // 套餐管理（规格书 §6.3.3）
-    Route::get('/plans', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'plans']);
-    Route::post('/plans', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'createPlan']);
-    Route::put('/plans/{planId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'updatePlan']);
-    Route::delete('/plans/{planId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'deletePlan']);
+    Route::get('/plans', [AdminApiController::class, 'plans']);
+    Route::post('/plans', [AdminApiController::class, 'createPlan']);
+    Route::put('/plans/{planId}', [AdminApiController::class, 'updatePlan']);
+    Route::delete('/plans/{planId}', [AdminApiController::class, 'deletePlan']);
 
     // 支付记录（规格书 §6.3.3）
-    Route::get('/payments', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'payments']);
-    Route::get('/payments/{paymentId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'getPayment']);
+    Route::get('/payments', [AdminApiController::class, 'payments']);
+    Route::get('/payments/{paymentId}', [AdminApiController::class, 'getPayment']);
 
     // 系统设置（规格书 §6.3.1）
-    Route::get('/settings', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'getSettings']);
-    Route::put('/settings', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'updateSettings']);
+    Route::get('/settings', [AdminApiController::class, 'getSettings']);
+    Route::put('/settings', [AdminApiController::class, 'updateSettings']);
 
     // 统计数据（规格书 §6.3.5）
-    Route::get('/statistics', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'getStatistics']);
+    Route::get('/statistics', [AdminApiController::class, 'getStatistics']);
 
     // 插件管理（规格书 §14）
-    Route::get('/plugins', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'plugins']);
-    Route::put('/plugins/{pluginId}', [\App\Http\Controllers\Api\v1\AdminApiController::class, 'updatePlugin']);
+    Route::get('/plugins', [AdminApiController::class, 'plugins']);
+    Route::put('/plugins/{pluginId}', [AdminApiController::class, 'updatePlugin']);
 });

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\ImageOptimizerStat;
+
 /**
  * 图片压缩服务（规格书 §14.9）
  * 压缩引擎：PHP GD（imagejpeg / imagepng / imagegif）。
@@ -59,11 +61,11 @@ class ImageOptimizer
         }
 
         if ($keepOriginal) {
-            @copy($path, $path . '.original');
+            @copy($path, $path.'.original');
         }
 
         // 先写入临时文件，成功后再替换原文件（失败不破坏原图）
-        $tmpPath = $path . '.optimized';
+        $tmpPath = $path.'.optimized';
 
         $success = match ($type) {
             IMAGETYPE_JPEG => imagejpeg($image, $tmpPath, max(1, min(100, $quality))),
@@ -91,7 +93,7 @@ class ImageOptimizer
         rename($tmpPath, $path);
 
         // 记录统计
-        \App\Models\ImageOptimizerStat::create([
+        ImageOptimizerStat::create([
             'user_id' => $userId,
             'file_type' => $fileType,
             'original_size' => $originalSize,

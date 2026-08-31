@@ -50,7 +50,7 @@ class TotpService
      */
     public static function verify(string $secret, ?string $code): bool
     {
-        if (! $code || ! preg_match('/^\d{' . self::DIGITS . '}$/', $code)) {
+        if (! $code || ! preg_match('/^\d{'.self::DIGITS.'}$/', $code)) {
             return false;
         }
 
@@ -83,7 +83,7 @@ class TotpService
      */
     public static function qrImageUrl(string $uri, int $size = 200): string
     {
-        return 'https://api.qrserver.com/v1/create-qr-code/?size=' . $size . 'x' . $size . '&data=' . rawurlencode($uri);
+        return 'https://api.qrserver.com/v1/create-qr-code/?size='.$size.'x'.$size.'&data='.rawurlencode($uri);
     }
 
     /* -----------------------------------------------------------------

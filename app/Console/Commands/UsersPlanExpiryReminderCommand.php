@@ -2,9 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Mail\PlanExpiryReminder;
 use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * 套餐到期提醒 Cron
@@ -19,7 +21,7 @@ class UsersPlanExpiryReminderCommand extends Command
     public function handle(): int
     {
         // 检查是否启用
-        $isEnabled = \Illuminate\Support\Facades\DB::table('settings')
+        $isEnabled = DB::table('settings')
             ->where('key', 'payment.user_plan_expiry_reminder')
             ->value('value');
 
@@ -43,7 +45,7 @@ class UsersPlanExpiryReminderCommand extends Command
         foreach ($users as $user) {
             // M22：真实发送到期提醒邮件（Mailable 早已存在，此前为 TODO）
             try {
-                \Illuminate\Support\Facades\Mail::to($user->email)->queue(new \App\Mail\PlanExpiryReminder($user));
+                Mail::to($user->email)->queue(new PlanExpiryReminder($user));
             } catch (\Throwable $e) {
                 // 邮件失败不阻断标志位更新
             }

@@ -6,6 +6,7 @@
  */
 
 use App\Support\PluginManager;
+use Illuminate\Support\Facades\Blade;
 
 if (! function_exists('email_shield')) {
     /**
@@ -22,22 +23,22 @@ if (! function_exists('email_shield')) {
         if ($method === 'entity') {
             $encoded = ''; // HTML 实体编码
             foreach (str_split($email) as $char) {
-                $encoded .= '&#' . ord($char) . ';';
+                $encoded .= '&#'.ord($char).';';
             }
 
-            return '<a href="mailto:' . $encoded . '">' . $encoded . '</a>';
+            return '<a href="mailto:'.$encoded.'">'.$encoded.'</a>';
         }
 
         // rot13 + JS 反解
         $rot13 = str_rot13($email);
 
-        return '<span class="email-shield" data-email="' . e($rot13) . '">'
-            . '<script>document.currentScript.replaceWith((m=>`<a href="mailto:${m}">${m}</a>`)(document.currentScript.parentElement.dataset.email.replace(/[a-zA-Z]/g,c=>String.fromCharCode((c<="Z"?90:122)>=(c=c.charCodeAt(0)+13)?c:c-26))))</script>'
-            . '</span>';
+        return '<span class="email-shield" data-email="'.e($rot13).'">'
+            .'<script>document.currentScript.replaceWith((m=>`<a href="mailto:${m}">${m}</a>`)(document.currentScript.parentElement.dataset.email.replace(/[a-zA-Z]/g,c=>String.fromCharCode((c<="Z"?90:122)>=(c=c.charCodeAt(0)+13)?c:c-26))))</script>'
+            .'</span>';
     }
 }
 
 // Blade 指令：@emailShield($user->email)
-\Illuminate\Support\Facades\Blade::directive('emailShield', function ($expression) {
+Blade::directive('emailShield', function ($expression) {
     return "<?php echo email_shield({$expression}); ?>";
 });

@@ -74,10 +74,10 @@ class AdminLanguages extends Controller
         );
 
         return redirect()->route('admin.languages.edit', $code)
-                        ->with('success', __('msg.language_updated', ['count' => $changed]));
+            ->with('success', __('msg.language_updated', ['count' => $changed]));
     }
 
-        public function create()
+    public function create()
     {
         return view('admin.languages.create')->with('adminNav', 'languages');
     }
@@ -90,14 +90,14 @@ class AdminLanguages extends Controller
         ]);
 
         $code = $validated['code'];
-        $path = lang_path($code . '.json');
+        $path = lang_path($code.'.json');
 
         if (! $this->files->exists($path)) {
             $this->files->put($path, '{}');
         }
 
         return redirect()->route('admin.languages.index')
-                        ->with('success', __('msg.language_created', ['name' => $validated['name']]));
+            ->with('success', __('msg.language_created', ['name' => $validated['name']]));
     }
 
     private function availableLocales(): array

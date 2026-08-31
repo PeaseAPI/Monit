@@ -47,7 +47,7 @@ class WebhookSignature
             return false;
         }
 
-        $expected = hash_hmac('sha256', $timestamp . '.' . $rawBody, $secret);
+        $expected = hash_hmac('sha256', $timestamp.'.'.$rawBody, $secret);
 
         foreach ($parts['v1'] ?? [] as $candidate) {
             if (hash_equals($expected, $candidate)) {
@@ -185,4 +185,3 @@ class WebhookSignature
             && in_array(strtolower($parsed['scheme']), ['http', 'https'], true);
     }
 }
-

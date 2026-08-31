@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Website;
 use App\Models\WebsiteGoal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
@@ -65,7 +66,7 @@ class PixelTrackTest extends TestCase
         config(['monit.pixel.events_retention_days' => 365, 'monit.pixel.replays_retention_days' => 30]);
     }
 
-    protected function track(array $payload, array $server = []): \Illuminate\Testing\TestResponse
+    protected function track(array $payload, array $server = []): TestResponse
     {
         return $this->post('/pixel-track/px_test_key_123', ['data' => json_encode($payload)], $server);
     }

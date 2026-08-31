@@ -70,6 +70,7 @@ class WebsitesImportController extends Controller
             $parts = parse_url(trim($url));
             if (! isset($parts['host'])) {
                 $skipped++;
+
                 continue;
             }
 
@@ -78,6 +79,7 @@ class WebsitesImportController extends Controller
             // 检查是否已存在该域名的网站（同一用户下）
             if ($user->websites()->where('host', $host)->exists()) {
                 $skipped++;
+
                 continue;
             }
 
@@ -100,7 +102,7 @@ class WebsitesImportController extends Controller
 
         $message = __('msg.websites_imported', ['count' => $created]);
         if ($skipped > 0) {
-            $message .= ' ' . __('msg.websites_imported_skipped', ['count' => $skipped]);
+            $message .= ' '.__('msg.websites_imported_skipped', ['count' => $skipped]);
         }
 
         return redirect()->route('websites.index')

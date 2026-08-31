@@ -16,12 +16,12 @@ class AdminPlans extends Controller
     {
         $plans = Plan::orderBy('order')->get();
 
-                return view('admin.plans.index', compact('plans'))->with('adminNav', 'plans');
+        return view('admin.plans.index', compact('plans'))->with('adminNav', 'plans');
     }
 
     public function create()
     {
-                return view('admin.plans.create')->with('adminNav', 'plans');
+        return view('admin.plans.create')->with('adminNav', 'plans');
     }
 
     public function store(Request $request): RedirectResponse
@@ -53,7 +53,7 @@ class AdminPlans extends Controller
         ]);
 
         return redirect()->route('admin.plans.index')
-                        ->with('success', __('msg.plan_created', ['name' => $validated['name']]));
+            ->with('success', __('msg.plan_created', ['name' => $validated['name']]));
     }
 
     public function edit(string $planId)
@@ -93,7 +93,7 @@ class AdminPlans extends Controller
         ]);
 
         return redirect()->route('admin.plans.index')
-                        ->with('success', __('msg.plan_updated', ['name' => $plan->name]));
+            ->with('success', __('msg.plan_updated', ['name' => $plan->name]));
     }
 
     /**
@@ -127,6 +127,6 @@ class AdminPlans extends Controller
         $plan = Plan::findOrFail($planId);
         $plan->update(['is_enabled' => ! $plan->is_enabled]);
 
-                return back()->with('success', __('msg.plan_status_toggled', ['name' => $plan->name, 'status' => $plan->is_enabled ? __('msg.status_enabled') : __('msg.status_disabled')]));
+        return back()->with('success', __('msg.plan_status_toggled', ['name' => $plan->name, 'status' => $plan->is_enabled ? __('msg.status_enabled') : __('msg.status_disabled')]));
     }
 }

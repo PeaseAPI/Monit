@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Team;
 use App\Models\TeamMember;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 /**
  * 管理后台 - 团队与成员管理
@@ -38,7 +37,7 @@ class AdminTeams extends Controller
         $team->delete();
 
         return redirect()->route('admin.teams.index')
-                        ->with('success', __('msg.team_deleted'));
+            ->with('success', __('msg.team_deleted'));
     }
 
     public function destroyMember(int $teamId, int $memberId): RedirectResponse
@@ -46,6 +45,6 @@ class AdminTeams extends Controller
         TeamMember::where('team_id', $teamId)->where('team_member_id', $memberId)->firstOrFail()->delete();
 
         return redirect()->route('admin.teams.members', $teamId)
-                        ->with('success', __('msg.team_member_removed'));
+            ->with('success', __('msg.team_member_removed'));
     }
 }

@@ -58,7 +58,7 @@ return new class extends Migration
             $table->dateTime('datetime');
         });
 
-                // broadcasts
+        // broadcasts
         Schema::create('broadcasts', function (Blueprint $table) {
             $table->increments('broadcast_id');
             $table->unsignedInteger('user_id');

@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 /**
  * 发送推送通知任务（规格书 §14.5：push_notifications_campaigns）
@@ -42,7 +43,7 @@ class SendPushNotificationCampaign implements ShouldQueue
                         $this->campaign->url,
                     );
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning('Push notification failed', [
+                    Log::warning('Push notification failed', [
                         'subscriber_id' => $subscriber->id,
                         'error' => $e->getMessage(),
                     ]);

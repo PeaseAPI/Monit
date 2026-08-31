@@ -22,7 +22,7 @@ class AdminBlogPosts extends Controller
 
     public function create()
     {
-        return view('admin.blog_posts.form', ['post' => new BlogPost()])->with('adminNav', 'blog_posts');
+        return view('admin.blog_posts.form', ['post' => new BlogPost])->with('adminNav', 'blog_posts');
     }
 
     public function store(Request $request): RedirectResponse
@@ -37,7 +37,7 @@ class AdminBlogPosts extends Controller
         ]);
 
         return redirect()->route('admin.blog-posts.index')
-                        ->with('success', __('msg.blog_post_created'));
+            ->with('success', __('msg.blog_post_created'));
     }
 
     public function edit(int $postId)
@@ -58,7 +58,7 @@ class AdminBlogPosts extends Controller
         ]);
 
         return redirect()->route('admin.blog-posts.index')
-                        ->with('success', __('msg.blog_post_updated'));
+            ->with('success', __('msg.blog_post_updated'));
     }
 
     public function togglePublish(int $postId): RedirectResponse
@@ -77,7 +77,7 @@ class AdminBlogPosts extends Controller
         BlogPost::findOrFail($postId)->delete();
 
         return redirect()->route('admin.blog-posts.index')
-                        ->with('success', __('msg.blog_post_deleted'));
+            ->with('success', __('msg.blog_post_deleted'));
     }
 
     protected function validated(Request $request): array
@@ -89,7 +89,7 @@ class AdminBlogPosts extends Controller
             'description' => ['nullable', 'string', 'max:1024'],
             'is_published' => ['boolean'],
         ]) + [
-            'url' => Str::slug($request->input('title') ?? '') . '-' . Str::lower(Str::random(6)),
+            'url' => Str::slug($request->input('title') ?? '').'-'.Str::lower(Str::random(6)),
             'is_published' => $request->boolean('is_published', false),
         ];
     }

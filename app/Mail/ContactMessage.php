@@ -15,14 +15,12 @@ class ContactMessage extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public array $payload)
-    {
-    }
+    public function __construct(public array $payload) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[' . config('app.name') . '] ' . __('contact.title') . ' — ' . $this->payload['name'],
+            subject: '['.config('app.name').'] '.__('contact.title').' — '.$this->payload['name'],
             replyTo: [$this->payload['email']],
         );
     }

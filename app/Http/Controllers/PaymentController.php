@@ -172,7 +172,7 @@ class PaymentController extends Controller
             return back()->withErrors(['code' => $result['message']]);
         }
 
-                return back()->with('success', $result['message']);
+        return back()->with('success', $result['message']);
     }
 
     /**
@@ -183,7 +183,7 @@ class PaymentController extends Controller
     {
         abort_unless($payment->user_id === $request->user()->user_id, 403);
 
-        $offlineProcessor = new OfflinePaymentProcessor();
+        $offlineProcessor = new OfflinePaymentProcessor;
         $result = $offlineProcessor->uploadProof($request, $payment);
 
         if (! ($result['success'] ?? false)) {
@@ -198,7 +198,7 @@ class PaymentController extends Controller
      */
     public function stripeWebhook(Request $request)
     {
-        $stripeProcessor = new StripeProcessor();
+        $stripeProcessor = new StripeProcessor;
 
         if (! $stripeProcessor->verifyWebhook($request)) {
             return response()->json(['error' => 'Invalid signature'], 400);
@@ -230,7 +230,7 @@ class PaymentController extends Controller
      */
     public function paypalWebhook(Request $request)
     {
-        $payPalProcessor = new PayPalProcessor();
+        $payPalProcessor = new PayPalProcessor;
 
         if (! $payPalProcessor->verifyWebhook($request)) {
             return response()->json(['error' => 'Invalid signature'], 400);
@@ -283,7 +283,7 @@ class PaymentController extends Controller
 
     protected function redirectToStripe(Payment $payment): View|RedirectResponse
     {
-        $stripeProcessor = new StripeProcessor();
+        $stripeProcessor = new StripeProcessor;
 
         if (! $stripeProcessor->isConfigured()) {
             return back()->withErrors(['processor' => __('payment.stripe_not_configured')]);
@@ -308,7 +308,7 @@ class PaymentController extends Controller
 
     protected function redirectToPayPal(Payment $payment): RedirectResponse
     {
-        $payPalProcessor = new PayPalProcessor();
+        $payPalProcessor = new PayPalProcessor;
 
         if (! $payPalProcessor->isConfigured()) {
             return back()->withErrors(['processor' => __('payment.paypal_not_configured')]);
@@ -333,7 +333,7 @@ class PaymentController extends Controller
 
     protected function handleOffline(Payment $payment): View
     {
-        $offlineProcessor = new OfflinePaymentProcessor();
+        $offlineProcessor = new OfflinePaymentProcessor;
         $result = $offlineProcessor->createOrder($payment->user, $payment);
 
         return view('payments.offline-instructions', [
@@ -344,7 +344,7 @@ class PaymentController extends Controller
 
     protected function redirectToRazorpay(Payment $payment): RedirectResponse
     {
-        $razorpayProcessor = new RazorpayProcessor();
+        $razorpayProcessor = new RazorpayProcessor;
         if (! $razorpayProcessor->isConfigured()) {
             return back()->withErrors(['processor' => __('payment.razorpay_not_configured')]);
         }
@@ -355,12 +355,13 @@ class PaymentController extends Controller
         if (isset($result['error'])) {
             return back()->withErrors(['processor' => $result['error']]);
         }
+
         return view('payments.razorpay-checkout', compact('payment', 'result'));
     }
 
     protected function redirectToMollie(Payment $payment): RedirectResponse
     {
-        $mollieProcessor = new MollieProcessor();
+        $mollieProcessor = new MollieProcessor;
         if (! $mollieProcessor->isConfigured()) {
             return back()->withErrors(['processor' => __('payment.mollie_not_configured')]);
         }
@@ -374,12 +375,13 @@ class PaymentController extends Controller
         if ($result['checkout_url'] ?? null) {
             return redirect($result['checkout_url']);
         }
+
         return back()->withErrors(['processor' => __('payment.mollie_order_failed')]);
     }
 
     protected function redirectToPaystack(Payment $payment): RedirectResponse
     {
-        $paystackProcessor = new PaystackProcessor();
+        $paystackProcessor = new PaystackProcessor;
         if (! $paystackProcessor->isConfigured()) {
             return back()->withErrors(['processor' => __('payment.paystack_not_configured')]);
         }
@@ -393,6 +395,7 @@ class PaymentController extends Controller
         if ($result['authorization_url'] ?? null) {
             return redirect($result['authorization_url']);
         }
+
         return back()->withErrors(['processor' => __('payment.paystack_order_failed')]);
     }
 
@@ -401,7 +404,7 @@ class PaymentController extends Controller
      */
     protected function redirectToWeChatPay(Payment $payment): View|RedirectResponse
     {
-        $processor = new WeChatPayProcessor();
+        $processor = new WeChatPayProcessor;
 
         if (! $processor->isConfigured()) {
             return back()->withErrors(['processor' => __('payment.wechat_not_configured')]);
@@ -424,7 +427,7 @@ class PaymentController extends Controller
      */
     protected function redirectToAlipay(Payment $payment): Response|RedirectResponse
     {
-        $processor = new AlipayProcessor();
+        $processor = new AlipayProcessor;
 
         if (! $processor->isConfigured()) {
             return back()->withErrors(['processor' => __('payment.alipay_not_configured')]);
@@ -455,7 +458,7 @@ class PaymentController extends Controller
             return back()->withErrors(['processor' => __('payment.unsupported_processor')]);
         }
 
-        $instance = new $class();
+        $instance = new $class;
 
         try {
             $result = $instance->createCheckout($user, $plan, $frequency);

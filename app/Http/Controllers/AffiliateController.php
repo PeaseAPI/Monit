@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AffiliateWithdrawal;
 use App\Models\User;
+use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -29,7 +30,7 @@ class AffiliateController extends Controller
      */
     private function ensureAffiliateEnabled(): void
     {
-        if (! \App\Support\Settings::get('affiliate.is_enabled', true)) {
+        if (! Settings::get('affiliate.is_enabled', true)) {
             abort(404);
         }
     }
@@ -43,7 +44,7 @@ class AffiliateController extends Controller
 
         $user = $request->user();
         $referralKey = $user->referral_key;
-        $referralUrl = route('register') . '?ref=' . $referralKey;
+        $referralUrl = route('register').'?ref='.$referralKey;
 
         $referrals = User::where('referred_by', $user->user_id)
             ->orderByDesc('user_id')

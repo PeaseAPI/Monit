@@ -25,8 +25,7 @@ class TencentSmsProvider
         protected string $sdkAppId,
         protected string $signName,
         protected string $templateId,
-    ) {
-    }
+    ) {}
 
     public static function make(): static
     {
@@ -51,7 +50,7 @@ class TencentSmsProvider
         }
 
         $body = json_encode([
-            'PhoneNumberSet' => ['+86' . $phone],
+            'PhoneNumberSet' => ['+86'.$phone],
             'SmsSdkAppId' => $this->sdkAppId,
             'SignName' => $this->signName,
             'TemplateId' => $this->templateId,
@@ -110,7 +109,7 @@ class TencentSmsProvider
         ]);
 
         // 签名密钥链
-        $secretDate = hash_hmac('sha256', $date, 'TC3' . $this->secretKey, true);
+        $secretDate = hash_hmac('sha256', $date, 'TC3'.$this->secretKey, true);
         $secretService = hash_hmac('sha256', 'sms', $secretDate, true);
         $secretSigning = hash_hmac('sha256', 'tc3_request', $secretService, true);
         $signature = hash_hmac('sha256', $stringToSign, $secretSigning);

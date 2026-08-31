@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
  */
 class AnnotationController extends Controller
 {
-        public function index(Request $request, Website $website)
+    public function index(Request $request, Website $website)
     {
         $annotations = $website->annotations()
             ->where('user_id', $request->user()->user_id)
@@ -45,7 +45,7 @@ class AnnotationController extends Controller
         ]);
 
         return redirect()->route('annotations.index', ['website' => $website->website_id])
-                        ->with('success', __('msg.annotation_created'));
+            ->with('success', __('msg.annotation_created'));
     }
 
     public function update(Request $request): RedirectResponse
@@ -61,17 +61,17 @@ class AnnotationController extends Controller
         $annotation->update($validated);
 
         return redirect()->route('annotations.index', ['website' => $websiteId])
-                        ->with('success', __('msg.annotation_updated'));
+            ->with('success', __('msg.annotation_updated'));
     }
 
-        public function delete(Request $request, int $annotationId): RedirectResponse
+    public function delete(Request $request, int $annotationId): RedirectResponse
     {
         $annotation = Annotation::findOrFail($annotationId);
         $websiteId = $annotation->website_id;
         $annotation->delete();
 
         return redirect()->route('annotations.index', ['website' => $websiteId])
-                        ->with('success', __('msg.annotation_deleted'));
+            ->with('success', __('msg.annotation_deleted'));
     }
 
     public function destroy(Request $request, Website $website, Annotation $annotation): RedirectResponse
@@ -80,6 +80,6 @@ class AnnotationController extends Controller
         $annotation->delete();
 
         return redirect()->route('annotations.index', $website)
-                        ->with('success', __('msg.annotation_deleted'));
+            ->with('success', __('msg.annotation_deleted'));
     }
 }

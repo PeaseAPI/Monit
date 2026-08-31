@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -24,7 +25,7 @@ return new class extends Migration
         });
 
         // 历史订单回填：无法还原购买快照，回填下单用户的当前套餐（与旧行为一致）
-        \Illuminate\Support\Facades\DB::statement(
+        DB::statement(
             'UPDATE payments SET plan_id = (SELECT plan_id FROM users WHERE users.user_id = payments.user_id) WHERE plan_id IS NULL'
         );
     }

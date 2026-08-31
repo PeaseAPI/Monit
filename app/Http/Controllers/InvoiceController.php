@@ -4,11 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\Plan;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use App\Models\Setting;
 use Barry\DomPDF\Facade\Pdf;
+use Illuminate\View\View;
 
 /**
  * 发票控制器
@@ -45,13 +43,13 @@ class InvoiceController extends Controller
         $billing = $user->billing ?? [];
 
         $data = [
-            'invoice_number' => 'INV-' . str_pad($payment->payment_id, 6, '0', STR_PAD_LEFT),
+            'invoice_number' => 'INV-'.str_pad($payment->payment_id, 6, '0', STR_PAD_LEFT),
             'date' => $payment->datetime?->format('Y-m-d') ?? now()->format('Y-m-d'),
             'user' => $user,
             'payment' => $payment,
             'plan' => $plan,
             'billing' => $billing,
-            'site_title' => \App\Models\Setting::where('key', 'main.site_title')->value('value') ?? config('app.name'),
+            'site_title' => Setting::where('key', 'main.site_title')->value('value') ?? config('app.name'),
         ];
 
         // 简单 HTML 发票（无需 DomPDF 依赖）

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Website;
 use App\Models\VisitorsSession;
+use App\Models\Website;
 use Illuminate\Http\Request;
 
 class SpotlightController extends Controller
@@ -27,7 +27,7 @@ class SpotlightController extends Controller
         $websites = Website::where('user_id', $user->id)
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('host', 'like', "%{$query}%");
+                    ->orWhere('host', 'like', "%{$query}%");
             })
             ->limit(5)
             ->get();

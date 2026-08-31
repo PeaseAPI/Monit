@@ -2,13 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Models\DashboardView;
 use App\Models\GoalConversion;
+use App\Models\SessionEvent;
+use App\Models\User;
+use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteGoal;
 use App\Models\WebsiteVisitor;
-use App\Models\VisitorSession;
 use App\Services\StatisticsService;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
@@ -56,7 +58,7 @@ class PlanQuotasAndFiltersTest extends TestCase
                 'session_uuid_binary' => Uuid::uuid4()->getBytes(),
                 'date' => now(), 'total_events' => 0,
             ]);
-            \App\Models\SessionEvent::create([
+            SessionEvent::create([
                 'event_uuid_binary' => Uuid::uuid4()->getBytes(),
                 'session_id' => $s->session_id, 'visitor_id' => $v->visitor_id,
                 'website_id' => $website->website_id,
@@ -97,7 +99,7 @@ class PlanQuotasAndFiltersTest extends TestCase
             'plan_settings' => ['dashboard_views_limit' => 1],
         ]);
 
-        \App\Models\DashboardView::create([
+        DashboardView::create([
             'user_id' => $user->user_id, 'name' => 'First', 'settings' => [], 'order' => 0, 'datetime' => now(),
         ]);
 
@@ -118,7 +120,7 @@ class PlanQuotasAndFiltersTest extends TestCase
             'plan_settings' => ['dashboard_views_limit' => -1],
         ]);
 
-        \App\Models\DashboardView::create([
+        DashboardView::create([
             'user_id' => $user->user_id, 'name' => 'First', 'settings' => [], 'order' => 0, 'datetime' => now(),
         ]);
 

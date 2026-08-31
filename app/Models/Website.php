@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Website extends Model
 {
@@ -16,13 +17,13 @@ class Website extends Model
     {
         static::saved(function (Website $website): void {
             if ($website->pixel_key) {
-                \Illuminate\Support\Facades\Cache::forget('pixel.website.'.$website->pixel_key);
+                Cache::forget('pixel.website.'.$website->pixel_key);
             }
         });
 
         static::deleted(function (Website $website): void {
             if ($website->pixel_key) {
-                \Illuminate\Support\Facades\Cache::forget('pixel.website.'.$website->pixel_key);
+                Cache::forget('pixel.website.'.$website->pixel_key);
             }
         });
     }

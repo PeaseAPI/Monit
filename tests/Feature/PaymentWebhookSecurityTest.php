@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Services\Payment\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -100,7 +101,7 @@ class PaymentWebhookSecurityTest extends TestCase
 
         $this->call('POST', '/webhooks/stripe', [], [], [], $this->transformHeadersToServerVars([
             'Content-Type' => 'application/json',
-            'Stripe-Signature' => 't=' . time() . ',v1=' . Str::random(64),
+            'Stripe-Signature' => 't='.time().',v1='.Str::random(64),
         ]), $body)->assertStatus(400);
 
         $this->assertDatabaseHas('payments', ['payment_id' => $payment->payment_id, 'status' => 0]);
@@ -121,7 +122,7 @@ class PaymentWebhookSecurityTest extends TestCase
         ]);
 
         $stale = time() - 3600;
-        $sig = hash_hmac('sha256', $stale . '.' . $body, 'whsec_test');
+        $sig = hash_hmac('sha256', $stale.'.'.$body, 'whsec_test');
 
         $this->call('POST', '/webhooks/stripe', [], [], [], $this->transformHeadersToServerVars([
             'Content-Type' => 'application/json',
@@ -144,7 +145,7 @@ class PaymentWebhookSecurityTest extends TestCase
         ]);
 
         $t = time();
-        $sig = hash_hmac('sha256', $t . '.' . $body, 'whsec_test');
+        $sig = hash_hmac('sha256', $t.'.'.$body, 'whsec_test');
 
         $this->call('POST', '/webhooks/stripe', [], [], [], $this->transformHeadersToServerVars([
             'Content-Type' => 'application/json',
@@ -316,7 +317,7 @@ class PaymentWebhookSecurityTest extends TestCase
             'plan_id' => 'free',
         ]);
 
-        $file = \Illuminate\Http\UploadedFile::fake()->create('proof.pdf', 100, 'application/pdf');
+        $file = UploadedFile::fake()->create('proof.pdf', 100, 'application/pdf');
 
         $this->actingAs($intruder)
             ->post("/payments/{$payment->payment_id}/proof", ['proof' => $file])

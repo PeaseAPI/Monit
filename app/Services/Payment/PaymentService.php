@@ -2,12 +2,12 @@
 
 namespace App\Services\Payment;
 
+use App\Models\Code;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Services\WebhookService;
 use App\Support\Currency;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 /**
  * 支付服务 - 统一处理支付下单/回调/订阅
@@ -36,7 +36,7 @@ class PaymentService
         $discountAmount = 0;
         $codeId = null;
         if ($code) {
-            $codeModel = \App\Models\Code::where('code', $code)->first();
+            $codeModel = Code::where('code', $code)->first();
 
             if ($codeModel && $codeModel->type === 'discount' && ! $codeModel->redemptionIssue($user)) {
                 $discountAmount = $amount * ((float) $codeModel->discount / 100);
@@ -107,7 +107,7 @@ class PaymentService
         $this->activatePlan($user, $payment);
 
         // 平台 Webhook 派发（规格 §6.3.1：webhooks.webhook_payment_success_url）
-        app(\App\Services\WebhookService::class)->paymentSuccess([
+        app(WebhookService::class)->paymentSuccess([
             'payment_id' => $payment->payment_id,
             'user_id' => $user->user_id,
             'email' => $user->email,
@@ -139,7 +139,7 @@ class PaymentService
         ], fn ($value) => $value !== null));
 
         // 平台 Webhook 派发（规格 §6.3.1：webhooks.webhook_payment_failure_url）
-        app(\App\Services\WebhookService::class)->paymentFailure([
+        app(WebhookService::class)->paymentFailure([
             'payment_id' => $payment->payment_id,
             'user_id' => $payment->user_id,
             'email' => $payment->email,
@@ -183,7 +183,7 @@ class PaymentService
      */
     public function redeemCode(User $user, string $code): array
     {
-        $codeModel = \App\Models\Code::where('code', $code)->first();
+        $codeModel = Code::where('code', $code)->first();
 
         if (! $codeModel) {
             return ['success' => false, 'message' => __('msg.code_not_found')];

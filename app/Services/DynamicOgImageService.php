@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
-use Intervention\Image\ImageManager;
+use App\Models\BlogPost;
+use App\Models\Page;
+use App\Models\Website;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 
 /**
  * 动态OG图片生成服务（规格书 §14.7：dynamic-og-images 插件）
@@ -19,7 +22,7 @@ class DynamicOgImageService
             default => config('app.name'),
         };
 
-        $manager = new ImageManager(new Driver());
+        $manager = new ImageManager(new Driver);
         $image = $manager->create(1200, 630);
 
         // 背景渐变
@@ -39,19 +42,22 @@ class DynamicOgImageService
 
     private function getBlogTitle(int $id): string
     {
-        $post = \App\Models\BlogPost::find($id);
+        $post = BlogPost::find($id);
+
         return $post?->title ?? config('app.name');
     }
 
     private function getPageTitle(int $id): string
     {
-        $page = \App\Models\Page::find($id);
+        $page = Page::find($id);
+
         return $page?->title ?? config('app.name');
     }
 
     private function getWebsiteTitle(int $id): string
     {
-        $website = \App\Models\Website::find($id);
+        $website = Website::find($id);
+
         return $website?->name ?? config('app.name');
     }
 }

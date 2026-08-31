@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Website;
 use App\Models\OutboundClick;
+use App\Models\Website;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,7 +33,7 @@ class ApiOutboundClicksController extends Controller
 
     protected function authorizeWebsite(Website $website): void
     {
-        if ((int) $website->user_id !== (int) auth()->id() && !auth()->user()->isAdmin()) {
+        if ((int) $website->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

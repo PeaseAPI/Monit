@@ -145,4 +145,3 @@ class PaymentGatewayCatalog
         return $bools;
     }
 }
-

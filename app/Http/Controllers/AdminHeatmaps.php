@@ -34,6 +34,6 @@ class AdminHeatmaps extends Controller
         $heatmap->delete();
 
         return redirect()->route('admin.heatmaps.index')
-                        ->with('success', __('msg.heatmap_deleted'));
+            ->with('success', __('msg.heatmap_deleted'));
     }
 }

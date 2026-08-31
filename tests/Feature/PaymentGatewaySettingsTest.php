@@ -24,7 +24,7 @@ class PaymentGatewaySettingsTest extends TestCase
         parent::setUp();
 
         // 绑定 EnvWriter 到临时文件，避免污染真实 .env
-        $this->tmpEnv = sys_get_temp_dir() . '/monit-envwriter-test-' . uniqid() . '.env';
+        $this->tmpEnv = sys_get_temp_dir().'/monit-envwriter-test-'.uniqid().'.env';
         file_put_contents($this->tmpEnv, "APP_KEY=base64:testkey\nAPP_URL=http://localhost\n# comment line\n\nSTRIPE_KEY=sk_test_old\n");
         $this->app->instance(EnvWriter::class, new EnvWriter($this->tmpEnv));
     }
@@ -212,4 +212,3 @@ class PaymentGatewaySettingsTest extends TestCase
         $this->assertMatchesRegularExpression('/A=1\n\nNEW_KEY=v\n$/', $content);
     }
 }
-

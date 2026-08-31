@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\WebsiteGoal;
 use App\Models\GoalConversion;
 use App\Models\Website;
+use App\Models\WebsiteGoal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
  */
 class GoalController extends Controller
 {
-        public function index(Request $request, Website $website)
+    public function index(Request $request, Website $website)
     {
         $goals = $website->goals()->orderBy('goal_id')->get();
 
@@ -25,7 +25,7 @@ class GoalController extends Controller
         return view('stats.goals', compact('website', 'goals'));
     }
 
-        public function create(Request $request, Website $website)
+    public function create(Request $request, Website $website)
     {
         return view('stats.goal_create', compact('website'));
     }
@@ -57,7 +57,7 @@ class GoalController extends Controller
         ]);
 
         return redirect()->route('goals.index', ['website' => $website->website_id])
-                        ->with('success', __('msg.goal_created'));
+            ->with('success', __('msg.goal_created'));
     }
 
     public function update(Request $request): RedirectResponse
@@ -77,7 +77,7 @@ class GoalController extends Controller
         $goal->update($validated);
 
         return redirect()->route('goals.index', ['website' => $websiteId])
-                        ->with('success', __('msg.goal_updated'));
+            ->with('success', __('msg.goal_updated'));
     }
 
     public function delete(Request $request, int $goalId): RedirectResponse
@@ -89,6 +89,6 @@ class GoalController extends Controller
         GoalConversion::where('goal_id', $goalId)->delete();
 
         return redirect()->route('goals.index', ['website' => $websiteId])
-                        ->with('success', __('msg.goal_deleted'));
+            ->with('success', __('msg.goal_deleted'));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\PaymentController;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -55,7 +56,7 @@ class PaymentCheckoutTest extends TestCase
         $this->assertCount(22, config('monit.payment.supported_processors'));
         $this->assertSame(
             config('monit.payment.supported_processors'),
-            \App\Http\Controllers\PaymentController::PROCESSORS
+            PaymentController::PROCESSORS
         );
 
         // 未知处理器被拒

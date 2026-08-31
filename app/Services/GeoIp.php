@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-
 /**
  * Monit GeoIP 地理位置解析
  * MVP 阶段：无本地 mmdb 时返回空结果（预留 MaxMind GeoLite2 接入点）

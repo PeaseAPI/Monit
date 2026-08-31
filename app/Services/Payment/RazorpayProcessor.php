@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use Illuminate\Support\Facades\Http;
 
 /**
  * Razorpay 支付处理器（规格书 §11）
@@ -20,7 +21,7 @@ class RazorpayProcessor
         $apiSecret = config('services.razorpay.key_secret');
 
         try {
-            $response = \Illuminate\Support\Facades\Http::withBasicAuth($apiKey, $apiSecret)
+            $response = Http::withBasicAuth($apiKey, $apiSecret)
                 ->post('https://api.razorpay.com/v1/orders', [
                     'amount' => (int) ($payment->total_amount * 100),
                     'currency' => $payment->currency,

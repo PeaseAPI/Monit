@@ -15,7 +15,7 @@ class AccountLog extends Model
         'continent_code', 'country_code', 'city_name', 'datetime',
     ];
 
-        protected function casts(): array
+    protected function casts(): array
     {
         return [
             'datetime' => 'datetime',

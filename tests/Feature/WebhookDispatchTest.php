@@ -8,6 +8,7 @@ use App\Services\Payment\PaymentService;
 use App\Services\WebhookService;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -73,7 +74,7 @@ class WebhookDispatchTest extends TestCase
     public function dispatch_failure_does_not_throw(): void
     {
         Http::fake(function () {
-            throw new \Illuminate\Http\Client\ConnectionException('timeout');
+            throw new ConnectionException('timeout');
         });
 
         Settings::set('webhooks.webhook_user_delete_url', 'https://example.com/hook');

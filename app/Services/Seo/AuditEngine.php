@@ -4,8 +4,10 @@ namespace App\Services\Seo;
 
 use App\Jobs\Seo\SeoAiSummaryJob;
 use App\Models\SeoAudit;
+use App\Models\SeoAuditArchive;
 use App\Models\User;
 use App\Models\Website;
+use App\Services\PlanLimitService;
 use App\Services\Seo\Tests\ContentTests;
 use App\Services\Seo\Tests\LinkTests;
 use App\Services\Seo\Tests\MetaTests;
@@ -13,6 +15,7 @@ use App\Services\Seo\Tests\MiscTests;
 use App\Services\Seo\Tests\PerformanceTests;
 use App\Services\Seo\Tests\SecurityTests;
 use App\Support\Settings;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -251,7 +254,7 @@ class AuditEngine
      */
     protected function archive(SeoAudit $audit): void
     {
-        \App\Models\SeoAuditArchive::create([
+        SeoAuditArchive::create([
             'seo_audit_id' => $audit->seo_audit_id,
             'website_id' => $audit->website_id,
             'user_id' => $audit->user_id,
@@ -286,7 +289,7 @@ class AuditEngine
     /**
      * 复审间隔映射到下次执行时间
      */
-    public static function nextRunTime(?string $interval): ?\Carbon\CarbonInterface
+    public static function nextRunTime(?string $interval): ?CarbonInterface
     {
         return match ($interval) {
             'daily' => now()->addDay(),
@@ -305,7 +308,7 @@ class AuditEngine
             return;
         }
 
-        if (app(\App\Services\PlanLimitService::class)->isFeatureEnabled($user, 'seo_ai_is_enabled')) {
+        if (app(PlanLimitService::class)->isFeatureEnabled($user, 'seo_ai_is_enabled')) {
             SeoAiSummaryJob::dispatch($audit);
         }
     }

@@ -22,13 +22,12 @@ class TencentCosClient
         protected string $secretKey,
         protected string $bucket,
         protected string $region = 'ap-guangzhou',
-    ) {
-    }
+    ) {}
 
     /** 对象完整 URL（virtual-hosted style） */
     public function urlFor(string $key): string
     {
-        return 'https://' . $this->bucket . '.cos.' . $this->region . '.myqcloud.com/' . ltrim($key, '/');
+        return 'https://'.$this->bucket.'.cos.'.$this->region.'.myqcloud.com/'.ltrim($key, '/');
     }
 
     public function put(string $key, string $content, string $contentType = 'application/octet-stream'): array
@@ -58,12 +57,12 @@ class TencentCosClient
     protected function request(string $method, string $key, ?string $body = null, array $headers = []): array
     {
         $url = $this->urlFor($key);
-        $host = $this->bucket . '.cos.' . $this->region . '.myqcloud.com';
+        $host = $this->bucket.'.cos.'.$this->region.'.myqcloud.com';
         $contentType = (string) ($headers['Content-Type'] ?? '');
 
         $startTime = now()->timestamp - 60;
         $endTime = now()->timestamp + 600;
-        $keyTime = $startTime . ';' . $endTime;
+        $keyTime = $startTime.';'.$endTime;
 
         // 签名头（小写排序）
         $headerPairs = ['host' => $host];
@@ -73,15 +72,15 @@ class TencentCosClient
         ksort($headerPairs);
 
         $headerList = implode('&', array_map(
-            fn (string $name, string $value) => $name . '=' . static::cosEncode($value),
+            fn (string $name, string $value) => $name.'='.static::cosEncode($value),
             array_keys($headerPairs),
             $headerPairs,
         ));
         $signedHeaderNames = implode(';', array_keys($headerPairs));
 
-        $uriPath = '/' . ltrim($key, '/');
+        $uriPath = '/'.ltrim($key, '/');
 
-        $httpString = strtolower($method) . "\n" . $uriPath . "\n\n" . $headerList . "\n";
+        $httpString = strtolower($method)."\n".$uriPath."\n\n".$headerList."\n";
         $stringToSign = implode("\n", ['sha1', $keyTime, sha1($httpString), '']);
 
         $signKey = hash_hmac('sha1', $keyTime, $this->secretKey);
@@ -96,10 +95,10 @@ class TencentCosClient
             $signature,
         );
 
-        $curlHeaders = ['Authorization: ' . $authorization];
+        $curlHeaders = ['Authorization: '.$authorization];
         foreach ($headerPairs as $h => $v) {
             if ($h !== 'host') {
-                $curlHeaders[] = ucwords($h, '-') . ': ' . $v;
+                $curlHeaders[] = ucwords($h, '-').': '.$v;
             }
         }
 

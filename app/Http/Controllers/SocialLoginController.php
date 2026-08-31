@@ -3,6 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\Social\FeishuProvider;
+use App\Services\Social\GiteeProvider;
+use App\Services\Social\QQProvider;
+use App\Services\Social\WeChatProvider;
+use App\Services\Social\WeiboProvider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +20,7 @@ use Illuminate\Support\Str;
  */
 class SocialLoginController extends Controller
 {
-        protected array $providers = [
+    protected array $providers = [
         'google' => [
             'authorize_url' => 'https://accounts.google.com/o/oauth2/v2/auth',
             'token_url' => 'https://oauth2.googleapis.com/token',
@@ -74,14 +79,14 @@ class SocialLoginController extends Controller
      * 通过服务容器延迟实例化，避免未配置时报错
      */
     protected array $chineseProviders = [
-        'qq' => \App\Services\Social\QQProvider::class,
-        'wechat' => \App\Services\Social\WeChatProvider::class,
-        'weibo' => \App\Services\Social\WeiboProvider::class,
-        'gitee' => \App\Services\Social\GiteeProvider::class,
-        'feishu' => \App\Services\Social\FeishuProvider::class,
+        'qq' => QQProvider::class,
+        'wechat' => WeChatProvider::class,
+        'weibo' => WeiboProvider::class,
+        'gitee' => GiteeProvider::class,
+        'feishu' => FeishuProvider::class,
     ];
 
-            /**
+    /**
      * 跳转到社交登录授权页面
      */
     public function redirect(string $provider): RedirectResponse
@@ -126,7 +131,7 @@ class SocialLoginController extends Controller
             $query['response_mode'] = 'form_post';
         }
 
-        return redirect("{$config['authorize_url']}?" . http_build_query($query));
+        return redirect("{$config['authorize_url']}?".http_build_query($query));
     }
 
     /**
@@ -149,7 +154,7 @@ class SocialLoginController extends Controller
         return redirect($providerInstance->getAuthorizationUrl());
     }
 
-        /**
+    /**
      * 处理社交登录回调
      */
     public function callback(string $provider, Request $request): RedirectResponse
@@ -189,7 +194,7 @@ class SocialLoginController extends Controller
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_no_email')]);
         }
 
-                return $this->loginOrRegister($provider, $userInfo);
+        return $this->loginOrRegister($provider, $userInfo);
     }
 
     /**
@@ -229,7 +234,7 @@ class SocialLoginController extends Controller
 
         // 如果没有邮箱，用 provider+id 构造一个虚拟邮箱
         if (empty($userInfo['email'])) {
-            $userInfo['email'] = $provider . '_' . $userInfo['id'] . '@social.login';
+            $userInfo['email'] = $provider.'_'.$userInfo['id'].'@social.login';
         }
 
         return $this->loginOrRegister($provider, $userInfo);
@@ -270,7 +275,7 @@ class SocialLoginController extends Controller
         };
     }
 
-        /**
+    /**
      * 用 authorization code 换取 access_token
      */
     protected function getAccessToken(string $provider, string $code): ?array
@@ -299,13 +304,14 @@ class SocialLoginController extends Controller
 
         try {
             $response = Http::asForm()->post($config['token_url'], $params);
+
             return $response->json();
         } catch (\Throwable) {
             return null;
         }
     }
 
-        /**
+    /**
      * 用 access_token 获取用户信息
      */
     protected function getUserInfo(string $provider, string $accessToken): ?array
@@ -357,6 +363,7 @@ class SocialLoginController extends Controller
             // Twitter 用户信息（嵌套 data 对象）
             if ($provider === 'twitter') {
                 $userData = $data['data'] ?? $data;
+
                 return [
                     'id' => (string) ($userData['id'] ?? ''),
                     'email' => null, // Twitter v2 不提供邮箱
@@ -434,10 +441,10 @@ class SocialLoginController extends Controller
             openssl_sign("$header.$payload", $signature, $privateKey, OPENSSL_ALGO_SHA256);
         }
 
-        return "$header.$payload." . rtrim(strtr(base64_encode($signature), '+/', '-_'), '=');
+        return "$header.$payload.".rtrim(strtr(base64_encode($signature), '+/', '-_'), '=');
     }
 
-        /**
+    /**
      * 登录或注册用户
      */
     protected function loginOrRegister(string $provider, array $userInfo): RedirectResponse

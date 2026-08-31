@@ -20,8 +20,7 @@ class AliyunSmsProvider
         protected string $accessKeySecret,
         protected string $signName,
         protected string $templateCode,
-    ) {
-    }
+    ) {}
 
     public static function make(): static
     {
@@ -79,14 +78,14 @@ class AliyunSmsProvider
         ksort($params);
 
         $canonicalized = implode('&', array_map(
-            fn (string $key, string $value) => static::percentEncode($key) . '=' . static::percentEncode($value),
+            fn (string $key, string $value) => static::percentEncode($key).'='.static::percentEncode($value),
             array_keys($params),
             $params,
         ));
 
-        $stringToSign = 'POST&' . static::percentEncode('/') . '&' . static::percentEncode($canonicalized);
+        $stringToSign = 'POST&'.static::percentEncode('/').'&'.static::percentEncode($canonicalized);
 
-        return base64_encode(hash_hmac('sha1', $stringToSign, $this->accessKeySecret . '&', true));
+        return base64_encode(hash_hmac('sha1', $stringToSign, $this->accessKeySecret.'&', true));
     }
 
     /** 阿里云 POP 编码：RFC3986（+ → %20、* → %2A、%7E → ~） */

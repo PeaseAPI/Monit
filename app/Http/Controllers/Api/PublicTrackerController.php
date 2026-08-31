@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Website;
 use App\Services\PixelTracker;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * 公开追踪 API（规格书 §5.1：POST /api/v1/public/track，API Key 门控）
@@ -27,12 +27,12 @@ class PublicTrackerController
     {
         // 验证来源
         $host = $request->header('Host');
-        if (!$host) {
+        if (! $host) {
             return response()->json(['error' => __('msg.invalid_request_origin')], 400);
         }
 
         $website = Website::where('host', strtolower($host))->first();
-        if (!$website || !$website->is_enabled) {
+        if (! $website || ! $website->is_enabled) {
             return response()->json(['error' => __('msg.website_not_found')], 404);
         }
 
@@ -57,7 +57,7 @@ class PublicTrackerController
 
         // API 客户端可能显式传 user_agent；PixelTracker 内部读取当前请求 UA，
         // 因此这里把显式传入的 UA 同步到请求头，保证解析结果一致。
-        if (!empty($data['user_agent'])) {
+        if (! empty($data['user_agent'])) {
             $request->headers->set('User-Agent', (string) $data['user_agent']);
         }
 

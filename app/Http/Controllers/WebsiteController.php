@@ -39,7 +39,7 @@ class WebsiteController extends Controller
         $planSettings = $user->getPlanSettings();
         $limit = $planSettings['websites_limit'] ?? -1;
         if ($limit !== -1 && $user->websites()->count() >= $limit) {
-                        return back()->withErrors(['url' => __('msg.website_limit_reached', ['limit' => $limit])]);
+            return back()->withErrors(['url' => __('msg.website_limit_reached', ['limit' => $limit])]);
         }
 
         $validated = $this->validateWebsite($request);
@@ -59,10 +59,10 @@ class WebsiteController extends Controller
         ]);
 
         return redirect()->route('websites.index')
-                        ->with('success', __('msg.website_created', ['name' => $website->name]));
+            ->with('success', __('msg.website_created', ['name' => $website->name]));
     }
 
-        public function edit(Request $request, Website $website)
+    public function edit(Request $request, Website $website)
     {
         return view('websites.edit', compact('website'));
     }
@@ -85,17 +85,17 @@ class WebsiteController extends Controller
         ]);
 
         return redirect()->route('websites.index')
-                        ->with('success', __('msg.website_updated', ['name' => $website->name]));
+            ->with('success', __('msg.website_updated', ['name' => $website->name]));
     }
 
-        public function destroy(Request $request, Website $website): RedirectResponse
+    public function destroy(Request $request, Website $website): RedirectResponse
     {
         $name = $website->name;
 
         $website->delete(); // Related data deleted by FK cascade
 
         return redirect()->route('websites.index')
-                        ->with('success', __('msg.website_deleted', ['name' => $name]));
+            ->with('success', __('msg.website_deleted', ['name' => $name]));
     }
 
     /* ---------------------------------------------------------------------
@@ -111,7 +111,7 @@ class WebsiteController extends Controller
             'excluded_ips' => ['nullable', 'string', 'max:2048'],
             'timezone' => ['required', 'string', 'max:64', 'timezone'],
         ], [
-                        'name.required' => __('validation.website_name_required'),
+            'name.required' => __('validation.website_name_required'),
             'url.required' => __('validation.website_url_required'),
             'url.url' => __('validation.website_url_format'),
             'tracking_type.required' => __('validation.tracking_type_required'),
@@ -151,7 +151,7 @@ class WebsiteController extends Controller
         return $key;
     }
 
-        protected function findOwnedWebsite(Request $request, int $websiteId): Website
+    protected function findOwnedWebsite(Request $request, int $websiteId): Website
     {
         $website = $request->user()->websites()->findOrFail($websiteId);
         abort_if(! $website, 404);

@@ -17,7 +17,7 @@ class FeishuProvider implements ChineseSocialProvider
 
     public function getAuthorizationUrl(): string
     {
-        return 'https://open.feishu.cn/open-apis/authen/v1/authorize?' . http_build_query([
+        return 'https://open.feishu.cn/open-apis/authen/v1/authorize?'.http_build_query([
             'app_id' => $this->appId,
             'redirect_uri' => $this->redirectUri,
             'response_type' => 'code',

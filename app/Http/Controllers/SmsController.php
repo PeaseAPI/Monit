@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\Sms\SmsService;
-use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -28,7 +27,7 @@ class SmsController extends Controller
     {
         $validated = $request->validate([
             'phone' => ['required', 'string', 'max:32'],
-            'purpose' => ['required', 'string', 'in:' . implode(',', SmsService::PURPOSES)],
+            'purpose' => ['required', 'string', 'in:'.implode(',', SmsService::PURPOSES)],
         ], [
             'phone.required' => __('validation.phone_required'),
             'purpose.in' => __('auth.sms_not_enabled'),

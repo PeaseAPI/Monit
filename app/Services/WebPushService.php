@@ -43,7 +43,7 @@ class WebPushService
             'Content-Encoding: aes128gcm',
             'TTL: 86400',
             'Urgency: normal',
-            'Authorization: ' . $vapid,
+            'Authorization: '.$vapid,
         ]);
 
         $this->lastResults = ['status' => $status, 'expired' => in_array($status, [404, 410], true)];
@@ -67,19 +67,19 @@ class WebPushService
         $sharedSecret = openssl_pkey_derive($uaPublicDer, $asPrivate, 32);
 
         // 3. IKM = HKDF(salt=auth, ikm=shared, info="WebPush: info\0"||ua||as)
-        $ikm = $this->hkdf($authSecret, $sharedSecret, 'WebPush: info' . "\0" . $uaPublic . $asPublicRaw, 32);
+        $ikm = $this->hkdf($authSecret, $sharedSecret, 'WebPush: info'."\0".$uaPublic.$asPublicRaw, 32);
 
         // 4. 派生 CEK(16) / NONCE(12)
         $salt = random_bytes(16);
-        $cek = $this->hkdf($salt, $ikm, 'Content-Encoding: aes128gcm' . "\0" . $uaPublic . $asPublicRaw, 16);
-        $nonce = $this->hkdf($salt, $ikm, 'Content-Encoding: nonce' . "\0" . $uaPublic . $asPublicRaw, 12);
+        $cek = $this->hkdf($salt, $ikm, 'Content-Encoding: aes128gcm'."\0".$uaPublic.$asPublicRaw, 16);
+        $nonce = $this->hkdf($salt, $ikm, 'Content-Encoding: nonce'."\0".$uaPublic.$asPublicRaw, 12);
 
         // 5. AES-128-GCM（aes128gcm padding：明文后接 0x02 定界符）
         $tag = '';
-        $ciphertext = openssl_encrypt($plaintext . "\x02", 'aes-128-gcm', $cek, OPENSSL_RAW_DATA, $nonce, $tag);
+        $ciphertext = openssl_encrypt($plaintext."\x02", 'aes-128-gcm', $cek, OPENSSL_RAW_DATA, $nonce, $tag);
 
         // 6. 拼装：salt(16) || rs(4=4096) || idlen(1=65) || asPublic || ciphertext+tag
-        return $salt . pack('N', 4096) . chr(strlen($asPublicRaw)) . $asPublicRaw . $ciphertext . $tag;
+        return $salt.pack('N', 4096).chr(strlen($asPublicRaw)).$asPublicRaw.$ciphertext.$tag;
     }
 
     /* ---------------- RFC 8292：VAPID ES256 JWT ---------------- */
@@ -87,8 +87,8 @@ class WebPushService
     protected function buildVapidHeader(string $endpoint, string $subject, string $publicKeyB64, string $privateKeyB64): string
     {
         $parts = parse_url($endpoint);
-        $origin = $parts['scheme'] . '://' . $parts['host']
-            . (isset($parts['port']) ? ':' . $parts['port'] : '');
+        $origin = $parts['scheme'].'://'.$parts['host']
+            .(isset($parts['port']) ? ':'.$parts['port'] : '');
 
         $header = $this->b64urlEncode((string) json_encode(['typ' => 'JWT', 'alg' => 'ES256']));
         $claims = $this->b64urlEncode((string) json_encode([
@@ -96,14 +96,14 @@ class WebPushService
             'exp' => time() + 43200,
             'sub' => $subject,
         ]));
-        $signingInput = $header . '.' . $claims;
+        $signingInput = $header.'.'.$claims;
 
         $pem = $this->rawPrivateToPem($this->b64urlDecode($privateKeyB64));
         openssl_sign($signingInput, $derSignature, $pem, OPENSSL_ALGO_SHA256);
 
-        $jwt = $signingInput . '.' . $this->b64urlEncode($this->derToRawSignature($derSignature));
+        $jwt = $signingInput.'.'.$this->b64urlEncode($this->derToRawSignature($derSignature));
 
-        return 'vapid t=' . $jwt . ', k=' . $publicKeyB64;
+        return 'vapid t='.$jwt.', k='.$publicKeyB64;
     }
 
     /* ---------------- 工具函数 ---------------- */
@@ -116,7 +116,7 @@ class WebPushService
         $counter = 1;
 
         while (strlen($okm) < $length) {
-            $t = hash_hmac('sha256', $t . $info . chr($counter++), $prk, true);
+            $t = hash_hmac('sha256', $t.$info.chr($counter++), $prk, true);
             $okm .= $t;
         }
 
@@ -128,23 +128,23 @@ class WebPushService
     {
         $details = openssl_pkey_get_details($pkey);
 
-        return "\x04" . str_pad($details['ec']['x'], 32, "\0", STR_PAD_LEFT)
-            . str_pad($details['ec']['y'], 32, "\0", STR_PAD_LEFT);
+        return "\x04".str_pad($details['ec']['x'], 32, "\0", STR_PAD_LEFT)
+            .str_pad($details['ec']['y'], 32, "\0", STR_PAD_LEFT);
     }
 
     /** raw 65 字节公钥 -> openssl 可读 SPKI DER */
     protected function rawPublicToDer(string $raw): string
     {
-        return hex2bin('3059301306072a8648ce3d020106082a8648ce3d030107034200') . $raw;
+        return hex2bin('3059301306072a8648ce3d020106082a8648ce3d030107034200').$raw;
     }
 
     /** raw 32 字节私钥 -> SEC1 EC PRIVATE KEY PEM */
     protected function rawPrivateToPem(string $raw): string
     {
-        $body = "\x02\x01\x01" . "\x04\x20" . $raw . "\xa0\x07" . hex2bin('06072a8648ce3d0201');
-        $der = "\x30" . $this->derLength(strlen($body)) . $body;
+        $body = "\x02\x01\x01"."\x04\x20".$raw."\xa0\x07".hex2bin('06072a8648ce3d0201');
+        $der = "\x30".$this->derLength(strlen($body)).$body;
 
-        return "-----BEGIN EC PRIVATE KEY-----\n" . chunk_split(base64_encode($der), 64) . "-----END EC PRIVATE KEY-----\n";
+        return "-----BEGIN EC PRIVATE KEY-----\n".chunk_split(base64_encode($der), 64)."-----END EC PRIVATE KEY-----\n";
     }
 
     protected function derLength(int $length): string
@@ -155,7 +155,7 @@ class WebPushService
 
         $bytes = ltrim(pack('N', $length), "\0");
 
-        return chr(0x80 | strlen($bytes)) . $bytes;
+        return chr(0x80 | strlen($bytes)).$bytes;
     }
 
     /** DER ECDSA 签名 -> raw r||s（64 字节） */
@@ -165,7 +165,7 @@ class WebPushService
         $r = $this->readDerInt($der, $pos);
         $s = $this->readDerInt($der, $pos);
 
-        return str_pad($r, 32, "\0", STR_PAD_LEFT) . str_pad($s, 32, "\0", STR_PAD_LEFT);
+        return str_pad($r, 32, "\0", STR_PAD_LEFT).str_pad($s, 32, "\0", STR_PAD_LEFT);
     }
 
     protected function readDerInt(string $der, int &$pos): string
@@ -174,7 +174,7 @@ class WebPushService
         $len = ord($der[$pos]);
         $pos++;
         if ($len & 0x80) {
-            $numBytes = $len & 0x7f;
+            $numBytes = $len & 0x7F;
             $len = (int) hexdec(bin2hex(substr($der, $pos, $numBytes)));
             $pos += $numBytes;
         }
@@ -190,8 +190,8 @@ class WebPushService
         $key = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
         $details = openssl_pkey_get_details($key);
 
-        $public = "\x04" . str_pad($details['ec']['x'], 32, "\0", STR_PAD_LEFT)
-            . str_pad($details['ec']['y'], 32, "\0", STR_PAD_LEFT);
+        $public = "\x04".str_pad($details['ec']['x'], 32, "\0", STR_PAD_LEFT)
+            .str_pad($details['ec']['y'], 32, "\0", STR_PAD_LEFT);
 
         // 从 SEC1 DER 中提取 32 字节私钥 d（"\x04\x20" 定位）
         $pem = $details['key'];
@@ -208,7 +208,7 @@ class WebPushService
 
     protected function b64urlDecode(string $data): string
     {
-        return base64_decode(strtr($data, '-_', '+/') . str_repeat('=', (4 - strlen($data) % 4) % 4));
+        return base64_decode(strtr($data, '-_', '+/').str_repeat('=', (4 - strlen($data) % 4) % 4));
     }
 
     protected function b64urlEncode(string $data): string

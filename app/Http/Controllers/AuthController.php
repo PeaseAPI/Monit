@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\AccountLog;
 use App\Models\User;
 use App\Services\Sms\SmsService;
+use App\Services\TotpService;
 use App\Services\UserAgentParser;
+use App\Services\WebhookService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,7 +41,7 @@ class AuthController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ], [
-                        'email.required' => __('validation.email_required'),
+            'email.required' => __('validation.email_required'),
             'email.email' => __('validation.email_email'),
             'password.required' => __('validation.password_required'),
         ]);
@@ -51,7 +53,7 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             return back()
                 ->withInput($request->only('email'))
-                                ->withErrors(['email' => __('validation.auth_failed')]);
+                ->withErrors(['email' => __('validation.auth_failed')]);
         }
 
         return $this->completeLogin($request, $user, $remember);
@@ -97,7 +99,7 @@ class AuthController extends Controller
         if ($user->status !== 1) {
             return back()
                 ->withInput($request->only('email'))
-                                ->withErrors(['email' => __('validation.account_disabled')]);
+                ->withErrors(['email' => __('validation.account_disabled')]);
         }
 
         // 两步验证（规格书 §12.4）：已开启则进入二步验证流程
@@ -123,7 +125,7 @@ class AuthController extends Controller
         return redirect()->intended(route('dashboard'));
     }
 
-        /**
+    /**
      * 两步验证页（规格书 §12.4）
      */
     public function showTwoFactor(Request $request)
@@ -159,7 +161,7 @@ class AuthController extends Controller
         $user = User::find($userId);
 
         if (! $user || ! $user->twofa_is_enabled
-            || ! \App\Services\TotpService::verify((string) $user->twofa_token, $validated['code'])) {
+            || ! TotpService::verify((string) $user->twofa_token, $validated['code'])) {
             return back()->withErrors(['code' => __('account.twofa_code_invalid')]);
         }
 
@@ -189,7 +191,7 @@ class AuthController extends Controller
         ]);
     }
 
-        public function register(Request $request): RedirectResponse
+    public function register(Request $request): RedirectResponse
     {
         // 短信验证注册（M17 §12.5）：开关开启时需手机号 + 短信验证码
         $smsRegister = SmsService::scenarioEnabled('register');
@@ -206,7 +208,7 @@ class AuthController extends Controller
         }
 
         $validated = $request->validate($rules, [
-                        'name.required' => __('validation.name_required'),
+            'name.required' => __('validation.name_required'),
             'email.required' => __('validation.email_required'),
             'email.email' => __('validation.email_email'),
             'email.unique' => __('validation.email_unique'),
@@ -265,7 +267,7 @@ class AuthController extends Controller
         $this->logAccount($user, 'register');
 
         // 平台 Webhook：用户注册（规格 §6.3.1：webhooks.webhook_user_register_url）
-        app(\App\Services\WebhookService::class)->userRegister([
+        app(WebhookService::class)->userRegister([
             'user_id' => $user->user_id,
             'email' => $user->email,
             'name' => $user->name,
@@ -273,7 +275,7 @@ class AuthController extends Controller
         ]);
 
         return redirect()->route('dashboard')
-                        ->with('success', __('msg.welcome_monit'));
+            ->with('success', __('msg.welcome_monit'));
     }
 
     public function logout(Request $request): RedirectResponse

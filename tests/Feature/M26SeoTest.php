@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\Seo\RunSeoAuditJob;
 use App\Models\SeoAudit;
 use App\Models\SeoToolUse;
 use App\Models\Setting;
@@ -18,6 +19,7 @@ use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use ReflectionMethod;
 use Tests\TestCase;
 
@@ -377,7 +379,7 @@ class M26SeoTest extends TestCase
 
     public function test_scheduled_refresh_command_dispatches_due_audits(): void
     {
-        \Illuminate\Support\Facades\Queue::fake();
+        Queue::fake();
 
         Website::create([
             'user_id' => $this->user->user_id, 'pixel_key' => 'px_due',
@@ -390,7 +392,7 @@ class M26SeoTest extends TestCase
 
         $this->artisan('monit:seo-audits-refresh')->assertSuccessful();
 
-        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\Seo\RunSeoAuditJob::class);
+        Queue::assertPushed(RunSeoAuditJob::class);
     }
 
     public function test_archives_cleanup_respects_plan_retention(): void

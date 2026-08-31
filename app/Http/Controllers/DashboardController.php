@@ -52,7 +52,7 @@ class DashboardController extends Controller
     /**
      * 像素安装指引
      */
-        public function install(Request $request, Website $website)
+    public function install(Request $request, Website $website)
     {
         return view('dashboard.install', ['website' => $website]);
     }

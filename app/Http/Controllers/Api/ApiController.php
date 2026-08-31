@@ -38,13 +38,13 @@ class ApiController
     {
         $apiKey = $request->bearerToken() ?? $request->query('api_key');
 
-        if (!$apiKey) {
-                        return response()->json(['error' => __('msg.missing_api_key')], 401);
+        if (! $apiKey) {
+            return response()->json(['error' => __('msg.missing_api_key')], 401);
         }
 
         $user = User::where('api_key', $apiKey)->first();
-        if (!$user) {
-                        return response()->json(['error' => __('msg.invalid_api_key')], 401);
+        if (! $user) {
+            return response()->json(['error' => __('msg.invalid_api_key')], 401);
         }
 
         return response()->json([
@@ -62,7 +62,7 @@ class ApiController
         $apiKey = Hash::make($request->user()->api_key);
 
         return response()->json([
-                        'message' => __('msg.new_api_key_generated'),
+            'message' => __('msg.new_api_key_generated'),
             'api_key' => $apiKey,
         ]);
     }

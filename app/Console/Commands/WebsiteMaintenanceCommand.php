@@ -2,11 +2,12 @@
 
 namespace App\Console\Commands;
 
-use App\Models\GoalConversion;
+use App\Models\HeatmapSnapshotClick;
+use App\Models\HeatmapSnapshotScroll;
+use App\Models\LightweightEvent;
+use App\Models\SessionReplay;
 use App\Models\Website;
-use App\Models\WebsiteVisitor;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 /**
  * 网站维护 Cron
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 class WebsiteMaintenanceCommand extends Command
 {
     protected $signature = 'monit:website-maintenance';
+
     protected $description;
 
     public function __construct()
@@ -28,14 +30,14 @@ class WebsiteMaintenanceCommand extends Command
         $now = now();
 
         // 1. 清理过期的热图快照数据
-        \App\Models\HeatmapSnapshotClick::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
-        \App\Models\HeatmapSnapshotScroll::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
+        HeatmapSnapshotClick::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
+        HeatmapSnapshotScroll::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
 
         // 2. 清理过期的会话回放
-        \App\Models\SessionReplay::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
+        SessionReplay::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
 
         // 3. 清理过期的轻事件
-        \App\Models\LightweightEvent::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
+        LightweightEvent::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
 
         // 4. 更新每月的计数（重置到0如果月份改变）
         Website::where('is_enabled', true)->get()->each(function ($website) use ($now) {
@@ -54,7 +56,7 @@ class WebsiteMaintenanceCommand extends Command
             }
         });
 
-                $this->info(__('console.maintenance_done'));
+        $this->info(__('console.maintenance_done'));
 
         return self::SUCCESS;
     }

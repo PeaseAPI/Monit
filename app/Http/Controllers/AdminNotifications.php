@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InternalNotification;
+use App\Models\PushNotificationCampaign;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -62,19 +63,19 @@ class AdminNotifications extends Controller
 
         if ($count === 0) {
             return redirect()->route('admin.notifications.index')
-                            ->with('error', __('msg.notification_no_recipients'));
+                ->with('error', __('msg.notification_no_recipients'));
         }
 
         return redirect()->route('admin.notifications.index')
-                        ->with('success', __('msg.notification_sent', ['count' => $count]));
+            ->with('success', __('msg.notification_sent', ['count' => $count]));
     }
 
-        public function destroy(int $notificationId): RedirectResponse
+    public function destroy(int $notificationId): RedirectResponse
     {
         InternalNotification::findOrFail($notificationId)->delete();
 
         return redirect()->route('admin.notifications.index')
-                        ->with('success', __('msg.notification_deleted'));
+            ->with('success', __('msg.notification_deleted'));
     }
 
     // ========================================
@@ -83,7 +84,7 @@ class AdminNotifications extends Controller
 
     public function pushIndex()
     {
-        $campaigns = \App\Models\PushNotificationCampaign::orderByDesc('push_notification_campaign_id')->paginate(25);
+        $campaigns = PushNotificationCampaign::orderByDesc('push_notification_campaign_id')->paginate(25);
 
         return view('admin.push-notifications.index', compact('campaigns'))->with('adminNav', 'push-notifications');
     }
@@ -102,26 +103,26 @@ class AdminNotifications extends Controller
             'url' => ['nullable', 'url', 'max:2048'],
         ]);
 
-        \App\Models\PushNotificationCampaign::create([
+        PushNotificationCampaign::create([
             ...$validated,
             'status' => 'pending',
             'datetime' => now(),
         ]);
 
         return redirect()->route('admin.push-notifications.index')
-                        ->with('success', __('msg.campaign_created'));
+            ->with('success', __('msg.campaign_created'));
     }
 
     public function pushEdit(int $campaign)
     {
-        $campaign = \App\Models\PushNotificationCampaign::findOrFail($campaign);
+        $campaign = PushNotificationCampaign::findOrFail($campaign);
 
         return view('admin.push-notifications.edit', compact('campaign'))->with('adminNav', 'push-notifications');
     }
 
     public function pushUpdate(Request $request, int $campaign): RedirectResponse
     {
-        $campaign = \App\Models\PushNotificationCampaign::findOrFail($campaign);
+        $campaign = PushNotificationCampaign::findOrFail($campaign);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:256'],
@@ -133,14 +134,14 @@ class AdminNotifications extends Controller
         $campaign->update($validated);
 
         return redirect()->route('admin.push-notifications.index')
-                        ->with('success', __('msg.campaign_updated'));
+            ->with('success', __('msg.campaign_updated'));
     }
 
     public function pushDestroy(int $campaign): RedirectResponse
     {
-        \App\Models\PushNotificationCampaign::findOrFail($campaign)->delete();
+        PushNotificationCampaign::findOrFail($campaign)->delete();
 
         return redirect()->route('admin.push-notifications.index')
-                        ->with('success', __('msg.campaign_deleted'));
+            ->with('success', __('msg.campaign_deleted'));
     }
 }

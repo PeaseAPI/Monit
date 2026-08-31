@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Team;
 use App\Models\TeamMember;
-use App\Models\User;
-use App\Models\Website;
+use App\Models\TeamMemberAssociation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -39,7 +38,7 @@ class TeamController extends Controller
         ]);
 
         return redirect()->route('teams.index')
-                        ->with('success', __('msg.team_created', ['name' => $validated['name']]));
+            ->with('success', __('msg.team_created', ['name' => $validated['name']]));
     }
 
     public function show(Request $request, int $teamId)
@@ -66,7 +65,7 @@ class TeamController extends Controller
         if (TeamMember::where('team_id', $team->team_id)
             ->where('user_email', $validated['user_email'])
             ->exists()) {
-                        return back()->withErrors(['user_email' => __('msg.email_already_invited')]);
+            return back()->withErrors(['user_email' => __('msg.email_already_invited')]);
         }
 
         TeamMember::create([
@@ -74,7 +73,7 @@ class TeamController extends Controller
             'status' => 0, // pending
         ]);
 
-                return back()->with('success', __('msg.invitation_sent', ['email' => $validated['user_email']]));
+        return back()->with('success', __('msg.invitation_sent', ['email' => $validated['user_email']]));
     }
 
     public function accept(Request $request, int $memberId): RedirectResponse
@@ -91,7 +90,7 @@ class TeamController extends Controller
         ]);
 
         return redirect()->route('teams.index')
-                        ->with('success', __('msg.team_joined', ['name' => $member->team->name]));
+            ->with('success', __('msg.team_joined', ['name' => $member->team->name]));
     }
 
     public function remove(Request $request, int $memberId): RedirectResponse
@@ -101,17 +100,17 @@ class TeamController extends Controller
         $member->delete();
 
         return redirect()->route('teams.show', ['teamId' => $teamId])
-                        ->with('success', __('msg.member_removed'));
+            ->with('success', __('msg.member_removed'));
     }
 
-        public function destroy(Request $request, int $teamId): RedirectResponse
+    public function destroy(Request $request, int $teamId): RedirectResponse
     {
         $team = Team::findOrFail($teamId);
         $team->members()->delete();
         $team->delete();
 
         return redirect()->route('teams.index')
-                        ->with('success', __('msg.team_deleted'));
+            ->with('success', __('msg.team_deleted'));
     }
 
     /**
@@ -133,7 +132,7 @@ class TeamController extends Controller
     public function associationsAjax(Request $request)
     {
         $memberId = $request->query('member_id');
-        $associations = \App\Models\TeamMemberAssociation::where('team_member_id', $memberId)
+        $associations = TeamMemberAssociation::where('team_member_id', $memberId)
             ->with('team', 'website')
             ->get();
 

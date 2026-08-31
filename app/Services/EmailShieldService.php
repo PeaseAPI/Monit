@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
+
 /**
  * Email Shield 插件（规格 §14.3-6 / §14.9）：邮箱混淆输出防爬虫
  *
@@ -49,7 +51,7 @@ class EmailShieldService
     public function isEnabled(): bool
     {
         try {
-            $settings = \App\Models\Setting::getGroup('plugins');
+            $settings = Setting::getGroup('plugins');
 
             return (bool) ($settings['email_shield_is_enabled'] ?? false);
         } catch (\Throwable) {

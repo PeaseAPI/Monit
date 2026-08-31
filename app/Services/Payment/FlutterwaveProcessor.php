@@ -19,7 +19,7 @@ class FlutterwaveProcessor
         return [
             'processor' => 'flutterwave',
             'public_key' => $publicKey,
-            'tx_ref' => 'monit-' . $user->user_id . '-' . time(),
+            'tx_ref' => 'monit-'.$user->user_id.'-'.time(),
             'amount' => $this->getPrice($plan, $frequency),
             'currency' => 'USD',
             'payment_options' => 'card,banktransfer,ussd',
@@ -34,7 +34,7 @@ class FlutterwaveProcessor
             ],
             'customizations' => [
                 'title' => config('app.name'),
-                'description' => $plan->name . ' 订阅',
+                'description' => $plan->name.' 订阅',
             ],
         ];
     }
@@ -52,7 +52,7 @@ class FlutterwaveProcessor
         $user = User::find($meta['user_id'] ?? 0);
         $plan = Plan::find($meta['plan_id'] ?? 0);
 
-        if (!$user || !$plan) {
+        if (! $user || ! $plan) {
             return null;
         }
 
@@ -77,6 +77,7 @@ class FlutterwaveProcessor
     private function getPrice(Plan $plan, string $frequency): float
     {
         $prices = $plan->prices['USD'] ?? $plan->prices;
+
         return match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,

@@ -2,14 +2,14 @@
 
 namespace App\Console\Commands;
 
-use App\Models\LightweightEvent;
-use App\Models\SessionEvent;
-use App\Models\SessionReplay;
 use App\Models\EventChild;
+use App\Models\GoalConversion;
 use App\Models\HeatmapSnapshotClick;
 use App\Models\HeatmapSnapshotScroll;
+use App\Models\LightweightEvent;
 use App\Models\OutboundClick;
-use App\Models\GoalConversion;
+use App\Models\SessionEvent;
+use App\Models\SessionReplay;
 use Illuminate\Console\Command;
 
 /**

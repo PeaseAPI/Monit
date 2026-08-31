@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Models\Plan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -132,7 +133,7 @@ class AccountController
         return response()->json($teamModel->members()->orderByDesc('team_member_id')->get());
     }
 
-        public function teamMembersDestroy(Request $request, int $team, int $member): JsonResponse
+    public function teamMembersDestroy(Request $request, int $team, int $member): JsonResponse
     {
         $teamModel = $request->user()->teams()->where('team_id', $team)->firstOrFail();
 
@@ -150,7 +151,7 @@ class AccountController
     public function plans(): JsonResponse
     {
         return response()->json(
-            \App\Models\Plan::where('is_enabled', true)->orderBy('order')->get()
+            Plan::where('is_enabled', true)->orderBy('order')->get()
         );
     }
 }

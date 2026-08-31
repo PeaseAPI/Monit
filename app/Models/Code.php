@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Code extends Model
 {
@@ -77,7 +78,7 @@ class Code extends Model
      */
     public function recordRedemption(User $user): bool
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($user): bool {
+        return DB::transaction(function () use ($user): bool {
             $locked = self::where('code_id', $this->code_id)->lockForUpdate()->first();
 
             if (! $locked) {

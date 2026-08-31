@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Support\Settings;
+use App\Support\WebhookSignature;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -35,7 +36,7 @@ class WebhookService
         $url = trim((string) Settings::get("webhooks.webhook_{$event}_url", ''));
 
         // 仅允许 http/https（拒绝 file://、ftp:// 等 SSRF 向量）
-        if ($url === '' || ! \App\Support\WebhookSignature::isSafeHttpUrl($url)) {
+        if ($url === '' || ! WebhookSignature::isSafeHttpUrl($url)) {
             return;
         }
 

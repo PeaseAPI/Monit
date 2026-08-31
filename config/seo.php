@@ -230,5 +230,3 @@ return [
         'keywords_top' => 10,
     ],
 ];
-
-

@@ -28,7 +28,7 @@ class YooKassaProcessor
                 'type' => 'redirect',
                 'return_url' => route('pay.thank_you'),
             ],
-            'description' => $plan->name . ' 订阅',
+            'description' => $plan->name.' 订阅',
             'metadata' => [
                 'user_id' => $user->user_id,
                 'plan_id' => $plan->plan_id,
@@ -50,7 +50,7 @@ class YooKassaProcessor
         $user = User::find($metadata['user_id'] ?? 0);
         $plan = Plan::find($metadata['plan_id'] ?? 0);
 
-        if (!$user || !$plan) {
+        if (! $user || ! $plan) {
             return null;
         }
 
@@ -75,6 +75,7 @@ class YooKassaProcessor
     private function getPrice(Plan $plan, string $frequency): float
     {
         $prices = $plan->prices['RUB'] ?? $plan->prices['USD'] ?? $plan->prices;
+
         return match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,

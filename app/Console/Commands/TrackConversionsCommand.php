@@ -4,10 +4,8 @@ namespace App\Console\Commands;
 
 use App\Models\GoalConversion;
 use App\Models\SessionEvent;
-use App\Models\Website;
 use App\Models\WebsiteGoal;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 /**
  * 转化追踪 Cron
@@ -16,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 class TrackConversionsCommand extends Command
 {
     protected $signature = 'monit:track-conversions';
+
     protected $description;
 
     public function __construct()
@@ -38,7 +37,7 @@ class TrackConversionsCommand extends Command
 
         foreach ($events as $event) {
             $website = $event->website;
-            if (!$website || !$website->is_enabled) {
+            if (! $website || ! $website->is_enabled) {
                 continue;
             }
 
@@ -59,7 +58,7 @@ class TrackConversionsCommand extends Command
                         $matched = true;
                     }
                     // 前缀匹配 (路径以目标路径开头)
-                    elseif (str_starts_with($path, $goal->path . '/')) {
+                    elseif (str_starts_with($path, $goal->path.'/')) {
                         $matched = true;
                     }
                 }
@@ -69,7 +68,7 @@ class TrackConversionsCommand extends Command
                         ->where('session_id', $event->session_id)
                         ->exists();
 
-                    if (!$existing) {
+                    if (! $existing) {
                         GoalConversion::create([
                             'goal_id' => $goal->goal_id,
                             'website_id' => $website->website_id,
@@ -84,7 +83,7 @@ class TrackConversionsCommand extends Command
             }
         }
 
-                $this->info(__('console.conversions_processed', ['events' => $events->count(), 'conversions' => $conversions]));
+        $this->info(__('console.conversions_processed', ['events' => $events->count(), 'conversions' => $conversions]));
 
         return self::SUCCESS;
     }

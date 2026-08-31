@@ -17,10 +17,10 @@ class OnePayProcessor
         return [
             'processor' => 'onepay',
             'merchant_code' => config('services.onepay.merchant_code'),
-            'order_id' => 'monit-' . $user->user_id . '-' . time(),
+            'order_id' => 'monit-'.$user->user_id.'-'.time(),
             'amount' => $this->getPrice($plan, $frequency),
             'currency' => 'USD',
-            'description' => $plan->name . ' 订阅',
+            'description' => $plan->name.' 订阅',
             'return_url' => route('pay.thank_you'),
             'callback_url' => url('/webhooks/onepay'),
             'metadata' => [
@@ -43,7 +43,7 @@ class OnePayProcessor
         $user = User::find($metadata['user_id'] ?? 0);
         $plan = Plan::find($metadata['plan_id'] ?? 0);
 
-        if (!$user || !$plan) {
+        if (! $user || ! $plan) {
             return null;
         }
 
@@ -68,6 +68,7 @@ class OnePayProcessor
     private function getPrice(Plan $plan, string $frequency): float
     {
         $prices = $plan->prices['USD'] ?? $plan->prices;
+
         return match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,

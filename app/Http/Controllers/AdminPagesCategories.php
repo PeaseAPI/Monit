@@ -29,7 +29,7 @@ class AdminPagesCategories extends Controller
         ]);
 
         return redirect()->route('admin.pages-categories.index')
-                        ->with('success', __('msg.category_created'));
+            ->with('success', __('msg.category_created'));
     }
 
     public function update(Request $request, int $pageCategoryId): RedirectResponse
@@ -38,7 +38,7 @@ class AdminPagesCategories extends Controller
         $category->update($this->validated($request));
 
         return redirect()->route('admin.pages-categories.index')
-                        ->with('success', __('msg.category_updated'));
+            ->with('success', __('msg.category_updated'));
     }
 
     public function destroy(int $pageCategoryId): RedirectResponse
@@ -46,7 +46,7 @@ class AdminPagesCategories extends Controller
         PageCategory::findOrFail($pageCategoryId)->delete();
 
         return redirect()->route('admin.pages-categories.index')
-                        ->with('success', __('msg.category_deleted'));
+            ->with('success', __('msg.category_deleted'));
     }
 
     private function validated(Request $request): array

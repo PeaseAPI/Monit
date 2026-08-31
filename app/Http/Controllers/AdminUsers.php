@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Plan;
 use App\Models\AccountLog;
+use App\Models\Plan;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * 管理后台 - 用户管理
@@ -28,13 +29,13 @@ class AdminUsers extends Controller
             $query->where('plan_id', $plan);
         }
 
-                        $users = $query->orderByDesc('created_at')->paginate(50);
+        $users = $query->orderByDesc('created_at')->paginate(50);
         $plans = Plan::orderBy('order')->get();
 
-                        return view('admin.users.index', compact('users', 'plans'))->with('adminNav', 'users');
+        return view('admin.users.index', compact('users', 'plans'))->with('adminNav', 'users');
     }
 
-        public function create()
+    public function create()
     {
         $plans = Plan::orderBy('order')->get();
 
@@ -53,8 +54,8 @@ class AdminUsers extends Controller
 
         $user = User::create([
             ...$validated,
-            'api_key' => \Illuminate\Support\Str::random(60),
-            'referral_key' => \Illuminate\Support\Str::random(32),
+            'api_key' => Str::random(60),
+            'referral_key' => Str::random(32),
             'language' => 'zh_CN',
             'timezone' => 'Asia/Shanghai',
             'status' => 1,
@@ -63,7 +64,7 @@ class AdminUsers extends Controller
         ]);
 
         return redirect()->route('admin.users.index')
-                        ->with('success', __('msg.user_created', ['name' => $validated['name']]));
+            ->with('success', __('msg.user_created', ['name' => $validated['name']]));
     }
 
     public function edit(int $userId)
@@ -71,7 +72,7 @@ class AdminUsers extends Controller
         $user = User::findOrFail($userId);
         $plans = Plan::orderBy('order')->get();
 
-                return view('admin.users.edit', compact('user', 'plans'))->with('adminNav', 'users');
+        return view('admin.users.edit', compact('user', 'plans'))->with('adminNav', 'users');
     }
 
     public function update(Request $request, int $userId): RedirectResponse
@@ -95,7 +96,7 @@ class AdminUsers extends Controller
         }
 
         return redirect()->route('admin.users.index')
-                        ->with('success', __('msg.user_updated', ['name' => $user->name]));
+            ->with('success', __('msg.user_updated', ['name' => $user->name]));
     }
 
     public function view(int $userId)
@@ -103,7 +104,7 @@ class AdminUsers extends Controller
         $user = User::with('websites')->findOrFail($userId);
         $logs = AccountLog::where('user_id', $userId)->orderByDesc('datetime')->limit(100)->get();
 
-                return view('admin.users.view', compact('user', 'logs'))->with('adminNav', 'users');
+        return view('admin.users.view', compact('user', 'logs'))->with('adminNav', 'users');
     }
 
     public function toggleStatus(int $userId): RedirectResponse
@@ -111,7 +112,7 @@ class AdminUsers extends Controller
         $user = User::findOrFail($userId);
         $user->update(['status' => $user->status === 1 ? 0 : 1]);
 
-                $status = $user->status === 1 ? __('msg.status_activated') : __('msg.status_disabled');
+        $status = $user->status === 1 ? __('msg.status_activated') : __('msg.status_disabled');
 
         return back()->with('success', __('msg.user_status_toggled', ['name' => $user->name, 'status' => $status]));
     }
@@ -126,6 +127,6 @@ class AdminUsers extends Controller
 
         $logs = $query->orderByDesc('datetime')->paginate(100);
 
-                return view('admin.users.logs', compact('logs'))->with('adminNav', 'users');
+        return view('admin.users.logs', compact('logs'))->with('adminNav', 'users');
     }
 }

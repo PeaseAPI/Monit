@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\User;
 use App\Models\Website;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -14,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 class SendEmailReportsCommand extends Command
 {
     protected $signature = 'monit:send-email-reports';
+
     protected $description;
 
     public function __construct()
@@ -34,7 +34,7 @@ class SendEmailReportsCommand extends Command
 
         foreach ($websites as $website) {
             $user = $website->user;
-            if (!$user || !$user->isActive()) {
+            if (! $user || ! $user->isActive()) {
                 continue;
             }
 
@@ -47,7 +47,7 @@ class SendEmailReportsCommand extends Command
             $sent++;
         }
 
-                $this->info(__('console.email_reports_sent', ['sent' => $sent]));
+        $this->info(__('console.email_reports_sent', ['sent' => $sent]));
 
         return self::SUCCESS;
     }

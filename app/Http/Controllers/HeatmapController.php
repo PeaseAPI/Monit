@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
  */
 class HeatmapController extends Controller
 {
-        public function index(Request $request, Website $website)
+    public function index(Request $request, Website $website)
     {
         $heatmaps = $website->heatmaps()->orderByDesc('heatmap_id')->get();
 
@@ -44,10 +44,10 @@ class HeatmapController extends Controller
         ]);
 
         return redirect()->route('heatmaps.index', ['website' => $website->website_id])
-                        ->with('success', __('msg.heatmap_created'));
+            ->with('success', __('msg.heatmap_created'));
     }
 
-        public function show(Request $request, Website $website, int $heatmapId)
+    public function show(Request $request, Website $website, int $heatmapId)
     {
         $heatmap = $website->heatmaps()->findOrFail($heatmapId);
 
@@ -56,7 +56,7 @@ class HeatmapController extends Controller
             ->limit(500)
             ->get();
 
-        $scrolls = \App\Models\HeatmapSnapshotScroll::where('website_id', $website->website_id)
+        $scrolls = HeatmapSnapshotScroll::where('website_id', $website->website_id)
             ->orderByDesc('max_scroll')
             ->get()
             ->groupBy('max_scroll')
@@ -79,7 +79,7 @@ class HeatmapController extends Controller
         $heatmap->update($validated);
 
         return redirect()->route('heatmaps.index', ['website' => $websiteId])
-                        ->with('success', __('msg.heatmap_updated'));
+            ->with('success', __('msg.heatmap_updated'));
     }
 
     public function destroy(Request $request, int $heatmapId): RedirectResponse
@@ -88,8 +88,8 @@ class HeatmapController extends Controller
         $websiteId = $heatmap->website_id;
         $heatmap->delete();
 
-                return redirect()->route('heatmaps.index', ['website' => $websiteId])
-                        ->with('success', __('msg.heatmap_deleted'));
+        return redirect()->route('heatmaps.index', ['website' => $websiteId])
+            ->with('success', __('msg.heatmap_deleted'));
     }
 
     /**

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
@@ -14,7 +16,8 @@ class AdminUserCreate extends Controller
 {
     public function index(): View
     {
-        $plans = \App\Models\Plan::where('is_enabled', true)->orderBy('order')->get();
+        $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
+
         return view('admin.users.create', compact('plans'))->with('adminNav', 'users');
     }
 
@@ -30,8 +33,8 @@ class AdminUserCreate extends Controller
         ]);
 
         $validated['password'] = bcrypt($validated['password']);
-        $validated['api_key'] = \Illuminate\Support\Str::random(60);
-        $validated['referral_key'] = \Illuminate\Support\Str::random(32);
+        $validated['api_key'] = Str::random(60);
+        $validated['referral_key'] = Str::random(32);
         $validated['plan_id'] = $validated['plan_id'] ?? 'free';
         $validated['status'] = $validated['status'] ?? 1;
         $validated['type'] = $validated['type'] ?? 0;

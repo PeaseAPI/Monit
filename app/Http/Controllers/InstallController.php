@@ -170,21 +170,21 @@ class InstallController extends Controller
         $envPath = base_path('.env');
 
         if ($value !== '' && preg_match('/[\s"\'#\\\\]/', $value)) {
-            $value = '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $value) . '"';
+            $value = '"'.str_replace(['\\', '"'], ['\\\\', '\\"'], $value).'"';
         }
 
         if (! file_exists($envPath)) {
-            file_put_contents($envPath, $key . '=' . $value . "\n");
+            file_put_contents($envPath, $key.'='.$value."\n");
 
             return;
         }
 
         $content = (string) file_get_contents($envPath);
 
-        if (preg_match('/^' . preg_quote($key, '/') . '=.*$/m', $content)) {
-            $content = preg_replace('/^' . preg_quote($key, '/') . '=.*$/m', $key . '=' . $value, $content);
+        if (preg_match('/^'.preg_quote($key, '/').'=.*$/m', $content)) {
+            $content = preg_replace('/^'.preg_quote($key, '/').'=.*$/m', $key.'='.$value, $content);
         } else {
-            $content .= $key . '=' . $value . "\n";
+            $content .= $key.'='.$value."\n";
         }
 
         file_put_contents($envPath, $content);

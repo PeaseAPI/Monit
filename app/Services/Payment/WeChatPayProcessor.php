@@ -28,8 +28,8 @@ class WeChatPayProcessor
                 'appid' => config('services.wechat_pay.app_id'),
                 'mch_id' => config('services.wechat_pay.mch_id'),
                 'nonce_str' => bin2hex(random_bytes(16)),
-                'body' => mb_substr('Monit Plan ' . $payment->payment_id, 0, 127),
-                'out_trade_no' => 'monit_' . $payment->payment_id . '_' . now()->format('His'),
+                'body' => mb_substr('Monit Plan '.$payment->payment_id, 0, 127),
+                'out_trade_no' => 'monit_'.$payment->payment_id.'_'.now()->format('His'),
                 'total_fee' => (int) round(((float) $payment->total_amount) * 100), // 单位：分
                 'spbill_create_ip' => request()->ip() ?: '127.0.0.1',
                 'notify_url' => route('webhooks.wechatpay'),
@@ -109,11 +109,11 @@ class WeChatPayProcessor
         $parts = [];
         foreach ($params as $key => $value) {
             if ($key !== 'sign' && $value !== '' && $value !== null) {
-                $parts[] = $key . '=' . $value;
+                $parts[] = $key.'='.$value;
             }
         }
 
-        $string = implode('&', $parts) . '&key=' . config('services.wechat_pay.api_key');
+        $string = implode('&', $parts).'&key='.config('services.wechat_pay.api_key');
 
         return strtoupper(md5($string));
     }

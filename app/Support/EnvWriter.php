@@ -22,8 +22,7 @@ class EnvWriter
 {
     public function __construct(
         protected ?string $envPath = null,
-    ) {
-    }
+    ) {}
 
     public function path(): string
     {
@@ -83,7 +82,7 @@ class EnvWriter
 
         $replacement = ($value === null || $value === '')
             ? []  // 空值 → 删除该键
-            : [$key . '=' . $this->encodeValue($value)];
+            : [$key.'='.$this->encodeValue($value)];
 
         if ($span === null) {
             if ($replacement !== []) {
@@ -119,7 +118,7 @@ class EnvWriter
         $value = str_replace(["\r\n", "\r", "\n"], '\\n', $value);
 
         if ($value !== '' && preg_match('/[\s"\'#\\\\]/', $value)) {
-            $value = '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $value) . '"';
+            $value = '"'.str_replace(['\\', '"'], ['\\\\', '\\"'], $value).'"';
         }
 
         return $value;
@@ -154,7 +153,7 @@ class EnvWriter
                 if (str_starts_with($raw, '"')) {
                     while ($i + 1 < $count && ! $this->quotesClosed($raw)) {
                         $i++;
-                        $raw .= "\n" . $lines[$i];
+                        $raw .= "\n".$lines[$i];
                     }
                 }
 
@@ -178,6 +177,7 @@ class EnvWriter
         for ($j = 0; $j < $len; $j++) {
             if ($raw[$j] === '\\') {
                 $j++; // 跳过被转义字符
+
                 continue;
             }
             if ($raw[$j] === '"') {
@@ -220,14 +220,14 @@ class EnvWriter
         $count = count($lines);
 
         for ($i = 0; $i < $count; $i++) {
-            if (preg_match('/^(' . preg_quote($key, '/') . ')=(.*)$/', $lines[$i], $m)) {
+            if (preg_match('/^('.preg_quote($key, '/').')=(.*)$/', $lines[$i], $m)) {
                 $start = $i;
                 $raw = $m[2];
 
                 if (str_starts_with($raw, '"')) {
                     while ($i + 1 < $count && ! $this->quotesClosed($raw)) {
                         $i++;
-                        $raw .= "\n" . $lines[$i];
+                        $raw .= "\n".$lines[$i];
                     }
                 }
 
@@ -256,7 +256,7 @@ class EnvWriter
             throw new RuntimeException("Directory does not exist: {$dir}");
         }
 
-        $tmp = $path . '.tmp.' . bin2hex(random_bytes(4));
+        $tmp = $path.'.tmp.'.bin2hex(random_bytes(4));
 
         if (file_put_contents($tmp, $content) === false) {
             throw new RuntimeException("Failed to write {$tmp}");
@@ -270,4 +270,3 @@ class EnvWriter
         }
     }
 }
-

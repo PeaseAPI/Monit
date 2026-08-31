@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AffiliateWithdrawal;
 use App\Models\Payment;
 use App\Models\PaymentAudit;
 use App\Models\User;
@@ -26,14 +27,14 @@ class AdminPayments extends Controller
 
         $payments = $query->orderByDesc('datetime')->paginate(50);
 
-                return view('admin.payments.index', compact('payments'))->with('adminNav', 'payments');
+        return view('admin.payments.index', compact('payments'))->with('adminNav', 'payments');
     }
 
     public function create()
     {
         $users = User::where('status', 1)->orderBy('name')->limit(1000)->pluck('name', 'user_id');
 
-                return view('admin.payments.create', compact('users'))->with('adminNav', 'payments');
+        return view('admin.payments.create', compact('users'))->with('adminNav', 'payments');
     }
 
     public function store(Request $request): RedirectResponse
@@ -58,7 +59,7 @@ class AdminPayments extends Controller
         ]);
 
         return redirect()->route('admin.payments.index')
-                        ->with('success', __('msg.payment_created'));
+            ->with('success', __('msg.payment_created'));
     }
 
     public function view(int $paymentId)
@@ -66,7 +67,7 @@ class AdminPayments extends Controller
         $payment = Payment::with('user')->findOrFail($paymentId);
         $auditLogs = PaymentAudit::where('payment_id', $paymentId)->orderByDesc('datetime')->get();
 
-                return view('admin.payments.view', compact('payment', 'auditLogs'))->with('adminNav', 'payments');
+        return view('admin.payments.view', compact('payment', 'auditLogs'))->with('adminNav', 'payments');
     }
 
     /**
@@ -74,7 +75,7 @@ class AdminPayments extends Controller
      */
     public function affiliateWithdrawals(Request $request)
     {
-        $query = \App\Models\AffiliateWithdrawal::with('user');
+        $query = AffiliateWithdrawal::with('user');
 
         if ($status = $request->query('status')) {
             $query->where('status', $status);
@@ -90,7 +91,7 @@ class AdminPayments extends Controller
      */
     public function approveWithdrawal(int $withdrawalId): RedirectResponse
     {
-        $withdrawal = \App\Models\AffiliateWithdrawal::findOrFail($withdrawalId);
+        $withdrawal = AffiliateWithdrawal::findOrFail($withdrawalId);
 
         if ($withdrawal->status !== 'pending') {
             return back()->withErrors(['status' => __('referrals.withdrawal_not_pending')]);
@@ -108,7 +109,7 @@ class AdminPayments extends Controller
      */
     public function rejectWithdrawal(int $withdrawalId): RedirectResponse
     {
-        $withdrawal = \App\Models\AffiliateWithdrawal::findOrFail($withdrawalId);
+        $withdrawal = AffiliateWithdrawal::findOrFail($withdrawalId);
 
         if ($withdrawal->status !== 'pending') {
             return back()->withErrors(['status' => __('referrals.withdrawal_not_pending')]);

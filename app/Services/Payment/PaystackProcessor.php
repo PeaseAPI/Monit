@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use Illuminate\Support\Facades\Http;
 
 /**
  * Paystack 支付处理器（规格书 §11）
@@ -19,7 +20,7 @@ class PaystackProcessor
         $secretKey = config('services.paystack.secret_key');
 
         try {
-            $response = \Illuminate\Support\Facades\Http::withToken($secretKey)
+            $response = Http::withToken($secretKey)
                 ->post('https://api.paystack.co/transaction/initialize', [
                     'email' => $payment->email,
                     'amount' => (int) ($payment->total_amount * 100),

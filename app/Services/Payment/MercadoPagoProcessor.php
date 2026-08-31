@@ -42,7 +42,7 @@ class MercadoPagoProcessor
         $user = User::find($externalRef['user_id'] ?? 0);
         $plan = Plan::find($externalRef['plan_id'] ?? 0);
 
-        if (!$user || !$plan) {
+        if (! $user || ! $plan) {
             return null;
         }
 
@@ -67,6 +67,7 @@ class MercadoPagoProcessor
     private function getPrice(Plan $plan, string $frequency): float
     {
         $prices = $plan->prices['USD'] ?? $plan->prices;
+
         return match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,

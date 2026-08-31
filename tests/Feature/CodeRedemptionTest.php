@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Code;
 use App\Models\Plan;
-use App\Models\RedeemedCode;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;

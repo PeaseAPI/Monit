@@ -36,7 +36,7 @@ class ProcessBroadcastsCommand extends Command
                 $query->where('plan_id', $broadcast->target_plan_id);
             }
 
-            $users = $query->chunk(100, function ($chunk) use ($broadcast, &$sent) {
+            $users = $query->chunk(100, function ($chunk) use (&$sent) {
                 foreach ($chunk as $user) {
                     // TODO: 使用 Mail 发送广播邮件
                     // Mail::to($user)->queue(new BroadcastMail($broadcast, $user));

@@ -26,7 +26,7 @@ class AdminCodes extends Controller
     {
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
 
-        return view('admin.codes.form', ['code' => new Code(), 'plans' => $plans, 'codeValue' => Str::upper(Str::random(16))])->with('adminNav', 'codes');
+        return view('admin.codes.form', ['code' => new Code, 'plans' => $plans, 'codeValue' => Str::upper(Str::random(16))])->with('adminNav', 'codes');
     }
 
     public function store(Request $request): RedirectResponse
@@ -37,7 +37,7 @@ class AdminCodes extends Controller
         Code::create([...$validated, 'datetime' => now()]);
 
         return redirect()->route('admin.codes.index')
-                        ->with('success', __('msg.code_created'));
+            ->with('success', __('msg.code_created'));
     }
 
     public function edit(int $codeId)
@@ -54,7 +54,7 @@ class AdminCodes extends Controller
         $code->update($this->validated($request));
 
         return redirect()->route('admin.codes.index')
-                        ->with('success', __('msg.code_updated'));
+            ->with('success', __('msg.code_updated'));
     }
 
     public function destroy(int $codeId): RedirectResponse
@@ -62,7 +62,7 @@ class AdminCodes extends Controller
         Code::findOrFail($codeId)->delete();
 
         return redirect()->route('admin.codes.index')
-                        ->with('success', __('msg.code_deleted'));
+            ->with('success', __('msg.code_deleted'));
     }
 
     /**

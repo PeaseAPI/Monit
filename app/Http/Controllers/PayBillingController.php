@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Services\Payment\PaymentService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -29,16 +30,17 @@ class PayBillingController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->payment_subscription_id) {
+        if (! $user->payment_subscription_id) {
             return back()->withErrors(['error' => __('msg.no_active_subscription')]);
         }
 
         // 调用对应支付处理器取消订阅
         $processor = $user->payment_processor;
-        $paymentService = app(\App\Services\Payment\PaymentService::class);
+        $paymentService = app(PaymentService::class);
 
         try {
             $paymentService->cancelSubscription($user, $processor);
+
             return back()->with('success', __('msg.subscription_cancelled'));
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);

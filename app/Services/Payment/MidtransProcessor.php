@@ -21,7 +21,7 @@ class MidtransProcessor
             'processor' => 'midtrans',
             'client_key' => $clientKey,
             'transaction_details' => [
-                'order_id' => 'monit-' . $user->user_id . '-' . time(),
+                'order_id' => 'monit-'.$user->user_id.'-'.time(),
                 'gross_amount' => $this->getPrice($plan, $frequency),
             ],
             'item_details' => [[
@@ -48,12 +48,12 @@ class MidtransProcessor
         $user = User::find($customField['user_id'] ?? 0);
         $plan = Plan::find($customField['plan_id'] ?? 0);
 
-        if (!$user || !$plan) {
+        if (! $user || ! $plan) {
             return null;
         }
 
         $status = $request->input('transaction_status');
-        if (!in_array($status, ['capture', 'settlement'])) {
+        if (! in_array($status, ['capture', 'settlement'])) {
             return null;
         }
 
@@ -78,6 +78,7 @@ class MidtransProcessor
     private function getPrice(Plan $plan, string $frequency): float
     {
         $prices = $plan->prices['USD'] ?? $plan->prices;
+
         return match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,

@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Payment;
+use App\Models\User;
 use App\Models\Website;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 /**
  * 管理后台 - 概览
@@ -14,7 +12,7 @@ use Illuminate\Support\Facades\DB;
  */
 class AdminIndex extends Controller
 {
-        public function index()
+    public function index()
     {
         $totalUsers = User::count();
         $activeUsers = User::where('status', 1)->count();

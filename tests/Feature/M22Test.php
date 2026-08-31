@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Mail\PlanLimitNotice;
+use App\Mail\UserDeletionReminder;
 use App\Models\OutboundClick;
 use App\Models\SessionEvent;
 use App\Models\User;
@@ -210,7 +212,7 @@ class M22Test extends TestCase
         $this->artisan('monit:websites-limit-notice')->assertSuccessful();
 
         $this->assertTrue($this->website->fresh()->plan_sessions_events_limit_notice);
-        Mail::assertQueued(\App\Mail\PlanLimitNotice::class);
+        Mail::assertQueued(PlanLimitNotice::class);
     }
 
     public function test_users_deletion_reminder_and_auto_delete(): void
@@ -230,7 +232,7 @@ class M22Test extends TestCase
         $this->artisan('monit:users-deletion-reminder')->assertSuccessful();
 
         $this->assertTrue($inactive->fresh()->user_deletion_reminder);
-        Mail::assertQueued(\App\Mail\UserDeletionReminder::class);
+        Mail::assertQueued(UserDeletionReminder::class);
 
         // 超过 30 天 + 已提醒 → 删除
         $inactive->fresh()->forceFill(['last_activity' => now()->subDays(31)])->save();

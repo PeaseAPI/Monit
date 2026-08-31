@@ -1,11 +1,12 @@
 <?php
 
+use App\Http\Controllers\AccountApiController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountPaymentsController;
 use App\Http\Controllers\AccountPlanController;
 use App\Http\Controllers\AccountPreferencesController;
 use App\Http\Controllers\ActivationController;
-use App\Http\Controllers\AffiliateController;
+use App\Http\Controllers\AdminAffiliatesWithdrawals;
 use App\Http\Controllers\AdminAnnotations;
 use App\Http\Controllers\AdminBlogPosts;
 use App\Http\Controllers\AdminBlogPostsCategories;
@@ -25,33 +26,29 @@ use App\Http\Controllers\AdminPayments;
 use App\Http\Controllers\AdminPlans;
 use App\Http\Controllers\AdminPlugins;
 use App\Http\Controllers\AdminPushSubscribers;
+use App\Http\Controllers\AdminRedeemedCodes;
 use App\Http\Controllers\AdminReplays;
 use App\Http\Controllers\AdminSettings;
 use App\Http\Controllers\AdminStatistics;
-use App\Http\Controllers\AdminTeams;
 use App\Http\Controllers\AdminTaxes;
+use App\Http\Controllers\AdminTeams;
+use App\Http\Controllers\AdminUserCreate;
 use App\Http\Controllers\AdminUsers;
+use App\Http\Controllers\AdminUsersLogs;
+use App\Http\Controllers\AdminUserUpdate;
+use App\Http\Controllers\AdminUserView;
 use App\Http\Controllers\AdminWebsites;
+use App\Http\Controllers\AffiliateController;
 use App\Http\Controllers\AnnotationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CronController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DashboardViewController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\FaviconController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\GoalController;
-use App\Http\Controllers\AccountApiController;
-use App\Http\Controllers\AdminAffiliatesWithdrawals;
-use App\Http\Controllers\AdminRedeemedCodes;
-use App\Http\Controllers\AdminUserCreate;
-use App\Http\Controllers\AdminUsersLogs;
-use App\Http\Controllers\AdminUserUpdate;
-use App\Http\Controllers\AdminUserView;
 use App\Http\Controllers\HeatmapController;
-use App\Http\Controllers\SeoAuditController;
-use App\Http\Controllers\SeoNotificationHandlerController;
-use App\Http\Controllers\SeoToolController;
-use App\Http\Controllers\WebsiteSeoController;
-use App\Http\Middleware\SeoGuestAccess;
 use App\Http\Controllers\IndexController;
 use App\Http\Controllers\InstallController;
 use App\Http\Controllers\InternalNotificationsController;
@@ -59,28 +56,34 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\OutboundClicksController;
 use App\Http\Controllers\PageviewsAdvancedController;
 use App\Http\Controllers\PageviewsLightweightController;
-use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayBillingController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayThankYouController;
-use App\Http\Controllers\PixelTrackController;
 use App\Http\Controllers\PublicStatisticsController;
 use App\Http\Controllers\ReplayController;
+use App\Http\Controllers\SeoAuditController;
+use App\Http\Controllers\SeoNotificationHandlerController;
+use App\Http\Controllers\SeoToolController;
+use App\Http\Controllers\SessionAjaxController;
+use App\Http\Controllers\SmsController;
 use App\Http\Controllers\SocialLoginController;
+use App\Http\Controllers\SpotlightController;
 use App\Http\Controllers\SsoController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TeamController;
-use App\Http\Controllers\CronController;
-use App\Http\Controllers\DashboardViewController;
 use App\Http\Controllers\VisitorController;
-use App\Http\Controllers\WebsiteController;
-use App\Http\Controllers\WebsitesImportController;
 use App\Http\Controllers\WebhookMollieController;
-use App\Http\Controllers\WebhookPaystackController;
 use App\Http\Controllers\WebhookPaymentController;
+use App\Http\Controllers\WebhookPaystackController;
 use App\Http\Controllers\WebhookRazorpayController;
-use App\Http\Controllers\SessionAjaxController;
-use App\Http\Controllers\SmsController;
-use App\Http\Controllers\SpotlightController;
+use App\Http\Controllers\WebsiteController;
+use App\Http\Controllers\WebsiteSeoController;
+use App\Http\Controllers\WebsitesImportController;
+use App\Http\Middleware\SeoGuestAccess;
+use App\Models\PushNotificationSubscriber;
+use App\Models\Setting;
+use App\Services\DynamicOgImageService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -227,7 +230,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/dashboard/install/{website}', [DashboardController::class, 'install'])
         ->middleware('can:own,website')->name('dashboard.install');
 
-            // 账号管理
+    // 账号管理
     Route::get('/account', [AccountController::class, 'index'])->name('account.index');
     Route::get('/account/logs', [AccountController::class, 'logs'])->name('account.logs');
     Route::put('/account', [AccountController::class, 'update'])->name('account.update');
@@ -243,7 +246,7 @@ Route::middleware('auth')->group(function (): void {
     // 网站管理
     Route::get('/websites', [WebsiteController::class, 'index'])->name('websites.index');
     Route::get('/websites/create', [WebsiteController::class, 'create'])->name('websites.create');
-        Route::post('/websites', [WebsiteController::class, 'store'])->middleware('plan_limit:websites_limit')->name('websites.store');
+    Route::post('/websites', [WebsiteController::class, 'store'])->middleware('plan_limit:websites_limit')->name('websites.store');
     Route::get('/websites/import', [WebsitesImportController::class, 'index'])->name('websites.import');
     Route::post('/websites/import', [WebsitesImportController::class, 'store'])->middleware('plan_limit:websites_limit')->name('websites.import.store');
     Route::get('/websites/{website}/edit', [WebsiteController::class, 'edit'])
@@ -253,7 +256,7 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('/websites/{website}', [WebsiteController::class, 'destroy'])
         ->middleware('can:own,website')->name('websites.destroy');
 
-                // 数据统计
+    // 数据统计
     Route::get('/stats/{website}/overview', [StatsController::class, 'overview'])
         ->middleware('can:own,website')->name('stats.overview');
 
@@ -315,7 +318,7 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('can:own,website')->name('stats.goals');
     Route::get('/stats/{website}/goals/create', [GoalController::class, 'create'])
         ->middleware('can:own,website')->name('stats.goals.create');
-        Route::post('/stats/goals', [GoalController::class, 'store'])->middleware('plan_limit:websites_goals_limit')->name('stats.goals.store');
+    Route::post('/stats/goals', [GoalController::class, 'store'])->middleware('plan_limit:websites_goals_limit')->name('stats.goals.store');
     Route::put('/stats/goals', [GoalController::class, 'update'])->name('stats.goals.update');
     Route::delete('/stats/goals/{goalId}', [GoalController::class, 'delete'])->name('stats.goals.delete');
 
@@ -324,7 +327,7 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('can:own,website')->name('stats.annotations');
     Route::get('/stats/{website}/annotations/create', [AnnotationController::class, 'create'])
         ->middleware('can:own,website')->name('stats.annotations.create');
-        Route::post('/stats/annotations', [AnnotationController::class, 'store'])->middleware('plan_limit:annotations_limit')->name('stats.annotations.store');
+    Route::post('/stats/annotations', [AnnotationController::class, 'store'])->middleware('plan_limit:annotations_limit')->name('stats.annotations.store');
     Route::put('/stats/annotations', [AnnotationController::class, 'update'])->name('stats.annotations.update');
     Route::delete('/stats/annotations/{annotationId}', [AnnotationController::class, 'delete'])->name('stats.annotations.delete');
 
@@ -333,13 +336,13 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('can:own,website')->name('stats.heatmaps');
     Route::get('/stats/{website}/heatmaps/create', [HeatmapController::class, 'create'])
         ->middleware('can:own,website')->name('stats.heatmaps.create');
-        Route::post('/stats/heatmaps', [HeatmapController::class, 'store'])->middleware('plan_limit:websites_heatmaps_limit')->name('stats.heatmaps.store');
+    Route::post('/stats/heatmaps', [HeatmapController::class, 'store'])->middleware('plan_limit:websites_heatmaps_limit')->name('stats.heatmaps.store');
     Route::get('/stats/{website}/heatmaps/{heatmapId}', [HeatmapController::class, 'show'])
         ->middleware('can:own,website')->name('stats.heatmaps.show');
     Route::put('/stats/heatmaps', [HeatmapController::class, 'update'])->name('stats.heatmaps.update');
     Route::delete('/stats/heatmaps/{heatmapId}', [HeatmapController::class, 'destroy'])->name('stats.heatmaps.destroy');
 
-        // 会话回放
+    // 会话回放
     Route::get('/stats/{website}/replays', [ReplayController::class, 'index'])
         ->middleware('can:own,website')->name('stats.replays');
     Route::get('/stats/{website}/replays/{replayId}', [ReplayController::class, 'show'])
@@ -356,7 +359,7 @@ Route::middleware('auth')->group(function (): void {
     // 自定义域名
     Route::get('/domains', [DomainController::class, 'index'])->name('domains.index');
     Route::get('/domains/create', [DomainController::class, 'create'])->name('domains.create');
-        Route::post('/domains', [DomainController::class, 'store'])->middleware('plan_limit:domains_limit')->name('domains.store');
+    Route::post('/domains', [DomainController::class, 'store'])->middleware('plan_limit:domains_limit')->name('domains.store');
     Route::put('/domains', [DomainController::class, 'update'])->name('domains.update');
     Route::delete('/domains/{domainId}', [DomainController::class, 'destroy'])->name('domains.destroy');
 
@@ -392,12 +395,12 @@ Route::middleware('auth')->group(function (): void {
     Route::put('/notifications/read-all', [InternalNotificationsController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::delete('/notifications/{notificationId}', [InternalNotificationsController::class, 'destroy'])->name('notifications.destroy');
 
-                // 推荐返佣
+    // 推荐返佣
     Route::get('/referrals', [AffiliateController::class, 'index'])->name('referrals.index');
     Route::post('/referrals/withdrawal', [AffiliateController::class, 'requestWithdrawal'])->name('referrals.withdrawal');
     Route::get('/referrals/withdrawals', [AffiliateController::class, 'withdrawals'])->name('referrals.withdrawals');
 
-            // 支付（规格书 §10/§11）
+    // 支付（规格书 §10/§11）
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::post('/payments/checkout', [PaymentController::class, 'checkout'])->name('payments.checkout');
     Route::get('/payments/success', [PaymentController::class, 'success'])->name('payments.success');
@@ -421,7 +424,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/account-plan', [AccountPlanController::class, 'index'])->name('account.plan');
     Route::post('/account-plan/redeem', [AccountPlanController::class, 'redeemCode'])->name('account.plan.redeem');
 
-        // 偏好设置（规格书 §6.2.5：/account-preferences）
+    // 偏好设置（规格书 §6.2.5：/account-preferences）
     Route::get('/account-preferences', [AccountPreferencesController::class, 'index'])->name('account.preferences');
     Route::put('/account-preferences', [AccountPreferencesController::class, 'update'])->name('account.preferences.update');
 
@@ -434,7 +437,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::get('/invoices/{payment}/download', [InvoiceController::class, 'download'])->name('invoices.download');
 
-        // 信用票据（规格书 §6.2.6：/credit-notes）
+    // 信用票据（规格书 §6.2.6：/credit-notes）
     Route::get('/credit-notes', [InvoiceController::class, 'creditNotes'])->name('credit-notes.index');
 
     // 仪表盘视图管理（规格书 §6.2.1：DashboardViews；§10.2：dashboard_views_limit 配额）
@@ -458,8 +461,8 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/stats/{website}/sessions/{sessionId}', [StatsController::class, 'sessionDetail'])
         ->middleware('can:own,website')->name('stats.session');
 
-        // 热图AJAX（规格书 §6.2.2：/heatmaps-ajax）
-        Route::get('/stats/{website}/heatmaps-ajax/{heatmapId}', [HeatmapController::class, 'ajax'])
+    // 热图AJAX（规格书 §6.2.2：/heatmaps-ajax）
+    Route::get('/stats/{website}/heatmaps-ajax/{heatmapId}', [HeatmapController::class, 'ajax'])
         ->middleware('can:own,website')->name('stats.heatmaps.ajax');
 
     // 页面浏览 - 高级模式（规格书 §6.2.2：/pageviews-advanced）
@@ -520,7 +523,7 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     // 管理概览
     Route::get('/admin', [AdminIndex::class, 'index'])->name('admin.index');
     Route::get('/admin/statistics', [AdminStatistics::class, 'index'])->name('admin.statistics');
-        Route::get('/admin/settings', [AdminSettings::class, 'index'])->name('admin.settings.index');
+    Route::get('/admin/settings', [AdminSettings::class, 'index'])->name('admin.settings.index');
     Route::put('/admin/settings', [AdminSettings::class, 'update'])->name('admin.settings.update');
 
     // 插件管理（规格书 §14：install → activate → deactivate → uninstall）
@@ -531,7 +534,7 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     Route::delete('/admin/plugins/{plugin}', [AdminPlugins::class, 'uninstall'])->name('admin.plugins.uninstall');
     Route::post('/admin/plugins/{plugin}/settings', [AdminPlugins::class, 'updateSettings'])->name('admin.plugins.settings');
 
-            // 用户管理（规格书 §6.3.2：AdminUsers / AdminUserCreate / AdminUserUpdate / AdminUserView / AdminUsersLogs）
+    // 用户管理（规格书 §6.3.2：AdminUsers / AdminUserCreate / AdminUserUpdate / AdminUserView / AdminUsersLogs）
     Route::get('/admin/users', [AdminUsers::class, 'index'])->name('admin.users.index');
     Route::get('/admin/users/create', [AdminUserCreate::class, 'index'])->name('admin.users.create');
     Route::post('/admin/users', [AdminUserCreate::class, 'store'])->name('admin.users.store');
@@ -546,7 +549,7 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     Route::get('/admin/websites', [AdminWebsites::class, 'index'])->name('admin.websites.index');
     Route::put('/admin/websites/{websiteId}/toggle-status', [AdminWebsites::class, 'toggleStatus'])->name('admin.websites.toggle_status');
 
-        // 域名管理（规格书 §6.3.2：AdminDomains / AdminDomainCreate / AdminDomainUpdate）
+    // 域名管理（规格书 §6.3.2：AdminDomains / AdminDomainCreate / AdminDomainUpdate）
     Route::get('/admin/domains', [AdminDomains::class, 'index'])->name('admin.domains.index');
     Route::get('/admin/domains/create', [AdminDomains::class, 'create'])->name('admin.domains.create');
     Route::post('/admin/domains', [AdminDomains::class, 'store'])->name('admin.domains.store');
@@ -569,25 +572,25 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     Route::post('/admin/payments', [AdminPayments::class, 'store'])->name('admin.payments.store');
     Route::get('/admin/payments/{paymentId}', [AdminPayments::class, 'view'])->name('admin.payments.view');
 
-        // 税费管理
+    // 税费管理
     Route::get('/admin/taxes', [AdminTaxes::class, 'index'])->name('admin.taxes.index');
     Route::get('/admin/taxes/create', [AdminTaxes::class, 'create'])->name('admin.taxes.create');
     Route::post('/admin/taxes', [AdminTaxes::class, 'store'])->name('admin.taxes.store');
     Route::get('/admin/taxes/{taxId}/edit', [AdminTaxes::class, 'edit'])->name('admin.taxes.edit');
     Route::put('/admin/taxes/{taxId}', [AdminTaxes::class, 'update'])->name('admin.taxes.update');
-        Route::delete('/admin/taxes/{taxId}', [AdminTaxes::class, 'destroy'])->name('admin.taxes.destroy');
+    Route::delete('/admin/taxes/{taxId}', [AdminTaxes::class, 'destroy'])->name('admin.taxes.destroy');
 
     // 税费批量导入（规格书 §6.3.3：/admin/taxes-import）
     Route::get('/admin/taxes-import', [AdminTaxes::class, 'importForm'])->name('admin.taxes.import');
     Route::post('/admin/taxes-import', [AdminTaxes::class, 'import'])->name('admin.taxes.import.submit');
 
-        // 联盟提现管理（规格书 §6.3 / §14.7：AdminAffiliatesWithdrawals）
+    // 联盟提现管理（规格书 §6.3 / §14.7：AdminAffiliatesWithdrawals）
     Route::get('/admin/affiliates-withdrawals', [AdminAffiliatesWithdrawals::class, 'index'])->name('admin.affiliates-withdrawals.index');
     Route::put('/admin/affiliates-withdrawals/{withdrawalId}/approve', [AdminAffiliatesWithdrawals::class, 'approve'])->name('admin.affiliates-withdrawals.approve');
     Route::put('/admin/affiliates-withdrawals/{withdrawalId}/reject', [AdminAffiliatesWithdrawals::class, 'reject'])->name('admin.affiliates-withdrawals.reject');
     Route::post('/admin/affiliates-withdrawals/bulk', [AdminAffiliatesWithdrawals::class, 'bulkUpdate'])->name('admin.affiliates-withdrawals.bulk');
 
-        // 兑换码管理（规格书 §6.3.3 / §10.3：AdminCodes / AdminRedeemedCodes）
+    // 兑换码管理（规格书 §6.3.3 / §10.3：AdminCodes / AdminRedeemedCodes）
     Route::get('/admin/codes', [AdminCodes::class, 'index'])->name('admin.codes.index');
     Route::get('/admin/codes/create', [AdminCodes::class, 'create'])->name('admin.codes.create');
     Route::post('/admin/codes', [AdminCodes::class, 'store'])->name('admin.codes.store');
@@ -619,7 +622,7 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     Route::post('/admin/broadcasts', [AdminBroadcasts::class, 'store'])->name('admin.broadcasts.store');
     Route::get('/admin/broadcasts/{broadcastId}/edit', [AdminBroadcasts::class, 'edit'])->name('admin.broadcasts.edit');
     Route::put('/admin/broadcasts/{broadcastId}', [AdminBroadcasts::class, 'update'])->name('admin.broadcasts.update');
-        Route::put('/admin/broadcasts/{broadcastId}/send', [AdminBroadcasts::class, 'send'])->name('admin.broadcasts.send');
+    Route::put('/admin/broadcasts/{broadcastId}/send', [AdminBroadcasts::class, 'send'])->name('admin.broadcasts.send');
     Route::delete('/admin/broadcasts/{broadcastId}', [AdminBroadcasts::class, 'destroy'])->name('admin.broadcasts.destroy');
     Route::get('/admin/broadcasts/{broadcastId}', [AdminBroadcasts::class, 'show'])->name('admin.broadcasts.show');
     Route::post('/admin/broadcasts/{broadcastId}/duplicate', [AdminBroadcasts::class, 'duplicate'])->name('admin.broadcasts.duplicate');
@@ -658,7 +661,7 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     Route::get('/admin/replays', [AdminReplays::class, 'index'])->name('admin.replays.index');
     Route::delete('/admin/replays/{replayId}', [AdminReplays::class, 'destroy'])->name('admin.replays.destroy');
 
-        // 账户日志（规格书 §6.3.5：AdminLogs、AdminLog、AdminLogDownload）
+    // 账户日志（规格书 §6.3.5：AdminLogs、AdminLog、AdminLogDownload）
     Route::get('/admin/logs', [AdminLogs::class, 'index'])->name('admin.logs.index');
     Route::get('/admin/logs/download', [AdminLogs::class, 'download'])->name('admin.logs.download');
     Route::get('/admin/logs/{logId}', [AdminLogs::class, 'show'])->name('admin.logs.show');
@@ -668,9 +671,9 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     Route::get('/admin/languages/{code}/edit', [AdminLanguages::class, 'edit'])->name('admin.languages.edit');
     Route::put('/admin/languages/{code}', [AdminLanguages::class, 'update'])->name('admin.languages.update');
 
-        // Push 订阅者（规格书 §6.3.4：AdminPushSubscribers，插件 push-notifications）
+    // Push 订阅者（规格书 §6.3.4：AdminPushSubscribers，插件 push-notifications）
     Route::get('/admin/push-subscribers', [AdminPushSubscribers::class, 'index'])->name('admin.push-subscribers.index');
-        Route::delete('/admin/push-subscribers/{subscriberId}', [AdminPushSubscribers::class, 'destroy'])->name('admin.push-subscribers.destroy');
+    Route::delete('/admin/push-subscribers/{subscriberId}', [AdminPushSubscribers::class, 'destroy'])->name('admin.push-subscribers.destroy');
 
     // Push 通知 Campaign 管理（规格书 §6.3.4 / §14.5：AdminPushNotifications）
     Route::get('/admin/push-notifications', [AdminNotifications::class, 'pushIndex'])->name('admin.push-notifications.index');
@@ -694,7 +697,7 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     Route::get('/admin/statistics/users', [AdminStatistics::class, 'users'])->name('admin.statistics.users');
     Route::get('/admin/statistics/payments', [AdminStatistics::class, 'payments'])->name('admin.statistics.payments');
 
-        // 管理后台 - 授权许可（规格书 §15.2）
+    // 管理后台 - 授权许可（规格书 §15.2）
     Route::get('/admin/license', [AdminLicense::class, 'index'])->name('admin.license.index');
     Route::post('/admin/license/upload', [AdminLicense::class, 'upload'])->name('admin.license.upload');
     Route::get('/admin/license/refresh', [AdminLicense::class, 'refresh'])->name('admin.license.refresh');
@@ -718,7 +721,8 @@ Route::post('/install/admin', [InstallController::class, 'admin'])->name('instal
 
 // PWA 插件（规格书 §14.6）
 Route::get('/pwa/manifest.json', function () {
-    $settings = \App\Models\Setting::getGroup('pwa');
+    $settings = Setting::getGroup('pwa');
+
     return response()->json([
         'name' => $settings['name'] ?? config('app.name'),
         'short_name' => $settings['short_name'] ?? 'Monit',
@@ -741,29 +745,30 @@ Route::get('/pwa/sw.js', function () {
 })->name('pwa.sw');
 
 // Push Notifications 前端订阅（规格书 §14.5）
-Route::post('/push-notifications/subscribe', function (\Illuminate\Http\Request $request) {
+Route::post('/push-notifications/subscribe', function (Request $request) {
     $validated = $request->validate([
         'endpoint' => ['required', 'url'],
         'keys.auth' => ['required', 'string'],
         'keys.p256dh' => ['required', 'string'],
     ]);
-        \App\Models\PushNotificationSubscriber::create([
+    PushNotificationSubscriber::create([
         'user_id' => auth()->id(),
         'endpoint' => $validated['endpoint'],
         'keys_auth' => $validated['keys']['auth'],
         'keys_p256dh' => $validated['keys']['p256dh'],
         'subscriber_datetime' => now(),
     ]);
+
     return response()->json(['status' => 'subscribed']);
 })->middleware('auth')->name('push-notifications.subscribe');
 
 // Push Notifications 取消订阅（规格书 §14.5）
-Route::post('/push-notifications/unsubscribe', function (\Illuminate\Http\Request $request) {
+Route::post('/push-notifications/unsubscribe', function (Request $request) {
     $validated = $request->validate([
         'endpoint' => ['required', 'url'],
     ]);
 
-    \App\Models\PushNotificationSubscriber::where('user_id', auth()->id())
+    PushNotificationSubscriber::where('user_id', auth()->id())
         ->where('endpoint', $validated['endpoint'])
         ->delete();
 
@@ -772,7 +777,8 @@ Route::post('/push-notifications/unsubscribe', function (\Illuminate\Http\Reques
 
 // Dynamic OG Images 插件端点（规格书 §14.7）
 Route::get('/dynamic-og-images/{type}/{id}', function (string $type, int $id) {
-    $imageService = app(\App\Services\DynamicOgImageService::class);
+    $imageService = app(DynamicOgImageService::class);
+
     return $imageService->generate($type, $id);
 })->name('dynamic-og-images.generate');
 

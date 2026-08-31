@@ -19,11 +19,11 @@ class IyzicoProcessor
         return [
             'processor' => 'iyzico',
             'base_url' => $baseUrl,
-            'conversation_id' => 'monit-' . $user->user_id . '-' . time(),
+            'conversation_id' => 'monit-'.$user->user_id.'-'.time(),
             'price' => $this->getPrice($plan, $frequency),
             'paid_price' => $this->getPrice($plan, $frequency),
             'currency' => 'TRY',
-            'basket_id' => 'B' . time(),
+            'basket_id' => 'B'.time(),
             'buyer' => [
                 'id' => (string) $user->user_id,
                 'name' => $user->name,
@@ -57,7 +57,7 @@ class IyzicoProcessor
         $userId = $parts[1] ?? 0;
 
         $user = User::find($userId);
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -84,6 +84,7 @@ class IyzicoProcessor
     private function getPrice(Plan $plan, string $frequency): float
     {
         $prices = $plan->prices['TRY'] ?? $plan->prices['USD'] ?? $plan->prices;
+
         return match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,

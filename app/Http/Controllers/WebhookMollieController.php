@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\Payment\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Mollie\Api\MollieApiClient;
 
 /**
  * Mollie Webhook 控制器（规格书 §11）
@@ -19,7 +20,7 @@ class WebhookMollieController extends Controller
             $apiKey = config('services.mollie.key');
             if ($apiKey) {
                 try {
-                    $mollie = new \Mollie\Api\MollieApiClient();
+                    $mollie = new MollieApiClient;
                     $mollie->setApiKey($apiKey);
                     $payment = $mollie->payments->get($paymentId);
 

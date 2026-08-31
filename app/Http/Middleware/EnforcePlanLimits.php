@@ -24,7 +24,7 @@ class EnforcePlanLimits
             return $next($request);
         }
 
-        $planLimitService = new PlanLimitService();
+        $planLimitService = new PlanLimitService;
 
         // 检查功能是否启用
         if (! $planLimitService->isFeatureEnabled($user, $feature)) {

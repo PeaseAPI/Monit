@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use Illuminate\Http\Response;
 
 /**
  * Alipay 支付处理器（规格书 §11：中国，一次性）
@@ -24,9 +25,9 @@ class AlipayProcessor
     {
         try {
             $biz = [
-                'out_trade_no' => 'monit_' . $payment->payment_id . '_' . now()->format('His'),
+                'out_trade_no' => 'monit_'.$payment->payment_id.'_'.now()->format('His'),
                 'total_amount' => number_format((float) $payment->total_amount, 2, '.', ''),
-                'subject' => mb_substr('Monit Plan ' . $payment->payment_id, 0, 256),
+                'subject' => mb_substr('Monit Plan '.$payment->payment_id, 0, 256),
                 'product_code' => 'FAST_INSTANT_TRADE_PAY',
                 'passback_params' => urlencode(json_encode(['payment_id' => $payment->payment_id])),
             ];
@@ -48,11 +49,11 @@ class AlipayProcessor
 
             $fields = '';
             foreach ($params as $key => $value) {
-                $fields .= '<input type="hidden" name="' . e($key) . '" value="' . e($value) . '">';
+                $fields .= '<input type="hidden" name="'.e($key).'" value="'.e($value).'">';
             }
 
             return [
-                'redirect_html' => '<form id="alipay-submit" method="POST" action="' . static::GATEWAY . '?charset=utf-8">' . $fields . '</form><script>document.getElementById("alipay-submit").submit();</script>',
+                'redirect_html' => '<form id="alipay-submit" method="POST" action="'.static::GATEWAY.'?charset=utf-8">'.$fields.'</form><script>document.getElementById("alipay-submit").submit();</script>',
                 'out_trade_no' => $biz['out_trade_no'],
             ];
         } catch (\Throwable $e) {
@@ -77,7 +78,7 @@ class AlipayProcessor
         $parts = [];
         foreach ($data as $key => $value) {
             if ($value !== '' && $value !== null) {
-                $parts[] = $key . '=' . $value;
+                $parts[] = $key.'='.$value;
             }
         }
         $content = implode('&', $parts);
@@ -90,7 +91,7 @@ class AlipayProcessor
     /**
      * 通知应答（支付宝要求纯字符串 success）
      */
-    public function successResponse(): \Illuminate\Http\Response
+    public function successResponse(): Response
     {
         return response('success', 200)->header('Content-Type', 'text/plain');
     }
@@ -104,7 +105,7 @@ class AlipayProcessor
         $parts = [];
         foreach ($params as $key => $value) {
             if ($value !== '' && $value !== null) {
-                $parts[] = $key . '=' . $value;
+                $parts[] = $key.'='.$value;
             }
         }
         $content = implode('&', $parts);
@@ -122,7 +123,7 @@ class AlipayProcessor
             return $key;
         }
 
-        return "-----BEGIN RSA PRIVATE KEY-----\n" . chunk_split($key, 64, "\n") . "-----END RSA PRIVATE KEY-----\n";
+        return "-----BEGIN RSA PRIVATE KEY-----\n".chunk_split($key, 64, "\n")."-----END RSA PRIVATE KEY-----\n";
     }
 
     protected function normalizePublicKey(string $key): string
@@ -131,6 +132,6 @@ class AlipayProcessor
             return $key;
         }
 
-        return "-----BEGIN PUBLIC KEY-----\n" . chunk_split($key, 64, "\n") . "-----END PUBLIC KEY-----\n";
+        return "-----BEGIN PUBLIC KEY-----\n".chunk_split($key, 64, "\n")."-----END PUBLIC KEY-----\n";
     }
 }

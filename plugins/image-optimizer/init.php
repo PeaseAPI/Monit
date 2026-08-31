@@ -7,12 +7,14 @@
  * - 注册 Admin 端点：批量优化 uploads/ 目录 + 统计页
  */
 
+use App\Models\ImageOptimizerStat;
 use App\Services\ImageOptimizer;
 use App\Support\PluginManager;
+use App\Support\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-\App\Support\Settings::set('image_optimizer.is_enabled', true);
+Settings::set('image_optimizer.is_enabled', true);
 
 /* ---------------- 上传拦截 hook（规格书 §14.9 uploads_upload() 拦截） ---------------- */
 
@@ -39,11 +41,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin/plugins/image-optimizer')->g
             abort(404);
         }
 
-        $totalOriginal = \App\Models\ImageOptimizerStat::sum('original_size');
-        $totalOptimized = \App\Models\ImageOptimizerStat::sum('optimized_size');
+        $totalOriginal = ImageOptimizerStat::sum('original_size');
+        $totalOptimized = ImageOptimizerStat::sum('optimized_size');
         $saved = max(0, $totalOriginal - $totalOptimized);
         $savedPercent = $totalOriginal > 0 ? round($saved / $totalOriginal * 100, 1) : 0.0;
-        $recent = \App\Models\ImageOptimizerStat::orderByDesc('stat_id')->limit(50)->get();
+        $recent = ImageOptimizerStat::orderByDesc('stat_id')->limit(50)->get();
 
         return view('plugins.image-optimizer.stats', compact('totalOriginal', 'totalOptimized', 'saved', 'savedPercent', 'recent'))
             ->with('adminNav', 'plugins');
@@ -60,7 +62,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin/plugins/image-optimizer')->g
         $optimizer = new ImageOptimizer;
 
         $dir = public_path('uploads');
-        $files = glob($dir . '/*.{jpg,jpeg,png,gif}', GLOB_BRACE) ?: [];
+        $files = glob($dir.'/*.{jpg,jpeg,png,gif}', GLOB_BRACE) ?: [];
         $processed = 0;
         $failed = 0;
 

@@ -2,12 +2,13 @@
 
 namespace App\Policies;
 
+use App\Models\TeamMember;
 use App\Models\User;
 use App\Models\Website;
 
 class WebsitePolicy
 {
-        public function own(User $user, Website $website): bool
+    public function own(User $user, Website $website): bool
     {
         // 管理员拥有所有权限
         if ($user->isAdmin()) {
@@ -20,7 +21,7 @@ class WebsitePolicy
         }
 
         // 团队拥有
-        return \App\Models\TeamMember::where('team_id', $website->team_id ?? 0)
+        return TeamMember::where('team_id', $website->team_id ?? 0)
             ->where('user_id', $user->user_id)
             ->where('status', 1)
             ->exists();

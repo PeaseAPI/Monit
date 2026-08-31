@@ -7,6 +7,7 @@ use App\Services\Sms\SmsService;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 /**
@@ -33,7 +34,7 @@ class SmsAuthTest extends TestCase
     /** 从 Cache 取出验证码（log driver 下生产端写入处） */
     protected function codeFromCache(string $phone, string $purpose): string
     {
-        return (string) Cache::get("monit.sms.{$purpose}." . SmsService::normalizePhone($phone));
+        return (string) Cache::get("monit.sms.{$purpose}.".SmsService::normalizePhone($phone));
     }
 
     public function test_register_with_phone_and_sms_code(): void
@@ -165,7 +166,7 @@ class SmsAuthTest extends TestCase
             'password' => 'newpassword123',
         ])->assertRedirect(route('dashboard'));
 
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('newpassword123', $user->refresh()->password));
+        $this->assertTrue(Hash::check('newpassword123', $user->refresh()->password));
     }
 
     public function test_phone_bind_in_account(): void

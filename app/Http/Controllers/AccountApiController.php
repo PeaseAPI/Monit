@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 /**
  * 账户 API Key 管理控制器
@@ -16,6 +15,7 @@ class AccountApiController extends Controller
     public function index(): View
     {
         $user = auth()->user();
+
         return view('account.api', compact('user'));
     }
 

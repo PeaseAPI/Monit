@@ -4,15 +4,16 @@
  * PWA 启动入口：注册 /pwa/manifest.json 与 /pwa/sw.js 端点（规格书 §14.6）
  */
 
+use App\Support\PluginManager;
 use Illuminate\Support\Facades\Route;
 
 // 动态 Manifest
 Route::get('/pwa/manifest.json', function () {
-    if (! \App\Support\PluginManager::isActive('pwa')) {
+    if (! PluginManager::isActive('pwa')) {
         abort(404);
     }
 
-    $settings = fn (string $key, mixed $default) => \App\Support\PluginManager::setting('pwa', $key, $default);
+    $settings = fn (string $key, mixed $default) => PluginManager::setting('pwa', $key, $default);
 
     return response()->json([
         'name' => $settings('name', 'Monit Analytics'),
@@ -30,7 +31,7 @@ Route::get('/pwa/manifest.json', function () {
 
 // Service Worker：CacheFirst 静态 / NetworkFirst 页面
 Route::get('/pwa/sw.js', function () {
-    if (! \App\Support\PluginManager::isActive('pwa')) {
+    if (! PluginManager::isActive('pwa')) {
         abort(404);
     }
 

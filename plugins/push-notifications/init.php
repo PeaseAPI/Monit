@@ -8,17 +8,22 @@
  * - Admin Campaign 管理见后半段
  */
 
+use App\Models\PushNotificationCampaign;
 use App\Models\PushNotificationSubscriber;
 use App\Models\Website;
+use App\Services\WebPushService;
+use App\Support\PluginManager;
+use App\Support\Settings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
-\App\Support\Settings::set('push_notifications.is_enabled', true);
+Settings::set('push_notifications.is_enabled', true);
 
 /* ---------------- 订阅端点 ---------------- */
 
 Route::post('/push-notifications/subscribe', function (Request $request) {
-    if (! \App\Support\PluginManager::isActive('push-notifications')) {
+    if (! PluginManager::isActive('push-notifications')) {
         abort(404);
     }
 
@@ -61,11 +66,11 @@ Route::post('/push-notifications/subscribe', function (Request $request) {
 /* ---------------- 插件 Service Worker ---------------- */
 
 Route::get('/push-notifications/sw.js', function () {
-    if (! \App\Support\PluginManager::isActive('push-notifications')) {
+    if (! PluginManager::isActive('push-notifications')) {
         abort(404);
     }
 
-    $js = <<<JS
+    $js = <<<'JS'
 self.addEventListener('push', (event) => {
     let data = {};
     try { data = event.data.json(); } catch (e) {}
@@ -99,11 +104,11 @@ JS;
 /* ---------------- 嵌入脚本（用户站点使用） ---------------- */
 
 Route::get('/push-notifications/js', function () {
-    if (! \App\Support\PluginManager::isActive('push-notifications')) {
+    if (! PluginManager::isActive('push-notifications')) {
         abort(404);
     }
 
-    $vapidKey = \App\Support\PluginManager::setting('push-notifications', 'vapid_public_key', '');
+    $vapidKey = PluginManager::setting('push-notifications', 'vapid_public_key', '');
     $origin = rtrim(config('app.url'), '/');
 
     $js = <<<JS
@@ -150,34 +155,34 @@ JS;
 
 Route::middleware(['auth', 'admin'])->prefix('admin/plugins/push-notifications')->group(function (): void {
     // 密钥对生成（一次性）
-    Route::post('/generate-keys', function (\Illuminate\Http\Request $request) {
-        if (! \App\Support\PluginManager::isActive('push-notifications')) {
+    Route::post('/generate-keys', function (Request $request) {
+        if (! PluginManager::isActive('push-notifications')) {
             abort(404);
         }
 
-        $keys = \App\Services\WebPushService::generateVapidKeys();
-        \App\Support\PluginManager::saveSettings('push-notifications', $keys);
+        $keys = WebPushService::generateVapidKeys();
+        PluginManager::saveSettings('push-notifications', $keys);
 
-        return back()->with('success', 'VAPID 密钥对已生成：公钥 ' . substr($keys['public_key'], 0, 24) . '…');
+        return back()->with('success', 'VAPID 密钥对已生成：公钥 '.substr($keys['public_key'], 0, 24).'…');
     })->name('admin.plugins.push-notifications.generate-keys');
 
     // Campaign 列表 + 订阅者统计
     Route::get('/campaigns', function () {
-        if (! \App\Support\PluginManager::isActive('push-notifications')) {
+        if (! PluginManager::isActive('push-notifications')) {
             abort(404);
         }
 
-        $campaigns = \App\Models\PushNotificationCampaign::with('website')
+        $campaigns = PushNotificationCampaign::with('website')
             ->orderByDesc('campaign_id')->limit(100)->get();
-        $subscribersTotal = \App\Models\PushNotificationSubscriber::count();
+        $subscribersTotal = PushNotificationSubscriber::count();
 
         return view('plugins.push-notifications.admin-campaigns', compact('campaigns', 'subscribersTotal'))
             ->with('adminNav', 'plugins');
     })->name('admin.plugins.push-notifications.campaigns');
 
     // Campaign 创建（默认 is_sent=false，由 Cron 分批发送）
-    Route::post('/campaigns', function (\Illuminate\Http\Request $request) {
-        if (! \App\Support\PluginManager::isActive('push-notifications')) {
+    Route::post('/campaigns', function (Request $request) {
+        if (! PluginManager::isActive('push-notifications')) {
             abort(404);
         }
 
@@ -190,7 +195,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin/plugins/push-notifications')
             'icon' => ['nullable', 'url', 'max:2048'],
         ]);
 
-        \App\Models\PushNotificationCampaign::create([
+        PushNotificationCampaign::create([
             ...$validated,
             'is_enabled' => true,
             'is_sent' => false,
@@ -202,29 +207,29 @@ Route::middleware(['auth', 'admin'])->prefix('admin/plugins/push-notifications')
 
     // 手动触发发送（把 enabled+未发送的置为待发送标记后由命令处理；此处直接同步发送小批量）
     Route::post('/campaigns/{campaignId}/send', function (string $campaignId) {
-        if (! \App\Support\PluginManager::isActive('push-notifications')) {
+        if (! PluginManager::isActive('push-notifications')) {
             abort(404);
         }
 
-        $campaign = \App\Models\PushNotificationCampaign::findOrFail($campaignId);
+        $campaign = PushNotificationCampaign::findOrFail($campaignId);
 
         if ($campaign->is_sent) {
             return back()->with('error', '该 Campaign 已发送');
         }
 
-        \Illuminate\Support\Facades\Artisan::call('monit:push-notifications-campaigns', [
+        Artisan::call('monit:push-notifications-campaigns', [
             'campaignId' => $campaign->campaign_id,
         ]);
 
-        return back()->with('success', '发送完成：成功 ' . $campaign->refresh()->total_sent . ' / 失败 ' . $campaign->refresh()->total_failed);
+        return back()->with('success', '发送完成：成功 '.$campaign->refresh()->total_sent.' / 失败 '.$campaign->refresh()->total_failed);
     })->name('admin.plugins.push-notifications.campaigns.send');
 
     Route::delete('/campaigns/{campaignId}', function (string $campaignId) {
-        if (! \App\Support\PluginManager::isActive('push-notifications')) {
+        if (! PluginManager::isActive('push-notifications')) {
             abort(404);
         }
 
-        \App\Models\PushNotificationCampaign::findOrFail($campaignId)->delete();
+        PushNotificationCampaign::findOrFail($campaignId)->delete();
 
         return back()->with('success', 'Campaign 已删除');
     })->name('admin.plugins.push-notifications.campaigns.destroy');

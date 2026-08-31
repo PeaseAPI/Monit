@@ -17,7 +17,7 @@ class WeiboProvider implements ChineseSocialProvider
 
     public function getAuthorizationUrl(): string
     {
-        return 'https://api.weibo.com/oauth2/authorize?' . http_build_query([
+        return 'https://api.weibo.com/oauth2/authorize?'.http_build_query([
             'client_id' => $this->appKey,
             'redirect_uri' => $this->redirectUri,
             'response_type' => 'code',
