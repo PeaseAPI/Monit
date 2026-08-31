@@ -33,5 +33,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- 安装向导锁路径隔离：避免测试触碰 storage/installed.lock（TestCase 统一 touch/清理） -->
+        <env name="MONIT_INSTALL_LOCK" value="tests/tmp/installed.lock"/>
     </php>
 </phpunit>

@@ -65,21 +65,18 @@ zh_CN / zh_TW / en / ru / be / ms，**1662 个语言键全对齐**；落地页�
 ## 🚀 快速开始（3 分钟）
 
 ```bash
-# 1️⃣ 克隆 & 配置（依赖已随仓库内置，内网/离线环境免 composer install）
+# 1️⃣ 克隆（依赖已随仓库内置，内网/离线环境免 composer install）
 git clone https://github.com/PeaseAPI/Monit.git
 cd Monit
-cp .env.example .env
-php artisan key:generate
 
-# 2️⃣ 建库后配置 .env 中的 DB_*，然后迁移
-php artisan migrate
-php artisan db:seed --class=DemoDataSeeder   # 可选：演示数据
+# 2️⃣ 目录权限（PHP-FPM 运行用户；本地开发可跳过）
+chown -R www:www storage database bootstrap/cache
 
-# 3️⃣ 启动
+# 3️⃣ 启动后浏览器访问 → 自动进入 /install 网页安装向导
 php artisan serve
 ```
 
-演示账号：`admin@monit.dev` / `password`（管理员）· `pro@monit.dev` · `free@monit.dev`（均 `password`）
+向导三步走完（环境检查 → 数据库/迁移 → 创建管理员），自动生成 `APP_KEY`、迁移建库、写入套餐数据——**全程零命令行、零演示账号**。
 
 接入网站：后台创建网站后，一行脚本即刻采集（`sendBeacon` + `keepalive`，无第三方依赖、不拖慢页面）：
 

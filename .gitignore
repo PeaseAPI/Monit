@@ -25,3 +25,6 @@ Homestead.yaml
 Thumbs.db
 /database/database.sqlite
 /docs
+
+# 安装向导测试临时文件（installed.lock 隔离路径）
+/tests/tmp/

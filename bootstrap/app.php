@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AuthenticateApiKey;
 use App\Http\Middleware\CheckMaintenance;
+use App\Http\Middleware\EnsureInstalled;
 use App\Http\Middleware\EnforcePlanLimits;
 use App\Http\Middleware\EnsureUserActive;
 use App\Models\Website;
@@ -22,9 +23,15 @@ return Application::configure(basePath: dirname(__DIR__))
         // M23 性能优化：高频像素采集走无中间件路由组（无 Session/Cookie 开销）
         then: function (): void {
             Route::middleware([])->group(__DIR__.'/../routes/track.php');
+            // 安装向导同样无中间件（未安装时 Session 表/APP_KEY 均未就绪，走 web 组必 500）
+            Route::middleware([])->group(__DIR__.'/../routes/install.php');
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // 安装守卫（全局最前）：未安装时一切请求 302 到 /install 网页向导（规格 §15.3/§19），
+        // 先于 web 组执行——未安装时 Session/Cookie/业务中间件不会因数据库未就绪而 500
+        $middleware->prepend(EnsureInstalled::class);
+
         // 像素采集端点：跨站公开 POST，必须免 CSRF（规格书 §4.1）
         $middleware->validateCsrfTokens(except: [
             'pixel-track/*',

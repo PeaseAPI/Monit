@@ -50,7 +50,6 @@ use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\GoalController;
 use App\Http\Controllers\HeatmapController;
 use App\Http\Controllers\IndexController;
-use App\Http\Controllers\InstallController;
 use App\Http\Controllers\InternalNotificationsController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\OutboundClicksController;
@@ -709,11 +708,9 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
 Route::get('/cron', [CronController::class, 'index'])->name('cron');
 Route::get('/cron/{task}', [CronController::class, 'task'])->whereIn('task', ['email_reports', 'broadcasts', 'push_notifications'])->name('cron.task'); // 规格 §13.1 子任务
 
-// 安装向导（规格 §15.3/§19：storage/installed.lock 存在即失效）
-Route::get('/install', [InstallController::class, 'index'])->name('install');
-Route::post('/install/database', [InstallController::class, 'database'])->name('install.database');
-Route::get('/install/admin', [InstallController::class, 'showAdmin'])->name('install.admin');
-Route::post('/install/admin', [InstallController::class, 'admin'])->name('install.admin.submit');
+// 安装向导路由已移至 routes/install.php（无中间件注册，见 bootstrap/app.php）：
+// 未安装时 Session 表/APP_KEY 未就绪，走 web 组会 500；EnsureInstalled 中间件负责未安装拦截
+
 
 // ========================================
 // 插件端点（规格书 §14）

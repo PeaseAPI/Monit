@@ -18,7 +18,7 @@
         button:disabled{background:#a5b4fc;cursor:not-allowed}
         .check{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f4f4f5;font-size:14px}
         .ok{color:#059669}.bad{color:#dc2626}
-        .error{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:10px 12px;border-radius:8px;font-size:13px;margin-top:12px}
+        .error{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:10px 12px;border-radius:8px;font-size:13px;margin-top:12px;word-break:break-all}
     </style>
 </head>
 <body>
@@ -30,6 +30,15 @@
         <span class="{{ $current >= 3 ? 'on' : '' }}"></span>
     </div>
 
+    {{-- 无 Session 环境（无中间件路由组）：错误/回填用显式变量，不用 @csrf / old() / $errors --}}
+    @if (! empty($errors))
+        <div class="error">
+            @foreach ($errors as $error)
+                {{ $error }}<br>
+            @endforeach
+        </div>
+    @endif
+
     @if ($step === 'requirements')
         <h1>环境检查</h1>
         <p class="sub">第 1 步 · 共 3 步：确认服务器满足运行要求</p>
@@ -39,9 +48,8 @@
                 <span class="{{ $passed ? 'ok' : 'bad' }}">{{ $passed ? '✓ 通过' : '✗ 未通过' }}</span>
             </div>
         @endforeach
-        @if ($allPassed)
+        @if ($allPassed && empty($errors))
             <form method="POST" action="{{ route('install.database') }}">
-                @csrf
                 <label>数据库类型</label>
                 <select name="connection">
                     <option value="sqlite">SQLite（推荐 · 零依赖）</option>
@@ -64,18 +72,14 @@
         <h1>创建管理员</h1>
         <p class="sub">第 3 步 · 共 3 步：数据库已就绪，创建超级管理员账户</p>
         <form method="POST" action="{{ route('install.admin') }}">
-            @csrf
             <label>管理员名称</label>
-            <input name="name" value="{{ old('name', 'admin') }}" required>
+            <input name="name" value="{{ $old['name'] ?? 'admin' }}" required>
             <label>邮箱</label>
-            <input name="email" type="email" value="{{ old('email') }}" required>
+            <input name="email" type="email" value="{{ $old['email'] ?? '' }}" required>
             <label>密码（≥8 位）</label>
             <input name="password" type="password" required>
             <label>确认密码</label>
             <input name="password_confirmation" type="password" required>
-            @if ($errors->any())
-                <div class="error">{{ $errors->first() }}</div>
-            @endif
             <button type="submit">完成安装</button>
         </form>
     @endif

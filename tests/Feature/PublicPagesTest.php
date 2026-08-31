@@ -90,6 +90,7 @@ class PublicPagesTest extends TestCase
     {
         // 规格 §15.3/§19：全新实例 /install 向导可用（无 lock 且无管理员）
         // 回归：routes/web.php 曾缺失 use InstallController 导致 /install 500
+        @unlink(config('monit.install_lock'));
         $this->get('/install')->assertOk();
     }
 }
