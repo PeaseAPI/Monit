@@ -60,3 +60,17 @@ Schedule::command('monit:housekeeping-cleanup')->dailyAt('03:30');
 
 // 每小时：站点配额超限通知（原版 websites_*_notice ×3）
 Schedule::command('monit:websites-limit-notice')->hourly();
+
+// ---------- M26：SEO 模块调度（SEO模块融合方案 §10） ----------
+
+// 每小时：定时复审（扫描 seo_next_audit_at 到期网站，dispatch RunSeoAuditJob）
+Schedule::command('monit:seo-audits-refresh')->hourly();
+
+// 每小时：Sitemap 监控（diff → 变更通知）
+Schedule::command('monit:seo-sitemaps-check')->hourly();
+
+// 每日 06:30：域名监控复检（whois 到期 30/7/1 天预警）
+Schedule::command('monit:seo-domains-monitor')->dailyAt('06:30');
+
+// 每日 03:15：SEO 归档清理（按套餐 seo_history_retention_days）
+Schedule::command('monit:seo-archives-cleanup')->dailyAt('03:15');

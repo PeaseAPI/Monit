@@ -124,6 +124,16 @@ class User extends Authenticatable
         return $this->hasMany(DashboardView::class, 'user_id', 'user_id');
     }
 
+    public function seoAudits()
+    {
+        return $this->hasMany(SeoAudit::class, 'user_id', 'user_id');
+    }
+
+    public function notificationHandlers()
+    {
+        return $this->hasMany(NotificationHandler::class, 'user_id', 'user_id');
+    }
+
     public function annotations()
     {
         return $this->hasMany(Annotation::class, 'user_id', 'user_id');

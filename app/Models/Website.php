@@ -40,6 +40,11 @@ class Website extends Model
         // M22：配额通知标志（原版 plan_*_limit_notice，规格书 §13.1）
         'plan_sessions_events_limit_notice', 'plan_events_children_limit_notice',
         'plan_sessions_replays_limit_notice', 'stats_month',
+        // SEO 模块：定时复审 / 通知 / Sitemap 监控 / 聚合缓存
+        'seo_audit_check_interval', 'seo_notifications_enabled', 'seo_notifications_mode',
+        'seo_next_audit_at', 'seo_last_audit_at', 'seo_sitemap_url',
+        'seo_sitemap_check_interval', 'seo_sitemap_urls_hash', 'seo_sitemap_checked_at',
+        'seo_avg_score', 'seo_total_audits',
     ];
 
     protected function casts(): array
@@ -58,6 +63,11 @@ class Website extends Model
             'plan_sessions_replays_limit_notice' => 'boolean',
             'settings' => 'array',
             'email_reports_last_date' => 'datetime',
+            // SEO 模块
+            'seo_notifications_enabled' => 'boolean',
+            'seo_next_audit_at' => 'datetime',
+            'seo_last_audit_at' => 'datetime',
+            'seo_sitemap_checked_at' => 'datetime',
         ];
     }
 
@@ -118,6 +128,11 @@ class Website extends Model
     public function domains()
     {
         return $this->hasMany(Domain::class, 'user_id', 'user_id');
+    }
+
+    public function seoAudits()
+    {
+        return $this->hasMany(SeoAudit::class, 'website_id', 'website_id');
     }
 
     /* ---------------------------------------------------------------------

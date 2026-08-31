@@ -92,10 +92,13 @@ php artisan test        # 112 tests / 374 assertions 全绿
 ## 文档
 
 - `Monit-完整开发规格书.md` — 完整功能规格（位于仓库上级文档目录）
-- `TASKS.md` — M0–M23 分段开发记录与验收清单
+- `TASKS.md` — M0–M25 分段开发记录与验收清单
 - `lang/` — 六语言 1356 键（zh_CN / zh_TW / en / ru / be / ms，键集强一致）
 - REST API：`/api-documentation` 页面；`Authorization: Bearer <api_key>` 鉴权，17 类资源端点
 - `docs/二次开发指南.md` — 架构/生命周期/扩展点/6 个二开实操场景
+- `docs/66audit-功能全解析.md` — 66SEO 审计 SaaS 功能全量解析（M26+ SEO 模块参考）
+- `docs/phpRank-功能全解析.md` — phpRank SEO 报告平台功能全量解析（M26+ SEO 模块参考）
+- `docs/SEO模块融合方案.md` — M26+ SEO 模块融合蓝图（数据模型/服务/路由/套餐/调度/里程碑）
 - `public/docs/` — 产品介绍 / 安装指南 / 使用手册（HTML，线上 `/docs/index.html`）
 - `deploy/nginx/monit.conf`、`deploy/apache/monit.conf` — 生产伪静态与缓存规则（无需手写）
 
@@ -121,4 +124,4 @@ deploy/                      # Nginx / Apache 生产配置
 
 ---
 
-> Monit 为规格书驱动的完整实现项目（M0–M23），持续迭代中。
+> Monit 为规格书驱动的完整实现项目（M0–M25 已交付，M26+ SEO 模块规划中），持续迭代中。
