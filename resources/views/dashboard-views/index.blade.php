@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.app', ['nav' => 'dashboard'])
 @section('title', __('msg.dashboard_views'))
 @section('content')
 <div class="mb-6 flex items-center justify-between">

@@ -22,15 +22,16 @@ class DashboardViewController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:128'],
-            'settings' => ['required', 'array'],
+            'settings' => ['required'],
             'order' => ['nullable', 'integer'],
+            'website_id' => ['nullable', 'integer', 'exists:websites,website_id'],
         ]);
 
         DashboardView::create([
             'website_id' => $validated['website_id'] ?? null,
             'user_id' => auth()->id(),
             'name' => $validated['name'],
-            'settings' => $validated['settings'],
+            'settings' => $this->normalizeSettings($validated['settings']),
             'order' => $validated['order'] ?? 0,
             'datetime' => now(),
         ]);
@@ -44,13 +45,35 @@ class DashboardViewController extends Controller
 
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:128'],
-            'settings' => ['sometimes', 'array'],
+            'settings' => ['sometimes'],
             'order' => ['nullable', 'integer'],
         ]);
 
-        $view->update($validated);
+        $attributes = collect($validated)->except(['settings', 'order'])->all();
+        if (array_key_exists('settings', $validated)) {
+            $attributes['settings'] = $this->normalizeSettings($validated['settings']);
+        }
+        if ($request->filled('order')) {
+            $attributes['order'] = (int) $request->input('order');
+        }
+
+        $view->update($attributes);
 
         return back()->with('success', __('msg.dashboard_view_updated'));
+    }
+
+    /**
+     * 表单以 JSON 文本域提交，模型 cast 需要 array —— 统一归一化
+     */
+    private function normalizeSettings(mixed $settings): array
+    {
+        if (is_string($settings)) {
+            $decoded = json_decode($settings, true);
+
+            return is_array($decoded) ? $decoded : ['raw' => $settings];
+        }
+
+        return is_array($settings) ? $settings : [];
     }
 
     public function destroy(int $viewId): RedirectResponse

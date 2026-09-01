@@ -46,6 +46,21 @@
                                 {{ __('dashboard.install_code') }}
             </a>
 
+            @if (count($savedViews ?? []) > 0)
+                <select onchange="window.location=this.value ? this.value : window.location"
+                        class="rounded-xl border-zinc-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                    <option value="">{{ __('dashboard.saved_views') }}</option>
+                    @foreach ($savedViews as $view)
+                        <option value="{{ route('dashboard', ['website_id' => $view->website_id ?: $website->website_id]) }}">{{ $view->name }}</option>
+                    @endforeach
+                </select>
+            @endif
+
+            <a href="{{ route('dashboard-views.index') }}"
+               class="rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">
+                {{ __('dashboard.manage_views') }}
+            </a>
+
             <a href="{{ route('stats.visitors', ['website' => $website->website_id]) }}"
                class="rounded-xl bg-white/70 px-3.5 py-2 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-200 shadow-sm transition hover:bg-brand-50">
                 👥 {{ __('dashboard.view_visitors') }}

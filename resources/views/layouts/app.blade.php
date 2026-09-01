@@ -22,14 +22,18 @@
                 --}}
                 @php
                     $nav = $nav ?? 'dashboard';
-                                        $items = [
-                                                ['key' => 'dashboard', 'route' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'chart'],
+                    $unreadNotifications = auth()->user()->internalNotifications()->where('is_read', false)->count();
+                    $items = [
+                        ['key' => 'dashboard', 'route' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'chart'],
                         ['key' => 'websites', 'route' => 'websites.index', 'label' => __('Websites'), 'icon' => 'globe'],
+                        ['key' => 'domains', 'route' => 'domains.index', 'label' => __('nav.domains'), 'icon' => 'server'],
+                        ['key' => 'teams', 'route' => 'teams.index', 'label' => __('nav.teams'), 'icon' => 'users'],
                         ['key' => 'seo_audits', 'route' => 'seo.audits', 'label' => __('seo.nav_audits'), 'icon' => 'magnifier'],
                         ['key' => 'seo_keywords', 'route' => 'seo.keywords', 'label' => __('seo.nav_keywords'), 'icon' => 'target'],
                         ['key' => 'seo_backlinks', 'route' => 'seo.backlinks', 'label' => __('seo.nav_backlinks'), 'icon' => 'link'],
                         ['key' => 'payments', 'route' => 'payments.index', 'label' => __('nav.payments'), 'icon' => 'card'],
                         ['key' => 'referrals', 'route' => 'referrals.index', 'label' => __('nav.referrals'), 'icon' => 'gift'],
+                        ['key' => 'notifications', 'route' => 'notifications.index', 'label' => __('nav.notifications'), 'icon' => 'bell', 'badge' => $unreadNotifications],
                         ['key' => 'account', 'route' => 'account.index', 'label' => __('nav.account'), 'icon' => 'user'],
                     ];
                 @endphp
@@ -51,10 +55,19 @@
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
                         @elseif ($item['icon'] === 'user')
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                        @elseif ($item['icon'] === 'bell')
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg>
+                        @elseif ($item['icon'] === 'server')
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 17.25v-.228a4.5 4.5 0 0 0-.12-1.03l-2.268-9.64a3.375 3.375 0 0 0-3.285-2.602H7.923a3.375 3.375 0 0 0-3.285 2.602l-2.268 9.64a4.5 4.5 0 0 0-.12 1.03v.228m19.5 0a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3m19.5 0a3 3 0 0 0-3-3H5.25a3 3 0 0 0-3 3m16.5 0h.008v.008h-.008v-.008Zm-3 0h.008v.008h-.008v-.008Z"/></svg>
+                        @elseif ($item['icon'] === 'users')
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
                         @else
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.5-2.5 4-5.5 4-9s-1.5-6.5-4-9m0 18c-2.5-2.5-4-5.5-4-9s1.5-6.5 4-9M3.5 9h17m-17 6h17"/></svg>
                         @endif
                         {{ $item['label'] }}
+                        @if (($item['badge'] ?? 0) > 0)
+                            <span class="ml-auto rounded-full bg-rose-500/90 px-2 py-0.5 text-[11px] font-semibold leading-none text-white">{{ $item['badge'] > 99 ? '99+' : $item['badge'] }}</span>
+                        @endif
                     </a>
                 @endforeach
 
@@ -103,6 +116,11 @@
                         <a href="{{ route('admin.index') }}" class="text-sm font-semibold text-amber-600 hover:text-amber-700">{{ __('nav.admin') }}</a>
                     @endif
                                         <a href="{{ route('websites.index') }}" class="text-sm text-zinc-600">{{ __('Websites') }}</a>
+                    <a href="{{ route('teams.index') }}" class="text-sm text-zinc-600">{{ __('nav.teams') }}</a>
+                    <a href="{{ route('notifications.index') }}" class="relative text-sm text-zinc-600">{{ __('nav.notifications') }}
+                        @php $unread = auth()->user()->internalNotifications()->where('is_read', false)->count(); @endphp
+                        @if ($unread > 0)<span class="absolute -right-2 -top-1.5 rounded-full bg-rose-500 px-1.5 text-[10px] font-semibold leading-4 text-white">{{ $unread > 99 ? '99+' : $unread }}</span>@endif
+                    </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="text-sm text-zinc-500">{{ __('Log out') }}</button>

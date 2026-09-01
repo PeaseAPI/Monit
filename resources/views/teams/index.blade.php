@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.app', ['nav' => 'teams'])
 @section('content')
 <div class="max-w-7xl">
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('teams.my_teams') }}</h1>

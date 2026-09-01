@@ -21,9 +21,10 @@ class InternalNotificationsController extends Controller
         return view('internal_notifications.index', compact('notifications'));
     }
 
-    public function markAsRead(int $notificationId): RedirectResponse
+    public function markAsRead(Request $request, int $notificationId): RedirectResponse
     {
-        $notification = InternalNotification::findOrFail($notificationId);
+        // 归属校验：仅允许操作自己的通知（防 IDOR 越权）
+        $notification = $request->user()->internalNotifications()->findOrFail($notificationId);
         $notification->update(['is_read' => true]);
 
         return back()->with('success', __('msg.notification_read'));
@@ -38,9 +39,10 @@ class InternalNotificationsController extends Controller
         return back()->with('success', __('msg.all_notifications_read'));
     }
 
-    public function destroy(int $notificationId): RedirectResponse
+    public function destroy(Request $request, int $notificationId): RedirectResponse
     {
-        $notification = InternalNotification::findOrFail($notificationId);
+        // 归属校验：仅允许操作自己的通知（防 IDOR 越权）
+        $notification = $request->user()->internalNotifications()->findOrFail($notificationId);
         $notification->delete();
 
         return back()->with('success', __('msg.notification_deleted'));

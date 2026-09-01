@@ -44,7 +44,16 @@ class TeamController extends Controller
 
     public function show(Request $request, int $teamId)
     {
-        $team = Team::findOrFail($teamId);
+        // 归属校验：仅团队 owner 或已接受邀请的成员可访问
+        $team = Team::where('team_id', $teamId)
+            ->where(function ($query) use ($request) {
+                $query->where('user_id', $request->user()->user_id)
+                    ->orWhereHas('members', function ($q) use ($request) {
+                        $q->where('user_id', $request->user()->user_id)->where('status', 1);
+                    });
+            })
+            ->firstOrFail();
+
         $members = $team->members()->with('user')->get();
         $userWebsites = $request->user()->websites()->get();
 
@@ -60,7 +69,10 @@ class TeamController extends Controller
             'access' => ['nullable', 'array'],
         ]);
 
-        $team = Team::findOrFail($validated['team_id']);
+        // 归属校验：仅团队 owner 可邀请成员
+        $team = Team::where('team_id', $validated['team_id'])
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
 
         // 检查是否已存在
         if (TeamMember::where('team_id', $team->team_id)
@@ -98,6 +110,12 @@ class TeamController extends Controller
     public function remove(Request $request, int $memberId): RedirectResponse
     {
         $member = TeamMember::findOrFail($memberId);
+
+        // 归属校验：仅团队 owner 可移除成员
+        if ((int) $member->team->user_id !== (int) $request->user()->user_id) {
+            abort(403);
+        }
+
         $teamId = $member->team_id;
         $member->delete();
 
@@ -107,7 +125,11 @@ class TeamController extends Controller
 
     public function destroy(Request $request, int $teamId): RedirectResponse
     {
-        $team = Team::findOrFail($teamId);
+        // 归属校验：仅团队 owner 可解散团队
+        $team = Team::where('team_id', $teamId)
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
+
         $team->members()->delete();
         $team->delete();
 
