@@ -388,6 +388,7 @@ class AdminSettings extends Controller
                 'seo_double_check_wait' => 'nullable|integer|min:1|max:10',
                 'domain_monitor_alert_days' => 'nullable|string|max:64|regex:/^\d+(\s*,\s*\d+)*$/',
                 'archives_retention_days' => 'nullable|integer|min:0|max:3650',
+                'serpapi_api_key' => 'nullable|string|max:256',
             ],
             'users' => [
                 'register_is_enabled' => 'boolean',

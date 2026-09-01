@@ -25,6 +25,9 @@
                                         $items = [
                                                 ['key' => 'dashboard', 'route' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'chart'],
                         ['key' => 'websites', 'route' => 'websites.index', 'label' => __('Websites'), 'icon' => 'globe'],
+                        ['key' => 'seo_audits', 'route' => 'seo.audits', 'label' => __('seo.nav_audits'), 'icon' => 'magnifier'],
+                        ['key' => 'seo_keywords', 'route' => 'seo.keywords', 'label' => __('seo.nav_keywords'), 'icon' => 'target'],
+                        ['key' => 'seo_backlinks', 'route' => 'seo.backlinks', 'label' => __('seo.nav_backlinks'), 'icon' => 'link'],
                         ['key' => 'payments', 'route' => 'payments.index', 'label' => __('nav.payments'), 'icon' => 'card'],
                         ['key' => 'referrals', 'route' => 'referrals.index', 'label' => __('nav.referrals'), 'icon' => 'gift'],
                         ['key' => 'account', 'route' => 'account.index', 'label' => __('nav.account'), 'icon' => 'user'],
@@ -36,6 +39,12 @@
                               {{ $nav === $item['key'] ? 'bg-brand-600/20 text-brand-300' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100' }}">
                                                 @if ($item['icon'] === 'chart')
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.5 8.5 8l4 4 8-8M21 4v6m0-6h-6"/></svg>
+                        @elseif ($item['icon'] === 'magnifier')
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                        @elseif ($item['icon'] === 'target')
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm0-4.5a4.5 4.5 0 100-9 4.5 4.5 0 000 9zm0-3a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
+                        @elseif ($item['icon'] === 'link')
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
                         @elseif ($item['icon'] === 'card')
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
                         @elseif ($item['icon'] === 'gift')

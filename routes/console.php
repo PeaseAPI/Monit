@@ -74,3 +74,10 @@ Schedule::command('monit:seo-domains-monitor')->dailyAt('06:30');
 
 // 每日 03:15：SEO 归档清理（按套餐 seo_history_retention_days）
 Schedule::command('monit:seo-archives-cleanup')->dailyAt('03:15');
+
+// 每小时：关键词排名刷新（seo.serpapi_api_key 已配置时扫描到期关键词）
+Schedule::command('monit:seo-keywords-refresh')->hourly();
+
+// 每日 05:30：反链活性重验（抓源页匹配目标站链接，标记 active/lost）
+Schedule::command('monit:seo-backlinks-verify')->dailyAt('05:30');
+

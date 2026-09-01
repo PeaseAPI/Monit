@@ -72,6 +72,11 @@
                 <input type="number" min="1" max="10" name="seo_double_check_wait" class="form-input" value="{{ old('seo_double_check_wait', $settings['seo.seo_double_check_wait'] ?? 2) }}">
                 <p class="form-hint">首次失败后等待多久发起重试</p>
             </div>
+            <div>
+                <label class="form-label">SerpApi 密钥（关键词排名自动查询）</label>
+                <input type="text" name="serpapi_api_key" class="form-input font-mono text-[13px]" value="{{ old('serpapi_api_key', $settings['seo.serpapi_api_key'] ?? '') }}" autocomplete="off">
+                <p class="form-hint">配置后关键词排名跟踪支持每日/每周自动 SERP 查询（Google/Bing/Baidu）；留空则仅支持手动录入排名快照</p>
+            </div>
         </div>
     </section>
 

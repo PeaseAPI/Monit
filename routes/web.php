@@ -61,6 +61,8 @@ use App\Http\Controllers\PayThankYouController;
 use App\Http\Controllers\PublicStatisticsController;
 use App\Http\Controllers\ReplayController;
 use App\Http\Controllers\SeoAuditController;
+use App\Http\Controllers\SeoBacklinkController;
+use App\Http\Controllers\SeoKeywordController;
 use App\Http\Controllers\SeoNotificationHandlerController;
 use App\Http\Controllers\SeoToolController;
 use App\Http\Controllers\SessionAjaxController;
@@ -389,6 +391,21 @@ Route::middleware('auth')->group(function (): void {
     // SEO：网站 SEO 标签页（can:own,website）
     Route::get('/websites/{website}/seo', [WebsiteSeoController::class, 'show'])->middleware('can:own,website', 'seo.feature:audits')->name('websites.seo');
     Route::put('/websites/{website}/seo', [WebsiteSeoController::class, 'update'])->middleware('can:own,website', 'seo.feature:audits')->name('websites.seo.update');
+
+    // SEO：关键词排名跟踪（SerpApi 自动 / 手动快照，融合方案 §8 扩展）
+    Route::get('/seo/keywords', [SeoKeywordController::class, 'index'])->middleware('seo.feature:audits')->name('seo.keywords');
+    Route::post('/seo/keywords', [SeoKeywordController::class, 'store'])->middleware('seo.feature:audits', 'throttle:20,1')->name('seo.keywords.store');
+    Route::put('/seo/keywords/{keyword}', [SeoKeywordController::class, 'update'])->middleware('seo.feature:audits')->name('seo.keywords.update');
+    Route::post('/seo/keywords/{keyword}/snapshot', [SeoKeywordController::class, 'snapshot'])->middleware('seo.feature:audits')->name('seo.keywords.snapshot');
+    Route::post('/seo/keywords/{keyword}/refresh', [SeoKeywordController::class, 'refresh'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.keywords.refresh');
+    Route::delete('/seo/keywords/{keyword}', [SeoKeywordController::class, 'destroy'])->middleware('seo.feature:audits')->name('seo.keywords.destroy');
+
+    // SEO：反链分析（台账 + 活性重验，融合方案 §8 扩展）
+    Route::get('/seo/backlinks', [SeoBacklinkController::class, 'index'])->middleware('seo.feature:audits')->name('seo.backlinks');
+    Route::post('/seo/backlinks', [SeoBacklinkController::class, 'store'])->middleware('seo.feature:audits', 'throttle:20,1')->name('seo.backlinks.store');
+    Route::post('/seo/backlinks/{backlink}/verify', [SeoBacklinkController::class, 'verify'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.backlinks.verify');
+    Route::delete('/seo/backlinks/{backlink}', [SeoBacklinkController::class, 'destroy'])->middleware('seo.feature:audits')->name('seo.backlinks.destroy');
+    Route::get('/seo/backlinks/export', [SeoBacklinkController::class, 'export'])->middleware('seo.feature:audits')->name('seo.backlinks.export');
 
     // 团队协作
     Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
