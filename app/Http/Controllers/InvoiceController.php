@@ -19,6 +19,9 @@ class InvoiceController extends Controller
      */
     public function index(): View
     {
+        // 发票开关（payment.invoice_is_enabled，默认开启）
+        abort_unless(\App\Http\Controllers\PaymentController::invoiceEnabled(), 404);
+
         // status 为 tinyint（1=paid）；datetime 为下单时间列（无 created_at 时间戳列）
         $payments = Payment::where('user_id', auth()->id())
             ->where('status', 1)

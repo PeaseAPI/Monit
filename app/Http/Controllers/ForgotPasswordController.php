@@ -34,6 +34,12 @@ class ForgotPasswordController extends Controller
      */
     public function sendResetLinkEmail(Request $request): RedirectResponse
     {
+        // 人机验证（captcha.captcha_on_lost_password）
+        if (\App\Support\Captcha::enabled('lost_password') && ! \App\Support\Captcha::verify(\App\Support\Captcha::tokenFrom($request->all()))) {
+            return back()->withInput($request->only('email'))
+                ->withErrors(['captcha' => __('validation.captcha_failed')]);
+        }
+
         $validated = $request->validate([
             'email' => ['required', 'string', 'max:256'],
         ], [

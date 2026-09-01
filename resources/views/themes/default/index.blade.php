@@ -10,7 +10,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ \App\Support\Brand::heroTitle() ?? __('landing.title') }} · {{ \App\Support\Brand::name() }}</title>
+    <title>{{ \App\Support\Brand::heroTitle() ?? __('landing.title') }} {{ \App\Support\Brand::titleSeparator() }} {{ \App\Support\Brand::name() }}</title>
     <meta name="description" content="{{ __('landing.subtitle') }}">
     @include('parts.brand_head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -18,6 +18,16 @@
 <body class="bg-white font-sans text-zinc-900 antialiased">
 
     @include('parts.announcement_bar')
+
+    {{-- 头部广告位（ads.ads_header，后台可投放任意 HTML） --}}
+    @if ($adsHeader = trim((string) \App\Support\Settings::get('ads.ads_header', '')))
+        <div class="mx-auto max-w-7xl px-6 pt-4">{!! $adsHeader !!}</div>
+    @endif
+
+    {{-- 首页自定义 HTML（content.index_html，紧跟公告/广告之后注入） --}}
+    @if ($indexHtml = trim((string) \App\Support\Settings::get('content.index_html', '')))
+        {!! $indexHtml !!}
+    @endif
 
     {{{-- ===== 顶部导航 ===== --}}}
     <header class="sticky top-0 z-40 border-b border-zinc-100 bg-white/80 backdrop-blur-lg">
@@ -470,6 +480,34 @@
 
     @endif
 
+    {{-- 最新博客（main.display_index_latest_blog_posts，默认关闭；有已发布文章才显示） --}}
+    @php($showLatestPosts = \App\Support\Settings::get('main.display_index_latest_blog_posts'))
+    @if (in_array($showLatestPosts, [true, 1, '1', 'true', 'on'], true))
+        @php($latestPosts = \App\Models\BlogPost::where('is_published', true)->orderByDesc('datetime')->limit(3)->get())
+        @if ($latestPosts->isNotEmpty())
+        <section class="border-t border-zinc-100 bg-white py-16 md:py-20">
+            <div class="mx-auto max-w-7xl px-6">
+                <div class="flex items-end justify-between">
+                    <div>
+                        <p class="text-sm font-semibold tracking-widest text-brand-600 uppercase">{{ __('landing.latest_posts_eyebrow') }}</p>
+                        <h2 class="mt-2 text-3xl font-bold tracking-tight text-zinc-900">{{ __('landing.latest_posts_title') }}</h2>
+                    </div>
+                    <a href="{{ route('blog') }}" class="hidden text-sm font-semibold text-brand-600 transition hover:text-brand-700 sm:block">{{ __('landing.latest_posts_all') }} →</a>
+                </div>
+                <div class="mt-10 grid gap-6 md:grid-cols-3">
+                    @foreach ($latestPosts as $post)
+                        <a href="{{ route('blog.post', $post->url) }}" class="group rounded-2xl border border-zinc-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-lg hover:shadow-brand-600/5">
+                            <time class="text-xs font-medium text-zinc-400" datetime="{{ $post->datetime?->toIso8601String() }}">{{ $post->datetime?->format('Y-m-d') }}</time>
+                            <h3 class="mt-2 line-clamp-2 font-semibold text-zinc-900 transition group-hover:text-brand-600">{{ $post->title }}</h3>
+                            <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-zinc-500">{{ strip_tags((string) $post->description) }}</p>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+        @endif
+    @endif
+
 
     {{-- ===== CTA ===== --}}
     <section class="py-20 md:py-24">
@@ -530,8 +568,11 @@
                 <div>
                     <h4 class="text-sm font-semibold text-zinc-200">{{ __('landing.footer_legal') }}</h4>
                     <ul class="mt-4 space-y-2.5 text-sm text-zinc-500">
-                        <li><a href="{{ route('page', 'terms') }}" class="transition hover:text-white">{{ __('landing.footer_terms') }}</a></li>
-                        <li><a href="{{ route('page', 'privacy') }}" class="transition hover:text-white">{{ __('landing.footer_privacy') }}</a></li>
+                        {{-- 法务链接（main.terms_and_conditions_url / privacy_policy_url）：外链优先，站内静态页兜底 --}}
+                        @php($termsUrl = trim((string) \App\Support\Settings::get('main.terms_and_conditions_url', '')))
+                        @php($privacyUrl = trim((string) \App\Support\Settings::get('main.privacy_policy_url', '')))
+                        <li><a href="{{ $termsUrl !== '' ? $termsUrl : route('terms') }}"@if ($termsUrl !== '') target="_blank" rel="noopener"@endif class="transition hover:text-white">{{ __('landing.footer_terms') }}</a></li>
+                        <li><a href="{{ $privacyUrl !== '' ? $privacyUrl : route('privacy') }}"@if ($privacyUrl !== '') target="_blank" rel="noopener"@endif class="transition hover:text-white">{{ __('landing.footer_privacy') }}</a></li>
                     </ul>
                 </div>
             </div>

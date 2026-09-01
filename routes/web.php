@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountApiController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountPaymentsController;
+use App\Support\Settings;
 use App\Http\Controllers\AccountPlanController;
 use App\Http\Controllers\AccountPreferencesController;
 use App\Http\Controllers\ActivationController;
@@ -149,6 +150,10 @@ Route::get('/api-documentation', [IndexController::class, 'apiDocs'])->name('api
 
 // 站点地图 / Cookie 同意 / 退订 / 维护页（规格书 §6.1）
 Route::get('/sitemap', [IndexController::class, 'sitemap'])->name('sitemap');
+
+// 法务静态页（content.terms_html / content.privacy_html，对标原版 /terms /privacy）
+Route::get('/terms', [IndexController::class, 'terms'])->name('terms');
+Route::get('/privacy', [IndexController::class, 'privacy'])->name('privacy');
 
 // M23 静态文档页兜道路由：Nginx/Apache 通常直接服务 public/docs/*.html，
 // 该路由保证未配置静态直服（或测试）环境同样可访问。
@@ -813,7 +818,36 @@ Route::get('/dynamic-og-images/{type}/{id}', function (string $type, int $id) {
     return $imageService->generate($type, $id);
 })->name('dynamic-og-images.generate');
 
-// 404 兜底路由（规格书 §6.1：/not-found）
+// 404 兜底路由（规格书 §6.1：/not-found；main.not_found_url 配置时跳转外部页面）
 Route::fallback(function () {
+    if ($url = trim((string) \App\Support\Settings::get('main.not_found_url', ''))) {
+        return redirect()->away($url, 302);
+    }
+
     return response()->view('errors.404', [], 404);
 });
+
+// 动态 robots.txt（main.sitemap_url 写入 Sitemap 行；main.ai_crawlers_is_enabled=false 时屏蔽 AI 爬虫）
+Route::get('/robots.txt', function () {
+    $lines = ['User-agent: *', 'Disallow:'];
+
+    // AI 爬虫策略（main.ai_crawlers_is_enabled=false → 拒绝常见 AI 抓取器）
+    $aiCrawlers = Settings::get('main.ai_crawlers_is_enabled');
+
+    if ($aiCrawlers !== null && ! in_array($aiCrawlers, [true, 1, '1', 'true', 'on'], true)) {
+        $lines = array_merge($lines, [
+            '', 'User-agent: GPTBot', 'Disallow: /',
+            '', 'User-agent: CCBot', 'Disallow: /',
+            '', 'User-agent: ClaudeBot', 'Disallow: /',
+            '', 'User-agent: Google-Extended', 'Disallow: /',
+            '', 'User-agent: Bytespider', 'Disallow: /',
+        ]);
+    }
+
+    if ($sitemap = trim((string) Settings::get('main.sitemap_url', ''))) {
+        $lines[] = '';
+        $lines[] = 'Sitemap: '.$sitemap;
+    }
+
+    return response(implode("\n", $lines), 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+})->name('robots.txt');

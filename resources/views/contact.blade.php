@@ -8,6 +8,15 @@
         <div><label class="block text-sm font-medium text-zinc-700">{{ __('contact.name_label') }}</label><input type="text" name="name" value="{{ old('name') }}" required class="form-input"></div>
         <div><label class="block text-sm font-medium text-zinc-700">{{ __('contact.email_label') }}</label><input type="email" name="email" value="{{ old('email') }}" required class="form-input"></div>
         <div><label class="block text-sm font-medium text-zinc-700">{{ __('contact.message_label') }}</label><textarea name="message" rows="4" required class="form-input">{{ old('message') }}</textarea></div>
+        @php($captcha = \App\Support\Captcha::widget('contact'))
+        @if ($captcha)
+            <div>
+                {!! $captcha !!}
+                @error('captcha')
+                    <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+        @endif
         <button class="rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('contact.send') }}</button>
     </form>
 </div>

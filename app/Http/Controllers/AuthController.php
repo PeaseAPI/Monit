@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Mail\ActivateUser;
+use App\Mail\WelcomeUser;
 use App\Models\AccountLog;
 use App\Models\User;
 use App\Services\Sms\SmsService;
 use App\Services\TotpService;
 use App\Services\UserAgentParser;
 use App\Services\WebhookService;
+use App\Support\Captcha;
 use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,6 +35,12 @@ class AuthController extends Controller
 
     public function login(Request $request): RedirectResponse
     {
+        // 人机验证（captcha.captcha_on_login）：失败直接打回
+        if (Captcha::enabled('login') && ! Captcha::verify(Captcha::tokenFrom($request->all()))) {
+            return back()->withInput($request->only('email'))
+                ->withErrors(['captcha' => __('validation.captcha_failed')]);
+        }
+
         // 手机号登录（M17 §12.5）：开关开启且输入为手机号时走手机号流程（密码或短信验证码）
         $identifier = trim((string) $request->input('email', ''));
 
@@ -105,8 +113,8 @@ class AuthController extends Controller
                 ->withErrors(['email' => __('validation.account_disabled')]);
         }
 
-        // 两步验证（规格书 §12.4）：已开启则进入二步验证流程
-        if ($user->twofa_is_enabled) {
+        // 两步验证（规格书 §12.4）：平台开关 users.two_fa_is_enabled 开启且用户已启用时进入二步验证流程
+        if ($user->twofa_is_enabled && self::twoFaEnabled()) {
             $request->session()->put([
                 'twofa_user_id' => $user->user_id,
                 'twofa_remember' => $remember,
@@ -115,6 +123,9 @@ class AuthController extends Controller
 
             return redirect()->route('login.twofa');
         }
+
+        // remember-me Cookie 有效期（users.login_rememberme_cookie_days）
+        Auth::guard('web')->setRememberDuration(self::rememberLifetimeMinutes());
 
         Auth::login($user, $remember);
 
@@ -145,6 +156,10 @@ class AuthController extends Controller
      */
     public function verifyTwoFactor(Request $request): RedirectResponse
     {
+        if (! self::twoFaEnabled()) {
+            return redirect()->route('login');
+        }
+
         $validated = $request->validate([
             'code' => ['required', 'digits:6'],
         ], [
@@ -170,6 +185,7 @@ class AuthController extends Controller
 
         $request->session()->forget(['twofa_user_id', 'twofa_remember', 'twofa_expires_at']);
 
+        Auth::guard('web')->setRememberDuration(self::rememberLifetimeMinutes());
         Auth::login($user, $request->session()->get('twofa_remember', false));
 
         $user->forceFill([
@@ -184,6 +200,11 @@ class AuthController extends Controller
 
     public function showRegister(Request $request)
     {
+        // 注册总开关（main.registration_is_enabled）：关闭时前台不可达
+        if (! self::registrationEnabled()) {
+            return redirect()->route('login')->withErrors(['email' => __('auth.registration_disabled')]);
+        }
+
         // 如果 URL 中有推荐码，保存到 session
         if ($ref = $request->query('ref')) {
             session(['referral_key' => $ref]);
@@ -191,11 +212,23 @@ class AuthController extends Controller
 
         return view('auth.register', [
             'smsRegisterEnabled' => SmsService::scenarioEnabled('register'),
+            'requireConsent' => self::requireConsent(),
+            'termsUrl' => self::termsUrl(),
         ]);
     }
 
     public function register(Request $request): RedirectResponse
     {
+        // 注册总开关（main.registration_is_enabled）：关闭时拒绝提交
+        if (! self::registrationEnabled()) {
+            return redirect()->route('login')->withErrors(['email' => __('auth.registration_disabled')]);
+        }
+
+        // 人机验证（captcha.captcha_on_register）
+        if (Captcha::enabled('register') && ! Captcha::verify(Captcha::tokenFrom($request->all()))) {
+            return back()->withErrors(['captcha' => __('validation.captcha_failed')]);
+        }
+
         // 短信验证注册（M17 §12.5）：开关开启时需手机号 + 短信验证码
         $smsRegister = SmsService::scenarioEnabled('register');
 
@@ -210,6 +243,11 @@ class AuthController extends Controller
             $rules['sms_code'] = ['required', 'digits:6'];
         }
 
+        // 条款同意（users.user_registration_require_consent）：开启时必须勾选
+        if (self::requireConsent()) {
+            $rules['terms'] = ['accepted'];
+        }
+
         $validated = $request->validate($rules, [
             'name.required' => __('validation.name_required'),
             'email.required' => __('validation.email_required'),
@@ -222,6 +260,7 @@ class AuthController extends Controller
             'phone.unique' => __('auth.phone_taken'),
             'sms_code.required' => __('validation.sms_code_required'),
             'sms_code.digits' => __('auth.sms_code_invalid'),
+            'terms.accepted' => __('auth.terms_required'),
         ]);
 
         // 注册黑名单（后台 设置→用户：域名 / IP，原版 blacklisted_*）
@@ -242,6 +281,18 @@ class AuthController extends Controller
             return back()
                 ->withInput($request->except(['password', 'password_confirmation', 'sms_code']))
                 ->withErrors(['email' => __('auth.registration_blocked')]);
+        }
+
+        // 国家黑名单（users.blacklisted_countries，ISO-3166 alpha-2 逗号分隔）
+        // 国家来源：CF-IPCountry 请求头（Cloudflare）→ 无来源时跳过检测
+        if ($blockedCountries = self::blacklistedCountries()) {
+            $country = strtoupper(trim((string) $request->header('CF-IPCountry', '')));
+
+            if ($country !== '' && in_array($country, $blockedCountries, true)) {
+                return back()
+                    ->withInput($request->except(['password', 'password_confirmation', 'sms_code']))
+                    ->withErrors(['email' => __('auth.registration_blocked')]);
+            }
         }
 
         // 短信验证码校验（一次性）
@@ -280,8 +331,8 @@ class AuthController extends Controller
             'plan_id' => 'free',
             'referral_key' => Str::random(32),
             'api_key' => Str::random(60),
-            'language' => 'zh_CN',
-            'timezone' => 'Asia/Shanghai',
+            'language' => self::defaultLanguage(),
+            'timezone' => self::defaultTimezone(),
             'status' => $requireActivation ? 0 : 1,
             'email_activation_code' => $activationCode,
             'ip' => $request->ip(),
@@ -308,6 +359,15 @@ class AuthController extends Controller
         }
 
         Auth::login($user);
+
+        // 欢迎邮件（users.welcome_email_is_enabled）：免激活注册立即发送
+        if (self::welcomeEmailEnabled()) {
+            try {
+                Mail::to($user->email)->send(new WelcomeUser($user));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('welcome_email_failed', ['error' => $e->getMessage()]);
+            }
+        }
 
         $user->forceFill(['last_activity' => now(), 'total_logins' => 1])->save();
 
@@ -345,5 +405,84 @@ class AuthController extends Controller
             'browser_name' => $browserName,
             'datetime' => now(),
         ]);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* 设置驱动的平台开关（原版对标：main/users 组） */
+    /* ------------------------------------------------------------------ */
+
+    /** 注册总开关 main.registration_is_enabled（默认开启） */
+    public static function registrationEnabled(): bool
+    {
+        return self::on(Settings::get('main.registration_is_enabled'), default: true);
+    }
+
+    /** 两步验证平台开关 users.two_fa_is_enabled（默认开启：用户已配置的 2FA 不因后台关闭而失效） */
+    public static function twoFaEnabled(): bool
+    {
+        return self::on(Settings::get('users.two_fa_is_enabled'), default: true);
+    }
+
+    /** 注册条款勾选 users.user_registration_require_consent */
+    public static function requireConsent(): bool
+    {
+        return self::on(Settings::get('users.user_registration_require_consent'), default: false);
+    }
+
+    /** 欢迎邮件开关 users.welcome_email_is_enabled（默认开启） */
+    public static function welcomeEmailEnabled(): bool
+    {
+        return self::on(Settings::get('users.welcome_email_is_enabled'), default: true);
+    }
+
+    /** 条款链接 main.terms_and_conditions_url（无外部链接时回退站内 /terms） */
+    public static function termsUrl(): string
+    {
+        $url = trim((string) Settings::get('main.terms_and_conditions_url', ''));
+
+        return $url !== '' ? $url : route('terms');
+    }
+
+    /** 新用户默认语言 main.default_language（回退 zh_CN） */
+    public static function defaultLanguage(): string
+    {
+        $language = trim((string) Settings::get('main.default_language', ''));
+
+        return array_key_exists($language, (array) config('monit.locales')) ? $language : 'zh_CN';
+    }
+
+    /** 新用户默认时区 main.default_timezone（回退 Asia/Shanghai） */
+    public static function defaultTimezone(): string
+    {
+        $timezone = trim((string) Settings::get('main.default_timezone', ''));
+
+        return in_array($timezone, timezone_identifiers_list(), true) ? $timezone : 'Asia/Shanghai';
+    }
+
+    /** 国家黑名单 users.blacklisted_countries（逗号分隔 ISO alpha-2） */
+    public static function blacklistedCountries(): array
+    {
+        $raw = (string) Settings::get('users.blacklisted_countries', '');
+
+        return array_values(array_filter(array_map(
+            fn ($c) => strtoupper(trim($c)),
+            preg_split('/[,\\s]+/', $raw) ?: []
+        )));
+    }
+
+    /** remember-me Cookie 有效期（users.login_rememberme_cookie_days，默认 30 天） */
+    public static function rememberLifetimeMinutes(): int
+    {
+        $days = (int) Settings::get('users.login_rememberme_cookie_days', 30);
+
+        return max(1, $days) * 24 * 60;
+    }
+
+    protected static function on(mixed $value, bool $default = true): bool
+    {
+        return match ($value) {
+            null, '' => $default,
+            default => in_array($value, [true, 1, '1', 'true', 'on'], true),
+        };
     }
 }

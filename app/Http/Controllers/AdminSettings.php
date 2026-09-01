@@ -640,6 +640,11 @@ class AdminSettings extends Controller
                 'webhook_payment_failure_url' => 'nullable|url',
                 'webhook_user_register_url' => 'nullable|url',
                 'webhook_user_delete_url' => 'nullable|url',
+                'webhook_user_update_url' => 'nullable|url',
+                'webhook_code_redeemed_url' => 'nullable|url',
+                'webhook_contact_url' => 'nullable|url',
+                'webhook_domain_new_url' => 'nullable|url',
+                'webhook_domain_update_url' => 'nullable|url',
                 // ↓ 原版对标补充（66 分析 / AltumCode）
                 'webhooks_secret_key' => 'nullable|string|max:128',
                 'webhooks_user_update' => 'boolean',

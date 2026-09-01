@@ -37,6 +37,7 @@ class Brand
     /**
      * Logo 地址（$dark=true 时优先取深色版本）
      * 兼容旧 custom_images.logo 设置（M16 遗留字段）
+     * 全部留空时回退 public/logo.png（默认品牌资产）
      */
     public static function logoUrl(bool $dark = false): ?string
     {
@@ -49,16 +50,17 @@ class Brand
         $url ??= self::trimOrNull((string) Settings::get('branding.logo_url', ''));
         $url ??= self::trimOrNull((string) Settings::get('custom_images.logo', ''));
 
-        return $url;
+        return $url ?? '/logo.png';
     }
 
     /**
-     * Favicon 地址（留空时布局回退内置 emoji SVG）
+     * Favicon 地址（留空时回退 public/favicon.ico）
      */
     public static function faviconUrl(): ?string
     {
         return self::trimOrNull((string) Settings::get('branding.favicon_url', ''))
-            ?? self::trimOrNull((string) Settings::get('custom_images.favicon', ''));
+            ?? self::trimOrNull((string) Settings::get('custom_images.favicon', ''))
+            ?? '/favicon.ico';
     }
 
     /**
@@ -92,6 +94,16 @@ class Brand
         }
 
         return '<style>'."\n".$vars.'</style>';
+    }
+
+    /**
+     * 页面标题分隔符（main.title_separator，默认 ·）
+     */
+    public static function titleSeparator(): string
+    {
+        $separator = trim((string) Settings::get('main.title_separator', ''));
+
+        return $separator !== '' ? mb_substr($separator, 0, 8) : '·';
     }
 
     /**

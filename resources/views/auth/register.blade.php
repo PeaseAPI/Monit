@@ -66,6 +66,34 @@
                 </div>
             @endif
 
+            {{-- 人机验证（captcha.captcha_on_register）：开启时渲染供应商 widget --}}
+            @php($captcha = \App\Support\Captcha::widget('register'))
+            @if ($captcha)
+                <div>
+                    {!! $captcha !!}
+                    @error('captcha')
+                        <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endif
+
+            {{-- 条款同意（users.user_registration_require_consent） --}}
+            @if ($requireConsent ?? false)
+                <div>
+                    <label class="flex items-start gap-2.5 text-sm text-zinc-600">
+                        <input type="checkbox" name="terms" value="1" required
+                               class="mt-0.5 rounded border-zinc-300 text-brand-600 focus:ring-brand-500">
+                        <span>
+                            {{ __('auth.terms_consent') }}
+                            <a href="{{ $termsUrl }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ __('auth.terms_link') }}</a>
+                        </span>
+                    </label>
+                    @error('terms')
+                        <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endif
+
             <button type="submit"
                     class="w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-600/30 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
                 {{ __('auth.register_btn') }}

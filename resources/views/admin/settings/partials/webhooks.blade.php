@@ -18,6 +18,36 @@
             <label class="form-label">用户删除 Webhook URL</label>
             <input type="url" name="webhook_user_delete_url" class="form-input w-full" value="{{ old('webhook_user_delete_url', $settings['webhooks.webhook_user_delete_url'] ?? '') }}" placeholder="https://your-server.com/webhook/user-delete">
         </div>
+        <div>
+            <label class="form-label">用户资料更新 Webhook URL</label>
+            <input type="url" name="webhook_user_update_url" class="form-input w-full" value="{{ old('webhook_user_update_url', $settings['webhooks.webhook_user_update_url'] ?? '') }}" placeholder="https://your-server.com/webhook/user-update">
+        </div>
+        <div>
+            <label class="form-label">优惠码核销 Webhook URL</label>
+            <input type="url" name="webhook_code_redeemed_url" class="form-input w-full" value="{{ old('webhook_code_redeemed_url', $settings['webhooks.webhook_code_redeemed_url'] ?? '') }}" placeholder="https://your-server.com/webhook/code-redeemed">
+        </div>
+        <div>
+            <label class="form-label">联系我们提交 Webhook URL</label>
+            <input type="url" name="webhook_contact_url" class="form-input w-full" value="{{ old('webhook_contact_url', $settings['webhooks.webhook_contact_url'] ?? '') }}" placeholder="https://your-server.com/webhook/contact">
+        </div>
+        <div>
+            <label class="form-label">新域名绑定 Webhook URL</label>
+            <input type="url" name="webhook_domain_new_url" class="form-input w-full" value="{{ old('webhook_domain_new_url', $settings['webhooks.webhook_domain_new_url'] ?? '') }}" placeholder="https://your-server.com/webhook/domain-new">
+        </div>
+        <div>
+            <label class="form-label">域名状态变更 Webhook URL</label>
+            <input type="url" name="webhook_domain_update_url" class="form-input w-full" value="{{ old('webhook_domain_update_url', $settings['webhooks.webhook_domain_update_url'] ?? '') }}" placeholder="https://your-server.com/webhook/domain-update">
+        </div>
+        <div>
+            <label class="form-label">定时任务开始 Webhook URL</label>
+            <input type="url" name="start_url" class="form-input w-full" value="{{ old('start_url', $settings['webhooks.start_url'] ?? '') }}" placeholder="https://your-server.com/webhook/cron-start">
+            <p class="form-hint">cron 启动时推送（需同时勾选下方「定时任务开始」开关）</p>
+        </div>
+        <div>
+            <label class="form-label">定时任务结束 Webhook URL</label>
+            <input type="url" name="end_url" class="form-input w-full" value="{{ old('end_url', $settings['webhooks.end_url'] ?? '') }}" placeholder="https://your-server.com/webhook/cron-end">
+            <p class="form-hint">cron 结束时推送执行摘要（需同时勾选下方「定时任务结束」开关）</p>
+        </div>
     </div>
 </div>
 

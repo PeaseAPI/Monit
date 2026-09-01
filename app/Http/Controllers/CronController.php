@@ -19,10 +19,11 @@ class CronController extends Controller
     /**
      * Cron 鉴权（fail-closed）：key 未配置（null/空）一律拒绝；
      * hash_equals 常时比较防时序侧信道
+     * key 来源：settings cron.cron_key（后台可改）→ config('app.cron_key') 兜底
      */
     protected function authorized(Request $request): bool
     {
-        $expected = (string) config('app.cron_key');
+        $expected = trim((string) \App\Support\Settings::get('cron.cron_key', '')) ?: (string) config('app.cron_key');
 
         if ($expected === '') {
             return false;
@@ -43,6 +44,9 @@ class CronController extends Controller
             return response()->json(['error' => 'Invalid cron key'], 403);
         }
 
+        // Webhook：cron 开始（webhooks.webhooks_cron_start）
+        app(\App\Services\WebhookService::class)->cronStart();
+
         $results = [];
         $results['users_plan_expiration'] = $this->usersPlanExpiration();
         $results['auto_delete_unconfirmed'] = $this->autoDeleteUnconfirmedUsers();
@@ -51,6 +55,9 @@ class CronController extends Controller
         $results['users_plan_expiry_reminder'] = $this->usersPlanExpiryReminder();
         $results['broadcasts'] = $this->broadcasts();
         $results['email_reports'] = $this->emailReports();
+
+        // Webhook：cron 结束（webhooks.webhooks_cron_end）
+        app(\App\Services\WebhookService::class)->cronEnd($results);
 
         return response()->json(['status' => 'ok', 'results' => $results]);
     }
@@ -65,6 +72,18 @@ class CronController extends Controller
             return response()->json(['error' => 'Invalid cron key'], 403);
         }
 
+        // 子任务开关（cron.cron_email_reports / cron_broadcasts / cron_push_notifications，默认开启）
+        $enabled = match ($task) {
+            'email_reports' => $this->cronTaskOn('cron_email_reports'),
+            'broadcasts' => $this->cronTaskOn('cron_broadcasts'),
+            'push_notifications' => $this->cronTaskOn('cron_push_notifications'),
+            default => true,
+        };
+
+        if (! $enabled) {
+            return response()->json(['status' => 'skipped', 'task' => $task, 'reason' => 'disabled']);
+        }
+
         $result = match ($task) {
             'email_reports' => $this->emailReports(),
             'broadcasts' => $this->broadcasts(),
@@ -77,6 +96,16 @@ class CronController extends Controller
         }
 
         return response()->json(['status' => 'ok', 'task' => $task, 'result' => $result]);
+    }
+
+    /**
+     * cron 子任务开关（settings cron 组，默认开启）
+     */
+    protected function cronTaskOn(string $key): bool
+    {
+        $value = \App\Support\Settings::get('cron.'.$key);
+
+        return $value === null || in_array($value, [true, 1, '1', 'true', 'on'], true);
     }
 
     /**

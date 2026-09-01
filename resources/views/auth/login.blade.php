@@ -55,6 +55,17 @@
                 <a href="{{ route('password.request') }}" class="text-sm font-medium text-brand-600 transition hover:text-brand-500">{{ __('auth.forgot_password') }}</a>
             </div>
 
+            {{-- 人机验证（captcha.captcha_on_login） --}}
+            @php($captcha = \App\Support\Captcha::widget('login'))
+            @if ($captcha)
+                <div>
+                    {!! $captcha !!}
+                    @error('captcha')
+                        <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endif
+
             <button type="submit"
                     class="w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-600/30 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
                 {{ __('auth.login_btn') }}

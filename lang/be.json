@@ -2039,5 +2039,20 @@
     "admin.uv_billing_phone": "Phone",
     "admin.uv_billing_tax_id": "VAT ID",
     "admin.user_type": "Type",
-    "common.optional": "optional"
+    "common.optional": "optional",
+    "auth.registration_disabled": "Рэгістрацыя ў цяперашні час закрытая",
+    "auth.terms_consent": "Я прачытаў і згодны з",
+    "auth.terms_link": "Умовамі абслугоўвання",
+    "auth.terms_required": "Калі ласка, прыміце ўмовы абслугоўвання",
+    "validation.captcha_failed": "Праверка капчы не пройдзена, паспрабуйце яшчэ раз",
+    "msg.welcome_email_subject": "Вітаем у :site",
+    "msg.welcome_email_body": "Дзякуй за рэгістрацыю на :site! Ваш уліковы запіс створаны. Увайдзіце, каб пачаць карыстацца поўнай аналітыкай.",
+    "msg.welcome_email_login": "Увайсці зараз",
+    "legal.terms_title": "Умовы абслугоўвання",
+    "legal.terms_default_body": "Змест умоў абслугоўвання яшчэ не наладжаны. Адрэдагуйце яго ў адмінцы: Налады → Кантэнт.",
+    "legal.privacy_title": "Палітыка канфідэнцыяльнасці",
+    "legal.privacy_default_body": "Змест палітыкі канфідэнцыяльнасці яшчэ не наладжаны. Адрэдагуйце яго ў адмінцы: Налады → Кантэнт.",
+    "landing.latest_posts_eyebrow": "БЛОГ",
+    "landing.latest_posts_title": "Новае ў блозе",
+    "landing.latest_posts_all": "Усе артыкулы"
 }

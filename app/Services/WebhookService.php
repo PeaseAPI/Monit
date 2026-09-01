@@ -46,10 +46,17 @@ class WebhookService
             'payload' => $payload,
         ];
 
+        $headers = ['X-Monit-Event' => $event];
+
+        // 签名（webhooks.webhooks_secret_key）：HMAC-SHA256(body)
+        if ($secret = trim((string) Settings::get('webhooks.webhooks_secret_key', ''))) {
+            $headers['X-Monit-Signature'] = WebhookSignature::sign($body, $secret);
+        }
+
         try {
             Http::timeout(5)
                 ->acceptJson()
-                ->withHeaders(['X-Monit-Event' => $event])
+                ->withHeaders($headers)
                 ->post($url, $body);
         } catch (\Throwable $e) {
             Log::warning('webhook.dispatch_failed', [
@@ -90,5 +97,107 @@ class WebhookService
     public function userDelete(array $payload): void
     {
         $this->dispatch('user_delete', $payload);
+    }
+
+    /**
+     * 通用 URL 事件派发（webhooks.start_url / webhooks.end_url 及
+     * user_update / code_redeemed / contact / domain_new / domain_update 布尔开关事件）
+     *
+     * 原版对标：除四个核心 URL 事件外，其余事件共享统一 URL 键
+     * （webhooks.webhook_{event}_url）且带独立启用开关（webhooks.webhooks_{event}）
+     */
+    public function dispatchToggleable(string $event, array $payload = []): void
+    {
+        $enabled = Settings::get("webhooks.webhooks_{$event}");
+
+        if ($enabled !== null && ! in_array($enabled, [true, 1, '1', 'true', 'on'], true)) {
+            return;
+        }
+
+        $url = trim((string) Settings::get("webhooks.webhook_{$event}_url", ''));
+
+        if ($url === '') {
+            return;
+        }
+
+        $this->postJson($url, $event, $payload);
+    }
+
+    /** Cron 开始（webhooks.webhooks_cron_start + webhooks.start_url） */
+    public function cronStart(): void
+    {
+        $this->dispatchToggleable('cron_start', ['started_at' => now()->toIso8601String()]);
+
+        if ($url = trim((string) Settings::get('webhooks.start_url', ''))) {
+            $this->postJson($url, 'cron_start', ['started_at' => now()->toIso8601String()]);
+        }
+    }
+
+    /** Cron 结束（webhooks.webhooks_cron_end + webhooks.end_url） */
+    public function cronEnd(array $results = []): void
+    {
+        $this->dispatchToggleable('cron_end', $results);
+
+        if ($url = trim((string) Settings::get('webhooks.end_url', ''))) {
+            $this->postJson($url, 'cron_end', $results);
+        }
+    }
+
+    /** 用户资料更新（webhooks.webhooks_user_update） */
+    public function userUpdate(array $payload): void
+    {
+        $this->dispatchToggleable('user_update', $payload);
+    }
+
+    /** 兑换码核销（webhooks.webhooks_code_redeemed） */
+    public function codeRedeemed(array $payload): void
+    {
+        $this->dispatchToggleable('code_redeemed', $payload);
+    }
+
+    /** 联系表单（webhooks.webhooks_contact） */
+    public function contact(array $payload): void
+    {
+        $this->dispatchToggleable('contact', $payload);
+    }
+
+    /** 新域名监控（webhooks.webhooks_domain_new） */
+    public function domainNew(array $payload): void
+    {
+        $this->dispatchToggleable('domain_new', $payload);
+    }
+
+    /** 域名监控变更（webhooks.webhooks_domain_update） */
+    public function domainUpdate(array $payload): void
+    {
+        $this->dispatchToggleable('domain_update', $payload);
+    }
+
+    /**
+     * 裸 URL POST（start_url/end_url 场景，无事件开关包装）
+     */
+    protected function postJson(string $url, string $event, array $payload): void
+    {
+        if (! WebhookSignature::isSafeHttpUrl($url)) {
+            return;
+        }
+
+        $body = [
+            'event' => $event,
+            'datetime' => now()->toIso8601String(),
+            'payload' => $payload,
+        ];
+
+        $headers = ['X-Monit-Event' => $event];
+
+        if ($secret = trim((string) Settings::get('webhooks.webhooks_secret_key', ''))) {
+            $headers['X-Monit-Signature'] = WebhookSignature::sign($body, $secret);
+        }
+
+        try {
+            Http::timeout(5)->acceptJson()->withHeaders($headers)->post($url, $body);
+        } catch (\Throwable $e) {
+            Log::warning('webhook.dispatch_failed', ['event' => $event, 'url' => $url, 'error' => $e->getMessage()]);
+        }
     }
 }

@@ -176,6 +176,15 @@ class WebhookSignature
     /**
      * 回调 URL 安全校验：仅允许 http/https（拒绝 file://、ftp:// 等 SSRF 向量）
      */
+    /**
+     * 出站 Webhook 签名（webhooks.webhooks_secret_key）
+     * HMAC-SHA256(json(body))，hex 输出，接收方可用同算法验证
+     */
+    public static function sign(array $body, string $secret): string
+    {
+        return hash_hmac('sha256', json_encode($body, JSON_UNESCAPED_UNICODE) ?: '', $secret);
+    }
+
     public static function isSafeHttpUrl(string $url): bool
     {
         $parsed = parse_url(trim($url));

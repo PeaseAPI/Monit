@@ -102,10 +102,10 @@ class M23Test extends TestCase
         $this->assertStringContainsString('#', $tag);
     }
 
-    /** Brand 回退链：logo → custom_images.logo 兼容 */
+    /** Brand 回退链：logo → custom_images.logo 兼容 → 默认 /logo.png */
     public function test_brand_logo_fallback_chain(): void
     {
-        $this->assertNull(Brand::logoUrl());
+        $this->assertSame('/logo.png', Brand::logoUrl());
 
         Setting::updateOrCreate(['key' => 'custom_images.logo'], ['value' => 'https://legacy.example.com/logo.png']);
         Settings::flush();

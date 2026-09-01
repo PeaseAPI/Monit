@@ -22,6 +22,37 @@
         </div>
 
         <div class="mt-2">
+            <h4 class="font-medium mb-1">各服务商独立密钥（可选）</h4>
+            <p class="form-hint mb-2">留空时回退上方通用 Site Key / Secret Key</p>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <div>
+                    <label class="form-label">reCAPTCHA Site Key</label>
+                    <input type="text" name="recaptcha_site_key" class="form-input" value="{{ old('recaptcha_site_key', $settings['captcha.recaptcha_site_key'] ?? '') }}">
+                </div>
+                <div>
+                    <label class="form-label">reCAPTCHA Secret Key</label>
+                    <input type="password" name="recaptcha_secret_key" class="form-input" value="{{ old('recaptcha_secret_key', $settings['captcha.recaptcha_secret_key'] ?? '') }}">
+                </div>
+                <div>
+                    <label class="form-label">hCaptcha Site Key</label>
+                    <input type="text" name="hcaptcha_site_key" class="form-input" value="{{ old('hcaptcha_site_key', $settings['captcha.hcaptcha_site_key'] ?? '') }}">
+                </div>
+                <div>
+                    <label class="form-label">hCaptcha Secret Key</label>
+                    <input type="password" name="hcaptcha_secret_key" class="form-input" value="{{ old('hcaptcha_secret_key', $settings['captcha.hcaptcha_secret_key'] ?? '') }}">
+                </div>
+                <div>
+                    <label class="form-label">Turnstile Site Key</label>
+                    <input type="text" name="turnstile_site_key" class="form-input" value="{{ old('turnstile_site_key', $settings['captcha.turnstile_site_key'] ?? '') }}">
+                </div>
+                <div>
+                    <label class="form-label">Turnstile Secret Key</label>
+                    <input type="password" name="turnstile_secret_key" class="form-input" value="{{ old('turnstile_secret_key', $settings['captcha.turnstile_secret_key'] ?? '') }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-2">
             <h4 class="font-medium mb-2">验证码保护页面</h4>
             <div class="space-y-2">
                 <label class="flex items-center gap-2">

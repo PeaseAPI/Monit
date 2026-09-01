@@ -27,6 +27,7 @@ use App\Services\Payment\RevolutProcessor;
 use App\Services\Payment\StripeProcessor;
 use App\Services\Payment\WeChatPayProcessor;
 use App\Services\Payment\YooKassaProcessor;
+use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -80,12 +81,24 @@ class PaymentController extends Controller
      */
     public function index(Request $request): View
     {
+        // 支付总开关（payment.payment_is_enabled，默认开启）：关闭时前台引导回仪表盘
+        if (! self::paymentEnabled()) {
+            abort(404);
+        }
+
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
         $user = $request->user();
         $currentPlan = Plan::find($user->plan_id);
         $recentPayments = $user->payments()->orderByDesc('datetime')->limit(5)->get();
 
-        return view('payments.index', compact('plans', 'user', 'currentPlan', 'recentPayments'));
+        // 结账页默认周期（payment.default_payment_frequency：monthly/annual/lifetime）
+        $defaultFrequency = in_array(
+            trim((string) Settings::get('payment.default_payment_frequency', '')),
+            ['monthly', 'annual', 'lifetime'],
+            true
+        ) ? trim((string) Settings::get('payment.default_payment_frequency')) : 'monthly';
+
+        return view('payments.index', compact('plans', 'user', 'currentPlan', 'recentPayments', 'defaultFrequency'));
     }
 
     /**
@@ -93,6 +106,10 @@ class PaymentController extends Controller
      */
     public function checkout(Request $request)
     {
+        if (! self::paymentEnabled()) {
+            abort(404);
+        }
+
         $validated = $request->validate([
             'plan_id' => ['required', 'string', 'exists:plans,plan_id'],
             'processor' => ['required', 'string', 'in:'.implode(',', self::PROCESSORS)],
@@ -478,5 +495,35 @@ class PaymentController extends Controller
             'processor' => $processor,
             'result' => $result,
         ]);
+    }
+
+    /**
+     * 支付总开关（payment.payment_is_enabled，默认开启）
+     */
+    public static function paymentEnabled(): bool
+    {
+        $value = Settings::get('payment.payment_is_enabled');
+
+        return $value === null || in_array($value, [true, 1, '1', 'true', 'on'], true);
+    }
+
+    /**
+     * 税费开关（payment.taxes_enabled，默认开启）：结账时是否应用后台税则
+     */
+    public static function taxesEnabled(): bool
+    {
+        $value = Settings::get('payment.taxes_enabled');
+
+        return $value === null || in_array($value, [true, 1, '1', 'true', 'on'], true);
+    }
+
+    /**
+     * 发票开关（payment.invoice_is_enabled，默认开启）：支付历史页是否提供发票下载
+     */
+    public static function invoiceEnabled(): bool
+    {
+        $value = Settings::get('payment.invoice_is_enabled');
+
+        return $value === null || in_array($value, [true, 1, '1', 'true', 'on'], true);
     }
 }

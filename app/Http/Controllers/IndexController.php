@@ -69,6 +69,9 @@ class IndexController extends Controller
 
     public function blog(Request $request)
     {
+        // 博客总开关（content.blog_is_enabled，默认开启）
+        abort_unless(self::contentOn('blog_is_enabled'), 404);
+
         $category = $request->query('category');
         $posts = BlogPost::where('is_published', true)
             ->when($category, fn ($q) => $q->where('category_id', $category))
@@ -80,6 +83,8 @@ class IndexController extends Controller
 
     public function blogPost($url)
     {
+        abort_unless(self::contentOn('blog_is_enabled'), 404);
+
         $post = BlogPost::where('is_published', true)->where('url', $url)->firstOrFail();
 
         return view('blog_post', compact('post'));
@@ -87,6 +92,9 @@ class IndexController extends Controller
 
     public function page($url)
     {
+        // 自定义页面总开关（content.pages_is_enabled，默认开启）
+        abort_unless(self::contentOn('pages_is_enabled'), 404);
+
         $page = Page::where('is_published', true)->where('url', $url)->firstOrFail();
 
         return view('page', compact('page'));
@@ -97,6 +105,8 @@ class IndexController extends Controller
      */
     public function pages()
     {
+        abort_unless(self::contentOn('pages_is_enabled'), 404);
+
         $pages = Page::where('is_published', true)->orderBy('order')->get();
 
         return view('pages', compact('pages'));
@@ -133,6 +143,11 @@ class IndexController extends Controller
      */
     public function contactSend(Request $request)
     {
+        // 人机验证（captcha.captcha_on_contact）
+        if (\App\Support\Captcha::enabled('contact') && ! \App\Support\Captcha::verify(\App\Support\Captcha::tokenFrom($request->all()))) {
+            return back()->withErrors(['captcha' => __('validation.captcha_failed')]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:128'],
             'email' => ['required', 'email', 'max:256'],
@@ -264,8 +279,44 @@ class IndexController extends Controller
         return view('api_docs');
     }
 
+    /**
+     * 服务条款静态页（content.terms_html）
+     * 优先级：后台 content 组富文本 → 站内自定义页面（url=terms）→ 默认文案
+     */
+    public function terms()
+    {
+        return view('legal.terms', [
+            'html' => (string) Settings::get('content.terms_html', ''),
+        ]);
+    }
+
+    /**
+     * 隐私政策静态页（content.privacy_html）
+     */
+    public function privacy()
+    {
+        return view('legal.privacy', [
+            'html' => (string) Settings::get('content.privacy_html', ''),
+        ]);
+    }
+
     public function notFound()
     {
+        // 404 外链（main.not_found_url）：配置时跳转指定页面（原版行为：站长可自定义 404 落点）
+        if ($url = trim((string) Settings::get('main.not_found_url', ''))) {
+            return redirect()->away($url, 302);
+        }
+
         return view('errors.404', [], 404);
+    }
+
+    /**
+     * content 组布尔开关（默认开启；显式 false 才关闭）
+     */
+    protected static function contentOn(string $key): bool
+    {
+        $value = Settings::get('content.'.$key);
+
+        return $value === null || in_array($value, [true, 1, '1', 'true', 'on'], true);
     }
 }

@@ -2039,5 +2039,20 @@
     "admin.uv_billing_phone": "电话",
     "admin.uv_billing_tax_id": "VAT 税号",
     "admin.user_type": "特权",
-    "common.optional": "可选"
+    "common.optional": "可选",
+    "auth.registration_disabled": "注册目前已关闭",
+    "auth.terms_consent": "我已阅读并同意",
+    "auth.terms_link": "服务条款",
+    "auth.terms_required": "请先同意服务条款",
+    "validation.captcha_failed": "人机验证未通过，请重试",
+    "msg.welcome_email_subject": "欢迎加入 :site",
+    "msg.welcome_email_body": "感谢注册 :site ！您的账户已创建成功，立即登录开始体验完整的网站分析服务。",
+    "msg.welcome_email_login": "立即登录",
+    "legal.terms_title": "服务条款",
+    "legal.terms_default_body": "服务条款内容尚未配置。请登录后台，在「设置 → 内容 → 服务条款」中编辑本页内容。",
+    "legal.privacy_title": "隐私政策",
+    "legal.privacy_default_body": "隐私政策内容尚未配置。请登录后台，在「设置 → 内容 → 隐私政策」中编辑本页内容。",
+    "landing.latest_posts_eyebrow": "最新动态",
+    "landing.latest_posts_title": "来自博客的最新文章",
+    "landing.latest_posts_all": "查看全部文章"
 }

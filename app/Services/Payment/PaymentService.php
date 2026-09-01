@@ -46,6 +46,31 @@ class PaymentService
 
         $totalAmount = max(0, $amount - $discountAmount);
 
+        // 税费（payment.taxes_enabled，默认开启）：按后台税则与用户账单国家计算
+        // value_type=percentage 按比例 / fixed 固定额；countries 空 = 全球适用
+        $taxesAmount = 0;
+
+        if (\App\Http\Controllers\PaymentController::taxesEnabled() && $billingCountry = strtoupper(trim((string) ($user->billing['country'] ?? '')))) {
+            foreach (\App\Models\Tax::all() as $tax) {
+                $countries = array_map(
+                    fn ($c) => strtoupper(trim((string) $c)),
+                    (array) ($tax->countries ?? [])
+                );
+
+                if (! empty($countries) && ! in_array($billingCountry, $countries, true)) {
+                    continue;
+                }
+
+                $taxesAmount += $tax->value_type === 'percentage'
+                    ? $totalAmount * ((float) $tax->value / 100)
+                    : (float) $tax->value;
+            }
+
+            $taxesAmount = round($taxesAmount, 2);
+        }
+
+        $totalAmount = round($totalAmount + $taxesAmount, 2);
+
         // 创建支付记录（plan_id 固化本次购买套餐，激活/发票均以此为准）
         $payment = Payment::create([
             'user_id' => $user->user_id,
@@ -60,6 +85,7 @@ class PaymentService
             'status' => 0, // pending
             'code_id' => $codeId,
             'discount_amount' => $discountAmount,
+            'taxes_amount' => $taxesAmount,
             'total_amount' => $totalAmount,
             'currency' => $currency,
             'datetime' => now(),

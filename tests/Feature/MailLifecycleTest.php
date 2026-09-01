@@ -49,7 +49,9 @@ class MailLifecycleTest extends TestCase
         $this->assertSame(1, $user->status);
         $this->assertNull($user->email_activation_code);
 
-        Mail::assertNothingSent();
+        // 免激活注册：不发激活邮件，但发送欢迎邮件（users.welcome_email_is_enabled 默认开）
+        Mail::assertSent(\App\Mail\WelcomeUser::class);
+        Mail::assertNotSent(\App\Mail\ActivateUser::class);
     }
 
     public function test_register_sends_activation_email_when_enabled(): void

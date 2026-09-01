@@ -2039,5 +2039,20 @@
     "admin.uv_billing_phone": "電話",
     "admin.uv_billing_tax_id": "VAT 税号",
     "admin.user_type": "特權",
-    "common.optional": "可選"
+    "common.optional": "可選",
+    "auth.registration_disabled": "註冊目前已關閉",
+    "auth.terms_consent": "我已閱讀並同意",
+    "auth.terms_link": "服務條款",
+    "auth.terms_required": "請先同意服務條款",
+    "validation.captcha_failed": "人機驗證未通過，請重試",
+    "msg.welcome_email_subject": "歡迎加入 :site",
+    "msg.welcome_email_body": "感謝註冊 :site ！您的帳戶已建立成功，立即登入開始體驗完整的網站分析服務。",
+    "msg.welcome_email_login": "立即登入",
+    "legal.terms_title": "服務條款",
+    "legal.terms_default_body": "服務條款內容尚未配置。請登入後台，在「設定 → 內容 → 服務條款」中編輯本頁內容。",
+    "legal.privacy_title": "隱私政策",
+    "legal.privacy_default_body": "隱私政策內容尚未配置。請登入後台，在「設定 → 內容 → 隱私政策」中編輯本頁內容。",
+    "landing.latest_posts_eyebrow": "最新動態",
+    "landing.latest_posts_title": "來自部落格的最新文章",
+    "landing.latest_posts_all": "查看全部文章"
 }

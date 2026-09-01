@@ -13,6 +13,8 @@
                     @php
                         $heroCurrency = \App\Support\Currency::normalize($user->payment_currency ?? '');
                         $heroMonthly = $currentPlan ? \App\Support\Currency::planPrice($currentPlan, $heroCurrency, 'monthly') : null;
+                        // 默认计费周期由后台 payment.default_payment_frequency 控制（控制器已传入）
+                        $defaultFrequency = $defaultFrequency ?? 'monthly';
                     @endphp
                     @if($heroMonthly !== null && $heroMonthly > 0)
                         <span class="rounded-full bg-white/15 px-3 py-1 text-sm font-medium text-white/90 backdrop-blur">
@@ -40,11 +42,12 @@
                 <p class="mt-1 text-sm text-zinc-500">{{ __('payments.subtitle') }}</p>
             </div>
 
-            {{-- 计费周期分段切换（联动所有卡片价格与表单 hidden frequency） --}}
+            {{-- 计费周期分段切换（联动所有卡片价格与表单 hidden frequency）
+                 默认选中周期由后台 payment.default_payment_frequency 控制（取值见上方 PHP 块） --}}
             <div id="freq-switch" class="flex rounded-2xl border border-zinc-200 bg-white p-1 shadow-sm">
                 @foreach(['monthly', 'annual', 'lifetime'] as $fi => $frequency)
                     <button type="button" data-freq="{{ $frequency }}"
-                            class="rounded-xl px-4 py-2 text-sm font-medium transition {{ $fi === 0 ? 'bg-brand-600 text-white shadow' : 'text-zinc-600 hover:bg-zinc-100' }}">
+                            class="rounded-xl px-4 py-2 text-sm font-medium transition {{ $frequency === $defaultFrequency ? 'bg-brand-600 text-white shadow' : 'text-zinc-600 hover:bg-zinc-100' }}">
                         {{ __('payments.frequency_' . $frequency) }}
                     </button>
                 @endforeach
