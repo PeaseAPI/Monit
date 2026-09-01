@@ -28,6 +28,7 @@ use App\Http\Controllers\AdminPlugins;
 use App\Http\Controllers\AdminPushSubscribers;
 use App\Http\Controllers\AdminRedeemedCodes;
 use App\Http\Controllers\AdminReplays;
+use App\Http\Controllers\WebsiteSwitchController;
 use App\Http\Controllers\AdminSettings;
 use App\Http\Controllers\AdminStatistics;
 use App\Http\Controllers\AdminTaxes;
@@ -257,6 +258,9 @@ Route::middleware('auth')->group(function (): void {
 
     // 网站管理
     Route::get('/websites', [WebsiteController::class, 'index'])->name('websites.index');
+    Route::get('/website-switch/{website}', WebsiteSwitchController::class)
+        ->middleware('can:own,website')->name('website.switch');
+
     Route::get('/websites/create', [WebsiteController::class, 'create'])->name('websites.create');
     Route::post('/websites', [WebsiteController::class, 'store'])->middleware('plan_limit:websites_limit')->name('websites.store');
     Route::get('/websites/import', [WebsitesImportController::class, 'index'])->name('websites.import');

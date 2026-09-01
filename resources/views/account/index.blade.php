@@ -4,9 +4,13 @@
 <div class="max-w-2xl">
     {{-- 页头：头像 + 身份信息 --}}
     <div class="flex items-center gap-4">
-        <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-xl font-bold text-white shadow-sm">
-            {{ mb_substr($user->name, 0, 1) }}
-        </span>
+        @if ($user->avatar)
+            <img src="{{ $user->avatar }}" alt="" class="h-14 w-14 shrink-0 rounded-2xl object-cover shadow-sm ring-2 ring-brand-100">
+        @else
+            <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-xl font-bold text-white shadow-sm">
+                {{ mb_substr($user->name, 0, 1) }}
+            </span>
+        @endif
         <div class="min-w-0">
             <h1 class="truncate text-2xl font-bold text-zinc-900">{{ $user->name }}</h1>
             <p class="truncate text-sm text-zinc-500">{{ $user->email }}</p>
@@ -16,16 +20,80 @@
         </span>
     </div>
 
-    {{-- 个人资料 --}}
-    <form method="POST" action="{{ route('account.update') }}" class="card mt-6">@csrf @method('PUT')
+    {{-- 个人资料（含头像上传 / 防钓鱼码，对标 monit.cn /account） --}}
+    <form method="POST" action="{{ route('account.update') }}" enctype="multipart/form-data" class="card mt-6">@csrf @method('PUT')
         <div class="card-header flex items-center gap-2">
             <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.118a7.5 7.5 0 0 1 15 0A17 17 0 0 1 12 21.75c-2.676 0-5.216-.584-7.5-1.632Z"/></svg>
             {{ __('account.profile_api_desc') }}
         </div>
         <div class="space-y-4 p-6">
+            {{-- 头像 --}}
+            @php($avatarMax = (int) (\App\Support\Settings::get('main.avatar_size_limit') ?: 512))
+            <div class="flex flex-wrap items-center gap-4">
+                <img id="avatar-preview" src="{{ $user->avatar }}" alt="" class="h-14 w-14 shrink-0 rounded-2xl bg-zinc-100 object-cover ring-2 ring-zinc-200" @if(! $user->avatar) style="display:none" @endif>
+                <span id="avatar-fallback" class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-xl font-bold text-white shadow-sm" @if($user->avatar) style="display:none" @endif>
+                    {{ mb_substr($user->name, 0, 1) }}
+                </span>
+                <div class="min-w-0 flex-1">
+                    <label class="form-label" for="acc-avatar">{{ __('account.avatar_label') }}</label>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <input id="acc-avatar" type="file" name="avatar" accept="image/*"
+                               class="text-sm text-zinc-500 file:mr-3 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-brand-700 hover:file:bg-brand-100"
+                               onchange="var f=this.files[0];if(f){var p=document.getElementById('avatar-preview');p.src=URL.createObjectURL(f);p.style.display='';document.getElementById('avatar-fallback').style.display='none'}">
+                        @if ($user->avatar)
+                            <label class="flex items-center gap-1.5 text-sm text-red-600">
+                                <input type="checkbox" name="avatar_remove" value="1" class="rounded border-zinc-300 text-red-600 focus:ring-red-500">
+                                {{ __('account.avatar_remove') }}
+                            </label>
+                        @endif
+                    </div>
+                    <p class="mt-1 text-xs text-zinc-400">{{ __('account.avatar_hint', ['size' => $avatarMax]) }}</p>
+                </div>
+            </div>
             <div><label class="form-label" for="acc-name">{{ __('account.name_label') }}</label><input id="acc-name" type="text" name="name" value="{{ old('name', $user->name) }}" class="form-input"></div>
             <div><label class="form-label" for="acc-email">{{ __('account.email_label') }}</label><input id="acc-email" type="email" name="email" value="{{ old('email', $user->email) }}" class="form-input"></div>
+            <div>
+                <label class="form-label" for="acc-antiphishing">{{ __('account.anti_phishing_label') }}</label>
+                <input id="acc-antiphishing" type="text" name="anti_phishing_code" maxlength="64" value="{{ old('anti_phishing_code', $user->anti_phishing_code) }}" class="form-input" placeholder="{{ __('account.anti_phishing_placeholder') }}">
+                <p class="mt-1 text-xs text-zinc-400">{{ __('account.anti_phishing_hint') }}</p>
+            </div>
             <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:ring-2 focus:ring-brand-500/40 focus:outline-none">{{ __('account.update_profile') }}</button>
+        </div>
+    </form>
+
+    {{-- 账单信息（对标 monit.cn /account billing；users.billing JSON 列） --}}
+    @php($billing = old('billing', $user->billing ?? []))
+    <form method="POST" action="{{ route('account.update') }}" class="card mt-6">@csrf @method('PUT')
+        <input type="hidden" name="name" value="{{ $user->name }}">
+        <input type="hidden" name="email" value="{{ $user->email }}">
+        <div class="card-header flex items-center gap-2">
+            <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"/></svg>
+            {{ __('account.billing_title') }}
+        </div>
+        <div class="space-y-4 p-6">
+            <div class="flex flex-wrap gap-4">
+                <label class="flex items-center gap-2 text-sm text-zinc-700">
+                    <input type="radio" name="billing_type" value="personal" class="text-brand-600 focus:ring-brand-500" {{ ($billing['type'] ?? 'personal') !== 'business' ? 'checked' : '' }}>
+                    {{ __('account.billing_personal') }}
+                </label>
+                <label class="flex items-center gap-2 text-sm text-zinc-700">
+                    <input type="radio" name="billing_type" value="business" class="text-brand-600 focus:ring-brand-500" {{ ($billing['type'] ?? '') === 'business' ? 'checked' : '' }}>
+                    {{ __('account.billing_business') }}
+                </label>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div><label class="form-label">{{ __('account.billing_name') }}</label><input type="text" name="billing_name" value="{{ old('billing_name', $billing['name'] ?? '') }}" class="form-input"></div>
+                <div><label class="form-label">{{ __('account.billing_phone') }}</label><input type="text" name="billing_phone" value="{{ old('billing_phone', $billing['phone'] ?? '') }}" class="form-input"></div>
+                <div class="sm:col-span-2"><label class="form-label">{{ __('account.billing_address') }}</label><input type="text" name="billing_address" value="{{ old('billing_address', $billing['address'] ?? '') }}" class="form-input"></div>
+                <div><label class="form-label">{{ __('account.billing_city') }}</label><input type="text" name="billing_city" value="{{ old('billing_city', $billing['city'] ?? '') }}" class="form-input"></div>
+                <div><label class="form-label">{{ __('account.billing_state') }}</label><input type="text" name="billing_state" value="{{ old('billing_state', $billing['state'] ?? '') }}" class="form-input"></div>
+                <div><label class="form-label">{{ __('account.billing_county') }}</label><input type="text" name="billing_county" value="{{ old('billing_county', $billing['county'] ?? '') }}" class="form-input"></div>
+                <div><label class="form-label">{{ __('account.billing_zip') }}</label><input type="text" name="billing_zip" value="{{ old('billing_zip', $billing['zip'] ?? '') }}" class="form-input"></div>
+                <div><label class="form-label">{{ __('account.billing_country') }}</label><input type="text" name="billing_country" maxlength="2" placeholder="CN" value="{{ old('billing_country', $billing['country'] ?? '') }}" class="form-input"></div>
+                <div><label class="form-label">{{ __('account.billing_tax_id') }}</label><input type="text" name="billing_tax_id" value="{{ old('billing_tax_id', $billing['tax_id'] ?? '') }}" class="form-input"></div>
+                <div class="sm:col-span-2"><label class="form-label">{{ __('account.billing_notes') }}</label><textarea name="billing_notes" rows="2" class="form-input">{{ old('billing_notes', $billing['notes'] ?? '') }}</textarea></div>
+            </div>
+            <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('account.billing_save') }}</button>
         </div>
     </form>
 

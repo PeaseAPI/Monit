@@ -37,21 +37,97 @@ class AccountController extends Controller
     }
 
     /**
-     * 更新个人资料
+     * 更新个人资料（对标 monit.cn /account：头像 / 防钓鱼码 / 账单信息）
      * 邮箱变更时重置 email_verified_at：防止「已验证身份」随邮箱漂移到他人地址
      */
     public function update(Request $request)
     {
+        $avatarMax = (int) (\App\Support\Settings::get('main.avatar_size_limit') ?: 512);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$request->user()->user_id.',user_id'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:'.$avatarMax],
+            'avatar_remove' => ['nullable', 'boolean'],
+            'anti_phishing_code' => ['nullable', 'string', 'max:64'],
+            'billing_type' => ['nullable', 'in:personal,business'],
+            'billing_name' => ['nullable', 'string', 'max:160'],
+            'billing_address' => ['nullable', 'string', 'max:255'],
+            'billing_city' => ['nullable', 'string', 'max:120'],
+            'billing_state' => ['nullable', 'string', 'max:120'],
+            'billing_county' => ['nullable', 'string', 'max:120'],
+            'billing_zip' => ['nullable', 'string', 'max:32'],
+            'billing_country' => ['nullable', 'string', 'max:2'],
+            'billing_phone' => ['nullable', 'string', 'max:32'],
+            'billing_tax_id' => ['nullable', 'string', 'max:64'],
+            'billing_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $emailChanged = strtolower((string) $validated['email']) !== strtolower((string) $request->user()->email);
+        $user = $request->user();
+        $emailChanged = strtolower((string) $validated['email']) !== strtolower((string) $user->email);
 
-        $request->user()->update(array_merge($validated, $emailChanged ? ['email_verified_at' => null] : []));
+        // ---- 头像：上传 / 移除（存储于 public/uploads/avatars，DB 存相对 URL） ----
+        $avatarUrl = $user->avatar;
+        $replacingAvatar = $request->boolean('avatar_remove')
+            || ($request->hasFile('avatar') && $request->file('avatar')->isValid());
+
+        if ($replacingAvatar) {
+            // 仅在确定替换/移除时清理旧文件，避免原样保存时误删
+            $this->deleteLocalAvatar($user->avatar);
+            $avatarUrl = null;
+        }
+
+        if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
+            $dir = public_path('uploads/avatars');
+            if (! is_dir($dir)) {
+                mkdir($dir, 0775, true);
+            }
+            $file = $request->file('avatar');
+            $filename = 'user_'.$user->user_id.'_'.time().'.'.$file->getClientOriginalExtension();
+            $file->move($dir, $filename);
+            $avatarUrl = '/uploads/avatars/'.$filename;
+        }
+
+        // ---- 账单信息（users.billng JSON 列，仅合并提交的字段） ----
+        $billing = $user->billing ?? [];
+        foreach (['billing_type', 'billing_name', 'billing_address', 'billing_city', 'billing_state',
+                     'billing_county', 'billing_zip', 'billing_country', 'billing_phone', 'billing_tax_id', 'billing_notes'] as $field) {
+            if (array_key_exists($field, $validated)) {
+                $key = substr($field, 8); // 去掉 billing_ 前缀
+                $billing[$key] = $validated[$field] !== '' ? $validated[$field] : null;
+            }
+        }
+
+        $update = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'billing' => $billing,
+            'avatar' => $avatarUrl,
+        ];
+
+        // 防钓鱼码仅在表单提交了该字段时更新（账单表单共用此端点，避免误清）
+        if (array_key_exists('anti_phishing_code', $validated)) {
+            $update['anti_phishing_code'] = $validated['anti_phishing_code'] ?? null;
+        }
+
+        $user->fill(array_merge($update, $emailChanged ? ['email_verified_at' => null] : []))->save();
 
         return back()->with('success', __('msg.profile_updated'));
+    }
+
+    /**
+     * 删除本站上传的旧头像文件（外部 URL / 社交头像不动）
+     */
+    private function deleteLocalAvatar(?string $avatar): void
+    {
+        if (! $avatar || ! str_starts_with($avatar, '/uploads/avatars/')) {
+            return;
+        }
+
+        $path = public_path(ltrim($avatar, '/'));
+        if (is_file($path)) {
+            @unlink($path);
+        }
     }
 
     /**
