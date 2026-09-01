@@ -19,7 +19,7 @@
 
     @include('parts.announcement_bar')
 
-    {{-- ===== 顶部导航 ===== --}}
+    {{{-- ===== 顶部导航 ===== --}}}
     <header class="sticky top-0 z-40 border-b border-zinc-100 bg-white/80 backdrop-blur-lg">
         <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
             <x-brand-logo href="{{ route('index') }}" />
@@ -356,7 +356,7 @@
     </section>
     @endif
 
-    {-- ===== 用户评价（原站 index testimonials 区 · 后台可关闭） ===== --}
+    {{-- ===== 用户评价（原站 index testimonials 区 · 后台可关闭） ===== --}}
     @php($showTestimonials = filter_var(\App\Support\Settings::get('main.display_index_testimonials', true), FILTER_VALIDATE_BOOLEAN))
     @if ($showTestimonials)
     <section class="relative overflow-hidden border-t border-zinc-100 bg-zinc-50/50 py-20 md:py-24">
@@ -368,28 +368,9 @@
                 <h2 class="mt-3 text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl">{{ __('landing.testimonials_title') }}</h2>
                 <p class="mt-4 text-base text-zinc-500">{{ __('landing.testimonials_subtitle') }}</p>
             </div>
-            <div class="reveal mt-14 grid gap-6 md:grid-cols-3">
-                @foreach ([
-                    ['quote' => __('landing.testimonial_1_quote'), 'author' => __('landing.testimonial_1_author'), 'role' => __('landing.testimonial_1_role')],
-                    ['quote' => __('landing.testimonial_2_quote'), 'author' => __('landing.testimonial_2_author'), 'role' => __('landing.testimonial_2_role')],
-                    ['quote' => __('landing.testimonial_3_quote'), 'author' => __('landing.testimonial_3_author'), 'role' => __('landing.testimonial_3_role')],
-                ] as $t)
-                <figure class="reveal group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-7 transition duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-xl hover:shadow-brand-600/10">
-                    <svg class="absolute top-4 right-5 h-9 w-9 text-brand-100 transition group-hover:text-brand-200" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 5C4.9 6.4 3.5 8.9 3.5 12c0 3.6 2 6.4 5.2 7.2l.6-1.4c-2.1-.7-3.5-2.5-3.6-4.8h2.6c.4 0 .7-.3.7-.7V7.1c0-.4-.3-.7-.7-.7H7.2Zm9.5 0c-2.3 1.4-3.7 3.9-3.7 7 0 3.6 2 6.4 5.2 7.2l.6-1.4c-2.1-.7-3.5-2.5-3.6-4.8h2.6c.4 0 .7-.3.7-.7V7.1c0-.4-.3-.7-.7-.7h-4.4Z"/></svg>
-                    <div class="flex gap-0.5" aria-hidden="true"><svg class="h-4 w-4" fill="#f59e0b" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg><svg class="h-4 w-4" fill="#f59e0b" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg><svg class="h-4 w-4" fill="#f59e0b" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg><svg class="h-4 w-4" fill="#f59e0b" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg><svg class="h-4 w-4" fill="#f59e0b" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.95a1 1 0 0 0 .95.69h4.15c.97 0 1.37 1.24.58 1.81l-3.35 2.44a1 1 0 0 0-.36 1.12l1.28 3.95c.3.92-.75 1.69-1.54 1.12l-3.35-2.43a1 1 0 0 0-1.18 0l-3.35 2.43c-.78.57-1.84-.2-1.54-1.12l1.28-3.95a1 1 0 0 0-.36-1.12L2.1 9.38c-.79-.57-.39-1.81.58-1.81h4.15a1 1 0 0 0 .95-.69L9.05 2.93Z"/></svg></div>
-                    <blockquote class="mt-4 flex-1 text-[15px] leading-7 text-zinc-600">“{{ $t['quote'] }}”</blockquote>
-                    <figcaption class="mt-6 flex items-center gap-3 border-t border-zinc-100 pt-5">
-                        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-sm">{{ mb_substr($t['author'], 0, 1) }}</span>
-                        <div>
-                            <p class="text-sm font-semibold text-zinc-900">{{ $t['author'] }}</p>
-                            <p class="text-xs text-zinc-400">{{ $t['role'] }}</p>
-                        </div>
-                    </figcaption>
-                </figure>
-                @endforeach
             </div>
-            {-- 信任徽章条 --}
-            <div class="reveal mt-12 grid gap-4 sm:grid-cols-3">
+            {{-- 信任徽章条 --}}
+            <div class="reveal mt-14 grid gap-4 sm:grid-cols-3">
                 @foreach ([
                     ['key' => 'landing.trust_data_own', 'path' => 'M4.5 12h15m-15 0a1.5 1.5 0 0 1-1.5-1.5v-3A1.5 1.5 0 0 1 4.5 6h15a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5m-15 0a1.5 1.5 0 0 0-1.5 1.5v3a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5v-3a1.5 1.5 0 0 0-1.5-1.5M9 9h.01M9 15h.01'],
                     ['key' => 'landing.trust_privacy', 'path' => 'M9 12.75 11.25 15 15 9.75m-3-7.036A11.96 11.96 0 0 1 3.598 6 12 12 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.249-8.25-3.286Z'],
