@@ -25,16 +25,16 @@ class AiService
     public const PROVIDERS = ['aliyun_bailian', 'tencent_hunyuan', 'volcengine_ark', 'openai_compatible', 'log'];
 
     /** AI 功能总开关 */
-    public static function isEnabled(): bool
+        public static function isEnabled(): bool
     {
-        return (bool) Settings::get('ai.ai_is_enabled', false);
+        return filter_var(Settings::get('ai.ai_is_enabled', false), FILTER_VALIDATE_BOOLEAN);
     }
 
     /** 统计页「AI 洞察」用例开关 */
     public static function insightsEnabled(): bool
     {
         return static::isEnabled()
-            && (bool) Settings::get('ai.ai_insights_is_enabled', false);
+            && filter_var(Settings::get('ai.ai_insights_is_enabled', false), FILTER_VALIDATE_BOOLEAN);
     }
 
     /** 当前服务商（非法值回退 log） */

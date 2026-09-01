@@ -27,6 +27,9 @@
                     $currentWebsite = $topWebsites->firstWhere('website_id', (int) session('current_website_id')) ?? $topWebsites->first();
                     $wid = $currentWebsite?->website_id;
 
+                    // Affiliate 插件门控（规格 §14.7：停用即关闭入口；布尔以 'true'/'false' 字符串存储，须 filter_var 归一化）
+                    $affiliateEnabled = filter_var(\App\Support\Settings::get('affiliate.affiliate_is_enabled', true), FILTER_VALIDATE_BOOLEAN);
+
                     // 统计入口（对标 monit.cn 侧边：pageviews/visitors/heatmaps/replays；无网站时整组隐藏）
                     $statsItems = $wid ? [
                         ['key' => 'stats', 'route' => 'stats.index', 'params' => ['website' => $wid], 'label' => __('stats.nav.overview'), 'icon' => 'pulse'],
@@ -41,18 +44,20 @@
                             ['key' => 'dashboard', 'route' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'chart'],
                         ],
                         $statsItems,
-                        [
+                        array_filter([
                             ['key' => 'websites', 'route' => 'websites.index', 'label' => __('Websites'), 'icon' => 'globe'],
                             ['key' => 'domains', 'route' => 'domains.index', 'label' => __('nav.domains'), 'icon' => 'server'],
                             ['key' => 'teams', 'route' => 'teams.index', 'label' => __('nav.teams'), 'icon' => 'users'],
-                            ['key' => 'seo_audits', 'route' => 'seo.audits', 'label' => __('seo.nav_audits'), 'icon' => 'magnifier'],
+                                                        ['key' => 'seo_audits', 'route' => 'seo.audits', 'label' => __('seo.nav_audits'), 'icon' => 'magnifier'],
                             ['key' => 'seo_keywords', 'route' => 'seo.keywords', 'label' => __('seo.nav_keywords'), 'icon' => 'target'],
                             ['key' => 'seo_backlinks', 'route' => 'seo.backlinks', 'label' => __('seo.nav_backlinks'), 'icon' => 'link'],
+                            ['key' => 'seo_tools', 'route' => 'seo.tools', 'label' => __('seo.nav_tools'), 'icon' => 'wrench'],
                             ['key' => 'payments', 'route' => 'payments.index', 'label' => __('nav.payments'), 'icon' => 'card'],
-                            ['key' => 'referrals', 'route' => 'referrals.index', 'label' => __('nav.referrals'), 'icon' => 'gift'],
+                            // 推荐返佣：联盟停用时隐藏入口（array_filter 移除 null）
+                            $affiliateEnabled ? ['key' => 'referrals', 'route' => 'referrals.index', 'label' => __('nav.referrals'), 'icon' => 'gift'] : null,
                             ['key' => 'notifications', 'route' => 'notifications.index', 'label' => __('nav.notifications'), 'icon' => 'bell', 'badge' => $unreadNotifications],
                             ['key' => 'account', 'route' => 'account.index', 'label' => __('nav.account'), 'icon' => 'user'],
-                        ]
+                        ])
                     );
                 @endphp
                 @foreach ($items as $item)
@@ -221,7 +226,9 @@
                                 <a href="{{ route('account.preferences') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_preferences') }}</a>
                                 <a href="{{ route('account.plan') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_plan') }}</a>
                                 <a href="{{ route('account.payments') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_payments') }}</a>
-                                <a href="{{ route('referrals.index') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_referrals') }}</a>
+                                @if ($affiliateEnabled)
+                                    <a href="{{ route('referrals.index') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_referrals') }}</a>
+                                @endif
                                 <a href="{{ route('account-api.index') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_api') }}</a>
                                 <a href="{{ route('teams.index') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_teams') }}</a>
                             </nav>

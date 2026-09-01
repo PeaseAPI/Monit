@@ -200,4 +200,43 @@ class SmsAuthTest extends TestCase
         $response->assertSessionHasErrors('phone');
         $this->assertFalse((bool) Cache::get('monit.sms.login.13000130000'));
     }
+
+    /**
+     * 回归：后台保存的布尔为 'true'/'false' 字符串（AdminSettings::saveSettings 约定）。
+     * (bool)'false' 为 truthy，曾导致后台关闭短信后功能仍开启；须 filter_var 归一化。
+     */
+    public function test_string_setting_values_disable_sms(): void
+    {
+        // 总开关以字符串 'false' 保存（模拟后台关闭短信）
+        Settings::set('sms.sms_is_enabled', 'false');
+        try {
+            $this->assertFalse(SmsService::isEnabled());
+            $this->assertFalse(SmsService::scenarioEnabled('register'));
+
+            // 注册页不再渲染短信手机号/验证码输入
+            $this->get('/register')
+                ->assertOk()
+                ->assertDontSee('name="sms_code"', false)
+                ->assertDontSee('name="phone"', false);
+
+            // 总开关 'true' + 场景 'false'：场景级关闭生效
+            Settings::set('sms.sms_is_enabled', 'true');
+            Settings::set('sms.sms_register_is_enabled', 'false');
+            $this->assertTrue(SmsService::isEnabled());
+            $this->assertFalse(SmsService::scenarioEnabled('register'));
+            $this->get('/register')
+                ->assertOk()
+                ->assertDontSee('name="sms_code"', false);
+
+            // 两者均 'true'：字符串开启路径可用
+            Settings::set('sms.sms_register_is_enabled', 'true');
+            $this->assertTrue(SmsService::scenarioEnabled('register'));
+            $this->get('/register')
+                ->assertOk()
+                ->assertSee('name="sms_code"', false);
+        } finally {
+            Settings::set('sms.sms_is_enabled', true);
+            Settings::set('sms.sms_register_is_enabled', true);
+        }
+    }
 }

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\Website;
+use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Testing\File;
 use Tests\TestCase;
@@ -86,6 +87,38 @@ class AppShellTest extends TestCase
             ->assertSee(__('stats.nav.visitors'))
             ->assertSee(__('stats.nav.heatmaps'))
             ->assertSee(__('stats.nav.replays'));
+    }
+
+    /**
+     * Affiliate 插件门控（规格 §14.7：停用即关闭入口）
+     * 设置以 'true'/'false' 字符串存储（saveSettings 约定），须归一化后判断：
+     * 非空字符串 'false' 为 truthy，直接布尔判断会导致停用后仍可访问（回归）。
+     */
+    public function test_referrals_entries_hidden_and_404_when_affiliate_disabled(): void
+    {
+        $user = $this->makeUser();
+
+        // 默认开启：侧边栏/顶部菜单可见，页面可访问
+        $this->actingAs($user)->get('/dashboard')
+            ->assertOk()
+            ->assertSee(__('nav.referrals'))
+            ->assertSee(__('topbar.menu_referrals'));
+        $this->actingAs($user)->get('/referrals')->assertOk();
+
+        // 停用：入口隐藏 + 页面 404
+        Settings::set('affiliate.affiliate_is_enabled', 'false');
+        try {
+            $this->actingAs($user)->get('/dashboard')
+                ->assertOk()
+                ->assertDontSee(__('nav.referrals'))
+                ->assertDontSee(__('topbar.menu_referrals'));
+
+            $this->actingAs($user)->get('/referrals')->assertNotFound();
+            $this->actingAs($user)->get('/referrals/withdrawals')->assertNotFound();
+            $this->get('/affiliate')->assertNotFound();
+        } finally {
+            Settings::set('affiliate.affiliate_is_enabled', 'true');
+        }
     }
 
     public function test_website_switch_stores_session_and_redirects(): void

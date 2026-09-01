@@ -65,8 +65,27 @@ class AuditEngine
             $audit->website_id = $options['website_id'] ?? null;
         }
 
-        try {
-            $context = $this->fetchContext($url);
+                try {
+            // HTML 离线审计：使用用户粘贴的 HTML，不发起 HTTP 请求
+            if ($type === 'html' && isset($options['html']) && trim($options['html']) !== '') {
+                $html = $options['html'];
+                $scheme = strtolower((string) (parse_url($url, PHP_URL_SCHEME) ?: 'https'));
+                $context = new AuditContext(
+                    url: $url,
+                    scheme: $scheme,
+                    host: $audit->host,
+                    html: $html,
+                    headers: [],
+                    statusCode: 200,
+                    responseTimeMs: 0,
+                    sizeBytes: strlen($html),
+                    sslInfo: null,
+                );
+                $context->extra['robots_exists'] = false;
+                $context->extra['sitemap_exists'] = false;
+            } else {
+                $context = $this->fetchContext($url);
+            }
             $results = $this->executeTests($context);
             $score = AuditScore::calculate($results);
 
@@ -175,15 +194,22 @@ class AuditEngine
         }
     }
 
-    /**
+        /**
      * 带二次校验的请求（反爬偶发失败自动重试一次）
+     * 捕获 cURL/OpenSSL 连接异常，避免队列 worker 崩溃
      */
     protected function request(string $url, int $timeout, string $ua, int $attempt = 0): Response
     {
-        $response = Http::withHeaders(['User-Agent' => $ua])
-            ->timeout($timeout)
-            ->withOptions(['verify' => false])
-            ->get($url);
+        try {
+            $response = Http::withHeaders(['User-Agent' => $ua])
+                ->timeout($timeout)
+                ->withOptions(['verify' => false])
+                ->get($url);
+        } catch (Throwable $e) {
+            // cURL 连接错误（DNS 解析失败 / OpenSSL 握手超时 / 连接拒绝等）
+            // 返回一个模拟 0 状态码的 Response，让上层逻辑走 "无法访问" 分支
+            return new Response(new \GuzzleHttp\Psr7\Response(0, [], $e->getMessage()), $e->getMessage());
+        }
 
         $doubleCheck = in_array(Settings::get('seo.seo_double_check'), [true, 'true', null], true);
 

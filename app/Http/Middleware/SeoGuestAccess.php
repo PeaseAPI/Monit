@@ -18,9 +18,9 @@ class SeoGuestAccess
             return $next($request);
         }
 
-        $enabled = Settings::get('seo.tools_guest_access');
+                $enabled = Settings::get('seo.tools_guest_access');
 
-        if ($enabled !== true && $enabled !== 'true' && $enabled !== '1') {
+        if (! filter_var($enabled, FILTER_VALIDATE_BOOLEAN)) {
             abort(403, __('seo.guest_disabled'));
         }
 

@@ -81,3 +81,6 @@ Schedule::command('monit:seo-keywords-refresh')->hourly();
 // 每日 05:30：反链活性重验（抓源页匹配目标站链接，标记 active/lost）
 Schedule::command('monit:seo-backlinks-verify')->dailyAt('05:30');
 
+// 每月 1 日 02:00：GeoIP 数据库更新（db-ip.com 免费 country lite）
+Schedule::command('geoip:update')->monthlyOn(1, '02:00');
+

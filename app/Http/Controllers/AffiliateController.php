@@ -30,7 +30,9 @@ class AffiliateController extends Controller
      */
     private function ensureAffiliateEnabled(): void
     {
-        if (! Settings::get('affiliate.is_enabled', true)) {
+        // 键名与后台 affiliate 组一致（affiliate.affiliate_is_enabled）；
+        // 布尔以 'true'/'false' 字符串存储，须 filter_var 归一化（'false' 为 truthy）。
+        if (! filter_var(Settings::get('affiliate.affiliate_is_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             abort(404);
         }
     }

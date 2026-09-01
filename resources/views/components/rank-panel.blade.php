@@ -13,7 +13,7 @@
                             @if ($showRank)
                                 <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-medium text-zinc-500">{{ $i + 1 }}</span>
                             @endif
-                            <span class="truncate font-medium text-zinc-700">{{ $item['key'] }}</span>
+                            <span class="truncate font-medium text-zinc-700">{{ $item['label'] ?? $item['key'] }}</span>
                         </span>
                         <span class="shrink-0 tabular-nums text-zinc-500">{{ number_format($item['count']) }}</span>
                     </div>

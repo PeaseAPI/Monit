@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\LightweightEvent;
+use App\Models\OutboundClick;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
 use App\Services\Ai\AiService;
 use App\Services\StatisticsService;
+use App\Support\ContinentNames;
+use App\Support\CountryNames;
+use App\Support\LocaleNames;
+use App\Support\TimezoneNames;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Uuid;
 
@@ -91,6 +96,8 @@ class StatsController extends Controller
 
         $stats = StatisticsService::for($website)->lastDays($range)->filters($filters);
 
+                $locale = app()->getLocale();
+
         return view('stats.index', [
             'website' => $website,
             'range' => $range,
@@ -99,7 +106,7 @@ class StatsController extends Controller
             'series' => $stats->dailySeries(),
             'topPaths' => $stats->breakdown('path'),
             'topReferrers' => $stats->breakdown('referrer_host'),
-            'topCountries' => $stats->breakdown('country_code', 8),
+            'topCountries' => array_map(fn ($item) => array_merge($item, ['label' => CountryNames::flag($item['key']) . ' ' . CountryNames::name($item['key'], $locale)]), $stats->breakdown('country_code', 8)),
             'topDevices' => $stats->breakdown('device_type', 4),
             'topBrowsers' => $stats->breakdown('browser_name', 4),
             'topOs' => $stats->breakdown('os_name', 4),
@@ -242,7 +249,7 @@ class StatsController extends Controller
         ]);
     }
 
-    /**
+        /**
      * 出站点击统计
      */
     public function outboundClicks(Request $request, Website $website)
@@ -254,9 +261,12 @@ class StatsController extends Controller
 
         $rangeDate = now()->subDays($range);
 
-        $clicks = $website->outboundClicks()
+        // 按出站主机聚合（点击次数 + 最近点击时间），避免逐条展示
+        $clicks = OutboundClick::where('website_id', $website->website_id)
             ->where('datetime', '>=', $rangeDate)
-            ->orderBy('datetime', 'desc')
+            ->selectRaw('host, COUNT(*) as count, MAX(datetime) as last_click')
+            ->groupBy('host')
+            ->orderByDesc('count')
             ->paginate(50);
 
         return view('stats.outbound_clicks', [
@@ -331,7 +341,7 @@ class StatsController extends Controller
     /**
      * 热门国家
      */
-    public function topCountries(Request $request, Website $website)
+        public function topCountries(Request $request, Website $website)
     {
         $range = (int) ($request->query('range') ?: 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
@@ -339,7 +349,12 @@ class StatsController extends Controller
         }
 
         $stats = StatisticsService::for($website)->lastDays($range);
-        $topCountries = $stats->breakdown('country_code', 50);
+        $locale = app()->getLocale();
+        $topCountries = array_map(function ($item) use ($locale) {
+            $item['label'] = CountryNames::flag($item['key']) . ' ' . CountryNames::name($item['key'], $locale);
+
+            return $item;
+        }, $stats->breakdown('country_code', 50));
 
         return view('stats.top_countries', [
             'website' => $website,
@@ -452,7 +467,7 @@ class StatsController extends Controller
         ]);
     }
 
-    /**
+        /**
      * M21 热门语言（GA「用户语言」）
      */
     public function topLanguages(Request $request, Website $website)
@@ -463,11 +478,17 @@ class StatsController extends Controller
         }
 
         $stats = StatisticsService::for($website)->lastDays($range);
+        $locale = app()->getLocale();
+        $topLanguages = array_map(function ($item) use ($locale) {
+            $item['label'] = LocaleNames::name($item['key'], $locale);
+
+            return $item;
+        }, $stats->breakdown('browser_language', 50));
 
         return view('stats.top_languages', [
             'website' => $website,
             'range' => $range,
-            'topLanguages' => $stats->breakdown('browser_language', 50),
+            'topLanguages' => $topLanguages,
         ]);
     }
 
@@ -493,7 +514,7 @@ class StatsController extends Controller
     /**
      * M22 热门浏览器时区（原版 browser-timezones 页，规格书 §5.1.1）
      */
-    public function topTimezones(Request $request, Website $website)
+        public function topTimezones(Request $request, Website $website)
     {
         $range = (int) ($request->query('range') ?: 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
@@ -501,18 +522,24 @@ class StatsController extends Controller
         }
 
         $stats = StatisticsService::for($website)->lastDays($range);
+        $locale = app()->getLocale();
+        $topTimezones = array_map(function ($item) use ($locale) {
+            $item['label'] = TimezoneNames::name($item['key'], $locale);
+
+            return $item;
+        }, $stats->breakdown('browser_timezone', 50));
 
         return view('stats.top_timezones', [
             'website' => $website,
             'range' => $range,
-            'topTimezones' => $stats->breakdown('browser_timezone', 50),
+            'topTimezones' => $topTimezones,
         ]);
     }
 
     /**
      * M22 大洲分布（原版 continents 页，规格书 §5.1.1）
      */
-    public function topContinents(Request $request, Website $website)
+        public function topContinents(Request $request, Website $website)
     {
         $range = (int) ($request->query('range') ?: 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
@@ -520,11 +547,17 @@ class StatsController extends Controller
         }
 
         $stats = StatisticsService::for($website)->lastDays($range);
+        $locale = app()->getLocale();
+        $topContinents = array_map(function ($item) use ($locale) {
+            $item['label'] = ContinentNames::name($item['key'], $locale);
+
+            return $item;
+        }, $stats->breakdown('continent_code', 10));
 
         return view('stats.top_continents', [
             'website' => $website,
             'range' => $range,
-            'topContinents' => $stats->breakdown('continent_code', 10),
+            'topContinents' => $topContinents,
         ]);
     }
 

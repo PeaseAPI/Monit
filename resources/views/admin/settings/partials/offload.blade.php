@@ -3,7 +3,7 @@
 
     <div class="space-y-4">
         <label class="flex items-center gap-2">
-            <input type="checkbox" name="offload_is_enabled" value="1" {{ ($settings['offload.offload_is_enabled'] ?? false) ? 'checked' : '' }}>
+            <input type="checkbox" name="offload_is_enabled" value="1" {{ filter_var($settings['offload.offload_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             启用 Offload
         </label>
         <div>

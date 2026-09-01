@@ -45,6 +45,8 @@
                 'push-subscribers' => 'push-notifications',
             ];
             $adminNav = $adminNavMap[$adminNav ?? ''] ?? ($adminNav ?? '');
+            // Affiliate 插件门控（规格 §14.7：停用即关闭入口；布尔以 'true'/'false' 字符串存储，须 filter_var 归一化）
+            $affiliateEnabled = filter_var(\App\Support\Settings::get('affiliate.affiliate_is_enabled', true), FILTER_VALIDATE_BOOLEAN);
         @endphp
         <nav class="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4 pt-2">
             @php
@@ -133,9 +135,11 @@
                 <a href="{{ route('account.index') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white">
                     <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
                     {{ __('admin.user_account') }}</a>
-                <a href="{{ route('referrals.index') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white">
-                    <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/></svg>
-                    {{ __('admin.user_referrals') }}</a>
+                @if ($affiliateEnabled)
+                    <a href="{{ route('referrals.index') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white">
+                        <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/></svg>
+                        {{ __('admin.user_referrals') }}</a>
+                @endif
                 <div class="my-1 border-t border-white/5"></div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

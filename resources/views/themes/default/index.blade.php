@@ -42,7 +42,7 @@
                     && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true)))
                 <a href="{{ route('seo.tools') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_seo_tools') }}</a>
                 @endif
-                @if (\App\Support\Settings::get('seo.audits_is_enabled', true))
+                @if (filter_var(\App\Support\Settings::get('seo.audits_is_enabled', true), FILTER_VALIDATE_BOOLEAN))
                 <a href="{{ route('seo.directory') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_seo_directory') }}</a>
                 @endif
                 <a href="{{ route('blog') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_blog') }}</a>
@@ -114,7 +114,7 @@
             <p class="mt-4 text-sm text-zinc-400">{{ __('landing.no_card_required') }}</p>
 
             {{-- 免费 SEO 分析（对标 monit.cn 首页获客组件：POST /seo/analyze，审计开关控制） --}}
-            @if (\App\Support\Settings::get('seo.audits_is_enabled', true))
+            @if (filter_var(\App\Support\Settings::get('seo.audits_is_enabled', true), FILTER_VALIDATE_BOOLEAN))
             <div class="mx-auto mt-12 max-w-xl">
                 <form method="POST" action="{{ route('seo.analyze') }}" class="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-lg shadow-zinc-900/5 sm:flex-row" data-seo-form>
                     @csrf
@@ -560,7 +560,7 @@
                             && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true)))
                         <li><a href="{{ route('seo.tools') }}" class="transition hover:text-white">{{ __('landing.nav_seo_tools') }}</a></li>
                         @endif
-                        @if (\App\Support\Settings::get('seo.audits_is_enabled', true))
+                        @if (filter_var(\App\Support\Settings::get('seo.audits_is_enabled', true), FILTER_VALIDATE_BOOLEAN))
                         <li><a href="{{ route('seo.directory') }}" class="transition hover:text-white">{{ __('landing.nav_seo_directory') }}</a></li>
                         @endif
                     </ul>

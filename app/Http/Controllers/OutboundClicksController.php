@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
  */
 class OutboundClicksController extends Controller
 {
-    public function index(Request $request, Website $website)
+        public function index(Request $request, Website $website)
     {
         $range = (int) ($request->query('range', 7));
         if (! in_array($range, [1, 7, 30, 90], true)) {

@@ -15,8 +15,8 @@
             <input type="color" name="primary_color" class="form-input w-20 h-10" value="{{ old('primary_color', $settings['theme.primary_color'] ?? '#4f46e5') }}">
         </div>
         <label class="flex items-center gap-2">
-            <input type="checkbox" name="white_label_is_enabled" value="1" {{ ($settings['theme.white_label_is_enabled'] ?? false) ? 'checked' : '' }}>
-            启用白标（隐藏 Monit 品牌标识）
+            <input type="checkbox" name="white_label_is_enabled" value="1" {{ filter_var($settings['theme.white_label_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+                        {{ __('admin.white_label_hint') }}
         </label>
     </div>
 </div>

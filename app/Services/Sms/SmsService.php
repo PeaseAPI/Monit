@@ -27,7 +27,8 @@ class SmsService
     /** 短信功能总开关 */
     public static function isEnabled(): bool
     {
-        return (bool) Settings::get('sms.sms_is_enabled', false);
+        // 设置存储为 'true'/'false' 字符串（saveSettings 约定）：(bool)'false' 为 true，须 filter_var 归一化
+        return filter_var(Settings::get('sms.sms_is_enabled', false), FILTER_VALIDATE_BOOLEAN);
     }
 
     /** 场景开关（register / phone_login / forgot_password / phone_bind） */
@@ -37,7 +38,7 @@ class SmsService
             return false;
         }
 
-        return (bool) Settings::get("sms.sms_{$scenario}_is_enabled", false);
+        return filter_var(Settings::get("sms.sms_{$scenario}_is_enabled", false), FILTER_VALIDATE_BOOLEAN);
     }
 
     /** 当前短信服务商 */

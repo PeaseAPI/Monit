@@ -31,20 +31,27 @@ class SeoAuditController extends Controller
         return view('seo.audits', ['audits' => $audits, 'host' => (string) $request->query('host')]);
     }
 
-    /**
+        /**
      * 发起审计（登录用户：配额校验后入队）
+     * 支持四种审计类型：single / sitemap / bulk / html
      */
     public function store(Request $request)
     {
-        $url = static::ensureScheme($request->input('url', ''));
-        $request->merge(['url' => $url]);
+        $type = $request->input('type', 'single');
+        $rules = ['type' => 'required|in:single,sitemap,bulk,html'];
 
-        $validated = $request->validate([
-            'url' => 'required|url|max:2048',
-            'type' => 'nullable|in:single,bulk',
-        ]);
+        // 根据审计类型动态校验
+        match ($type) {
+            'sitemap' => $rules['url'] = 'required|url|max:2048',
+            'bulk'    => $rules['urls'] = 'required|string|max:65535',
+            'html'    => $rules['url'] = 'required|url|max:2048',
+            default   => $rules['url'] = 'required|url|max:2048',
+        };
 
-        $limit = $this->monthlyLimit($request->user()->getPlanSettings(), 'seo_audits_limit');
+        $validated = $request->validate($rules);
+
+        $plan = $request->user()->getPlanSettings();
+        $limit = $this->monthlyLimit($plan, 'seo_audits_limit');
         $used = SeoAudit::where('user_id', $request->user()->user_id)
             ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
@@ -53,11 +60,54 @@ class SeoAuditController extends Controller
             return back()->withErrors(['url' => __('seo.quota_exceeded')]);
         }
 
-        RunSeoAuditJob::dispatch(
-            $validated['url'],
-            $request->user()->user_id,
-            $validated['type'] ?? 'single',
-        );
+        // Sitemap / Bulk：多 URL 入队
+        if ($type === 'sitemap') {
+            $bulkLimit = $this->monthlyLimit($plan, 'seo_bulk_limit') ?: 50;
+            dispatch(function () use ($validated, $request, $bulkLimit) {
+                $urls = app(\App\Services\Seo\SitemapMonitor::class)
+                    ->fetch($validated['url'])['urls'] ?? [];
+                $urls = array_slice($urls, 0, $bulkLimit);
+                foreach ($urls as $url) {
+                    RunSeoAuditJob::dispatch($url, $request->user()->user_id, 'single');
+                }
+            });
+
+            return redirect()->route('seo.audits')->with('success', __('seo.audit_queued'));
+        }
+
+        if ($type === 'bulk') {
+            $bulkLimit = $this->monthlyLimit($plan, 'seo_bulk_limit') ?: 50;
+            $urls = collect(preg_split('/\R/', $validated['urls']))
+                ->map(fn (string $u) => static::ensureScheme(trim($u)))
+                ->filter(fn (string $u) => filter_var($u, FILTER_VALIDATE_URL))
+                ->take($bulkLimit);
+
+            foreach ($urls as $url) {
+                RunSeoAuditJob::dispatch($url, $request->user()->user_id, 'single');
+            }
+
+            return redirect()->route('seo.audits')->with('success', __('seo.audit_queued'));
+        }
+
+        if ($type === 'html') {
+            $html = $request->input('html', '');
+            if (trim($html) === '') {
+                return back()->withErrors(['html' => __('seo.html_required')])->withInput();
+            }
+
+            RunSeoAuditJob::dispatch(
+                $validated['url'],
+                $request->user()->user_id,
+                'html',
+                ['html' => $html],
+            );
+
+            return redirect()->route('seo.audits')->with('success', __('seo.audit_queued'));
+        }
+
+        // Single
+        $url = static::ensureScheme($validated['url']);
+        RunSeoAuditJob::dispatch($url, $request->user()->user_id, 'single');
 
         return redirect()->route('seo.audits')->with('success', __('seo.audit_queued'));
     }
@@ -209,6 +259,24 @@ class SeoAuditController extends Controller
     }
 
     /**
+     * AI 审计摘要（异步队列生成，刷新后查看）
+     */
+    public function aiSummary(Request $request, SeoAudit $seoAudit)
+    {
+        if ((int) $seoAudit->user_id !== (int) $request->user()->user_id && ! $request->user()->isAdmin()) {
+            abort(403);
+        }
+
+        if (! \App\Services\Ai\AiService::isEnabled()) {
+            return back()->withErrors(['ai' => __('seo.ai_not_enabled')]);
+        }
+
+        \App\Jobs\Seo\SeoAiSummaryJob::dispatch($seoAudit, $request->user());
+
+        return back()->with('success', __('seo.ai_summary_queued'));
+    }
+
+    /**
      * 三态访问矩阵：granted / password / denied
      */
     protected function accessState(Request $request, SeoAudit $audit): string
@@ -233,11 +301,9 @@ class SeoAuditController extends Controller
         return (int) ($plan[$key] ?? -1);
     }
 
-    protected function guestAllowed(): bool
+        protected function guestAllowed(): bool
     {
-        $enabled = Settings::get('seo.tools_guest_access');
-
-        return $enabled === true || $enabled === 'true' || $enabled === '1';
+        return filter_var(Settings::get('seo.tools_guest_access'), FILTER_VALIDATE_BOOLEAN);
     }
 
     /**

@@ -15,7 +15,8 @@ class ReferralsController extends Controller
     public function index(Request $request)
     {
         // Affiliate 插件门控（规格书 §14.7：插件停用即关闭入口；默认开启保持向后兼容）
-        if (! Settings::get('affiliate.is_enabled', true)) {
+        // 键名与后台 affiliate 组一致；布尔以 'true'/'false' 字符串存储，须 filter_var 归一化。
+        if (! filter_var(Settings::get('affiliate.affiliate_is_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             abort(404);
         }
 

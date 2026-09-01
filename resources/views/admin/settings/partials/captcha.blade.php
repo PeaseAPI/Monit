@@ -56,19 +56,19 @@
             <h4 class="font-medium mb-2">验证码保护页面</h4>
             <div class="space-y-2">
                 <label class="flex items-center gap-2">
-                    <input type="checkbox" name="captcha_on_register" value="1" {{ ($settings['captcha.captcha_on_register'] ?? false) ? 'checked' : '' }}>
+                    <input type="checkbox" name="captcha_on_register" value="1" {{ filter_var($settings['captcha.captcha_on_register'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                     注册页面
                 </label>
                 <label class="flex items-center gap-2">
-                    <input type="checkbox" name="captcha_on_login" value="1" {{ ($settings['captcha.captcha_on_login'] ?? false) ? 'checked' : '' }}>
+                    <input type="checkbox" name="captcha_on_login" value="1" {{ filter_var($settings['captcha.captcha_on_login'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                     登录页面
                 </label>
                 <label class="flex items-center gap-2">
-                    <input type="checkbox" name="captcha_on_lost_password" value="1" {{ ($settings['captcha.captcha_on_lost_password'] ?? false) ? 'checked' : '' }}>
+                    <input type="checkbox" name="captcha_on_lost_password" value="1" {{ filter_var($settings['captcha.captcha_on_lost_password'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                     找回密码页面
                 </label>
                 <label class="flex items-center gap-2">
-                    <input type="checkbox" name="captcha_on_contact" value="1" {{ ($settings['captcha.captcha_on_contact'] ?? false) ? 'checked' : '' }}>
+                    <input type="checkbox" name="captcha_on_contact" value="1" {{ filter_var($settings['captcha.captcha_on_contact'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                     联系表单
                 </label>
             </div>

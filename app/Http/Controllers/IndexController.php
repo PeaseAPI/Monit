@@ -122,7 +122,9 @@ class IndexController extends Controller
      */
     public function affiliate()
     {
-        if (! Settings::get('affiliate.affiliate_is_enabled', true)) {
+        // 设置存储为 'true'/'false' 字符串（saveSettings 约定），须用 filter_var 归一化：
+        // 非空字符串 'false' 在 PHP 中为 truthy，直接布尔判断会导致关闭后仍可访问。
+        if (! filter_var(Settings::get('affiliate.affiliate_is_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             abort(404);
         }
 
@@ -314,10 +316,11 @@ class IndexController extends Controller
     /**
      * content 组布尔开关（默认开启；显式 false 才关闭）
      */
-    protected static function contentOn(string $key): bool
+        protected static function contentOn(string $key): bool
     {
         $value = Settings::get('content.'.$key);
 
-        return $value === null || in_array($value, [true, 1, '1', 'true', 'on'], true);
+        // 设置存储为 'true'/'false' 字符串（saveSettings 约定），须 filter_var 归一化
+        return $value === null || filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 }

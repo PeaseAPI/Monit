@@ -387,7 +387,8 @@ Route::middleware('auth')->group(function (): void {
     // SEO：审计（M26，融合方案 §8.1；seo.feature:audits 受后台 seo 组总开关控制）
     Route::get('/seo/audits', [SeoAuditController::class, 'index'])->middleware('seo.feature:audits')->name('seo.audits');
     Route::post('/seo/audits', [SeoAuditController::class, 'store'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.audits.store');
-    Route::post('/seo/audits/{seoAudit}/share', [SeoAuditController::class, 'share'])->middleware('seo.feature:audits')->name('seo.audits.share');
+        Route::post('/seo/audits/{seoAudit}/share', [SeoAuditController::class, 'share'])->middleware('seo.feature:audits')->name('seo.audits.share');
+    Route::post('/seo/audits/{seoAudit}/ai-summary', [SeoAuditController::class, 'aiSummary'])->middleware('seo.feature:audits')->name('seo.audits.ai');
     Route::delete('/seo/audits/{seoAudit}', [SeoAuditController::class, 'destroy'])->middleware('seo.feature:audits')->name('seo.audits.destroy');
     Route::get('/seo/audits/export', [SeoAuditController::class, 'export'])->middleware('seo.feature:audits')->name('seo.audits.export');
 

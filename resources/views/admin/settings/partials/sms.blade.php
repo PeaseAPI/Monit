@@ -3,7 +3,7 @@
 
     <div class="space-y-4">
         <label class="flex items-center gap-2">
-            <input type="checkbox" name="sms_is_enabled" value="1" {{ ($settings['sms.sms_is_enabled'] ?? false) ? 'checked' : '' }}>
+            <input type="checkbox" name="sms_is_enabled" value="1" {{ filter_var($settings['sms.sms_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             启用短信功能
         </label>
 
@@ -80,19 +80,19 @@
         <fieldset class="rounded-xl border border-zinc-200 p-4 space-y-3">
             <legend class="px-1 text-sm font-medium text-zinc-700">应用场景</legend>
             <label class="flex items-center gap-2">
-                <input type="checkbox" name="sms_register_is_enabled" value="1" {{ ($settings['sms.sms_register_is_enabled'] ?? false) ? 'checked' : '' }}>
+                <input type="checkbox" name="sms_register_is_enabled" value="1" {{ filter_var($settings['sms.sms_register_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                 注册：要求手机号 + 短信验证码
             </label>
             <label class="flex items-center gap-2">
-                <input type="checkbox" name="sms_phone_login_is_enabled" value="1" {{ ($settings['sms.sms_phone_login_is_enabled'] ?? false) ? 'checked' : '' }}>
+                <input type="checkbox" name="sms_phone_login_is_enabled" value="1" {{ filter_var($settings['sms.sms_phone_login_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                 手机号登录：手机号 + 密码 / 手机号 + 短信验证码
             </label>
             <label class="flex items-center gap-2">
-                <input type="checkbox" name="sms_forgot_password_is_enabled" value="1" {{ ($settings['sms.sms_forgot_password_is_enabled'] ?? false) ? 'checked' : '' }}>
+                <input type="checkbox" name="sms_forgot_password_is_enabled" value="1" {{ filter_var($settings['sms.sms_forgot_password_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                 找回密码：支持手机号短信验证码重置
             </label>
             <label class="flex items-center gap-2">
-                <input type="checkbox" name="sms_phone_bind_is_enabled" value="1" {{ ($settings['sms.sms_phone_bind_is_enabled'] ?? false) ? 'checked' : '' }}>
+                <input type="checkbox" name="sms_phone_bind_is_enabled" value="1" {{ filter_var($settings['sms.sms_phone_bind_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                 账户中心：允许绑定/更换手机号
             </label>
         </fieldset>
