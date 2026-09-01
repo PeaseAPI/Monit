@@ -2,7 +2,7 @@
 @section('title', __('payments.title'))
 
 @section('content')
-<div class="p-8 max-w-4xl">
+<div class="max-w-4xl">
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('payments.title') }}</h1>
     <p class="mt-2 text-sm text-zinc-500">{{ __('payments.subtitle') }}</p>
 
@@ -53,7 +53,7 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs font-medium text-zinc-500">{{ __('payments.billing_frequency') }}</label>
-                                <select name="frequency" class="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
+                                <select name="frequency" class="form-input">
                                     @foreach(['monthly', 'annual', 'lifetime'] as $frequency)
                                     <option value="{{ $frequency }}">{{ __('payments.frequency_' . $frequency) }}（{{ $planPrices[$frequency] !== null ? number_format($planPrices[$frequency], 2) : '—' }} {{ $currency }}）</option>
                                     @endforeach
@@ -61,7 +61,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-zinc-500">{{ __('payments.payment_method') }}</label>
-                                <select name="processor" class="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
+                                <select name="processor" class="form-input">
                                     @foreach(config('monit.payment.supported_processors') as $processor)
                                     <option value="{{ $processor }}">{{ __('payments.processor_' . $processor) }}</option>
                                     @endforeach
@@ -69,7 +69,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-zinc-500">{{ __('payments.discount_code') }}</label>
-                                <input type="text" name="code" placeholder="{{ __('payments.discount_code_placeholder') }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
+                                <input type="text" name="code" placeholder="{{ __('payments.discount_code_placeholder') }}" class="form-input">
                             </div>
                             <button class="w-full rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('payments.subscribe') }}</button>
                         </div>

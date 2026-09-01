@@ -1,36 +1,59 @@
-@extends('layouts.app')
+@extends('layouts.app', ['nav' => 'account'])
+@section('title', __('nav.account'))
 @section('content')
-<div class="p-8 max-w-4xl">
-    <h1 class="text-2xl font-bold text-zinc-900">{{ __('account.title') }}</h1>
-    <p class="mt-2 text-sm text-zinc-500">{{ __('account.profile_api_desc') }}</p>
+<div class="max-w-2xl">
+    {{-- 页头：头像 + 身份信息 --}}
+    <div class="flex items-center gap-4">
+        <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-xl font-bold text-white shadow-sm">
+            {{ mb_substr($user->name, 0, 1) }}
+        </span>
+        <div class="min-w-0">
+            <h1 class="truncate text-2xl font-bold text-zinc-900">{{ $user->name }}</h1>
+            <p class="truncate text-sm text-zinc-500">{{ $user->email }}</p>
+        </div>
+        <span class="ml-auto hidden rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 sm:inline-block">
+            {{ $user->plan->name ?? __('payments.free_plan') }}
+        </span>
+    </div>
 
     {{-- 个人资料 --}}
-    <form method="POST" action="{{ route('account.update') }}" class="mt-6 max-w-xl">@csrf @method('PUT')
-    <div class="space-y-4">
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('account.name_label') }}</label><input type="text" name="name" value="{{ old('name', $user->name) }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm"></div>
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('account.email_label') }}</label><input type="email" name="email" value="{{ old('email', $user->email) }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm"></div>
-        <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('account.update_profile') }}</button>
-    </div></form>
+    <form method="POST" action="{{ route('account.update') }}" class="card mt-6">@csrf @method('PUT')
+        <div class="card-header flex items-center gap-2">
+            <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.118a7.5 7.5 0 0 1 15 0A17 17 0 0 1 12 21.75c-2.676 0-5.216-.584-7.5-1.632Z"/></svg>
+            {{ __('account.profile_api_desc') }}
+        </div>
+        <div class="space-y-4 p-6">
+            <div><label class="form-label" for="acc-name">{{ __('account.name_label') }}</label><input id="acc-name" type="text" name="name" value="{{ old('name', $user->name) }}" class="form-input"></div>
+            <div><label class="form-label" for="acc-email">{{ __('account.email_label') }}</label><input id="acc-email" type="email" name="email" value="{{ old('email', $user->email) }}" class="form-input"></div>
+            <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:ring-2 focus:ring-brand-500/40 focus:outline-none">{{ __('account.update_profile') }}</button>
+        </div>
+    </form>
 
     {{-- 修改密码 --}}
-    <div class="mt-10 max-w-xl rounded-2xl border border-zinc-200 bg-white p-6">
-        <h3 class="text-sm font-semibold text-zinc-900">{{ __('account.change_password') }}</h3>
-        <form method="POST" action="{{ route('account.update-password') }}" class="mt-4 space-y-4">@csrf @method('PUT')
-            <div><label class="block text-sm font-medium text-zinc-700">{{ __('account.current_password') }}</label><input type="password" name="current_password" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" autocomplete="current-password"></div>
-            <div><label class="block text-sm font-medium text-zinc-700">{{ __('account.new_password') }}</label><input type="password" name="password" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" autocomplete="new-password"></div>
-            <div><label class="block text-sm font-medium text-zinc-700">{{ __('account.confirm_new_password') }}</label><input type="password" name="password_confirmation" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" autocomplete="new-password"></div>
-            <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('account.change_password_btn') }}</button>
+    <div class="card mt-6">
+        <div class="card-header flex items-center gap-2">
+            <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+            {{ __('account.change_password') }}
+        </div>
+        <form method="POST" action="{{ route('account.update-password') }}" class="space-y-4 p-6">@csrf @method('PUT')
+            <div><label class="form-label">{{ __('account.current_password') }}</label><input type="password" name="current_password" class="form-input" autocomplete="current-password"></div>
+            <div><label class="form-label">{{ __('account.new_password') }}</label><input type="password" name="password" class="form-input" autocomplete="new-password"></div>
+            <div><label class="form-label">{{ __('account.confirm_new_password') }}</label><input type="password" name="password_confirmation" class="form-input" autocomplete="new-password"></div>
+            <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('account.change_password_btn') }}</button>
         </form>
     </div>
 
     {{-- API 密钥 --}}
-    <div class="mt-6 max-w-xl rounded-2xl border border-zinc-200 bg-white p-6">
-        <h3 class="text-sm font-semibold text-zinc-900">{{ __('account.api_key') }}</h3>
-        <div class="mt-2 flex items-center gap-2">
-            <code class="rounded-xl bg-zinc-100 px-3 py-2 text-xs text-zinc-600">{{ $user->api_key ?? __('account.not_set') }}</code>
-            <a href="{{ route('account.regenerate_api_key') }}" onclick="event.preventDefault();document.getElementById('api-regen').submit();" class="text-sm text-brand-600 hover:underline">{{ __('account.regenerate') }}</a>
+    <div class="card mt-6">
+        <div class="card-header flex items-center gap-2">
+            <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v8.25A2.25 2.25 0 0 0 6 16.5h2.25m8.25-8.25H18A2.25 2.25 0 0 1 20.25 10.5V18A2.25 2.25 0 0 1 18 20.25h-7.5A2.25 2.25 0 0 1 8.25 18v-7.5A2.25 2.25 0 0 1 10.5 8.25h6Z"/></svg>
+            {{ __('account.api_key') }}
+        </div>
+        <div class="flex flex-wrap items-center gap-3 p-6">
+            <code class="flex-1 truncate rounded-xl bg-zinc-100 px-3 py-2.5 text-xs text-zinc-600">{{ $user->api_key ?? __('account.not_set') }}</code>
+            <a href="{{ route('account.regenerate_api_key') }}" onclick="event.preventDefault();document.getElementById('api-regen').submit();" class="rounded-xl border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 transition hover:bg-brand-50">{{ __('account.regenerate') }}</a>
             @if($user->api_key)
-            <a href="{{ route('account.revoke_api_key') }}" onclick="event.preventDefault();document.getElementById('api-revoke').submit();" class="text-sm text-red-600 hover:underline">{{ __('account.revoke') }}</a>
+            <a href="{{ route('account.revoke_api_key') }}" onclick="event.preventDefault();document.getElementById('api-revoke').submit();" class="rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50">{{ __('account.revoke') }}</a>
             @endif
         </div>
         <form id="api-regen" method="POST" action="{{ route('account.regenerate_api_key') }}">@csrf @method('PUT')</form>
@@ -42,9 +65,13 @@
     {{-- 手机号绑定（M17 §12.5） --}}
     @php($smsBindEnabled = \App\Services\Sms\SmsService::scenarioEnabled('phone_bind'))
     @if($smsBindEnabled)
-    <div class="mt-6 max-w-xl rounded-2xl border border-zinc-200 bg-white p-6">
-        <h3 class="text-sm font-semibold text-zinc-900">{{ __('account.phone_title') }}</h3>
-        <p class="mt-1 text-sm text-zinc-500">{{ __('account.phone_desc') }}</p>
+    <div class="card mt-6">
+        <div class="card-header flex items-center gap-2">
+            <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/></svg>
+            {{ __('account.phone_title') }}
+        </div>
+        <div class="p-6">
+        <p class="text-sm text-zinc-500">{{ __('account.phone_desc') }}</p>
 
         @if($user->phone)
             <div class="mt-3 flex items-center gap-2">
@@ -76,7 +103,7 @@
             @csrf
             <input type="hidden" name="phone" value="{{ old('phone', $user->phone) }}">
             <div>
-                <label class="block text-sm font-medium text-zinc-700">{{ __('auth.sms_code') }}</label>
+                <label class="form-label">{{ __('auth.sms_code') }}</label>
                 <input type="text" inputmode="numeric" maxlength="6" name="sms_code" required
                        placeholder="{{ __('auth.sms_code_placeholder') }}"
                        class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm @error('sms_code') border-red-400 @enderror">
@@ -85,23 +112,28 @@
                 @enderror
             </div>
             <p class="text-xs text-zinc-400">{{ __('account.phone_bind_form_hint') }}</p>
-            <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('account.phone_bind_btn') }}</button>
+            <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('account.phone_bind_btn') }}</button>
         </form>
+        </div>
     </div>
     @endif
 
     {{-- 两步验证（规格书 §12.4） --}}
-    <div class="mt-6 max-w-xl rounded-2xl border border-zinc-200 bg-white p-6">
-        <h3 class="text-sm font-semibold text-zinc-900">{{ __('account.twofa_title') }}</h3>
-        <p class="mt-1 text-sm text-zinc-500">{{ __('account.twofa_desc') }}</p>
+    <div class="card mt-6">
+        <div class="card-header flex items-center gap-2">
+            <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M12 3l7.5 3v5.25c0 4.42-3.03 8.12-7.5 9.75-4.47-1.63-7.5-5.33-7.5-9.75V6L12 3Z"/></svg>
+            {{ __('account.twofa_title') }}
+        </div>
+        <div class="p-6">
+        <p class="text-sm text-zinc-500">{{ __('account.twofa_desc') }}</p>
 
         @if($user->twofa_is_enabled)
             <p class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
                 <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>{{ __('account.twofa_status_on') }}
             </p>
             <form method="POST" action="{{ route('account.twofa.disable') }}" class="mt-4 space-y-3" onsubmit="return confirm('{{ __('account.twofa_disable_confirm') }}')">@csrf @method('DELETE')
-                <div><label class="block text-sm font-medium text-zinc-700">{{ __('account.current_password') }}</label><input type="password" name="password" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" autocomplete="current-password"></div>
-                <div><label class="block text-sm font-medium text-zinc-700">{{ __('account.twofa_code_label') }}</label><input type="text" name="code" inputmode="numeric" pattern="\d{6}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" autocomplete="one-time-code">@error('code')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror</div>
+                <div><label class="form-label">{{ __('account.current_password') }}</label><input type="password" name="password" class="form-input" autocomplete="current-password"></div>
+                <div><label class="form-label">{{ __('account.twofa_code_label') }}</label><input type="text" name="code" inputmode="numeric" pattern="\d{6}" class="form-input" autocomplete="one-time-code">@error('code')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror</div>
                 <button class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700">{{ __('account.twofa_disable_btn') }}</button>
             </form>
         @else
@@ -116,7 +148,7 @@
                         </div>
                     </div>
                     <form method="POST" action="{{ route('account.twofa.enable') }}" class="mt-4 space-y-3">@csrf
-                        <div><label class="block text-sm font-medium text-zinc-700">{{ __('account.twofa_code_label') }}</label><input type="text" name="code" inputmode="numeric" pattern="\d{6}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" autocomplete="one-time-code">@error('code')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror</div>
+                        <div><label class="form-label">{{ __('account.twofa_code_label') }}</label><input type="text" name="code" inputmode="numeric" pattern="\d{6}" class="form-input" autocomplete="one-time-code">@error('code')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror</div>
                         <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('account.twofa_confirm_enable') }}</button>
                     </form>
                 </div>
@@ -124,16 +156,19 @@
                 <a href="{{ route('account.twofa.setup') }}" class="mt-3 inline-block rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('account.twofa_enable_btn') }}</a>
             @endif
         @endif
+        </div>
     </div>
 
     {{-- 删除账户 --}}
-    <div class="mt-6 max-w-xl rounded-2xl border border-red-200 bg-red-50 p-6">
-        <h3 class="text-sm font-semibold text-red-900">{{ __('account.delete_account') }}</h3>
-        <p class="mt-1 text-sm text-red-700">{{ __('account.delete_warning') }}</p>
+    <div class="mt-6 rounded-2xl border border-red-200 bg-red-50/60">
+        <div class="border-b border-red-100 bg-red-100/40 px-6 py-4 text-sm font-semibold text-red-900">{{ __('account.delete_account') }}</div>
+        <div class="p-6">
+        <p class="text-sm text-red-700/90">{{ __('account.delete_warning') }}</p>
         <form method="POST" action="{{ route('account.destroy') }}" class="mt-4 space-y-3" onsubmit="return confirm('{{ __('account.delete_confirm') }}')">@csrf @method('DELETE')
-            <div><label class="block text-sm font-medium text-red-700">{{ __('account.current_password') }}</label><input type="password" name="password" class="mt-1 w-full rounded-xl border border-red-300 px-4 py-2.5 text-sm" autocomplete="current-password"></div>
-            <button class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700">{{ __('account.delete_account_btn') }}</button>
+            <div><label class="form-label !text-red-700">{{ __('account.current_password') }}</label><input type="password" name="password" class="form-input border-red-300 focus:border-red-500" autocomplete="current-password"></div>
+            <button class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700">{{ __('account.delete_account_btn') }}</button>
         </form>
+        </div>
     </div>
 </div>
 @endsection

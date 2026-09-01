@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('seo.handlers_title') }}</h1>
 
     <form method="POST" action="{{ route('seo.handlers.store') }}" class="mt-6 grid gap-3 rounded-2xl border border-zinc-200 bg-white p-6 md:grid-cols-2">

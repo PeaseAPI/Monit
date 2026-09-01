@@ -3,7 +3,7 @@
 @section('title', __('admin.license_title'))
 
 @section('content')
-<div class="p-8 max-w-3xl">
+<div class="max-w-3xl">
     <h1 class="text-2xl font-bold text-zinc-100">{{ __('admin.license_title') }}</h1>
     <p class="mt-2 text-sm text-zinc-400">{{ __('admin.license_desc') }}</p>
 

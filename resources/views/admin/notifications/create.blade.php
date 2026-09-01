@@ -5,10 +5,10 @@
 <div class="max-w-xl rounded-2xl border border-zinc-200 bg-white p-6">
     <form method="POST" action="{{ route('admin.notifications.store') }}">@csrf
     <div class="space-y-4">
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.notification_title') }}</label><input type="text" name="title" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required></div>
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.notification_message') }}</label><textarea name="message" rows="4" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required></textarea></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.notification_title') }}</label><input type="text" name="title" class="form-input" required></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.notification_message') }}</label><textarea name="message" rows="4" class="form-input" required></textarea></div>
         <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.notification_type') }}</label>
-            <select name="type" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm"><option value="info">Info</option><option value="success">Success</option><option value="warning">Warning</option><option value="danger">Danger</option></select>
+            <select name="type" class="form-input"><option value="info">Info</option><option value="success">Success</option><option value="warning">Warning</option><option value="danger">Danger</option></select>
         </div>
         <button class="rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('common.add') }}</button>
     </div>

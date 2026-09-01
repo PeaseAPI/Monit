@@ -48,6 +48,18 @@
                         {{ $item['label'] }}
                     </a>
                 @endforeach
+
+                {{-- 管理员可见：管理后台入口 --}}
+                @if ((int) auth()->user()->type === 1)
+                    <div class="mt-4 border-t border-zinc-800 pt-3">
+                        <a href="{{ route('admin.index') }}"
+                           class="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-amber-500/15 to-transparent px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:from-amber-500/25">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.96 11.96 0 0 1 3.598 6 12 12 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.249-8.25-3.286Z"/></svg>
+                            {{ __('nav.admin') }}
+                            <svg class="ml-auto h-4 w-4 opacity-50 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+                        </a>
+                    </div>
+                @endif
             </nav>
 
             <div class="border-t border-zinc-900 p-3">
@@ -62,8 +74,9 @@
                 </div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-200">
-                                                {{ __('Logout') }}
+                    <button type="submit" class="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-200">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg>
+                        {{ __('Logout') }}
                     </button>
                 </form>
             </div>
@@ -77,6 +90,9 @@
                     <x-brand-logo class="h-8 w-8" text-class="text-base" />
                 </a>
                 <div class="flex items-center gap-3">
+                    @if ((int) auth()->user()->type === 1)
+                        <a href="{{ route('admin.index') }}" class="text-sm font-semibold text-amber-600 hover:text-amber-700">{{ __('nav.admin') }}</a>
+                    @endif
                                         <a href="{{ route('websites.index') }}" class="text-sm text-zinc-600">{{ __('Websites') }}</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

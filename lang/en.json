@@ -941,7 +941,7 @@
     "landing.billing_annual": "Annual",
     "landing.billing_monthly": "Monthly",
     "landing.cta_primary": "Start Analyzing Free",
-    "landing.cta_secondary": "See the Product",
+    "landing.cta_secondary": "View pricing",
     "landing.cta_subtitle": "Create your account now and own your analytics platform in 5 minutes.",
     "landing.cta_title": "Ready to see your traffic clearly?",
     "landing.currency": "Currency",
@@ -1802,5 +1802,15 @@
     "websites.tracking_mode": "跟踪模式",
     "websites.unlimited": "Unlimited",
     "websites.url_hint": "需以 http:// 或 https:// 开头；www. 前缀会自动去除。",
-    "websites.url_label": "网站地址"
+    "websites.url_label": "网站地址",
+    "nav.admin": "Admin Panel",
+    "landing.testimonials_subtitle": "Real feedback from developers and teams using Monit every day",
+    "landing.trust_data_own": "Self-hosted, your data stays yours",
+    "landing.trust_privacy": "Privacy-first analytics",
+    "landing.trust_support": "Responsive human support",
+    "landing.faq_still_questions": "Can't find the answer you're looking for?",
+    "landing.faq_contact_btn": "Contact us",
+    "landing.cta_badge_free": "Free plan available",
+    "landing.cta_badge_nocard": "No credit card required",
+    "landing.cta_badge_fast": "Live in 5 minutes"
 }

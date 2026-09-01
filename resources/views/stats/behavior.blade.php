@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <x-stats-header :website="$website" :title="__('stats.behavior_title')" />
     <x-range-switcher :route-name="'stats.behavior'" :website="$website" :range="$range" />
 

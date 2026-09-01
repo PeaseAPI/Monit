@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8 max-w-4xl">
+<div class="max-w-4xl">
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('invoices.title') }}</h1>
 
     <div class="mt-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white">

@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <a href="{{ route('seo.tools') }}" class="text-sm text-zinc-500 hover:underline">← {{ __('seo.tools_title') }}</a>
     <h1 class="mt-2 text-2xl font-bold text-zinc-900">{{ $meta['name'] ?? \Illuminate\Support\Str::headline($slug) }}</h1>
     <p class="mt-1 text-sm text-zinc-500">{{ $meta['description'] ?? '' }}</p>

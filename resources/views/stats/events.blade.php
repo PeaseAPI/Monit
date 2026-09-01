@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <x-stats-header :website="$website" :title="__('stats.events_title')" />
     <x-range-switcher :route-name="'stats.events'" :website="$website" :range="$range" />
     <div class="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">

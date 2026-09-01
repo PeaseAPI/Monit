@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <x-stats-header :website="$website" :title="__('stats.heatmaps_title')" :back-route="'stats.index'">
         <a href="{{ route('heatmaps.create', $website->website_id) }}" class="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('stats.create_heatmap') }}</a>
     </x-stats-header>

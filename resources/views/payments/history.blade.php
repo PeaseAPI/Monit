@@ -2,7 +2,7 @@
 @section('title', __('payments.history_title'))
 
 @section('content')
-<div class="p-8 max-w-4xl">
+<div class="max-w-4xl">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-zinc-900">{{ __('payments.history_title') }}</h1>
         <a href="{{ route('payments.index') }}" class="text-sm text-brand-600 hover:underline">{{ __('payments.back_to_payments') }}</a>

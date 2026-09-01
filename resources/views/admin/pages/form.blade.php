@@ -6,19 +6,19 @@
     @csrf
     @if($page->exists) @method('PUT') @endif
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.title') }}</label>
-        <input type="text" name="title" value="{{ old('title', $page->title) }}" required class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm"></div>
+        <input type="text" name="title" value="{{ old('title', $page->title) }}" required class="form-input"></div>
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.url_slug') }}</label>
-        <input type="text" name="url" value="{{ old('url', $page->url) }}" placeholder="{{ __('admin.url_slug_hint') }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm"></div>
+        <input type="text" name="url" value="{{ old('url', $page->url) }}" placeholder="{{ __('admin.url_slug_hint') }}" class="form-input"></div>
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.description') }}</label>
-        <input type="text" name="description" value="{{ old('description', $page->description) }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm"></div>
+        <input type="text" name="description" value="{{ old('description', $page->description) }}" class="form-input"></div>
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.position') }}</label>
-        <select name="position" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm">
+        <select name="position" class="form-input">
             @foreach(['none', 'header', 'footer'] as $pos)
             <option value="{{ $pos }}" @selected(old('position', $page->position ?? 'none'))>{{ __('admin.position_' . $pos) }}</option>
             @endforeach
         </select></div>
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.content') }}</label>
-        <textarea name="content" rows="10" required class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm">{{ old('content', $page->content) }}</textarea></div>
+        <textarea name="content" rows="10" required class="form-input">{{ old('content', $page->content) }}</textarea></div>
     <label class="flex items-center gap-2 text-sm text-zinc-700"><input type="checkbox" name="is_published" value="1" @checked(old('is_published', $page->is_published))> {{ __('admin.is_published') }}</label>
     <button class="rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('common.save') }}</button>
 </form>

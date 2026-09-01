@@ -941,7 +941,7 @@
     "landing.billing_annual": "Штогадова",
     "landing.billing_monthly": "Штамесначна",
     "landing.cta_primary": "Начать аналіз бясплатна",
-    "landing.cta_secondary": "Попаглядзець продукт",
+    "landing.cta_secondary": "Паглядзець цэны",
     "landing.cta_subtitle": "Создайте акаўнт і получіте собственную аналітіческую платформу за 5 мінут.",
     "landing.cta_title": "Готовы ясно відеть свой трафік?",
     "landing.currency": "Валюта",
@@ -1802,5 +1802,15 @@
     "websites.tracking_mode": "Режім отслежіванія",
     "websites.unlimited": "Без ограніченій",
     "websites.url_hint": "需以 http:// 或 https:// 开头；www. 前缀会自动去除。",
-    "websites.url_label": "Адрес сайта"
+    "websites.url_label": "Адрес сайта",
+    "nav.admin": "Адмін-панэль",
+    "landing.testimonials_subtitle": "Сапраўдныя водгукі распрацоўшчыкаў і каманд",
+    "landing.trust_data_own": "Самастойны хостынг даных",
+    "landing.trust_privacy": "Аналітыка з прыярытэтам прыватнасці",
+    "landing.trust_support": "Адказная жывая падтрымка",
+    "landing.faq_still_questions": "Не знайшлі адказ?",
+    "landing.faq_contact_btn": "Звязацца з намі",
+    "landing.cta_badge_free": "Ёсць бясплатны тарыф",
+    "landing.cta_badge_nocard": "Картка не патрабуецца",
+    "landing.cta_badge_fast": "Запуск за 5 хвілін"
 }

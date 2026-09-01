@@ -5,11 +5,11 @@
 <div class="max-w-2xl rounded-2xl border border-zinc-200 bg-white p-6">
     <form method="POST" action="{{ route('admin.pages.update', $page->page_id) }}">@csrf @method('PUT')
     <div class="space-y-4">
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.page_title') }}</label><input type="text" name="title" value="{{ old('title', $page->title) }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required></div>
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.page_url') }}</label><input type="text" name="url" value="{{ old('url', $page->url) }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm font-mono" required></div>
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.page_content') }}</label><textarea name="content" rows="10" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm">{{ old('content', $page->content) }}</textarea></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.page_title') }}</label><input type="text" name="title" value="{{ old('title', $page->title) }}" class="form-input" required></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.page_url') }}</label><input type="text" name="url" value="{{ old('url', $page->url) }}" class="form-input font-mono" required></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.page_content') }}</label><textarea name="content" rows="10" class="form-input">{{ old('content', $page->content) }}</textarea></div>
         <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.page_position') }}</label>
-            <select name="position" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm">
+            <select name="position" class="form-input">
                 <option value="top" {{ old('position', $page->position) === 'top' ? 'selected' : '' }}>{{ __('admin.page_position_top') }}</option>
                 <option value="bottom" {{ old('position', $page->position) === 'bottom' ? 'selected' : '' }}>{{ __('admin.page_position_bottom') }}</option>
                 <option value="none" {{ old('position', $page->position) === 'none' ? 'selected' : '' }}>{{ __('admin.page_position_none') }}</option>

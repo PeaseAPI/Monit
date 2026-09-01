@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <x-stats-header :website="$website" :title="__('stats.visitors_title')" />
     {{-- M22 导出入口（原版 Visitors.php export，规格书 §6.2.2） --}}
     <div class="mb-4 flex items-center gap-2">

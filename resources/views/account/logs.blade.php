@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', __('account.logs_title'))
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <div class="mb-6">
         <a href="{{ route('account.index') }}" class="text-sm text-zinc-500 hover:underline">&larr; {{ __('common.back') }}</a>
         <h1 class="mt-2 text-2xl font-bold text-zinc-900">{{ __('account.logs_title') }}</h1>

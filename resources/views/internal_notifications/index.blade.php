@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('notifications.title') }}</h1>
     <div class="mt-6 space-y-4">
         @forelse($notifications ?? [] as $n)

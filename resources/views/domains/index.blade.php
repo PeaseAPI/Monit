@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('domains.title') }}</h1>
     <div class="mt-6 rounded-2xl border border-zinc-200 bg-white">
         <table class="w-full text-sm"><thead class="bg-zinc-50 text-left"><tr><th class="px-6 py-3 font-medium text-zinc-500">{{ __('domains.domain') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('common.status') }}</th></tr></thead>

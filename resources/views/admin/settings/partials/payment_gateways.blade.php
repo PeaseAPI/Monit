@@ -27,14 +27,14 @@
                     <div>
                         <label class="block text-xs font-mono font-medium text-zinc-500">{{ $envKey }}</label>
                         @if ($type === 'bool')
-                            <select name="{{ $envKey }}" class="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+                            <select name="{{ $envKey }}" class="form-input">
                                 <option value="true" @if(old($envKey, $settings['payment_gateways'][$envKey] ?? 'true') === 'true') selected @endif>true</option>
                                 <option value="false" @if(old($envKey, $settings['payment_gateways'][$envKey] ?? 'true') === 'false') selected @endif>false</option>
                             </select>
                         @elseif ($type === 'password')
                             <div class="mt-1 flex">
                                 <input type="password" name="{{ $envKey }}" value="{{ old($envKey, $settings['payment_gateways'][$envKey] ?? '') }}" autocomplete="off"
-                                    class="w-full rounded-lg border border-zinc-300 px-3 py-2 font-mono text-sm" oninput="this.dataset.dirty=this.value!==''">
+                                    class="form-input font-mono" oninput="this.dataset.dirty=this.value!==''">
                                 <button type="button" onclick="const i=this.previousElementSibling; i.type=i.type==='password'?'text':'password'" class="ml-2 rounded-lg border border-zinc-200 px-3 text-xs text-zinc-500 hover:bg-zinc-50">👁</button>
                             </div>
                         @else

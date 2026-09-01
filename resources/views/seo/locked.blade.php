@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('seo.locked_title') }}</h1>
     <p class="mt-2 text-sm text-zinc-500">{{ __('seo.report_locked') }}</p>
 

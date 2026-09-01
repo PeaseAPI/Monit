@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <div class="mb-6"><a href="{{ route('teams.index') }}" class="text-sm text-zinc-500 hover:underline">&larr; {{ __('common.back') }}</a><h1 class="mt-2 text-2xl font-bold text-zinc-900">{{ $team->name }}</h1></div>
     <div class="mt-6 rounded-2xl border border-zinc-200 bg-white p-6">
         <h2 class="text-lg font-semibold">{{ __('teams.member_list') }}</h2>

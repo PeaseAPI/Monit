@@ -941,7 +941,7 @@
     "landing.billing_annual": "Tahunan",
     "landing.billing_monthly": "Bulanan",
     "landing.cta_primary": "Mula Analitik Percuma",
-    "landing.cta_secondary": "Lihat Produk",
+    "landing.cta_secondary": "Lihat harga",
     "landing.cta_subtitle": "Create your account now and own your analytics platform in 5 minutes.",
     "landing.cta_title": "Sedia untuk melihat trafik anda dengan jelas?",
     "landing.currency": "Mata Wang",
@@ -1802,5 +1802,15 @@
     "websites.tracking_mode": "Mod penjejakan",
     "websites.unlimited": "Tanpa had",
     "websites.url_hint": "需以 http:// 或 https:// 开头；www. 前缀会自动去除。",
-    "websites.url_label": "Alamat laman web"
+    "websites.url_label": "Alamat laman web",
+    "nav.admin": "Panel Pentadbir",
+    "landing.testimonials_subtitle": "Maklum balas sebenar daripada pembangun dan pasukan",
+    "landing.trust_data_own": "Data dihos sendiri",
+    "landing.trust_privacy": "Analitik utamakan privasi",
+    "landing.trust_support": "Sokongan responsif",
+    "landing.faq_still_questions": "Tidak jumpa jawapan?",
+    "landing.faq_contact_btn": "Hubungi kami",
+    "landing.cta_badge_free": "Pelan percuma tersedia",
+    "landing.cta_badge_nocard": "Tanpa kad kredit",
+    "landing.cta_badge_fast": "Live dalam 5 minit"
 }

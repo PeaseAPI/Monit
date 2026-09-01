@@ -941,7 +941,7 @@
     "landing.billing_annual": "Ежегодно",
     "landing.billing_monthly": "Ежемесячно",
     "landing.cta_primary": "Начать анализ бесплатно",
-    "landing.cta_secondary": "Посмотреть продукт",
+    "landing.cta_secondary": "Посмотреть цены",
     "landing.cta_subtitle": "Создайте аккаунт и получите собственную аналитическую платформу за 5 минут.",
     "landing.cta_title": "Готовы ясно видеть свой трафик?",
     "landing.currency": "Валюта",
@@ -1802,5 +1802,15 @@
     "websites.tracking_mode": "Режим отслеживания",
     "websites.unlimited": "Без ограничений",
     "websites.url_hint": "需以 http:// 或 https:// 开头；www. 前缀会自动去除。",
-    "websites.url_label": "Адрес сайта"
+    "websites.url_label": "Адрес сайта",
+    "nav.admin": "Админ-панель",
+    "landing.testimonials_subtitle": "Реальные отзывы разработчиков и команд",
+    "landing.trust_data_own": "Данные на своём сервере",
+    "landing.trust_privacy": "Аналитика с приоритетом приватности",
+    "landing.trust_support": "Отзывчивая живая поддержка",
+    "landing.faq_still_questions": "Не нашли ответ?",
+    "landing.faq_contact_btn": "Связаться с нами",
+    "landing.cta_badge_free": "Есть бесплатный тариф",
+    "landing.cta_badge_nocard": "Без банковской карты",
+    "landing.cta_badge_fast": "Запуск за 5 минут"
 }

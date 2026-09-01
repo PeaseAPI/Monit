@@ -941,7 +941,7 @@
     "landing.billing_annual": "按年付费",
     "landing.billing_monthly": "按月付费",
     "landing.cta_primary": "免费开始分析",
-    "landing.cta_secondary": "查看产品演示",
+    "landing.cta_secondary": "查看定价",
     "landing.cta_subtitle": "立即创建账户，5 分钟获得属于你自己的分析平台。",
     "landing.cta_title": "准备好看清你的流量了吗？",
     "landing.currency": "货币",
@@ -1802,5 +1802,15 @@
     "websites.tracking_mode": "跟踪模式",
     "websites.unlimited": "不限",
     "websites.url_hint": "需以 http:// 或 https:// 开头；www. 前缀会自动去除。",
-    "websites.url_label": "网站地址"
+    "websites.url_label": "网站地址",
+    "nav.admin": "管理后台",
+    "landing.testimonials_subtitle": "来自开发者与团队的真实使用反馈",
+    "landing.trust_data_own": "自部署，数据完全自主",
+    "landing.trust_privacy": "隐私优先的统计分析",
+    "landing.trust_support": "专人响应的技术支持",
+    "landing.faq_still_questions": "没有找到想要的答案？",
+    "landing.faq_contact_btn": "联系我们",
+    "landing.cta_badge_free": "提供免费套餐",
+    "landing.cta_badge_nocard": "无需信用卡",
+    "landing.cta_badge_fast": "5 分钟上线"
 }

@@ -20,7 +20,8 @@ class AdminUserUpdate extends Controller
         $user = User::findOrFail($userId);
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
         $payments = Payment::where('user_id', $userId)->orderByDesc('datetime')->limit(20)->get();
-        $websites = Website::where('user_id', $userId)->orderByDesc('datetime')->limit(20)->get();
+        // websites 表无 datetime 列（仅 timestamps()），按 created_at 排序
+        $websites = Website::where('user_id', $userId)->latest('created_at')->limit(20)->get();
 
         return view('admin.users.edit', compact('user', 'plans', 'payments', 'websites'))
             ->with('adminNav', 'users');

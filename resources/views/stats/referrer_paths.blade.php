@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <x-stats-header :website="$website" :title="__('stats.referrer_paths_title', ['host' => $host])" />
     <x-range-switcher :route-name="'stats.referrer_paths'" :website="$website" :range="$range" :params="['host' => $host]" />
     <div class="mt-4">

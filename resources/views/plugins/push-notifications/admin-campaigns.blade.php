@@ -55,11 +55,11 @@
         <div class="rounded-2xl border border-zinc-200 bg-white p-6">
             <h2 class="text-lg font-semibold text-zinc-900">创建 Campaign</h2>
             <form method="POST" action="{{ route('admin.plugins.push-notifications.campaigns.store') }}" class="mt-4 space-y-3">@csrf
-                <input type="number" name="website_id" placeholder="Website ID" required class="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
-                <input type="text" name="name" placeholder="内部名称" required class="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
-                <input type="text" name="title" placeholder="通知标题" required class="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
-                <textarea name="description" placeholder="通知正文" class="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm" rows="2"></textarea>
-                <input type="url" name="url" placeholder="点击跳转 URL（可选）" class="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm">
+                <input type="number" name="website_id" placeholder="Website ID" required class="form-input">
+                <input type="text" name="name" placeholder="内部名称" required class="form-input">
+                <input type="text" name="title" placeholder="通知标题" required class="form-input">
+                <textarea name="description" placeholder="通知正文" class="form-input" rows="2"></textarea>
+                <input type="url" name="url" placeholder="点击跳转 URL（可选）" class="form-input">
                 <button class="w-full rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700">创建</button>
             </form>
         </div>

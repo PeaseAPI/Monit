@@ -35,6 +35,7 @@ class TeamController extends Controller
         Team::create([
             'user_id' => $request->user()->user_id,
             'name' => $validated['name'],
+            'datetime' => now(),
         ]);
 
         return redirect()->route('teams.index')
@@ -71,6 +72,7 @@ class TeamController extends Controller
         TeamMember::create([
             ...$validated,
             'status' => 0, // pending
+            'datetime' => now(),
         ]);
 
         return back()->with('success', __('msg.invitation_sent', ['email' => $validated['user_email']]));
@@ -132,8 +134,14 @@ class TeamController extends Controller
     public function associationsAjax(Request $request)
     {
         $memberId = $request->query('member_id');
-        $associations = TeamMemberAssociation::where('team_member_id', $memberId)
-            ->with('team', 'website')
+
+        // 缺少 member_id 时返回空集合而非触发 where null 查询
+        if (! $memberId || ! is_numeric($memberId)) {
+            return response()->json([]);
+        }
+
+        $associations = TeamMemberAssociation::where('team_member_id', (int) $memberId)
+            ->with('website')
             ->get();
 
         return response()->json($associations);

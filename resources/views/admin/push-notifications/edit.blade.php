@@ -5,10 +5,10 @@
 <div class="max-w-xl rounded-2xl border border-zinc-200 bg-white p-6">
     <form method="POST" action="{{ route('admin.push-notifications.update', $campaign) }}">@csrf @method('PUT')
     <div class="space-y-4">
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.campaign_name') }}</label><input type="text" name="name" value="{{ old('name', $campaign->name) }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required></div>
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.campaign_title') }}</label><input type="text" name="title" value="{{ old('title', $campaign->title) }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required></div>
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.campaign_body') }}</label><textarea name="body" rows="4" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm">{{ old('body', $campaign->body) }}</textarea></div>
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.campaign_url') }}</label><input type="url" name="url" value="{{ old('url', $campaign->url) }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm"></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.campaign_name') }}</label><input type="text" name="name" value="{{ old('name', $campaign->name) }}" class="form-input" required></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.campaign_title') }}</label><input type="text" name="title" value="{{ old('title', $campaign->title) }}" class="form-input" required></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.campaign_body') }}</label><textarea name="body" rows="4" class="form-input">{{ old('body', $campaign->body) }}</textarea></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.campaign_url') }}</label><input type="url" name="url" value="{{ old('url', $campaign->url) }}" class="form-input"></div>
         <button class="rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('common.save') }}</button>
     </div>
     </form>

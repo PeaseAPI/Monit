@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="max-w-2xl truncate text-2xl font-bold text-zinc-900">{{ $audit->url }}</h1>
         <span class="rounded-full px-3 py-1 text-sm font-semibold {{ ['poor' => 'bg-red-50 text-red-700', 'decent' => 'bg-yellow-50 text-yellow-700', 'good' => 'bg-emerald-50 text-emerald-700'][$audit->band] }}">{{ $audit->score }}/100 · {{ $audit->passed_tests }}/{{ $audit->total_tests }}</span>

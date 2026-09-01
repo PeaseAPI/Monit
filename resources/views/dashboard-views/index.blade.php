@@ -16,11 +16,11 @@
         @csrf
         <div class="mb-4">
             <label for="name" class="block text-sm font-medium text-zinc-700">{{ __('msg.view_name') }}</label>
-            <input type="text" name="name" id="name" class="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" required>
+            <input type="text" name="name" id="name" class="form-input" required>
         </div>
         <div class="mb-4">
             <label for="order" class="block text-sm font-medium text-zinc-700">{{ __('msg.view_order') }}</label>
-            <input type="number" name="order" id="order" class="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" value="0">
+            <input type="number" name="order" id="order" class="form-input" value="0">
         </div>
         <div class="mb-4">
             <label class="block text-sm font-medium text-zinc-700">{{ __('msg.view_settings') }}</label>

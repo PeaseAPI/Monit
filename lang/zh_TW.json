@@ -941,7 +941,7 @@
     "landing.billing_annual": "按年付費",
     "landing.billing_monthly": "按月付費",
     "landing.cta_primary": "免費開始分析",
-    "landing.cta_secondary": "查看產品演示",
+    "landing.cta_secondary": "查看定價",
     "landing.cta_subtitle": "立即創建賬戶，5 分鐘獲得屬於你自己的分析平臺。",
     "landing.cta_title": "準備好看清你的流量了嗎？",
     "landing.currency": "貨幣",
@@ -1802,5 +1802,15 @@
     "websites.tracking_mode": "跟蹤模式",
     "websites.unlimited": "不限",
     "websites.url_hint": "需以 http:// 或 https:// 開頭；www. 前綴會自動去除。",
-    "websites.url_label": "網站地址"
+    "websites.url_label": "網站地址",
+    "nav.admin": "管理後台",
+    "landing.testimonials_subtitle": "來自開發者與團隊的真實使用回饋",
+    "landing.trust_data_own": "自主部署，資料完全自主",
+    "landing.trust_privacy": "隱私優先的統計分析",
+    "landing.trust_support": "專人回應的技術支援",
+    "landing.faq_still_questions": "沒有找到想要的答案？",
+    "landing.faq_contact_btn": "聯絡我們",
+    "landing.cta_badge_free": "提供免費方案",
+    "landing.cta_badge_nocard": "無需信用卡",
+    "landing.cta_badge_fast": "5 分鐘上線"
 }

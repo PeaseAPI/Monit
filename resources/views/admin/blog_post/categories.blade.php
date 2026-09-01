@@ -14,7 +14,7 @@
         <input type="hidden" name="_method" value="POST" id="form-method">
         <div>
             <label class="mb-1 block text-xs font-medium text-zinc-500">{{ __('admin.title') }}</label>
-            <input type="text" name="title" id="f-title" required maxlength="64" class="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm" placeholder="{{ __('admin.title') }}">
+            <input type="text" name="title" id="f-title" required maxlength="64" class="form-input" placeholder="{{ __('admin.title') }}">
         </div>
         <div>
             <label class="mb-1 block text-xs font-medium text-zinc-500">{{ __('admin.url') }}</label>
@@ -22,7 +22,7 @@
         </div>
         <div>
             <label class="mb-1 block text-xs font-medium text-zinc-500">{{ __('admin.order') }}</label>
-            <input type="number" name="order" id="f-order" min="0" max="9999" class="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm" placeholder="0">
+            <input type="number" name="order" id="f-order" min="0" max="9999" class="form-input" placeholder="0">
         </div>
         <div class="flex items-end gap-2">
             <button type="submit" class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('msg.save') }}</button>

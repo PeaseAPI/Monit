@@ -6,14 +6,14 @@
     <form method="POST" action="{{ route('admin.payments.store') }}">@csrf
     <div class="space-y-4">
         <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.user_name') }}</label>
-            <select name="user_id" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required>
+            <select name="user_id" class="form-input" required>
                 @foreach($users as $uid => $uname)<option value="{{ $uid }}">{{ $uname }}</option>@endforeach
             </select>
         </div>
-        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.plan_price_col') }}</label><input type="number" step="0.01" name="total_amount" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required></div>
-        <div><label class="block text-sm font-medium text-zinc-700">{{ 'Currency' }}</label><select name="currency" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm"><option value="CNY">CNY</option><option value="USD">USD</option></select></div>
-        <div><label class="block text-sm font-medium text-zinc-700">{{ 'Payment Processor' }}</label><input type="text" name="payment_processor" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required></div>
-        <div><label class="block text-sm font-medium text-zinc-700">{{ 'Type' }}</label><select name="type" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm"><option value="one_time">{{ __('common.add') }}</option><option value="subscription">{{ 'Subscription' }}</option></select></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.plan_price_col') }}</label><input type="number" step="0.01" name="total_amount" class="form-input" required></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ 'Currency' }}</label><select name="currency" class="form-input"><option value="CNY">CNY</option><option value="USD">USD</option></select></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ 'Payment Processor' }}</label><input type="text" name="payment_processor" class="form-input" required></div>
+        <div><label class="block text-sm font-medium text-zinc-700">{{ 'Type' }}</label><select name="type" class="form-input"><option value="one_time">{{ __('common.add') }}</option><option value="subscription">{{ 'Subscription' }}</option></select></div>
         <button class="rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('common.add') }}</button>
     </div></form>
 </div>

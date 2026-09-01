@@ -18,7 +18,7 @@
         @csrf @method('DELETE')
         <div>
             <label class="block text-sm font-medium text-zinc-700">{{ __('account.confirm_password') }}</label>
-            <input type="password" name="password" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm" required>
+            <input type="password" name="password" class="form-input" required>
         </div>
         <button type="submit" class="mt-4 rounded-xl bg-red-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-red-700" onclick="return confirm('{{ __('account.delete_confirm_msg') }}')">{{ __('account.delete_account_btn') }}</button>
     </form>

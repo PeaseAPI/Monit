@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <h1 class="text-2xl font-bold text-zinc-900">{{ $website->host }} · SEO</h1>
     <p class="mt-1 text-sm text-zinc-500">{{ __('seo.avg_score') }}: {{ $website->seo_avg_score }} · {{ __('seo.total_audits') }}: {{ $website->seo_total_audits }}</p>
 

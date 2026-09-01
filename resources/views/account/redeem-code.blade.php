@@ -9,7 +9,7 @@
         <form method="POST" action="{{ route('account.redeem-code') }}">@csrf
             <div>
                 <label class="block text-sm font-medium text-zinc-700">{{ __('account.code') }}</label>
-                <input type="text" name="code" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm font-mono" required placeholder="XXXX-XXXX-XXXX">
+                <input type="text" name="code" class="form-input font-mono" required placeholder="XXXX-XXXX-XXXX">
             </div>
             <button class="mt-4 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('account.redeem') }}</button>
         </form>

@@ -3,7 +3,7 @@
 @section('title', __('admin.plugins_title'))
 
 @section('content')
-<div class="p-8 max-w-4xl">
+<div class="max-w-4xl">
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-zinc-100">{{ __('admin.plugins_title') }}</h1>

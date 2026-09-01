@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8 max-w-2xl text-center">
+<div class="max-w-2xl text-center">
     <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
         <svg class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />

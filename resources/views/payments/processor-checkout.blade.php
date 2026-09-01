@@ -2,7 +2,7 @@
 @section('title', __('payments.checkout_title'))
 
 @section('content')
-<div class="p-8 max-w-2xl">
+<div class="max-w-2xl">
     <div class="rounded-2xl border border-zinc-200 bg-white p-8">
         <h1 class="text-xl font-bold text-zinc-900">{{ __('payments.checkout_title') }}</h1>
         <p class="mt-2 text-sm text-zinc-500">

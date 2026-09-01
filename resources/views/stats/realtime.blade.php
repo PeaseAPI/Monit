@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', __('stats.realtime'))
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <x-stats-header :website="$website" :title="__('stats.realtime')" />
     <p class="mb-6 text-sm text-zinc-500">{{ __('stats.realtime_desc') }}</p>
 

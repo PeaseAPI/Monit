@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8 max-w-4xl">
+<div class="max-w-4xl">
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('account.api_key_management') }}</h1>
     <p class="mt-2 text-sm text-zinc-500">{{ __('account.api_key_desc') }}</p>
 

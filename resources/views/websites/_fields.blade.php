@@ -43,7 +43,7 @@
     <div>
         <label for="timezone" class="block text-sm font-medium text-zinc-700">{{ __('websites.timezone_label') }}</label>
         <select id="timezone" name="timezone"
-                class="mt-1.5 block w-full rounded-xl border-zinc-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                class="form-input">
             @foreach (['Asia/Shanghai' => 'Asia/Shanghai', 'Asia/Hong_Kong' => 'Asia/Hong_Kong', 'Asia/Tokyo' => 'Asia/Tokyo', 'UTC' => 'UTC'] as $tz => $label)
                 <option value="{{ $tz }}" {{ old('timezone', $website->timezone ?? 'Asia/Shanghai') === $tz ? 'selected' : '' }}>{{ $label }}</option>
             @endforeach
@@ -55,7 +55,7 @@
         <label for="excluded_ips" class="block text-sm font-medium text-zinc-700">{{ __('websites.excluded_ips_label') }}</label>
         <input id="excluded_ips" type="text" name="excluded_ips" value="{{ old('excluded_ips', $website->excluded_ips ?? '') }}"
                placeholder="1.2.3.4,10.0.0.0/24"
-               class="mt-1.5 block w-full rounded-xl border-zinc-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+               class="form-input">
         <p class="mt-1.5 text-xs text-zinc-400">{{ __('websites.excluded_ips_hint') }}</p>
     </div>
 </div>

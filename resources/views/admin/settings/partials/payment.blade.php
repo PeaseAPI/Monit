@@ -22,10 +22,10 @@
         <div class="mt-2 space-y-2" id="currency-rows">
             @foreach($currencyRows as $row)
             <div class="grid grid-cols-12 gap-2 currency-row">
-                <input type="text" name="currencies[{{ $row['code'] }}][code_display]" data-code-input value="{{ $row['code'] }}" placeholder="{{ __('admin.currency_code') }}" maxlength="3" class="col-span-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm uppercase" @if($row['code'] !== '')readonly title="{{ __('admin.currency_code_readonly') }}"@endif>
-                <input type="text" name="currencies[{{ $row['code'] }}][name]" value="{{ $row['name'] }}" placeholder="{{ __('admin.currency_name') }}" class="col-span-4 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
-                <input type="text" name="currencies[{{ $row['code'] }}][symbol]" value="{{ $row['symbol'] }}" placeholder="{{ __('admin.currency_symbol') }}" maxlength="8" class="col-span-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
-                <input type="number" step="any" min="0.000001" name="currencies[{{ $row['code'] }}][rate]" value="{{ $row['rate'] }}" placeholder="{{ __('admin.currency_rate') }}" class="col-span-3 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+                <input type="text" name="currencies[{{ $row['code'] }}][code_display]" data-code-input value="{{ $row['code'] }}" placeholder="{{ __('admin.currency_code') }}" maxlength="3" class="form-input col-span-2 uppercase" @if($row['code'] !== '')readonly title="{{ __('admin.currency_code_readonly') }}"@endif>
+                <input type="text" name="currencies[{{ $row['code'] }}][name]" value="{{ $row['name'] }}" placeholder="{{ __('admin.currency_name') }}" class="form-input col-span-4">
+                <input type="text" name="currencies[{{ $row['code'] }}][symbol]" value="{{ $row['symbol'] }}" placeholder="{{ __('admin.currency_symbol') }}" maxlength="8" class="form-input col-span-2">
+                <input type="number" step="any" min="0.000001" name="currencies[{{ $row['code'] }}][rate]" value="{{ $row['rate'] }}" placeholder="{{ __('admin.currency_rate') }}" class="form-input col-span-3">
                 <button type="button" onclick="this.closest('.currency-row').remove()" class="col-span-1 rounded-lg border border-zinc-200 px-2 py-2 text-xs text-red-500 hover:bg-red-50">✕</button>
             </div>
             @endforeach
@@ -144,10 +144,10 @@
 <script>
 function addCurrencyRow() {
     const html = `<div class="grid grid-cols-12 gap-2 currency-row">
-        <input type="text" data-code-input value="" placeholder="{{ __('admin.currency_code') }}" maxlength="3" class="col-span-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm uppercase">
-        <input type="text" name="currencies[__NEW__][name]" value="" placeholder="{{ __('admin.currency_name') }}" class="col-span-4 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
-        <input type="text" name="currencies[__NEW__][symbol]" value="" placeholder="{{ __('admin.currency_symbol') }}" maxlength="8" class="col-span-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
-        <input type="number" step="any" min="0.000001" name="currencies[__NEW__][rate]" value="" placeholder="{{ __('admin.currency_rate') }}" class="col-span-3 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+        <input type="text" data-code-input value="" placeholder="{{ __('admin.currency_code') }}" maxlength="3" class="form-input col-span-2 uppercase">
+        <input type="text" name="currencies[__NEW__][name]" value="" placeholder="{{ __('admin.currency_name') }}" class="form-input col-span-4">
+        <input type="text" name="currencies[__NEW__][symbol]" value="" placeholder="{{ __('admin.currency_symbol') }}" maxlength="8" class="form-input col-span-2">
+        <input type="number" step="any" min="0.000001" name="currencies[__NEW__][rate]" value="" placeholder="{{ __('admin.currency_rate') }}" class="form-input col-span-3">
         <button type="button" onclick="this.closest('.currency-row').remove()" class="col-span-1 rounded-lg border border-zinc-200 px-2 py-2 text-xs text-red-500 hover:bg-red-50">✕</button>
     </div>`;
     document.getElementById('currency-rows').insertAdjacentHTML('beforeend', html);

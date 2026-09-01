@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="p-8">
+<div class="max-w-7xl">
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
             <h2 class="text-2xl font-bold text-zinc-900">{{ $website->name }}</h2>

@@ -2,7 +2,7 @@
 @section('title', __('referrals.title'))
 
 @section('content')
-<div class="p-8 max-w-4xl">
+<div class="max-w-4xl">
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('referrals.title') }}</h1>
     <p class="mt-2 text-sm text-zinc-500">{{ __('referrals.subtitle') }}</p>
 
@@ -20,7 +20,7 @@
         <form method="POST" action="{{ route('referrals.withdrawal') }}" class="mt-4">@csrf
             <div>
                 <label class="block text-sm font-medium text-zinc-700">{{ __('referrals.withdrawal_amount') }}</label>
-                <input type="number" name="amount" step="0.01" min="1" required placeholder="0.00" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm">
+                <input type="number" name="amount" step="0.01" min="1" required placeholder="0.00" class="form-input">
             </div>
             <button class="mt-3 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('referrals.request_withdrawal') }}</button>
         </form>
