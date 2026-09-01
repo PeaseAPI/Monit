@@ -147,10 +147,32 @@ class AuditEngine
             sslInfo: $scheme === 'https' ? $this->probeSsl($host) : null,
         );
 
-        $context->extra['robots_exists'] = $this->remoteExists("{$scheme}://{$host}/robots.txt", $timeout, $ua);
-        $context->extra['sitemap_exists'] = $this->remoteExists("{$scheme}://{$host}/sitemap.xml", $timeout, $ua);
+        // robots / sitemap 并行探测（原串行最坏 +2×timeout，同步请求总耗时超网关
+        // 超时即线上"无响应"，故合并为一次并发探测；连接异常时 pool 返回异常对象而非 Response）
+        $probeTimeout = min(10, $timeout);
+        $probes = Http::pool(fn ($pool) => [
+            $pool->withHeaders(['User-Agent' => $ua])->timeout($probeTimeout)->get("{$scheme}://{$host}/robots.txt"),
+            $pool->withHeaders(['User-Agent' => $ua])->timeout($probeTimeout)->get("{$scheme}://{$host}/sitemap.xml"),
+        ]);
+
+        $context->extra['robots_exists'] = $this->probeOk($probes[0] ?? null);
+        $context->extra['sitemap_exists'] = $this->probeOk($probes[1] ?? null);
 
         return $context;
+    }
+
+    /**
+     * 探测结果判定（pool 内连接失败的条目是异常对象而非 Response）
+     */
+    protected function probeOk(mixed $response): bool
+    {
+        try {
+            return $response instanceof Response
+                && $response->successful()
+                && strlen((string) $response->body()) > 0;
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**
@@ -172,17 +194,6 @@ class AuditEngine
         }
 
         return $response;
-    }
-
-    protected function remoteExists(string $url, int $timeout, string $ua): bool
-    {
-        try {
-            $response = Http::withHeaders(['User-Agent' => $ua])->timeout(min(10, $timeout))->get($url);
-
-            return $response->successful() && strlen((string) $response->body()) > 0;
-        } catch (Throwable) {
-            return false;
-        }
     }
 
     /**
@@ -211,9 +222,11 @@ class AuditEngine
             return ['valid' => false];
         }
 
+        $parsed = openssl_x509_parse($cert);
+
         return [
-            'valid' => $cert->validTo_time_t > time(),
-            'valid_to' => date('Y-m-d', (int) $cert->validTo_time_t),
+            'valid' => ($parsed['validTo_time_t'] ?? 0) > time(),
+            'valid_to' => date('Y-m-d', (int) ($parsed['validTo_time_t'] ?? 0)),
         ];
     }
 

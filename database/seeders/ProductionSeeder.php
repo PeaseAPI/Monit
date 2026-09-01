@@ -162,7 +162,9 @@ class ProductionSeeder extends Seeder
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * @return array<string, string>
+     */
     protected function settings(): array
     {
         return [
@@ -170,6 +172,12 @@ class ProductionSeeder extends Seeder
             'branding.footer_icp' => '冀ICP备18013359号-38',
             // 落地页展示定价区（原库 main.display_index_plans = true）
             'branding.show_landing_plans' => 'true',
+            // SEO 功能总闸与访客开放（修复线上 403：原库快照无 seo.* 键，缺失时
+            // SeoGuestAccess / SeoAuditController::analyze() 会 403 拒绝访客，
+            // 与原站首页"免费 SEO 分析"获客组件冲突，故按原站行为显式开启）
+            'seo.audits_is_enabled' => 'true',
+            'seo.tools_is_enabled' => 'true',
+            'seo.tools_guest_access' => 'true',
         ];
     }
 }

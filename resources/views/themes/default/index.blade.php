@@ -29,7 +29,7 @@
         {!! $indexHtml !!}
     @endif
 
-    {{{-- ===== 顶部导航 ===== --}}}
+    {{-- ===== 顶部导航 ===== --}}
     <header class="sticky top-0 z-40 border-b border-zinc-100 bg-white/80 backdrop-blur-lg">
         <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
             <x-brand-logo href="{{ route('index') }}" />
@@ -116,9 +116,9 @@
             {{-- 免费 SEO 分析（对标 monit.cn 首页获客组件：POST /seo/analyze，审计开关控制） --}}
             @if (\App\Support\Settings::get('seo.audits_is_enabled', true))
             <div class="mx-auto mt-12 max-w-xl">
-                <form method="POST" action="{{ route('seo.analyze') }}" class="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-lg shadow-zinc-900/5 sm:flex-row">
+                <form method="POST" action="{{ route('seo.analyze') }}" class="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-lg shadow-zinc-900/5 sm:flex-row" data-seo-form>
                     @csrf
-                    <input type="url" name="url" required placeholder="{{ __('landing.seo_analyze_placeholder') }}" value="{{ old('url') }}"
+                    <input type="text" name="url" required placeholder="{{ __('landing.seo_analyze_placeholder') }}" value="{{ old('url') }}"
                            class="flex-1 rounded-xl border-0 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-500">
                     <button type="submit" class="rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700">
                         {{ __('landing.seo_analyze_cta') }}

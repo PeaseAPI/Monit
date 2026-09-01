@@ -4,9 +4,9 @@
 <div>
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('seo.directory_title') }}</h1>
 
-    <form method="POST" action="{{ route('seo.analyze') }}" class="mt-6 flex max-w-xl gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
+        <form method="POST" action="{{ route('seo.analyze') }}" class="mt-6 flex max-w-xl gap-3 rounded-2xl border border-zinc-200 bg-white p-4" data-seo-form>
         @csrf
-        <input type="url" name="url" required placeholder="https://example.com" value="{{ old('url') }}"
+        <input type="text" name="url" required placeholder="example.com" value="{{ old('url') }}"
                class="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm">
         <button type="submit" class="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white">{{ __('seo.free_analyze') }}</button>
     </form>

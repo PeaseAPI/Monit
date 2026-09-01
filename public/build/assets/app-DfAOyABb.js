@@ -1,0 +1,1 @@
+document.addEventListener(`submit`,function(e){let t=e.target;if(!t.matches(`[data-seo-form]`))return;let n=t.querySelector(`input[name="url"]`);if(!n)return;let r=n.value.trim();r&&!/^https?:\/\//i.test(r)&&(n.value=`https://`+r)});

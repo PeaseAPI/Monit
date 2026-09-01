@@ -122,7 +122,7 @@ class IndexController extends Controller
      */
     public function affiliate()
     {
-        if (Settings::get('affiliate.affiliate_is_enabled') !== 'true') {
+        if (! Settings::get('affiliate.affiliate_is_enabled', true)) {
             abort(404);
         }
 
@@ -211,6 +211,7 @@ class IndexController extends Controller
         return response()->json(['ok' => true], 204);
     }
 
+    
     /**
      * 邮件退订（规格书 §6.1：/unsubscribe，HMAC 签名链接）
      */

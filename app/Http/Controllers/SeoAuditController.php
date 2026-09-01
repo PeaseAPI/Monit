@@ -36,6 +36,9 @@ class SeoAuditController extends Controller
      */
     public function store(Request $request)
     {
+        $url = static::ensureScheme($request->input('url', ''));
+        $request->merge(['url' => $url]);
+
         $validated = $request->validate([
             'url' => 'required|url|max:2048',
             'type' => 'nullable|in:single,bulk',
@@ -107,6 +110,9 @@ class SeoAuditController extends Controller
         if ($user === null && ! $this->guestAllowed()) {
             abort(403, __('seo.guest_disabled'));
         }
+
+        $url = static::ensureScheme($request->input('url', ''));
+        $request->merge(['url' => $url]);
 
         $validated = $request->validate(['url' => 'required|url|max:2048']);
 
@@ -232,5 +238,24 @@ class SeoAuditController extends Controller
         $enabled = Settings::get('seo.tools_guest_access');
 
         return $enabled === true || $enabled === 'true' || $enabled === '1';
+    }
+
+    /**
+     * 自动为缺少协议的 URL 补上 https://
+     * 例：example.com → https://example.com
+     */
+    protected static function ensureScheme(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url === '') {
+            return '';
+        }
+
+        if (! preg_match('#^https?://#i', $url)) {
+            $url = 'https://'.$url;
+        }
+
+        return $url;
     }
 }
