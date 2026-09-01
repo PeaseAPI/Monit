@@ -7,6 +7,36 @@
         $pixelUrl = url('/assets/pixel/monit.js');
         $mode = $website->isLightweight() ? 'lightweight' : 'advanced';
         $snippet = '<script src="' . $pixelUrl . '" data-website-id="' . $website->pixel_key . '" data-mode="' . $mode . '" async></script>';
+
+        // SPA / 手动初始化示例（monit.js 真实 API：自动 hook pushState/replaceState/popstate/hashchange，暴露 MonitPixel.init）
+        $spaExample = <<<HTML
+<!-- SPA 应用（React / Vue / Next.js 等）：完整模式下路由切换自动追踪，无需额外代码 -->
+<script src="{$pixelUrl}" data-website-id="{$website->pixel_key}" data-mode="{$mode}" async></script>
+
+<!-- 需要用户同意（Cookie Consent）后再开始统计：加 data-manual，同意后手动启动 -->
+<script src="{$pixelUrl}" data-website-id="{$website->pixel_key}" data-mode="{$mode}" data-manual async></script>
+<script>
+  document.getElementById('consent-btn').addEventListener('click', function () {
+    window.MonitPixel.init(); // 用户同意后再启动统计
+  });
+</script>
+HTML;
+
+        // 自定义事件 / 目标转化示例（monit.js 真实 API：window.monitGoal）
+        $goalExample = <<<HTML
+<!-- 自定义事件：在后台「统计 → 目标」创建目标 key 后，在关键动作处触发转化 -->
+<script>
+  // 例：注册表单提交成功后记录 signup 目标
+  document.getElementById('signup-form').addEventListener('submit', function () {
+    window.monitGoal('signup');
+  });
+
+  // 异步场景（如支付完成回调）同样适用
+  fetch('/api/checkout', { method: 'POST' }).then(function (res) {
+    if (res.ok) window.monitGoal('purchase');
+  });
+</script>
+HTML;
     @endphp
 
     <div class="mx-auto max-w-3xl">
@@ -52,7 +82,12 @@
         {{-- Advanced --}}
         <div class="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
             <h3 class="text-sm font-semibold text-zinc-700">{{ __('dashboard.advanced_usage') }}</h3>
-            <pre class="mt-3 overflow-x-auto rounded-xl bg-zinc-950 p-4 text-sm leading-relaxed text-zinc-300"><code>{{ __('dashboard.advanced_code_example') }}</code></pre>
+
+            <p class="mt-3 text-sm leading-6 text-zinc-600">{{ __('dashboard.advanced_spa_desc') }}</p>
+            <pre class="mt-3 overflow-x-auto rounded-xl bg-zinc-950 p-4 text-xs leading-relaxed text-zinc-300"><code>{{ $spaExample }}</code></pre>
+
+            <p class="mt-5 text-sm leading-6 text-zinc-600">{{ __('dashboard.advanced_goal_desc') }}</p>
+            <pre class="mt-3 overflow-x-auto rounded-xl bg-zinc-950 p-4 text-xs leading-relaxed text-zinc-300"><code>{{ $goalExample }}</code></pre>
         </div>
 
         <div class="mt-6 flex items-center gap-3">
