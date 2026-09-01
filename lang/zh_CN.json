@@ -1913,5 +1913,11 @@
     "dashboard.manage_views": "管理视图",
     "common.previous": "上一页",
     "common.next": "下一页",
-    "msg.domain_exists": "该域名已添加。"
+    "msg.domain_exists": "该域名已添加。",
+    "landing.nav_seo_tools": "免费 SEO 工具",
+    "landing.nav_seo_directory": "SEO 审计目录",
+    "landing.nav_home": "首页",
+    "landing.seo_analyze_placeholder": "https://example.com 立即检测网站 SEO",
+    "landing.seo_analyze_cta": "开始分析",
+    "landing.seo_analyze_desc": "即时生成页面级 SEO 报告：元信息、标题、链接、安全等 60+ 检查项。"
 }

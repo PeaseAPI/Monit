@@ -11,7 +11,8 @@ class TextTools
     {
         $text = (string) ($in['text'] ?? '');
 
-        $latin = str_word_count($text, 0, '0123456789..-');
+        // charlist 中的 "-" 置于末尾避免被解析为范围；勿写 ".."（空范围会抛 ValueError）
+        $latin = str_word_count($text, 0, '0123456789-');
         $cjk = (int) preg_match_all('/[\x{4e00}-\x{9fff}]/u', $text);
 
         return ['ok' => true, 'data' => [

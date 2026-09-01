@@ -1,6 +1,7 @@
-@extends('layouts.guest')
+@extends('layouts.public')
+@section('title', __('seo.tools_title'))
 @section('content')
-<div class="max-w-7xl">
+<div>
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('seo.tools_title') }}</h1>
 
     @foreach($categories as $category => $tools)

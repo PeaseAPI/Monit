@@ -1913,5 +1913,11 @@
     "dashboard.manage_views": "Кіраванне праглядамі",
     "common.previous": "Папярэдняя",
     "common.next": "Наступная",
-    "msg.domain_exists": "Гэты дамен ужо дададзены."
+    "msg.domain_exists": "Гэты дамен ужо дададзены.",
+    "landing.nav_seo_tools": "Бясплатныя SEO-інструменты",
+    "landing.nav_seo_directory": "Каталог SEO-аўдытаў",
+    "landing.nav_home": "Галоўная",
+    "landing.seo_analyze_placeholder": "https://example.com — праверце SEO",
+    "landing.seo_analyze_cta": "Аналізаваць",
+    "landing.seo_analyze_desc": "Імгненны SEO-справаздача: мета, загалоўкі, спасылкі, бяспека."
 }

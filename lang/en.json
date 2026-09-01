@@ -1913,5 +1913,11 @@
     "dashboard.manage_views": "Manage views",
     "common.previous": "Previous",
     "common.next": "Next",
-    "msg.domain_exists": "This domain has already been added."
+    "msg.domain_exists": "This domain has already been added.",
+    "landing.nav_seo_tools": "Free SEO Tools",
+    "landing.nav_seo_directory": "SEO Audit Directory",
+    "landing.nav_home": "Home",
+    "landing.seo_analyze_placeholder": "https://example.com — analyze your SEO now",
+    "landing.seo_analyze_cta": "Analyze",
+    "landing.seo_analyze_desc": "Instant on-page SEO report: meta, headings, links, security and more."
 }

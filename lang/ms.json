@@ -1913,5 +1913,11 @@
     "dashboard.manage_views": "Kelola paparan",
     "common.previous": "Sebelumnya",
     "common.next": "Seterusnya",
-    "msg.domain_exists": "Domain ini telah ditambah."
+    "msg.domain_exists": "Domain ini telah ditambah.",
+    "landing.nav_seo_tools": "Alat SEO Percuma",
+    "landing.nav_seo_directory": "Direktori Audit SEO",
+    "landing.nav_home": "Laman Utama",
+    "landing.seo_analyze_placeholder": "https://example.com — analisis SEO anda",
+    "landing.seo_analyze_cta": "Analisis",
+    "landing.seo_analyze_desc": "Laporan SEO halaman serta-merta: meta, tajuk, pautan, keselamatan."
 }

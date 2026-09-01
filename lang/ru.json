@@ -1913,5 +1913,11 @@
     "dashboard.manage_views": "Управление представлениями",
     "common.previous": "Назад",
     "common.next": "Вперед",
-    "msg.domain_exists": "Этот домен уже добавлен."
+    "msg.domain_exists": "Этот домен уже добавлен.",
+    "landing.nav_seo_tools": "Бесплатные SEO-инструменты",
+    "landing.nav_seo_directory": "Каталог SEO-аудитов",
+    "landing.nav_home": "Главная",
+    "landing.seo_analyze_placeholder": "https://example.com — проверьте SEO",
+    "landing.seo_analyze_cta": "Анализировать",
+    "landing.seo_analyze_desc": "Мгновенный SEO-отчёт: мета, заголовки, ссылки, безопасность."
 }

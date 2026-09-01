@@ -28,6 +28,13 @@
                 <a href="#features" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_features') }}</a>
                 <a href="#showcase" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_showcase') }}</a>
                 <a href="#pricing" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_pricing') }}</a>
+                @if (\App\Support\Settings::get('seo.tools_is_enabled', true)
+                    && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true)))
+                <a href="{{ route('seo.tools') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_seo_tools') }}</a>
+                @endif
+                @if (\App\Support\Settings::get('seo.audits_is_enabled', true))
+                <a href="{{ route('seo.directory') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_seo_directory') }}</a>
+                @endif
                 <a href="{{ route('blog') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_blog') }}</a>
                 <a href="{{ route('help') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_help') }}</a>
             </nav>
@@ -95,6 +102,22 @@
                 </a>
             </div>
             <p class="mt-4 text-sm text-zinc-400">{{ __('landing.no_card_required') }}</p>
+
+            {{-- 免费 SEO 分析（对标 monit.cn 首页获客组件：POST /seo/analyze，审计开关控制） --}}
+            @if (\App\Support\Settings::get('seo.audits_is_enabled', true))
+            <div class="mx-auto mt-12 max-w-xl">
+                <form method="POST" action="{{ route('seo.analyze') }}" class="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-lg shadow-zinc-900/5 sm:flex-row">
+                    @csrf
+                    <input type="url" name="url" required placeholder="{{ __('landing.seo_analyze_placeholder') }}" value="{{ old('url') }}"
+                           class="flex-1 rounded-xl border-0 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <button type="submit" class="rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700">
+                        {{ __('landing.seo_analyze_cta') }}
+                    </button>
+                </form>
+                <p class="mt-2 text-xs text-zinc-400">{{ __('landing.seo_analyze_desc') }}</p>
+                @error('url')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            </div>
+            @endif
 
             {{-- 平台统计徽章（原站 hero 下方 "9 websites / 44K pageviews"，实时聚合 1 分钟缓存） --}}
             @if (($stats['websites'] ?? 0) > 0)
@@ -494,6 +517,13 @@
                         <li><a href="{{ route('blog') }}" class="transition hover:text-white">{{ __('landing.nav_blog') }}</a></li>
                         <li><a href="{{ route('help') }}" class="transition hover:text-white">{{ __('landing.nav_help') }}</a></li>
                         <li><a href="{{ route('contact') }}" class="transition hover:text-white">{{ __('landing.footer_contact') }}</a></li>
+                        @if (\App\Support\Settings::get('seo.tools_is_enabled', true)
+                            && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true)))
+                        <li><a href="{{ route('seo.tools') }}" class="transition hover:text-white">{{ __('landing.nav_seo_tools') }}</a></li>
+                        @endif
+                        @if (\App\Support\Settings::get('seo.audits_is_enabled', true))
+                        <li><a href="{{ route('seo.directory') }}" class="transition hover:text-white">{{ __('landing.nav_seo_directory') }}</a></li>
+                        @endif
                     </ul>
                 </div>
                 <div>

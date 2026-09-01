@@ -1,6 +1,7 @@
-@extends('layouts.guest')
+@extends('layouts.public')
+@section('title', __('seo.directory_title'))
 @section('content')
-<div class="max-w-7xl">
+<div>
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('seo.directory_title') }}</h1>
 
     <form method="POST" action="{{ route('seo.analyze') }}" class="mt-6 flex max-w-xl gap-3 rounded-2xl border border-zinc-200 bg-white p-4">

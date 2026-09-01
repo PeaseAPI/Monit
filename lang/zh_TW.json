@@ -1913,5 +1913,11 @@
     "dashboard.manage_views": "管理視圖",
     "common.previous": "上一頁",
     "common.next": "下一頁",
-    "msg.domain_exists": "該網域已新增。"
+    "msg.domain_exists": "該網域已新增。",
+    "landing.nav_seo_tools": "免費 SEO 工具",
+    "landing.nav_seo_directory": "SEO 稽核目錄",
+    "landing.nav_home": "首頁",
+    "landing.seo_analyze_placeholder": "https://example.com 立即檢測網站 SEO",
+    "landing.seo_analyze_cta": "開始分析",
+    "landing.seo_analyze_desc": "即時產生頁面級 SEO 報告：中繼資訊、標題、連結、安全等 60+ 檢查項。"
 }
