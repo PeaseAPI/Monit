@@ -26,8 +26,14 @@
     </select>
     <select name="status" class="form-select w-auto min-w-28">
         <option value="">{{ __('admin.filter_all_status') }}</option>
-        <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>{{ __('msg.status_enabled') }}</option>
-        <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>{{ __('msg.status_disabled') }}</option>
+        <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>{{ __('admin.status_active') }}</option>
+        <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>{{ __('admin.status_unconfirmed') }}</option>
+        <option value="2" {{ request('status') === '2' ? 'selected' : '' }}>{{ __('admin.status_disabled') }}</option>
+    </select>
+    <select name="type" class="form-select w-auto min-w-28">
+        <option value="">{{ __('admin.filter_all_types') }}</option>
+        <option value="0" {{ request('type') === '0' ? 'selected' : '' }}>{{ __('admin.type_user') }}</option>
+        <option value="1" {{ request('type') === '1' ? 'selected' : '' }}>{{ __('admin.type_admin') }}</option>
     </select>
     <button type="submit" class="btn btn-secondary">{{ __('admin.filter') }}</button>
     @if (request('search') || request('plan') || request('status') !== null)
@@ -42,6 +48,7 @@
                 <tr>
                     <th>{{ __('admin.col_user') }}</th>
                     <th>{{ __('admin.col_plan') }}</th>
+                    <th>{{ __('admin.user_type') }}</th>
                     <th>{{ __('admin.user_status') }}</th>
                     <th>{{ __('admin.col_date') }}</th>
                     <th class="text-right">{{ __('admin.actions') }}</th>
@@ -61,10 +68,15 @@
                     </td>
                     <td><span class="badge-soft bg-brand-50 text-brand-700">{{ $u->plan_id }}</span></td>
                     <td>
-                        @if ($u->status)
-                            <span class="badge-soft bg-emerald-50 text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>{{ __('msg.status_enabled') }}</span>
+                        @if ($u->type == 1)<span class="badge-soft bg-violet-50 text-violet-700">{{ __('admin.type_admin') }}</span>@else<span class="badge-soft bg-zinc-50 text-zinc-600">{{ __('admin.type_user') }}</span>@endif
+                    </td>
+                    <td>
+                        @if ($u->status == 1)
+                            <span class="badge-soft bg-emerald-50 text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>{{ __('admin.status_active') }}</span>
+                        @elseif ($u->status == 2)
+                            <span class="badge-soft bg-red-50 text-red-700"><span class="h-1.5 w-1.5 rounded-full bg-red-400"></span>{{ __('admin.status_disabled') }}</span>
                         @else
-                            <span class="badge-soft bg-red-50 text-red-700"><span class="h-1.5 w-1.5 rounded-full bg-red-400"></span>{{ __('msg.status_disabled') }}</span>
+                            <span class="badge-soft bg-amber-50 text-amber-700"><span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span>{{ __('admin.status_unconfirmed') }}</span>
                         @endif
                     </td>
                     <td class="text-zinc-500">{{ optional($u->created_at)->format('Y-m-d H:i') }}</td>
@@ -80,7 +92,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="5" class="py-12 text-center text-zinc-400">{{ __('admin.no_users') }}</td></tr>
+                <tr><td colspan="6" class="py-12 text-center text-zinc-400">{{ __('admin.no_users') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

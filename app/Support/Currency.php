@@ -101,6 +101,24 @@ class Currency
         return (string) (static::all()[strtoupper(trim($code))]['symbol'] ?? '');
     }
 
+    /**
+     * 金额格式化（本土习惯）：
+     * - ASCII 符号（$ € £）前置紧贴：$9.00
+     * - 非 ASCII 符号（元 等）后置带空格：9.00 元
+     */
+    public static function format(float $amount, ?string $code = null): string
+    {
+        $symbol = static::symbol($code ?? static::default());
+
+        if ($symbol === '') {
+            return number_format($amount, 2);
+        }
+
+        return preg_match('/^[\x20-\x7E]+$/', $symbol)
+            ? $symbol.number_format($amount, 2)
+            : number_format($amount, 2).' '.$symbol;
+    }
+
     /** 汇率：1 默认货币 = rate 该货币 */
     public static function rate(string $code): float
     {

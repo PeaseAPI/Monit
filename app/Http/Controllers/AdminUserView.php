@@ -19,7 +19,7 @@ class AdminUserView extends Controller
     public function index(Request $request, int $userId): View
     {
         $user = User::findOrFail($userId);
-        $websites = Website::where('user_id', $userId)->orderByDesc('datetime')->get();
+        $websites = Website::where('user_id', $userId)->latest('created_at')->get();
         $payments = Payment::where('user_id', $userId)->orderByDesc('datetime')->limit(50)->get();
         $logs = AccountLog::where('user_id', $userId)->orderByDesc('datetime')->limit(50)->get();
 

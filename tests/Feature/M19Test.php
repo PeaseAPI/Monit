@@ -98,9 +98,9 @@ class M19Test extends TestCase
             'is_enabled' => true, 'order' => 1,
         ]);
 
-        // 默认 CNY：渲染 prices JSON 月付价（修复前 $plan->price 恒为 null）
+        // 默认 CNY：渲染 prices JSON 月付价（CNY 符号本土化为「元」后置）
         $this->get('/')->assertOk()
-            ->assertSee('¥19.90', false);
+            ->assertSee('19.90 元', false);
 
         // 切换到 USD 并持久化到 session
         $this->get('/?currency=USD')->assertOk()

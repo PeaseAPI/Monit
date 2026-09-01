@@ -16,7 +16,7 @@
                     @endphp
                     @if($heroMonthly !== null && $heroMonthly > 0)
                         <span class="rounded-full bg-white/15 px-3 py-1 text-sm font-medium text-white/90 backdrop-blur">
-                            {{ \App\Support\Currency::symbol($heroCurrency) }}{{ number_format($heroMonthly, 2) }} {{ $heroCurrency }} / {{ __('payments.monthly') }}
+                            {{ \App\Support\Currency::format($heroMonthly, $heroCurrency) }} {{ $heroCurrency }} / {{ __('payments.monthly') }}
                         </span>
                     @endif
                 </div>

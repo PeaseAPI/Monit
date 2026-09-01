@@ -302,7 +302,8 @@
 
             <div class="reveal mt-16 grid gap-6 md:grid-cols-3">
                 @forelse ($plans ?? [] as $plan)
-                @php($symbol = $currencies[$plan->landing_currency ?? ($currency ?? 'CNY')]['symbol'] ?? '¥')
+                @php($planCode = $plan->landing_currency ?? ($currency ?? 'CNY'))
+                @php($symbol = $currencies[$planCode]['symbol'] ?? '')
                 @php($featured = ($loop->count >= 3) && ($loop->middle ?? false))
                 @php($s = $plan->settings ?? [])
                 @php($annual = $plan->landing_price_annual)
@@ -314,10 +315,10 @@
                     <h3 class="text-lg font-semibold text-zinc-900">{{ $plan->name }}</h3>
                     <p class="mt-3">
                         @if ($plan->landing_price !== null && (float) $plan->landing_price > 0)
-                            <span data-price="monthly" class="text-4xl font-bold text-zinc-900">{{ $symbol }}{{ number_format((float) $plan->landing_price, 2) }}</span>
+                            <span data-price="monthly" class="text-4xl font-bold text-zinc-900">{{ \App\Support\Currency::format((float) $plan->landing_price, $planCode) }}</span>
                             <span data-price="monthly" class="text-sm font-normal text-zinc-400">/{{ __('landing.per_month') }}</span>
                             @if ($annual !== null && (float) $annual > 0)
-                            <span data-price="annual" class="hidden text-4xl font-bold text-zinc-900">{{ $symbol }}{{ number_format((float) $annual, 2) }}</span>
+                            <span data-price="annual" class="hidden text-4xl font-bold text-zinc-900">{{ \App\Support\Currency::format((float) $annual, $planCode) }}</span>
                             <span data-price="annual" class="hidden text-sm font-normal text-zinc-400">/{{ __('landing.per_year') }}</span>
                             @if ($savePct > 0)
                             <span data-price="annual" class="hidden ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">{{ __('landing.save_percent', ['percent' => $savePct]) }}</span>

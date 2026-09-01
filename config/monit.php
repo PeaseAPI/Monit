@@ -87,7 +87,7 @@ return [
          | 后台「支付」组可覆盖任意行 / 新增任意货币（存 settings payment.currencies）。
          */
         'currencies' => [
-            'CNY' => ['name' => '人民币', 'symbol' => '¥', 'rate' => 1],
+            'CNY' => ['name' => '人民币', 'symbol' => '元', 'rate' => 1],
             'USD' => ['name' => '美元', 'symbol' => '$', 'rate' => 0.14],
             'EUR' => ['name' => '欧元', 'symbol' => '€', 'rate' => 0.13],
             'GBP' => ['name' => '英镑', 'symbol' => '£', 'rate' => 0.11],

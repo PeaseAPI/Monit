@@ -160,16 +160,28 @@ class User extends Authenticatable
 
     /**
      * 获取用户当前套餐设置（plan_settings 融合套餐表 settings）
+     *
+     * 优先级（对标 monit.cn /admin/user-update 自定义限额语义）：
+     * 1) plan_id=custom 且有用户级 plan_settings → 直接使用
+     * 2) 用户级 plan_settings 非空 → 逐键覆盖套餐默认（管理员微调单个用户限额）
+     * 3) 套餐表 settings → config 兜底
      */
     public function getPlanSettings(): array
     {
-        if ($this->plan_id === 'custom' && $this->plan_settings) {
-            return $this->plan_settings;
+        $userSettings = $this->plan_settings;
+
+        if ($this->plan_id === 'custom' && $userSettings) {
+            return $userSettings;
         }
 
         $plan = Plan::find($this->plan_id);
+        $base = $plan?->settings ?? config('monit.plan_defaults');
 
-        return $plan?->settings ?? config('monit.plan_defaults');
+        if ($userSettings) {
+            return array_merge($base, $userSettings);
+        }
+
+        return $base;
     }
 
     /**
