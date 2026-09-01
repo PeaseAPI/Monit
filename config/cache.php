@@ -129,8 +129,14 @@ return [
     | storage. By default, no PHP classes will be unserialized from your
     | cache to prevent gadget chain attacks if your APP_KEY is leaked.
     |
+    | Monit 白名单：M23 像素采集将 Website（含 user 关系）模型写入缓存
+    | （PixelTrackController::pixel.website.*），须放行反序列化。
+    |
     */
 
-    'serializable_classes' => false,
+    'serializable_classes' => [
+        \App\Models\Website::class,
+        \App\Models\User::class,
+    ],
 
 ];

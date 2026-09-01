@@ -304,4 +304,18 @@ return [
         'template_id' => env('SMS_TENCENT_TEMPLATE_ID'),
     ],
 
+    /*
+    |----------------------------------------------------------------------
+    | GeoIP（访客国家/大洲识别）
+    |----------------------------------------------------------------------
+    | 使用本地 MaxMind mmdb 库（GeoLite2 / db-ip country lite 均可）。
+    | 免费库下载（免注册，每月更新）：
+    |   curl -L https://download.db-ip.com/free/dbip-country-lite-$(date +%Y-%m).mmdb.gz \
+    |     | gunzip > storage/app/geoip/country.mmdb
+    | 未放置库文件时国家维度显示为空，不影响其余采集。
+    */
+    'geoip' => [
+        'mmdb_path' => env('GEOIP_MMDB_PATH', storage_path('app/geoip/country.mmdb')),
+    ],
+
 ];

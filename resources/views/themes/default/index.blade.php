@@ -382,6 +382,26 @@
                 </div>
                 @endforeach
             </div>
+
+            {{-- 用户评价卡片 --}}
+            <div class="reveal mt-10 grid gap-6 md:grid-cols-3">
+                @foreach ([
+                    ['quote' => 'landing.testimonial_1_quote', 'author' => 'landing.testimonial_1_author', 'role' => 'landing.testimonial_1_role'],
+                    ['quote' => 'landing.testimonial_2_quote', 'author' => 'landing.testimonial_2_author', 'role' => 'landing.testimonial_2_role'],
+                    ['quote' => 'landing.testimonial_3_quote', 'author' => 'landing.testimonial_3_author', 'role' => 'landing.testimonial_3_role'],
+                ] as $testimonial)
+                <figure class="flex h-full flex-col justify-between rounded-2xl border border-zinc-200/70 bg-white/70 p-7 backdrop-blur transition hover:border-brand-200">
+                    <blockquote class="text-sm leading-relaxed text-zinc-600">“{{ __($testimonial['quote']) }}”</blockquote>
+                    <figcaption class="mt-5 flex items-center gap-3">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-indigo-500 text-sm font-bold text-white">{{ mb_substr(__($testimonial['author']), 0, 1) }}</span>
+                        <div>
+                            <p class="text-sm font-semibold text-zinc-900">{{ __($testimonial['author']) }}</p>
+                            <p class="text-xs text-zinc-400">{{ __($testimonial['role']) }}</p>
+                        </div>
+                    </figcaption>
+                </figure>
+                @endforeach
+            </div>
         </div>
     </section>
     @endif

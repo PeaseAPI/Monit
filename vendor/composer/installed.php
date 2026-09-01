@@ -3,7 +3,7 @@
         'name' => 'monit/monit',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '52bbc7ab2dbc85df4232e466087cafad4076c7f2',
+        'reference' => '3cf4b1eda5184e70f1bd6ce356c76a08695b4385',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -574,6 +574,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'maxmind-db/reader' => array(
+            'pretty_version' => 'v1.13.1',
+            'version' => '1.13.1.0',
+            'reference' => '2194f58d0f024ce923e685cdf92af3daf9951908',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../maxmind-db/reader',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'mockery/mockery' => array(
             'pretty_version' => '1.6.15',
             'version' => '1.6.15.0',
@@ -595,7 +604,7 @@
         'monit/monit' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '52bbc7ab2dbc85df4232e466087cafad4076c7f2',
+            'reference' => '3cf4b1eda5184e70f1bd6ce356c76a08695b4385',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

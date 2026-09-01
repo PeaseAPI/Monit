@@ -97,11 +97,14 @@
     {{-- Dimension rankings --}}
     <div class="mt-6 grid gap-4 lg:grid-cols-2">
         @php
+            $locale = app()->getLocale();
             $panels = [
-                ['title' => __('dashboard.top_pages'), 'items' => $topPaths],
-                ['title' => __('dashboard.top_referrers'), 'items' => $topReferrers],
-                ['title' => __('dashboard.top_countries'), 'items' => $topCountries],
-                ['title' => __('dashboard.top_devices'), 'items' => $topDevices],
+                ['title' => __('dashboard.top_pages'), 'items' => $topPaths, 'type' => 'generic'],
+                ['title' => __('dashboard.top_referrers'), 'items' => $topReferrers, 'type' => 'referrer'],
+                ['title' => __('dashboard.top_countries'), 'items' => $topCountries, 'type' => 'country'],
+                ['title' => __('dashboard.top_devices'), 'items' => $topDevices, 'type' => 'device'],
+                ['title' => __('dashboard.top_operating_systems'), 'items' => $topOses, 'type' => 'generic'],
+                ['title' => __('dashboard.top_browsers'), 'items' => $topBrowsers, 'type' => 'generic'],
             ];
         @endphp
         @foreach ($panels as $panel)
@@ -113,9 +116,23 @@
                     @php $panelMax = max(1, max(array_column($panel['items'], 'count'))); @endphp
                     <ul class="mt-4 space-y-3">
                         @foreach ($panel['items'] as $item)
+                            @php
+                                // 维度展示格式化：国家 -> 国旗+本地化国名；来源 -> 空 referrer 显示“直接访问”；设备 -> 桌面/移动/平板
+                                $rawKey = (string) ($item['key'] ?? '');
+                                $unknownLabel = __('stats.unknown');
+                                if ($panel['type'] === 'country' && $rawKey !== '' && $rawKey !== $unknownLabel) {
+                                    $displayKey = \App\Support\CountryNames::flag($rawKey).'  '.\App\Support\CountryNames::name($rawKey, $locale);
+                                } elseif ($panel['type'] === 'referrer' && ($rawKey === '' || $rawKey === $unknownLabel)) {
+                                    $displayKey = __('dashboard.direct_visit');
+                                } elseif ($panel['type'] === 'device') {
+                                    $displayKey = ['desktop' => __('dashboard.device_desktop'), 'mobile' => __('dashboard.device_mobile'), 'tablet' => __('dashboard.device_tablet')][$rawKey] ?? __('dashboard.unknown');
+                                } else {
+                                    $displayKey = $rawKey !== '' ? $rawKey : __('dashboard.unknown');
+                                }
+                            @endphp
                             <li>
                                 <div class="flex items-center justify-between gap-4 text-sm">
-                                    <span class="truncate font-medium text-zinc-700">{{ $item['key'] }}</span>
+                                    <span class="truncate font-medium text-zinc-700">{{ $displayKey }}</span>
                                     <span class="shrink-0 tabular-nums text-zinc-500">{{ number_format($item['count']) }}</span>
                                 </div>
                                 <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-100">

@@ -57,6 +57,10 @@ class PixelTracker
         $this->website = $website;
         $this->request = $request;
 
+        // 绑定本次请求的 User-Agent（容器注入的实例未携带 UA，需按请求重建，
+        // 否则 os_name / browser_name / 爬虫过滤将全部失效）
+        $this->uaParser = UserAgentParser::make($request->userAgent());
+
         // 1. 解析载荷
         $raw = $request->input('data');
         $payload = is_string($raw) ? json_decode($raw, true) : $raw;

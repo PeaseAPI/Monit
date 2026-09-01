@@ -46,6 +46,8 @@ class DashboardController extends Controller
             'topReferrers' => $stats->breakdown('referrer_host'),
             'topCountries' => $stats->breakdown('country_code', 8),
             'topDevices' => $stats->breakdown('device_type', 4),
+            'topOses' => $stats->breakdown('os_name', 6),
+            'topBrowsers' => $stats->breakdown('browser_name', 6),
         ]);
     }
 

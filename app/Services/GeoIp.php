@@ -2,12 +2,26 @@
 
 namespace App\Services;
 
+use MaxMind\Db\Reader;
+
 /**
  * Monit GeoIP 地理位置解析
- * MVP 阶段：无本地 mmdb 时返回空结果（预留 MaxMind GeoLite2 接入点）
+ *
+ * 本地 MaxMind mmdb 库查询（GeoLite2 与 db-ip country lite 格式兼容）：
+ * - 库路径由 config('services.geoip.mmdb_path') 指定，默认 storage/app/geoip/country.mmdb
+ * - 免费库下载（免注册，每月更新）：
+ *   curl -L https://download.db-ip.com/free/dbip-country-lite-$(date +%Y-%m).mmdb.gz \
+ *     | gunzip > storage/app/geoip/country.mmdb
+ * - 未放置库文件时静默返回空结果（国家显示为未知，不影响采集）
+ *
+ * 关联：PixelTracker（写入 continent_code/country_code）、CountryNames（展示层国名/国旗）
  */
 class GeoIp
 {
+    protected ?Reader $reader = null;
+
+    protected bool $readerFailed = false;
+
     /**
      * @return array{continent_code: ?string, country_code: ?string, city_name: ?string, latitude: ?float, longitude: ?float}
      */
@@ -25,12 +39,65 @@ class GeoIp
             return $result;
         }
 
-        // 预留：MaxMind GeoLite2 本地库优先
-        if (config('services.geoip.mmdb_path') && is_file(config('services.geoip.mmdb_path'))) {
-            // TODO: 接入 maxmind-db/reader（Phase 4）
+        $record = $this->lookupRecord($ip);
+
+        if ($record !== null) {
+            $result['country_code'] = $record['country']['iso_code'] ?? null;
+            $result['continent_code'] = $record['continent']['code'] ?? null;
+            $result['city_name'] = $record['city']['names']['zh-CN']
+                ?? $record['city']['names']['en']
+                ?? null;
+            $result['latitude'] = isset($record['location']['latitude']) ? (float) $record['location']['latitude'] : null;
+            $result['longitude'] = isset($record['location']['longitude']) ? (float) $record['location']['longitude'] : null;
         }
 
         return $result;
+    }
+
+    /**
+     * 查询 mmdb 记录（库缺失 / 打开失败 / 查询异常均静默返回 null）
+     */
+    protected function lookupRecord(string $ip): ?array
+    {
+        if ($this->readerFailed) {
+            return null;
+        }
+
+        if ($this->reader === null) {
+            $path = (string) config('services.geoip.mmdb_path');
+
+            if ($path === '' || ! is_file($path)) {
+                $this->readerFailed = true;
+
+                return null;
+            }
+
+            try {
+                $this->reader = new Reader($path);
+            } catch (\Throwable) {
+                $this->readerFailed = true;
+
+                return null;
+            }
+        }
+
+        try {
+            $record = $this->reader->get($ip);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return is_array($record) ? $record : null;
+    }
+
+    /**
+     * 是否已配置可用的 mmdb 库（供管理面板状态提示）
+     */
+    public function isAvailable(): bool
+    {
+        $path = (string) config('services.geoip.mmdb_path');
+
+        return $path !== '' && is_file($path);
     }
 
     /**
