@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LightweightEvent;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
 use App\Services\Ai\AiService;
 use App\Services\StatisticsService;
 use Illuminate\Http\Request;
+use Ramsey\Uuid\Uuid;
 
 /**
  * Monit 网站详情统计页面
@@ -626,17 +628,88 @@ class StatsController extends Controller
     /**
      * 单访客详情（规格书 §6.2.2：/visitor）
      */
-    public function visitorDetail(Request $request, Website $website, int $visitorId)
+    public function visitorDetail(Request $request, Website $website, string $visitorId)
     {
+        // Lightweight：32 位 uuid hex → 轻量事件时间线（访客明细与旅程）
+        if (preg_match('/^[0-9a-fA-F]{32}$/', $visitorId)) {
+            try {
+                $binary = Uuid::fromString(strtolower($visitorId))->getBytes();
+            } catch (\Throwable) {
+                abort(404);
+            }
+
+            $events = LightweightEvent::query()
+                ->where('website_id', $website->website_id)
+                ->where('visitor_uuid', $binary)
+                ->orderBy('event_id')
+                ->limit(500)
+                ->get();
+
+            if ($events->isEmpty()) {
+                abort(404);
+            }
+
+            $first = $events->first();
+            $last = $events->last();
+
+            $profile = [
+                'label' => substr($visitorId, 0, 8).'…',
+                'country_code' => $first->country_code,
+                'os_name' => $first->os_name,
+                'browser_name' => $first->browser_name,
+                'device_type' => $first->device_type,
+                'screen_resolution' => $first->screen_resolution,
+                'browser_language' => $first->browser_language,
+                'first_date' => $first->date,
+                'last_date' => $last->date,
+                'total_events' => $events->count(),
+                'first_referrer' => $events->firstWhere('referrer_host')?->referrer_host,
+            ];
+
+            $timeline = $events->map(fn ($e) => [
+                'date' => $e->date,
+                'type' => $e->type,
+                'path' => $e->path,
+                'referrer_host' => $e->referrer_host,
+            ]);
+
+            return view('stats.visitor_detail', compact('website', 'profile', 'timeline'));
+        }
+
+        // Advanced：visitor_id → 会话事件时间线
         $visitor = WebsiteVisitor::where('website_id', $website->website_id)
-            ->findOrFail($visitorId);
+            ->findOrFail((int) $visitorId);
 
-        $sessions = VisitorSession::where('visitor_id', $visitorId)
+        $allEvents = VisitorSession::where('visitor_id', $visitor->visitor_id)
             ->with('events')
-            ->orderByDesc('date')
-            ->get();
+            ->get()
+            ->flatMap->events
+            ->sortBy('event_id')
+            ->take(500)
+            ->values();
 
-        return view('stats.visitor', compact('website', 'visitor', 'sessions'));
+        $profile = [
+            'label' => '#'.$visitor->visitor_id,
+            'country_code' => $visitor->country_code,
+            'os_name' => $visitor->os_name,
+            'browser_name' => $visitor->browser_name,
+            'device_type' => $visitor->device_type,
+            'screen_resolution' => $visitor->screen_resolution,
+            'browser_language' => $visitor->browser_language,
+            'first_date' => $allEvents->first()?->date,
+            'last_date' => $allEvents->last()?->date,
+            'total_events' => $allEvents->count(),
+            'first_referrer' => $allEvents->firstWhere('referrer_host')?->referrer_host,
+        ];
+
+        $timeline = $allEvents->map(fn ($e) => [
+            'date' => $e->date,
+            'type' => $e->type,
+            'path' => $e->path,
+            'referrer_host' => $e->referrer_host,
+        ]);
+
+        return view('stats.visitor_detail', compact('website', 'profile', 'timeline'));
     }
 
     /**

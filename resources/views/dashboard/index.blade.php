@@ -45,6 +45,11 @@
                class="rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">
                                 {{ __('dashboard.install_code') }}
             </a>
+
+            <a href="{{ route('stats.visitors', ['website' => $website->website_id]) }}"
+               class="rounded-xl bg-white/70 px-3.5 py-2 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-200 shadow-sm transition hover:bg-brand-50">
+                👥 {{ __('dashboard.view_visitors') }}
+            </a>
         </div>
     </div>
 

@@ -463,8 +463,9 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/teams-ajax', [TeamController::class, 'ajax'])->name('teams.ajax');
     Route::get('/teams-associations-ajax', [TeamController::class, 'associationsAjax'])->name('teams.associations-ajax');
 
-    // 访客详情（规格书 §6.2.2：/visitor）
+    // 访客详情（规格书 §6.2.2：/visitor；visitorId 兼容 advanced 自增 ID 与 lightweight 32 位 uuid hex）
     Route::get('/stats/{website}/visitors/{visitorId}', [StatsController::class, 'visitorDetail'])
+        ->where('visitorId', '[0-9]+|[0-9a-fA-F]{32}')
         ->middleware('can:own,website')->name('stats.visitor');
 
     // 会话详情（规格书 §6.2.2：/session-ajax）

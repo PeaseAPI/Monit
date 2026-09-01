@@ -190,6 +190,8 @@ class PixelTracker
 
         LightweightEvent::create([
             'website_id' => $this->website->website_id,
+            // 访客标识（访客明细与旅程：按 uuid 聚合列表 / 行为时间线）
+            'visitor_uuid' => $this->uuidToBinary($this->payload['visitor_uuid'] ?? ''),
             'type' => $type,
             'path' => $path,
             'referrer_host' => $this->parseReferrer($data, 'host'),

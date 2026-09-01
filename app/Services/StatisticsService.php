@@ -377,7 +377,37 @@ class StatisticsService
     public function topVisitors(int $limit = 50): array
     {
         if ($this->isLightweight) {
-            return [];
+            // LW：轻量单表按 visitor_uuid 聚合（访客明细与旅程）
+            $rows = DB::table('lightweight_events')
+                ->where('website_id', $this->website->website_id)
+                ->whereBetween('date', [$this->startDate, $this->endDate])
+                ->whereNotNull('visitor_uuid')
+                ->groupBy('visitor_uuid')
+                ->selectRaw("HEX(visitor_uuid) as visitor_uuid,
+                    COUNT(*) as total_events,
+                    MIN(date) as first_date,
+                    MAX(date) as last_date,
+                    MAX(country_code) as country_code,
+                    MAX(device_type) as device_type,
+                    MAX(os_name) as os_name,
+                    MAX(browser_name) as browser_name,
+                    SUBSTRING_INDEX(GROUP_CONCAT(referrer_host ORDER BY event_id SEPARATOR '\t'), '\t', 1) as first_referrer")
+                ->orderByDesc('last_date')
+                ->limit($limit)
+                ->get();
+
+            return collect($rows)->map(fn ($row) => [
+                'visitor_id' => null,
+                'visitor_uuid' => strtolower((string) $row->visitor_uuid),
+                'country_code' => $row->country_code,
+                'device_type' => $row->device_type,
+                'os_name' => $row->os_name,
+                'browser_name' => $row->browser_name,
+                'total_events' => (int) $row->total_events,
+                'first_date' => $row->first_date,
+                'last_date' => $row->last_date,
+                'first_referrer' => $row->first_referrer,
+            ])->all();
         }
 
         // MySQL：BINARY(16) UUID 十六进制展示（HEX 大写，前端小写化由展示层决定）
@@ -388,20 +418,26 @@ class StatisticsService
             ->where('websites_visitors.website_id', $this->website->website_id)
             ->whereBetween('sessions_events.date', [$this->startDate, $this->endDate])
             ->groupBy('websites_visitors.visitor_id')
-            ->selectRaw("websites_visitors.visitor_id, {$hexFunc} as visitor_uuid, websites_visitors.country_code, websites_visitors.device_type, websites_visitors.os_name, websites_visitors.browser_name, COUNT(sessions_events.event_id) as total_events, MAX(sessions_events.date) as last_date")
+            ->selectRaw("websites_visitors.visitor_id, {$hexFunc} as visitor_uuid, websites_visitors.country_code, websites_visitors.device_type, websites_visitors.os_name, websites_visitors.browser_name,
+                COUNT(sessions_events.event_id) as total_events,
+                MIN(sessions_events.date) as first_date,
+                MAX(sessions_events.date) as last_date,
+                SUBSTRING_INDEX(GROUP_CONCAT(sessions_events.referrer_host ORDER BY sessions_events.event_id SEPARATOR '\t'), '\t', 1) as first_referrer")
             ->orderByDesc('total_events')
             ->limit($limit)
             ->get();
 
         return collect($rows)->map(fn ($row) => [
             'visitor_id' => (int) $row->visitor_id,
-            'visitor_uuid' => $row->visitor_uuid,
-            'country_code' => $row->country_code ?? __('stats.unknown'),
-            'device_type' => $row->device_type ?? __('stats.unknown'),
-            'os_name' => $row->os_name ?? __('stats.unknown'),
-            'browser_name' => $row->browser_name ?? __('stats.unknown'),
+            'visitor_uuid' => strtolower((string) $row->visitor_uuid),
+            'country_code' => $row->country_code,
+            'device_type' => $row->device_type,
+            'os_name' => $row->os_name,
+            'browser_name' => $row->browser_name,
             'total_events' => (int) $row->total_events,
+            'first_date' => $row->first_date,
             'last_date' => $row->last_date,
+            'first_referrer' => $row->first_referrer,
         ])->all();
     }
 

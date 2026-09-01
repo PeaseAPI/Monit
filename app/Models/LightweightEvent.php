@@ -11,7 +11,7 @@ class LightweightEvent extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'website_id', 'type', 'path', 'referrer_host', 'referrer_path',
+        'website_id', 'visitor_uuid', 'type', 'path', 'referrer_host', 'referrer_path',
         'utm_source', 'utm_medium', 'utm_campaign', 'continent_code',
         'country_code', 'city_name', 'os_name', 'browser_name',
         'browser_language', 'browser_timezone', 'screen_resolution',
