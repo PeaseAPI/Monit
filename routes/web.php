@@ -87,6 +87,7 @@ use App\Models\PushNotificationSubscriber;
 use App\Models\Setting;
 use App\Services\DynamicOgImageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -768,7 +769,7 @@ Route::post('/push-notifications/subscribe', function (Request $request) {
         'keys.p256dh' => ['required', 'string'],
     ]);
     PushNotificationSubscriber::create([
-        'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
         'endpoint' => $validated['endpoint'],
         'keys_auth' => $validated['keys']['auth'],
         'keys_p256dh' => $validated['keys']['p256dh'],
@@ -784,7 +785,7 @@ Route::post('/push-notifications/unsubscribe', function (Request $request) {
         'endpoint' => ['required', 'url'],
     ]);
 
-    PushNotificationSubscriber::where('user_id', auth()->id())
+        PushNotificationSubscriber::where('user_id', Auth::id())
         ->where('endpoint', $validated['endpoint'])
         ->delete();
 
