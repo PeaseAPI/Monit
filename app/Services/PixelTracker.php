@@ -327,7 +327,11 @@ class PixelTracker
                 'last_date' => now(),
             ]],
             ['website_id', 'visitor_uuid_binary'],
-            ['last_date', 'ip', 'browser_language', 'browser_timezone', 'screen_resolution', 'device_type', 'theme']
+            // 回访时刷新地理 / UA 数据：早期版本未写入这些列的旧行、
+            // 以及库升级后 GeoIP 数据变化的访客都能借此补齐（修复"未知"地区不更新问题）
+            ['last_date', 'ip', 'continent_code', 'country_code', 'city_name',
+             'os_name', 'os_version', 'browser_name', 'browser_version',
+             'browser_language', 'browser_timezone', 'screen_resolution', 'device_type', 'theme']
         );
     }
 
@@ -528,10 +532,21 @@ class PixelTracker
         }
 
         // chunk 索引：缓存存储（key = session_replay_keys_{session_id}）
+        // monit.js 发送 { type: 'replays', data: { events: [...] } }；
+        // 兼容旧协议直接传事件数组（type: 'replay_chunk'）
+        $data = $this->payload['data'] ?? [];
+        $events = is_array($data) ? ($data['events'] ?? $data) : [];
+        if (! is_array($events) || $events === []) {
+            $this->skip('empty_replay_events');
+
+            return;
+        }
+        $events = array_values($events);
+
         $cacheKey = "session_replay_keys_{$session->session_id}";
         $keys = Cache::get($cacheKey, []);
         $chunkKey = 'session_replay_chunk_'.md5($session->session_id.'_'.count($keys).'_'.uniqid('', true));
-        Cache::put($chunkKey, $this->payload['data'] ?? [], now()->addDays(config('monit.pixel.replays_retention_days')));
+        Cache::put($chunkKey, $events, now()->addDays(config('monit.pixel.replays_retention_days')));
         $keys[] = $chunkKey;
         Cache::put($cacheKey, $keys, now()->addDays(config('monit.pixel.replays_retention_days')));
     }

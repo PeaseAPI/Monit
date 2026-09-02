@@ -38,9 +38,13 @@ class HeatmapController extends Controller
 
         $website = $request->user()->websites()->findOrFail($validated['website_id']);
 
+        // datetime 列 NOT NULL 无默认值（模型 $timestamps=false），必须显式赋值，否则 SQL 报错 500
         Heatmap::create([
-            ...$validated,
+            'website_id' => $validated['website_id'],
+            'path' => $validated['path'],
+            'name' => $validated['name'],
             'is_enabled' => $request->boolean('is_enabled', true),
+            'datetime' => now(),
         ]);
 
         return redirect()->route('stats.heatmaps', ['website' => $website->website_id])
@@ -51,12 +55,15 @@ class HeatmapController extends Controller
     {
         $heatmap = $website->heatmaps()->findOrFail($heatmapId);
 
+        $snapshotIds = $heatmap->snapshotIds();
+
         $clicks = HeatmapSnapshotClick::where('website_id', $website->website_id)
-            ->whereNotNull('snapshot_id')
+            ->whereIn('snapshot_id', $snapshotIds)
             ->limit(500)
             ->get();
 
         $scrolls = HeatmapSnapshotScroll::where('website_id', $website->website_id)
+            ->whereIn('snapshot_id', $snapshotIds)
             ->orderByDesc('max_scroll')
             ->get()
             ->groupBy('max_scroll')
@@ -79,7 +86,13 @@ class HeatmapController extends Controller
             ->where('user_id', $request->user()->user_id)
             ->firstOrFail();
         $websiteId = $website->website_id;
-        $heatmap->update($validated);
+
+        // heatmap_id 不在模型 fillable 中（主键），混入 update 会触发 MassAssignmentException
+        $heatmap->update([
+            'path' => $validated['path'],
+            'name' => $validated['name'],
+            'is_enabled' => $request->boolean('is_enabled', true),
+        ]);
 
         return redirect()->route('stats.heatmaps', ['website' => $websiteId])
             ->with('success', __('msg.heatmap_updated'));
@@ -100,20 +113,23 @@ class HeatmapController extends Controller
 
     /**
      * 热图AJAX数据（规格书 §6.2.2：/heatmaps-ajax）
+     * clicks/scrolls 表按 snapshot_id 关联（无 heatmap_id 列）；坐标列为 x_normalized/y_normalized，滚动列为 max_scroll
      */
     public function ajax(Request $request, Website $website, int $heatmapId)
     {
         $heatmap = Heatmap::where('website_id', $website->website_id)
             ->findOrFail($heatmapId);
 
-        $clicks = HeatmapSnapshotClick::where('heatmap_id', $heatmapId)
-            ->selectRaw('x, y, count(*) as count')
-            ->groupBy('x', 'y')
+        $snapshotIds = $heatmap->snapshotIds();
+
+        $clicks = HeatmapSnapshotClick::whereIn('snapshot_id', $snapshotIds)
+            ->selectRaw('x_normalized, y_normalized, SUM(count) as count')
+            ->groupBy('x_normalized', 'y_normalized')
             ->get();
 
-        $scrolls = HeatmapSnapshotScroll::where('heatmap_id', $heatmapId)
-            ->selectRaw('depth, count(*) as count')
-            ->groupBy('depth')
+        $scrolls = HeatmapSnapshotScroll::whereIn('snapshot_id', $snapshotIds)
+            ->selectRaw('max_scroll, count(*) as count')
+            ->groupBy('max_scroll')
             ->get();
 
         return response()->json([

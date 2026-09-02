@@ -108,21 +108,23 @@ class SeoAuditController extends Controller
                 return back()->withErrors(['html' => __('seo.html_required')])->withInput();
             }
 
-            RunSeoAuditJob::dispatch(
+            // 同步执行（HTML 离线审计不发起网络请求，耗时极短）；
+            // 历史上走队列导致未部署 queue:worker 的实例审计永不执行、记录不落库
+            $audit = app(AuditEngine::class)->run(
                 $validated['url'],
-                $request->user()->user_id,
+                $request->user(),
                 'html',
-                ['html' => $html],
+                ['html' => $html, 'with_ai' => true],
             );
 
-            return redirect()->route('seo.audits')->with('success', __('seo.audit_queued'));
+            return redirect()->route('seo.audits.show', $audit->seo_audit_id);
         }
 
-        // Single
+        // Single：同步执行并直达报告（避免队列未消费导致列表始终为空）
         $url = static::ensureScheme($validated['url']);
-        RunSeoAuditJob::dispatch($url, $request->user()->user_id, 'single');
+        $audit = app(AuditEngine::class)->run($url, $request->user(), 'single', ['with_ai' => true]);
 
-        return redirect()->route('seo.audits')->with('success', __('seo.audit_queued'));
+        return redirect()->route('seo.audits.show', $audit->seo_audit_id);
     }
 
     /**
@@ -394,12 +396,22 @@ class SeoAuditController extends Controller
 
     /**
      * 三态访问矩阵：granted / password / denied
+     * 访客经 /seo/analyze 创建的报告（user_id=null + uploader_key=md5(session id)）
+     * 由同一浏览器会话访问时视为作者（否则创建后立即 403，无法查看自己的报告）
      */
     protected function accessState(Request $request, SeoAudit $audit): string
     {
         $user = $request->user();
         $isOwner = $user !== null
             && ((int) $audit->user_id === (int) $user->user_id || $user->isAdmin());
+
+        // 访客自建报告：uploader_key 与当前会话匹配即可查看
+        if (! $isOwner
+            && $audit->user_id === null
+            && $audit->uploader_key !== null
+            && $audit->uploader_key === md5($request->session()->getId())) {
+            $isOwner = true;
+        }
 
         if ($isOwner || $audit->privacy === 'public') {
             return 'granted';

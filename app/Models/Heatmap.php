@@ -36,6 +36,18 @@ class Heatmap extends Model
         return $this->hasMany(HeatmapSnapshot::class, 'heatmap_id', 'heatmap_id');
     }
 
+    /**
+     * 三端（desktop / tablet / mobile）已采集的 snapshot_id 列表
+     */
+    public function snapshotIds(): array
+    {
+        return array_values(array_filter([
+            (int) $this->snapshot_id_desktop,
+            (int) $this->snapshot_id_tablet,
+            (int) $this->snapshot_id_mobile,
+        ]));
+    }
+
     public function clicks()
     {
         return $this->hasMany(HeatmapSnapshotClick::class, 'snapshot_id', 'snapshot_id_desktop');
