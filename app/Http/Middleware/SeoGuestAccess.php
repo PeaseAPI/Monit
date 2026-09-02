@@ -18,7 +18,9 @@ class SeoGuestAccess
             return $next($request);
         }
 
-                $enabled = Settings::get('seo.tools_guest_access');
+        // 默认值 true 与 ProductionSeeder 初始态一致：DB 缺 key（旧库升级未重播种）
+        // 时不再误判为关闭，避免访客侧 SEO 入口莫名 403
+        $enabled = Settings::get('seo.tools_guest_access', true);
 
         if (! filter_var($enabled, FILTER_VALIDATE_BOOLEAN)) {
             abort(403, __('seo.guest_disabled'));

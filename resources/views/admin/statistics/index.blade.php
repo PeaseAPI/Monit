@@ -45,7 +45,7 @@
                 @php($countryTotal = max(1, array_sum($countries ?? [])))
                 @forelse ($byCountry ?? [] as $row)
                 <tr class="transition hover:bg-zinc-50/60">
-                    <td class="px-6 py-3 font-medium text-zinc-900">{{ $row->country }}</td>
+                    <td class="px-6 py-3 font-medium text-zinc-900">{{ \App\Support\CountryNames::flag($row->country) . ' ' . \App\Support\CountryNames::name($row->country, app()->getLocale()) }}</td>
                     <td class="px-6 py-3 text-zinc-500">{{ number_format($row->count / $countryTotal * 100, 2) }}%</td>
                     <td class="px-6 py-3 font-semibold text-zinc-900">{{ number_format($row->count) }}</td>
                 </tr>

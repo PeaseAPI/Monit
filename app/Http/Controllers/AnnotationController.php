@@ -47,7 +47,7 @@ class AnnotationController extends Controller
             'user_id' => $user->user_id,
         ]);
 
-        return redirect()->route('annotations.index', ['website' => $website->website_id])
+        return redirect()->route('stats.annotations', ['website' => $website->website_id])
             ->with('success', __('msg.annotation_created'));
     }
 
@@ -60,20 +60,26 @@ class AnnotationController extends Controller
         ]);
 
         $annotation = Annotation::find($validated['annotation_id']);
-        $websiteId = $annotation->website_id;
+        $website = Website::where('website_id', $annotation->website_id)
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
+        $websiteId = $website->website_id;
         $annotation->update($validated);
 
-        return redirect()->route('annotations.index', ['website' => $websiteId])
+        return redirect()->route('stats.annotations', ['website' => $websiteId])
             ->with('success', __('msg.annotation_updated'));
     }
 
     public function delete(Request $request, int $annotationId): RedirectResponse
     {
         $annotation = Annotation::findOrFail($annotationId);
-        $websiteId = $annotation->website_id;
+        $website = Website::where('website_id', $annotation->website_id)
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
+        $websiteId = $website->website_id;
         $annotation->delete();
 
-        return redirect()->route('annotations.index', ['website' => $websiteId])
+        return redirect()->route('stats.annotations', ['website' => $websiteId])
             ->with('success', __('msg.annotation_deleted'));
     }
 
@@ -82,7 +88,7 @@ class AnnotationController extends Controller
         $this->authorize('own', $website);
         $annotation->delete();
 
-        return redirect()->route('annotations.index', $website)
+        return redirect()->route('stats.annotations', $website)
             ->with('success', __('msg.annotation_deleted'));
     }
 }

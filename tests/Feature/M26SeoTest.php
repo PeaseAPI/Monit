@@ -196,6 +196,11 @@ class M26SeoTest extends TestCase
 
     public function test_tools_blocked_for_guest_when_disabled(): void
     {
+        // 显式关闭访客访问（缺 key 的默认行为与 ProductionSeeder 初始态一致为 true，
+        // "disabled" 应测试设置值本身而非 key 缺失这一实现细节）
+        Setting::updateOrCreate(['key' => 'seo.tools_guest_access'], ['value' => 'false']);
+        Settings::flush();
+
         $this->get(route('seo.tools'))->assertForbidden();
     }
 

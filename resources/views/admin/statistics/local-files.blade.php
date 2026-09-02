@@ -12,7 +12,7 @@
     </div>
     <div class="rounded-2xl border border-zinc-200 bg-white p-6">
         <p class="text-sm font-medium text-zinc-500">{{ __('admin.total_disk_usage') }}</p>
-                <p class="mt-2 text-3xl font-bold text-zinc-900">{{ number_format(($fileStats['total_size'] ?? 0) / 1048576, 2) }} MB</p>
+        <p class="mt-2 text-3xl font-bold text-zinc-900">{{ number_format(($fileStats['total_size'] ?? 0) / 1048576, 2) }} MB</p>
     </div>
 </div>
 <div class="mt-6 rounded-2xl border border-zinc-200 bg-white">

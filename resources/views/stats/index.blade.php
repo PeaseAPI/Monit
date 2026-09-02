@@ -25,11 +25,11 @@
         <a href="{{ route('stats.top_continents', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.top_continents') }}</a>
         <a href="{{ route('stats.top_timezones', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.top_timezones') }}</a>
         <a href="{{ route('stats.top_themes', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.top_themes') }}</a>
-        <a href="{{ route('goals.index', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.goals') }}</a>
+        <a href="{{ route('stats.goals', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.goals') }}</a>
         <a href="{{ route('stats.outbound-clicks', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.outbound_clicks') }}</a>
-        <a href="{{ route('annotations.index', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.annotations') }}</a>
-        <a href="{{ route('heatmaps.index', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.heatmaps') }}</a>
-        <a href="{{ route('replays.index', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.replays') }}</a>
+        <a href="{{ route('stats.annotations', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.annotations') }}</a>
+        <a href="{{ route('stats.heatmaps', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.heatmaps') }}</a>
+        <a href="{{ route('stats.replays', $website->website_id) }}" class="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50">{{ __('stats.nav.replays') }}</a>
     </div>
     <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
         <x-stat-card :label="__('stats.pageviews')" :value="number_format($overview['pageviews'])" :hint="__('stats.pageviews_total')" />

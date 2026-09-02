@@ -30,11 +30,6 @@ class GoalController extends Controller
         return view('stats.goal_create', compact('website'));
     }
 
-    public function edit(Request $request, Website $website, WebsiteGoal $goal)
-    {
-        return view('goals.edit', compact('website', 'goal'));
-    }
-
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -55,8 +50,8 @@ class GoalController extends Controller
             'name' => $validated['name'] ?? $validated['key'],
             'is_enabled' => $request->boolean('is_enabled', true),
         ]);
-
-        return redirect()->route('goals.index', ['website' => $website->website_id])
+        
+        return redirect()->route('stats.goals', ['website' => $website->website_id])
             ->with('success', __('msg.goal_created'));
     }
 
@@ -73,22 +68,28 @@ class GoalController extends Controller
         ]);
 
         $goal = WebsiteGoal::find($validated['goal_id']);
-        $websiteId = $goal->website_id;
+        $website = Website::where('website_id', $goal->website_id)
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
+        $websiteId = $website->website_id;
         $goal->update($validated);
 
-        return redirect()->route('goals.index', ['website' => $websiteId])
+        return redirect()->route('stats.goals', ['website' => $websiteId])
             ->with('success', __('msg.goal_updated'));
     }
 
     public function delete(Request $request, int $goalId): RedirectResponse
     {
         $goal = WebsiteGoal::findOrFail($goalId);
-        $websiteId = $goal->website_id;
+        $website = Website::where('website_id', $goal->website_id)
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
+        $websiteId = $website->website_id;
         $goal->delete();
 
         GoalConversion::where('goal_id', $goalId)->delete();
 
-        return redirect()->route('goals.index', ['website' => $websiteId])
+        return redirect()->route('stats.goals', ['website' => $websiteId])
             ->with('success', __('msg.goal_deleted'));
     }
 }

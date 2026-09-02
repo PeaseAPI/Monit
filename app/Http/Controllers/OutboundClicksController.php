@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
  */
 class OutboundClicksController extends Controller
 {
-        public function index(Request $request, Website $website)
+    public function index(Request $request, Website $website)
     {
         $range = (int) ($request->query('range', 7));
         if (! in_array($range, [1, 7, 30, 90], true)) {
@@ -23,11 +23,11 @@ class OutboundClicksController extends Controller
 
         $clicks = OutboundClick::where('website_id', $website->website_id)
             ->where('datetime', '>=', $rangeDate)
-            ->selectRaw('host, url, COUNT(*) as count, MAX(datetime) as datetime')
-            ->groupBy('host', 'url')
+            ->selectRaw('host, COUNT(*) as count, MAX(datetime) as last_click')
+            ->groupBy('host')
             ->orderByDesc('count')
             ->paginate(50);
 
-        return view('outbound-clicks.index', compact('website', 'range', 'clicks'));
+        return view('stats.outbound_clicks', compact('website', 'range', 'clicks'));
     }
 }

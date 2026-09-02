@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>@yield('title', __('Dashboard')) {{ \App\Support\Brand::titleSeparator() }} {{ \App\Support\Brand::name() }}</title>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', __('Dashboard')) {{ \App\Support\Brand::titleSeparator() }} {{ \App\Support\Brand::name() }}</title>
     @include('parts.brand_head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -35,8 +35,8 @@
                         ['key' => 'stats', 'route' => 'stats.index', 'params' => ['website' => $wid], 'label' => __('stats.nav.overview'), 'icon' => 'pulse'],
                         ['key' => 'stats_realtime', 'route' => 'stats.realtime', 'params' => ['website' => $wid], 'label' => __('stats.nav.realtime'), 'icon' => 'bolt'],
                         ['key' => 'stats_visitors', 'route' => 'stats.visitors', 'params' => ['website' => $wid], 'label' => __('stats.nav.visitors'), 'icon' => 'users'],
-                        ['key' => 'stats_heatmaps', 'route' => 'heatmaps.index', 'params' => ['website' => $wid], 'label' => __('stats.nav.heatmaps'), 'icon' => 'grid'],
-                        ['key' => 'stats_replays', 'route' => 'replays.index', 'params' => ['website' => $wid], 'label' => __('stats.nav.replays'), 'icon' => 'play'],
+                        ['key' => 'stats_heatmaps', 'route' => 'stats.heatmaps', 'params' => ['website' => $wid], 'label' => __('stats.nav.heatmaps'), 'icon' => 'grid'],
+                        ['key' => 'stats_replays', 'route' => 'stats.replays', 'params' => ['website' => $wid], 'label' => __('stats.nav.replays'), 'icon' => 'play'],
                     ] : [];
 
                     $items = array_merge(
@@ -48,7 +48,7 @@
                             ['key' => 'websites', 'route' => 'websites.index', 'label' => __('Websites'), 'icon' => 'globe'],
                             ['key' => 'domains', 'route' => 'domains.index', 'label' => __('nav.domains'), 'icon' => 'server'],
                             ['key' => 'teams', 'route' => 'teams.index', 'label' => __('nav.teams'), 'icon' => 'users'],
-                                                        ['key' => 'seo_audits', 'route' => 'seo.audits', 'label' => __('seo.nav_audits'), 'icon' => 'magnifier'],
+                            ['key' => 'seo_audits', 'route' => 'seo.audits', 'label' => __('seo.nav_audits'), 'icon' => 'magnifier'],
                             ['key' => 'seo_keywords', 'route' => 'seo.keywords', 'label' => __('seo.nav_keywords'), 'icon' => 'target'],
                             ['key' => 'seo_backlinks', 'route' => 'seo.backlinks', 'label' => __('seo.nav_backlinks'), 'icon' => 'link'],
                             ['key' => 'seo_tools', 'route' => 'seo.tools', 'label' => __('seo.nav_tools'), 'icon' => 'wrench'],
@@ -253,7 +253,7 @@
                     @if ((int) auth()->user()->type === 1)
                         <a href="{{ route('admin.index') }}" class="text-sm font-semibold text-amber-600 hover:text-amber-700">{{ __('nav.admin') }}</a>
                     @endif
-                                        <a href="{{ route('websites.index') }}" class="text-sm text-zinc-600">{{ __('Websites') }}</a>
+                    <a href="{{ route('websites.index') }}" class="text-sm text-zinc-600">{{ __('Websites') }}</a>
                     <a href="{{ route('teams.index') }}" class="text-sm text-zinc-600">{{ __('nav.teams') }}</a>
                     <a href="{{ route('notifications.index') }}" class="relative text-sm text-zinc-600">{{ __('nav.notifications') }}
                         @php $unread = auth()->user()->internalNotifications()->where('is_read', false)->count(); @endphp

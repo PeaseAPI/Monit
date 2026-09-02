@@ -9,7 +9,7 @@
             <a href="{{ route('admin.affiliates-withdrawals.index') }}?status=pending" class="rounded-xl px-3 py-1.5 text-sm {{ request('status') === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-600' }}">{{ __('referrals.withdrawal_status_pending') }}</a>
             <a href="{{ route('admin.affiliates-withdrawals.index') }}?status=approved" class="rounded-xl px-3 py-1.5 text-sm {{ request('status') === 'approved' ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-100 text-zinc-600' }}">{{ __('referrals.withdrawal_status_completed') }}</a>
             <a href="{{ route('admin.affiliates-withdrawals.index') }}?status=rejected" class="rounded-xl px-3 py-1.5 text-sm {{ request('status') === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-zinc-100 text-zinc-600' }}">{{ __('referrals.withdrawal_status_rejected') }}</a>
-            <a href="{{ route('admin.affiliates-withdrawals.index') }}" class="rounded-xl px-3 py-1.5 text-sm {{ !request('status') ? 'bg-brand-100 text-brand-700' : 'bg-zinc-100 text-zinc-600' }}">全部</a>
+                        <a href="{{ route('admin.affiliates-withdrawals.index') }}" class="rounded-xl px-3 py-1.5 text-sm {{ !request('status') ? 'bg-brand-100 text-brand-700' : 'bg-zinc-100 text-zinc-600' }}">{{ __('admin.all') }}</a>
         </div>
     </div>
 
@@ -19,9 +19,9 @@
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">ID</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">{{ __('admin.col_user') }}</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">金额</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">{{ __('admin.amount') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">{{ __('admin.col_register_time') }}</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">状态</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">{{ __('common.status') }}</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">{{ __('admin.actions') }}</th>
                 </tr>
             </thead>

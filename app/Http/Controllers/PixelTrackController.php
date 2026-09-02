@@ -37,7 +37,14 @@ class PixelTrackController extends Controller
             : Website::where('pixel_key', $pixel_key)->with('user')->first();
 
         if ($website) {
-            $tracker->handle($website, $request);
+            try {
+                $tracker->handle($website, $request);
+            } catch (\Throwable $e) {
+                // 采集端点永不 500：异常上报后仍按 204 静默返回（不向客户端泄露信息，
+                // 也不打断被统计页面的加载）；关联 bug：外部域上报偶发 500 + CORS 报错
+                report($e);
+                $reason = 'exception';
+            }
         } else {
             $reason = 'website_not_found';
         }

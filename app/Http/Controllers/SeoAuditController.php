@@ -419,7 +419,8 @@ class SeoAuditController extends Controller
 
     protected function guestAllowed(): bool
     {
-        return filter_var(Settings::get('seo.tools_guest_access'), FILTER_VALIDATE_BOOLEAN);
+        // 默认 true 与 ProductionSeeder / SeoGuestAccess 保持一致（缺 key 不等于关闭）
+        return filter_var(Settings::get('seo.tools_guest_access', true), FILTER_VALIDATE_BOOLEAN);
     }
 
     /**

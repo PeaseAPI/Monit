@@ -249,7 +249,7 @@ class StatsController extends Controller
         ]);
     }
 
-        /**
+    /**
      * 出站点击统计
      */
     public function outboundClicks(Request $request, Website $website)
@@ -341,7 +341,7 @@ class StatsController extends Controller
     /**
      * 热门国家
      */
-        public function topCountries(Request $request, Website $website)
+    public function topCountries(Request $request, Website $website)
     {
         $range = (int) ($request->query('range') ?: 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
@@ -467,7 +467,7 @@ class StatsController extends Controller
         ]);
     }
 
-        /**
+    /**
      * M21 热门语言（GA「用户语言」）
      */
     public function topLanguages(Request $request, Website $website)
@@ -514,7 +514,7 @@ class StatsController extends Controller
     /**
      * M22 热门浏览器时区（原版 browser-timezones 页，规格书 §5.1.1）
      */
-        public function topTimezones(Request $request, Website $website)
+    public function topTimezones(Request $request, Website $website)
     {
         $range = (int) ($request->query('range') ?: 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
@@ -539,7 +539,7 @@ class StatsController extends Controller
     /**
      * M22 大洲分布（原版 continents 页，规格书 §5.1.1）
      */
-        public function topContinents(Request $request, Website $website)
+    public function topContinents(Request $request, Website $website)
     {
         $range = (int) ($request->query('range') ?: 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {

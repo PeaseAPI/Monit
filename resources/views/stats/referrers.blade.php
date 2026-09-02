@@ -2,8 +2,9 @@
 @section('content')
 <div class="max-w-7xl">
     <x-stats-header :website="$website" :title="__('stats.referrers_title')" />
+    <x-range-switcher :route-name="'stats.referrers'" :website="$website" :range="$range" />
     <div class="rounded-2xl border border-zinc-200 bg-white overflow-x-auto">
-        <table class="w-full text-sm"><thead class="bg-zinc-50 text-left"><tr><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.referrer_domain') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.referrer_visits') }}</th><th class="px-6 py-3 font-medium text-zinc-500">UTM Source</th><th class="px-6 py-3 font-medium text-zinc-500">UTM Medium</th><th class="px-6 py-3 font-medium text-zinc-500">UTM Campaign</th></tr></thead>
+        <table class="w-full text-sm"><thead class="bg-zinc-50 text-left"><tr><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.referrer_domain') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.referrer_visits') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.utm_source') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.utm_medium') }}</th><th class="px-6 py-3 font-medium text-zinc-500">{{ __('stats.utm_campaign') }}</th></tr></thead>
         <tbody class="divide-y divide-zinc-100">
             @forelse($topReferrers ?? [] as $r)
             <tr>

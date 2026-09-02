@@ -14,11 +14,11 @@
             <div>
                 <p class="text-sm font-medium text-zinc-900">{{ $payment->plan->name ?? '-' }}</p>
                 <p class="mt-1 text-xs text-zinc-400">{{ $payment->datetime->format('Y-m-d H:i') }}</p>
-                <p class="mt-1 text-xs text-zinc-400">{{ __('payments.payment_method') }}：{{ __('payments.processor_' . $payment->payment_method) }}</p>
+                                <p class="mt-1 text-xs text-zinc-400">{{ __('payments.payment_method') }}：{{ __('payments.processor_' . $payment->payment_processor) }}</p>
             </div>
             <div class="text-right">
-                <p class="text-sm font-semibold text-zinc-900">{{ $payment->amount }} {{ $payment->currency }}</p>
-                <span class="mt-1 inline-block rounded-lg px-2 py-0.5 text-xs font-medium {{ $payment->status === 'completed' ? 'bg-emerald-100 text-emerald-700' : ($payment->status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">{{ __('payments.status_' . $payment->status) }}</span>
+                <p class="text-sm font-semibold text-zinc-900">{{ number_format((float) $payment->total_amount, 2) }} {{ $payment->currency }}</p>
+                                <span class="mt-1 inline-block rounded-lg px-2 py-0.5 text-xs font-medium {{ $payment->status ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">{{ $payment->status ? __('payments.status_completed') : __('payments.status_pending') }}</span>
             </div>
         </div>
         @empty

@@ -42,14 +42,20 @@ class AdminStatistics extends Controller
             ->all();
         $byCountry = User::whereNotNull('country')->where('country', '!=', '')
             ->groupBy('country')->selectRaw('country, count(*) as count')->orderByDesc('count')->limit(20)->get();
-        $dailyActiveUsers = [];
+                $dailyActiveUsers = [];
         for ($i = 29; $i >= 0; $i--) {
             $date = now()->subDays($i)->format('Y-m-d');
-            $count = User::whereDate('last_activity', '>=', $date)->whereDate('last_activity', '<', now()->subDays($i - 1)->format('Y-m-d'))->count();
+            $nextDay = now()->subDays($i - 1)->format('Y-m-d');
+            $count = User::where('last_activity', '>=', $date)->where('last_activity', '<', $nextDay)->count();
             $dailyActiveUsers[] = ['date' => $date, 'count' => $count];
         }
 
-        return view('admin.statistics.index', compact('totalUsers', 'activeUsers', 'newUsersToday', 'totalWebsites', 'enabledWebsites', 'totalPayments', 'totalRevenue', 'monthlyRevenue', 'totalVisitors', 'totalSessions', 'totalEvents', 'planDistribution', 'dailyActiveUsers', 'countries', 'points', 'byCountry'))->with('adminNav', 'statistics');
+        // 总访问量 = 总会话数
+        $totalVisits = $totalSessions;
+        // 日均访问量（30天）
+        $dailyAvg = $totalVisits > 0 ? (int) round($totalVisits / 30) : 0;
+
+        return view('admin.statistics.index', compact('totalUsers', 'activeUsers', 'newUsersToday', 'totalWebsites', 'enabledWebsites', 'totalPayments', 'totalRevenue', 'monthlyRevenue', 'totalVisitors', 'totalSessions', 'totalEvents', 'planDistribution', 'dailyActiveUsers', 'countries', 'points', 'byCountry', 'totalVisits', 'dailyAvg'))->with('adminNav', 'statistics');
     }
 
     public function database()

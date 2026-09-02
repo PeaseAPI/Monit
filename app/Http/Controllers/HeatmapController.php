@@ -43,7 +43,7 @@ class HeatmapController extends Controller
             'is_enabled' => $request->boolean('is_enabled', true),
         ]);
 
-        return redirect()->route('heatmaps.index', ['website' => $website->website_id])
+        return redirect()->route('stats.heatmaps', ['website' => $website->website_id])
             ->with('success', __('msg.heatmap_created'));
     }
 
@@ -75,20 +75,26 @@ class HeatmapController extends Controller
         ]);
 
         $heatmap = Heatmap::find($validated['heatmap_id']);
-        $websiteId = $heatmap->website_id;
+        $website = Website::where('website_id', $heatmap->website_id)
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
+        $websiteId = $website->website_id;
         $heatmap->update($validated);
 
-        return redirect()->route('heatmaps.index', ['website' => $websiteId])
+        return redirect()->route('stats.heatmaps', ['website' => $websiteId])
             ->with('success', __('msg.heatmap_updated'));
     }
 
     public function destroy(Request $request, int $heatmapId): RedirectResponse
     {
         $heatmap = Heatmap::findOrFail($heatmapId);
-        $websiteId = $heatmap->website_id;
+        $website = Website::where('website_id', $heatmap->website_id)
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
+        $websiteId = $website->website_id;
         $heatmap->delete();
 
-        return redirect()->route('heatmaps.index', ['website' => $websiteId])
+        return redirect()->route('stats.heatmaps', ['website' => $websiteId])
             ->with('success', __('msg.heatmap_deleted'));
     }
 

@@ -295,8 +295,6 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('can:own,website')->name('stats.visitors');
     Route::get('/stats/{website}/referrers', [StatsController::class, 'referrers'])
         ->middleware('can:own,website')->name('stats.referrers');
-    Route::get('/stats/{website}/outbound-clicks', [StatsController::class, 'outboundClicks'])
-        ->middleware('can:own,website')->name('stats.outbound_clicks');
     Route::get('/stats/{website}/events', [StatsController::class, 'events'])
         ->middleware('can:own,website')->name('stats.events');
     Route::get('/stats/{website}/top-pages', [StatsController::class, 'topPages'])
@@ -365,10 +363,12 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('/stats/heatmaps/{heatmapId}', [HeatmapController::class, 'destroy'])->name('stats.heatmaps.destroy');
 
     // 会话回放
-    Route::get('/stats/{website}/replays', [ReplayController::class, 'index'])
+        Route::get('/stats/{website}/replays', [ReplayController::class, 'index'])
         ->middleware('can:own,website')->name('stats.replays');
     Route::get('/stats/{website}/replays/{replayId}', [ReplayController::class, 'show'])
         ->middleware('can:own,website')->name('stats.replays.show');
+    Route::get('/stats/{website}/replays/{replayId}/events', [ReplayController::class, 'events'])
+        ->middleware('can:own,website')->name('stats.replays.events');
 
     // 会话 AJAX 详情（规格书 §6.2.2：/session-ajax）
     Route::get('/session-ajax/{sessionId}', [SessionAjaxController::class, 'show'])
@@ -522,31 +522,6 @@ Route::middleware('auth')->group(function (): void {
     // 访客详情（规格书 §6.2.2：/visitor，独立控制器）
     Route::get('/stats/{website}/visitor/{visitorId}', [VisitorController::class, 'show'])
         ->middleware('can:own,website')->name('stats.visitor-show');
-
-    // 目标 CRUD 路由（规格书 §6.2.2：Goals）
-    Route::get('/stats/{website}/goals', [GoalController::class, 'index'])->middleware('can:own,website')->name('goals.index');
-    Route::get('/stats/{website}/goals/create', [GoalController::class, 'create'])->middleware('can:own,website')->name('goals.create');
-    Route::post('/stats/{website}/goals', [GoalController::class, 'store'])->middleware('can:own,website')->name('goals.store');
-    Route::get('/stats/{website}/goals/{goal}/edit', [GoalController::class, 'edit'])->middleware('can:own,website')->name('goals.edit');
-    Route::put('/stats/{website}/goals/{goal}', [GoalController::class, 'update'])->middleware('can:own,website')->name('goals.update');
-    Route::delete('/stats/{website}/goals/{goal}', [GoalController::class, 'delete'])->middleware('can:own,website')->name('goals.destroy');
-
-    // 热图 CRUD 路由（规格书 §6.2.2：Heatmaps）
-    Route::get('/stats/{website}/heatmaps', [HeatmapController::class, 'index'])->middleware('can:own,website')->name('heatmaps.index');
-    Route::get('/stats/{website}/heatmaps/create', [HeatmapController::class, 'create'])->middleware('can:own,website')->name('heatmaps.create');
-    Route::post('/stats/{website}/heatmaps', [HeatmapController::class, 'store'])->middleware('can:own,website')->name('heatmaps.store');
-    Route::get('/stats/{website}/heatmaps/{heatmap}', [HeatmapController::class, 'show'])->middleware('can:own,website')->name('heatmaps.show');
-    Route::delete('/stats/{website}/heatmaps/{heatmap}', [HeatmapController::class, 'destroy'])->middleware('can:own,website')->name('heatmaps.destroy-direct');
-
-    // 回放 CRUD 路由（规格书 §6.2.2：Replays）
-    Route::get('/stats/{website}/replays', [ReplayController::class, 'index'])->middleware('can:own,website')->name('replays.index');
-    Route::get('/stats/{website}/replays/{replay}', [ReplayController::class, 'show'])->middleware('can:own,website')->name('replays.show');
-
-    // 标注 CRUD 路由（规格书 §6.2.2：Annotations）
-    Route::get('/stats/{website}/annotations', [AnnotationController::class, 'index'])->middleware('can:own,website')->name('annotations.index');
-    Route::post('/stats/{website}/annotations', [AnnotationController::class, 'store'])->middleware('can:own,website')->name('annotations.store');
-    Route::put('/stats/{website}/annotations/{annotation}', [AnnotationController::class, 'update'])->middleware('can:own,website')->name('annotations.update');
-    Route::delete('/stats/{website}/annotations/{annotation}', [AnnotationController::class, 'destroy'])->middleware('can:own,website')->name('annotations.destroy');
 
     // 账户删除（规格书 §6.2.5：/account-delete）
     Route::get('/account-delete', [AccountController::class, 'deleteForm'])->name('account.delete-form');

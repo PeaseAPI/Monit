@@ -8,12 +8,13 @@
 <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
     @foreach($languages as $code => $meta)
     @php($flag = ['zh_CN' => '🇨🇳', 'zh_TW' => '🇹🇼', 'en' => '🇬🇧', 'ru' => '🇷🇺', 'be' => '🇧🇾', 'ms' => '🇲🇾'][$code] ?? '🌐')
+    @php($displayName = \App\Support\LocaleNames::name(str_replace('_', '-', $code), app()->getLocale()) ?: ($meta['name'] ?? $code))
     <div class="group rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg hover:shadow-zinc-900/5">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-50 text-xl ring-1 ring-zinc-100">{{ $flag }}</span>
                 <div>
-                    <p class="font-semibold text-zinc-900">{{ $meta['name'] ?? $code }}</p>
+                    <p class="font-semibold text-zinc-900">{{ $displayName }}</p>
                     <p class="font-mono text-xs text-zinc-400">{{ $code }}</p>
                 </div>
                 @if($meta['is_default'])<span class="badge-soft bg-emerald-50 text-emerald-700">{{ __('admin.default') }}</span>@endif

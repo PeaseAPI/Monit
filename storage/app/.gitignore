@@ -1,4 +1,7 @@
 *
+!.gitignore
+!geoip
+!geoip/country.mmdb
 !private/
 !public/
 !.gitignore
