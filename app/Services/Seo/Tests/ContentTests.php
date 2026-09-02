@@ -98,7 +98,7 @@ class ContentTests
 
         return [
             'passed' => $top !== [],
-            'value' => $top !== [] ? implode('、', array_slice($top, 0, 3)) : '无',
+            'value' => $top !== [] ? implode(', ', array_slice($top, 0, 3)) : '-',
         ];
     }
 

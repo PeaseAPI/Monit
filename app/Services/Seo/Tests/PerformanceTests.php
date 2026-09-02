@@ -133,7 +133,7 @@ class PerformanceTests
         $images = $c->dom()->getElementsByTagName('img');
 
         if ($images->length === 0) {
-            return ['passed' => true, 'value' => '无图片'];
+            return ['passed' => true, 'value' => '0'];
         }
 
         $lazy = 0;
@@ -170,7 +170,7 @@ class PerformanceTests
 
         return [
             'passed' => $encoding !== '',
-            'value' => $encoding !== '' ? $encoding : '未启用',
+            'value' => $encoding !== '' ? $encoding : 'Not enabled',
         ];
     }
 
@@ -183,7 +183,7 @@ class PerformanceTests
 
         return [
             'passed' => true,
-            'value' => $hint !== '' ? mb_substr($hint, 0, 60) : '无法探测',
+            'value' => $hint !== '' ? mb_substr($hint, 0, 60) : '-',
         ];
     }
 }

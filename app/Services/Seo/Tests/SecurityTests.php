@@ -36,7 +36,7 @@ class SecurityTests
     public function isSslValid(AuditContext $c): array
     {
         if ($c->scheme !== 'https') {
-            return ['passed' => false, 'value' => '非 HTTPS'];
+            return ['passed' => false, 'value' => 'Not HTTPS'];
         }
 
         $ssl = $c->sslInfo ?? [];
@@ -45,7 +45,7 @@ class SecurityTests
 
         return [
             'passed' => $valid,
-            'value' => $valid ? ($ssl['valid_to'] ?? '有效') : '证书无效或无法验证',
+            'value' => $valid ? ($ssl['valid_to'] ?? 'Valid') : 'Invalid or unverified',
         ];
     }
 
@@ -55,7 +55,7 @@ class SecurityTests
 
         return [
             'passed' => $hsts !== '',
-            'value' => $hsts !== '' ? mb_substr($hsts, 0, 80) : '未启用',
+            'value' => $hsts !== '' ? mb_substr($hsts, 0, 80) : 'Not enabled',
         ];
     }
 
@@ -65,7 +65,7 @@ class SecurityTests
 
         return [
             'passed' => $csp !== '',
-            'value' => $csp !== '' ? mb_substr($csp, 0, 80) : '未启用',
+            'value' => $csp !== '' ? mb_substr($csp, 0, 80) : 'Not enabled',
         ];
     }
 
@@ -114,7 +114,7 @@ class SecurityTests
     public function safeBrowsing(AuditContext $c): array
     {
         // 条件项：后台开启 safe_browsing 后执行（默认信任，标记未接入）
-        return ['passed' => true, 'value' => '未接入'];
+        return ['passed' => true, 'value' => '-'];
     }
 
     public function headerServer(AuditContext $c): array
@@ -124,7 +124,7 @@ class SecurityTests
         // 暴露服务器版本细节视为轻微风险
         return [
             'passed' => $server === '' || ! preg_match('/\d+\.\d+/', $server),
-            'value' => $server === '' ? '已隐藏' : mb_substr($server, 0, 60),
+            'value' => $server === '' ? 'Hidden' : mb_substr($server, 0, 60),
         ];
     }
 
@@ -143,7 +143,7 @@ class SecurityTests
 
         return [
             'passed' => $has,
-            'value' => $has ? '已配置' : '未检出',
+            'value' => $has ? '1' : '0',
         ];
     }
 
@@ -155,7 +155,7 @@ class SecurityTests
 
         return [
             'passed' => $meta !== '' || $header !== '',
-            'value' => $meta !== '' ? $meta : ($header !== '' ? $header : '未设置'),
+            'value' => $meta !== '' ? $meta : ($header !== '' ? $header : '-'),
         ];
     }
 }

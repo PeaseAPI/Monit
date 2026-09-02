@@ -187,6 +187,7 @@ Route::get('/seo/audits/{seoAudit}', [SeoAuditController::class, 'show'])
 Route::post('/seo/audits/{seoAudit}/password', [SeoAuditController::class, 'unlock'])
     ->middleware('throttle:10,1')->whereNumber('seoAudit')->name('seo.audits.password');
 Route::get('/seo/directory', [SeoAuditController::class, 'directory'])->middleware('seo.feature:audits')->name('seo.directory');
+Route::get('/seo', [SeoAuditController::class, 'landing'])->name('seo.landing');
 Route::post('/seo/analyze', [SeoAuditController::class, 'analyze'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.analyze');
 
 // SEO 工具中心（访客受 seo.tools_guest_access 开关控制；整站受 seo.tools_is_enabled 控制）
@@ -388,7 +389,10 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/seo/audits', [SeoAuditController::class, 'index'])->middleware('seo.feature:audits')->name('seo.audits');
     Route::post('/seo/audits', [SeoAuditController::class, 'store'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.audits.store');
         Route::post('/seo/audits/{seoAudit}/share', [SeoAuditController::class, 'share'])->middleware('seo.feature:audits')->name('seo.audits.share');
-    Route::post('/seo/audits/{seoAudit}/ai-summary', [SeoAuditController::class, 'aiSummary'])->middleware('seo.feature:audits')->name('seo.audits.ai');
+        Route::post('/seo/audits/{seoAudit}/ai-summary', [SeoAuditController::class, 'aiSummary'])->middleware('seo.feature:audits')->name('seo.audits.ai');
+    Route::post('/seo/audits/{seoAudit}/refresh', [SeoAuditController::class, 'refresh'])->middleware('seo.feature:audits')->name('seo.audits.refresh');
+    Route::post('/seo/audits/bulk-refresh', [SeoAuditController::class, 'bulkRefresh'])->middleware('seo.feature:audits')->name('seo.audits.bulk-refresh');
+    Route::get('/seo/audits/compare', [SeoAuditController::class, 'compare'])->middleware('seo.feature:audits')->name('seo.audits.compare');
     Route::delete('/seo/audits/{seoAudit}', [SeoAuditController::class, 'destroy'])->middleware('seo.feature:audits')->name('seo.audits.destroy');
     Route::get('/seo/audits/export', [SeoAuditController::class, 'export'])->middleware('seo.feature:audits')->name('seo.audits.export');
 

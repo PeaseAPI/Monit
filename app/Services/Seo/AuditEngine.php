@@ -65,7 +65,7 @@ class AuditEngine
             $audit->website_id = $options['website_id'] ?? null;
         }
 
-                try {
+        try {
             // HTML 离线审计：使用用户粘贴的 HTML，不发起 HTTP 请求
             if ($type === 'html' && isset($options['html']) && trim($options['html']) !== '') {
                 $html = $options['html'];
@@ -194,7 +194,7 @@ class AuditEngine
         }
     }
 
-        /**
+    /**
      * 带二次校验的请求（反爬偶发失败自动重试一次）
      * 捕获 cURL/OpenSSL 连接异常，避免队列 worker 崩溃
      */
@@ -282,6 +282,7 @@ class AuditEngine
                 'category' => $meta['category'],
                 'value' => (string) ($row['value'] ?? ''),
                 'detail' => (string) ($row['detail'] ?? ''),
+                'sub' => (array) ($row['sub'] ?? []),
             ];
         }
 

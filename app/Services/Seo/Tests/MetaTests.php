@@ -49,22 +49,44 @@ class MetaTests
         $min = (int) AuditTestRegistry::threshold('title_min', 10);
         $max = (int) AuditTestRegistry::threshold('title_max', 60);
 
+        $sub = [];
+        if ($length === 0) {
+            $sub[] = 'missing';
+        } elseif ($length < $min) {
+            $sub[] = 'too_short';
+        } elseif ($length > $max) {
+            $sub[] = 'too_long';
+        }
+
         return [
             'passed' => $length >= $min && $length <= $max,
-            'value' => $length === 0 ? '缺失' : (string) $length,
+            'value' => (string) $length,
             'detail' => $title !== '' ? mb_substr($title, 0, 120) : '',
+            'sub' => $sub,
         ];
     }
 
     public function metaDescription(AuditContext $c): array
     {
-        $length = mb_strlen((string) ($c->meta('description') ?? ''));
+        $desc = trim((string) ($c->meta('description') ?? ''));
+        $length = mb_strlen($desc);
         $min = (int) AuditTestRegistry::threshold('description_min', 50);
         $max = (int) AuditTestRegistry::threshold('description_max', 160);
 
+        $sub = [];
+        if ($length === 0) {
+            $sub[] = 'missing';
+        } elseif ($length < $min) {
+            $sub[] = 'too_short';
+        } elseif ($length > $max) {
+            $sub[] = 'too_long';
+        }
+
         return [
             'passed' => $length >= $min && $length <= $max,
-            'value' => $length === 0 ? '缺失' : (string) $length,
+            'value' => (string) $length,
+            'detail' => $desc !== '' ? mb_substr($desc, 0, 200) : '',
+            'sub' => $sub,
         ];
     }
 
@@ -72,9 +94,24 @@ class MetaTests
     {
         $count = $c->dom()->getElementsByTagName('h1')->length;
 
+        $sub = [];
+        if ($count === 0) {
+            $sub[] = 'missing';
+        } elseif ($count > 1) {
+            $sub[] = 'too_many';
+        }
+
+        $firstH1 = '';
+        $h1Node = $c->dom()->getElementsByTagName('h1')->item(0);
+        if ($h1Node) {
+            $firstH1 = trim($h1Node->textContent);
+        }
+
         return [
             'passed' => $count === 1,
             'value' => (string) $count,
+            'detail' => $firstH1 !== '' ? mb_substr($firstH1, 0, 120) : '',
+            'sub' => $sub,
         ];
     }
 
@@ -82,9 +119,16 @@ class MetaTests
     {
         $keywords = trim((string) ($c->meta('keywords') ?? ''));
 
+        $sub = [];
+        if (mb_strlen($keywords) === 0) {
+            $sub[] = 'missing';
+        }
+
         return [
             'passed' => mb_strlen($keywords) > 0,
-            'value' => $keywords === '' ? '缺失' : mb_substr($keywords, 0, 100),
+            'value' => (string) mb_strlen($keywords),
+            'detail' => $keywords !== '' ? mb_substr($keywords, 0, 100) : '',
+            'sub' => $sub,
         ];
     }
 
@@ -105,7 +149,7 @@ class MetaTests
 
         return [
             'passed' => $lang !== '',
-            'value' => $lang !== '' ? $lang : '未声明',
+            'value' => $lang !== '' ? $lang : '-',
         ];
     }
 
@@ -123,7 +167,7 @@ class MetaTests
 
         return [
             'passed' => $charset !== '',
-            'value' => $charset !== '' ? $charset : '未声明',
+            'value' => $charset !== '' ? $charset : '-',
         ];
     }
 
@@ -133,7 +177,7 @@ class MetaTests
 
         return [
             'passed' => $viewport !== '',
-            'value' => $viewport !== '' ? $viewport : '缺失',
+            'value' => $viewport !== '' ? mb_substr($viewport, 0, 80) : '-',
         ];
     }
 
@@ -144,7 +188,7 @@ class MetaTests
         // meta refresh 存在即视为对搜索引擎不友好
         return [
             'passed' => $refresh === '',
-            'value' => $refresh === '' ? '无' : $refresh,
+            'value' => $refresh === '' ? '-' : mb_substr($refresh, 0, 80),
         ];
     }
 
@@ -161,7 +205,7 @@ class MetaTests
 
         return [
             'passed' => $canonical !== '',
-            'value' => $canonical !== '' ? mb_substr($canonical, 0, 200) : '缺失',
+            'value' => $canonical !== '' ? mb_substr($canonical, 0, 120) : '-',
         ];
     }
 
@@ -203,7 +247,8 @@ class MetaTests
 
         return [
             'passed' => $found,
-            'value' => $found ? '已声明' : '缺失',
+            'value' => $found ? '1' : '0',
+            'sub' => $found ? [] : ['missing'],
         ];
     }
 
@@ -226,7 +271,8 @@ class MetaTests
 
         return [
             'passed' => $exists,
-            'value' => $exists ? '存在' : '缺失',
+            'value' => $exists ? '1' : '0',
+            'sub' => $exists ? [] : ['missing'],
         ];
     }
 
@@ -237,7 +283,8 @@ class MetaTests
 
         return [
             'passed' => ! $blocked,
-            'value' => $robots === '' ? '未设置' : $robots,
+            'value' => $robots === '' ? '-' : $robots,
+            'sub' => $blocked ? ['excluded'] : [],
         ];
     }
 
@@ -247,7 +294,8 @@ class MetaTests
 
         return [
             'passed' => ! str_contains($robots, 'noindex'),
-            'value' => $robots === '' ? '未设置' : $robots,
+            'value' => $robots === '' ? '-' : $robots,
+            'sub' => str_contains($robots, 'noindex') ? ['excluded'] : [],
         ];
     }
 
@@ -275,7 +323,8 @@ class MetaTests
 
         return [
             'passed' => $ogImage !== '',
-            'value' => $ogImage !== '' ? '已提供' : '缺失',
+            'value' => $ogImage !== '' ? '1' : '0',
+            'sub' => $ogImage !== '' ? [] : ['missing'],
         ];
     }
 
@@ -285,31 +334,31 @@ class MetaTests
 
     public function gscIsIndexed(AuditContext $c): array
     {
-        return ['passed' => false, 'value' => '未接入', 'detail' => 'Google Search Console 凭据尚未配置'];
+        return ['passed' => false, 'value' => '-', 'detail' => 'GSC not configured', 'sub' => ['not_configured']];
     }
 
     public function gscCoverage(AuditContext $c): array
     {
-        return ['passed' => false, 'value' => '未接入', 'detail' => 'Google Search Console 凭据尚未配置'];
+        return ['passed' => false, 'value' => '-', 'detail' => 'GSC not configured', 'sub' => ['not_configured']];
     }
 
     public function ahrefsDomainRating(AuditContext $c): array
     {
-        return ['passed' => false, 'value' => '未接入', 'detail' => 'Ahrefs API Key 尚未配置'];
+        return ['passed' => false, 'value' => '-', 'detail' => 'Ahrefs API not configured', 'sub' => ['not_configured']];
     }
 
     public function pageRank(AuditContext $c): array
     {
-        return ['passed' => false, 'value' => '未接入', 'detail' => 'PageRank API Key 尚未配置'];
+        return ['passed' => false, 'value' => '-', 'detail' => 'PageRank API not configured', 'sub' => ['not_configured']];
     }
 
     public function bingIndexed(AuditContext $c): array
     {
-        return ['passed' => false, 'value' => '未接入', 'detail' => 'Bing API Key 尚未配置'];
+        return ['passed' => false, 'value' => '-', 'detail' => 'Bing API not configured', 'sub' => ['not_configured']];
     }
 
     public function yandexIndexed(AuditContext $c): array
     {
-        return ['passed' => false, 'value' => '未接入', 'detail' => 'Yandex API Key 尚未配置'];
+        return ['passed' => false, 'value' => '-', 'detail' => 'Yandex API not configured', 'sub' => ['not_configured']];
     }
 }

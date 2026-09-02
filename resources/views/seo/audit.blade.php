@@ -3,11 +3,40 @@
 <div class="max-w-7xl">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="max-w-2xl truncate text-2xl font-bold text-zinc-900">{{ $audit->url }}</h1>
-        <span class="rounded-full px-3 py-1 text-sm font-semibold {{ ['poor' => 'bg-red-50 text-red-700', 'decent' => 'bg-yellow-50 text-yellow-700', 'good' => 'bg-emerald-50 text-emerald-700'][$audit->band] }}">{{ $audit->score }}/100 · {{ $audit->passed_tests }}/{{ $audit->total_tests }}</span>
+        <div class="flex items-center gap-3">
+            <span class="rounded-full px-3 py-1 text-sm font-semibold {{ ['poor' => 'bg-red-50 text-red-700', 'decent' => 'bg-yellow-50 text-yellow-700', 'good' => 'bg-emerald-50 text-emerald-700'][$audit->band] }}">{{ $audit->score }}/100 · {{ $audit->passed_tests }}/{{ $audit->total_tests }}</span>
+            @auth
+                <form method="POST" action="{{ route('seo.audits.refresh', $audit->seo_audit_id) }}" class="inline">
+                    @csrf
+                    <button class="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50">{{ __('seo.re_audit') }}</button>
+                </form>
+            @endauth
+        </div>
     </div>
     <p class="mt-1 text-sm text-zinc-500">{{ __('seo.response_time') }}: {{ $audit->response_time_ms }} ms · {{ __('seo.page_size') }}: {{ number_format($audit->page_size_bytes / 1024, 1) }} KB · {{ $audit->created_at?->format('Y-m-d H:i') }}</p>
 
-        @if($audit->category_scores)
+    {{-- Issues 总览横条 --}}
+    @php $total = max(1, $audit->total_tests); @endphp
+    <div class="mt-4 rounded-2xl border border-zinc-200 bg-white p-4">
+        <div class="mb-2 flex items-center justify-between">
+            <span class="text-sm font-medium text-zinc-700">{{ __('seo.issues_overview') }}</span>
+            <span class="text-sm text-zinc-500">{{ $audit->passed_tests }}/{{ $total }} {{ __('seo.passed') }}</span>
+        </div>
+        <div class="flex h-3 w-full overflow-hidden rounded-full bg-zinc-100">
+            @if($audit->major_issues)<div class="bg-red-500" style="width:{{ round($audit->major_issues/$total*100,1) }}%"></div>@endif
+            @if($audit->moderate_issues)<div class="bg-yellow-500" style="width:{{ round($audit->moderate_issues/$total*100,1) }}%"></div>@endif
+            @if($audit->minor_issues)<div class="bg-zinc-400" style="width:{{ round($audit->minor_issues/$total*100,1) }}%"></div>@endif
+            @if($audit->passed_tests)<div class="bg-emerald-500" style="width:{{ round($audit->passed_tests/$total*100,1) }}%"></div>@endif
+        </div>
+        <div class="mt-2 flex flex-wrap gap-4 text-xs text-zinc-500">
+            <span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-full bg-red-500"></span> {{ __('seo.major_issue') }}: {{ $audit->major_issues }}</span>
+            <span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-full bg-yellow-500"></span> {{ __('seo.moderate_issue') }}: {{ $audit->moderate_issues }}</span>
+            <span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-full bg-zinc-400"></span> {{ __('seo.minor_issue') }}: {{ $audit->minor_issues }}</span>
+            <span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span> {{ __('seo.passed') }}: {{ $audit->passed_tests }}</span>
+        </div>
+    </div>
+
+    @if($audit->category_scores)
         <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             @foreach($audit->category_scores as $category => $catScore)
                 <div class="rounded-2xl border border-zinc-200 bg-white p-4">
@@ -79,11 +108,25 @@
             <table class="w-full text-sm">
                 <tbody class="divide-y divide-zinc-100">
                 @foreach($rows as $key => $row)
-                    <tr>
+                    <tr id="{{ $key }}">
                         <td class="px-6 py-3 w-24">
-                            <span class="rounded-full px-2 py-1 text-xs {{ ($row['passed'] ?? false) ? 'bg-emerald-50 text-emerald-700' : ($row['importance'] === 'major' ? 'bg-red-50 text-red-700' : 'bg-yellow-50 text-yellow-700') }}">{{ ($row['passed'] ?? false) ? __('seo.pass') : __('seo.fail') }}</span>
+                            <span class="rounded-full px-2 py-1 text-xs {{ ($row['passed'] ?? false) ? 'bg-emerald-50 text-emerald-700' : ($row['importance'] === 'major' ? 'bg-red-50 text-red-700' : 'bg-yellow-50 text-yellow-700') }}">{{
+                                ($row['passed'] ?? false) ? __('seo.pass') : __('seo.fail')
+                            }}</span>
                         </td>
-                        <td class="px-2 py-3 text-zinc-700">{{ \Illuminate\Support\Str::headline($key) }}</td>
+                        <td class="px-2 py-3">
+                            <div class="text-zinc-700">{{ \Illuminate\Support\Str::headline($key) }}</div>
+                            @if(!empty($row['sub']))
+                                <div class="mt-0.5 text-xs text-zinc-400">
+                                    @foreach($row['sub'] as $subKey)
+                                        <span class="mr-2">{{ __("seo.sub.{$subKey}") }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
+                            @if(!empty($row['detail']))
+                                <div class="mt-0.5 text-xs text-zinc-500 truncate max-w-md">{{ $row['detail'] }}</div>
+                            @endif
+                        </td>
                         <td class="px-6 py-3 text-right text-zinc-500">{{ $row['value'] ?? '-' }}</td>
                     </tr>
                 @endforeach

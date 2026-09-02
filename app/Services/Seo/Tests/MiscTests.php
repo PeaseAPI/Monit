@@ -24,7 +24,7 @@ class MiscTests
         $images = $c->dom()->getElementsByTagName('img');
 
         if ($images->length === 0) {
-            return ['passed' => true, 'value' => '无图片'];
+            return ['passed' => true, 'value' => '0'];
         }
 
         $missing = 0;
@@ -46,7 +46,7 @@ class MiscTests
 
         return [
             'passed' => $has,
-            'value' => $has ? 'HTML5' : '缺失',
+            'value' => $has ? 'HTML5' : '-',
         ];
     }
 
@@ -56,7 +56,7 @@ class MiscTests
 
         return [
             'passed' => $exists,
-            'value' => $exists ? '存在' : '缺失',
+            'value' => $exists ? '1' : '0',
         ];
     }
 
