@@ -33,12 +33,12 @@
                         <td class="py-2 text-right">
                             @unless($c->is_sent)
                                 <form method="POST" action="{{ route('admin.plugins.push-notifications.campaigns.send', $c->campaign_id) }}" class="inline"
-                                      onsubmit="return confirm('{{ __("plugins.push.confirm_send") }}')">@csrf
+                                      data-confirm="{{ __('plugins.push.confirm_send') }}">@csrf
                                     <button class="mr-2 text-sm text-brand-600 hover:underline">{{ __('plugins.push.send') }}</button>
                                 </form>
                             @endunless
                             <form method="POST" action="{{ route('admin.plugins.push-notifications.campaigns.destroy', $c->campaign_id) }}" class="inline"
-                                  onsubmit="return confirm('{{ __("plugins.push.confirm_delete") }}')">@csrf @method('DELETE')
+                                  data-confirm="{{ __('plugins.push.confirm_delete') }}">@csrf @method('DELETE')
                                 <button class="text-sm text-red-600 hover:underline">{{ __('plugins.push.delete') }}</button>
                             </form>
                         </td>
@@ -73,4 +73,5 @@
         </div>
     </div>
 </div>
+
 @endsection

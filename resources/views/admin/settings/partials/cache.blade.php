@@ -19,11 +19,10 @@
         </div>
     </dl>
 
-    <form method="POST" action="{{ route('admin.settings.clear_cache') }}">
+    <form method="POST" action="{{ route('admin.settings.clear_cache') }}" data-confirm="{{ __('settings.cache.confirm_clear') }}">
         @csrf
         <button type="submit"
-            class="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-red-700"
-                        onclick="return confirm('{{ __('settings.cache.confirm_clear') }}')">
+            class="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-red-700">
             {{ __('settings.cache.clear_btn') }}
         </button>
     </form>

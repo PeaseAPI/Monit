@@ -192,7 +192,7 @@ Route::get('/seo', [SeoAuditController::class, 'landing'])->name('seo.landing');
 Route::post('/seo/analyze', [SeoAuditController::class, 'analyze'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.analyze');
 
 // SEO 工具中心（访客受 seo.tools_guest_access 开关控制；整站受 seo.tools_is_enabled 控制）
-Route::middleware('seo.feature:tools', SeoGuestAccess::class)->prefix('tools')->group(function (): void {
+Route::middleware(['seo.feature:tools', SeoGuestAccess::class])->prefix('tools')->group(function (): void {
     Route::get('/', [SeoToolController::class, 'index'])->name('seo.tools');
     Route::get('/{slug}', [SeoToolController::class, 'show'])->name('seo.tools.show');
     Route::post('/{slug}', [SeoToolController::class, 'process'])->middleware('throttle:20,1')->name('seo.tools.process');

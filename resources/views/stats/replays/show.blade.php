@@ -88,7 +88,7 @@
                 </select>
             </div>
         </div>
-        <div id="replay-container" class="relative bg-zinc-900" style="min-height:480px">
+        <div id="replay-container" class="relative bg-zinc-900" style="min-height:480px" data-events-url="{{ route('stats.replays.events', [$website->website_id, $replay->session_replay_id]) }}">
             <div id="replay-loading" class="absolute inset-0 flex items-center justify-center">
                 <div class="text-center">
                     <svg class="mx-auto h-8 w-8 animate-spin text-brand-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
@@ -111,7 +111,7 @@
 <script src="https://cdn.jsdelivr.net/npm/rrweb-player@2.0.0-alpha.17/dist/index.js"></script>
 <script>
 (function () {
-    const eventsUrl = '{{ route('stats.replays.events', [$website->website_id, $replay->session_replay_id]) }}';
+    const eventsUrl = document.getElementById('replay-container').dataset.eventsUrl;
     const loading = document.getElementById('replay-loading');
     const empty = document.getElementById('replay-empty');
     const controls = document.getElementById('replay-controls');

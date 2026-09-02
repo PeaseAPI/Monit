@@ -49,7 +49,7 @@
                         <form method="POST" action="{{ route('admin.plugins.deactivate', $plugin['id']) }}">@csrf @method('PUT')
                             <button class="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50">{{ __('admin.plugin_deactivate') }}</button>
                         </form>
-                        <form method="POST" action="{{ route('admin.plugins.uninstall', $plugin['id']) }}" onsubmit="return confirm('{{ __('admin.plugins_confirm_uninstall') }}')">@csrf @method('DELETE')
+                        <form method="POST" action="{{ route('admin.plugins.uninstall', $plugin['id']) }}" data-confirm="{{ __('admin.plugins_confirm_uninstall') }}">@csrf @method('DELETE')
                             <button class="rounded-xl bg-red-50 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-100">{{ __('admin.plugin_uninstall') }}</button>
                         </form>
                         {{-- 插件专属管理入口 --}}
@@ -62,7 +62,7 @@
                         <form method="POST" action="{{ route('admin.plugins.activate', $plugin['id']) }}">@csrf
                             <button class="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-700">{{ __('admin.plugin_activate') }}</button>
                         </form>
-                        <form method="POST" action="{{ route('admin.plugins.uninstall', $plugin['id']) }}" onsubmit="return confirm('{{ __('admin.plugins_confirm_uninstall') }}')">@csrf @method('DELETE')
+                        <form method="POST" action="{{ route('admin.plugins.uninstall', $plugin['id']) }}" data-confirm="{{ __('admin.plugins_confirm_uninstall') }}">@csrf @method('DELETE')
                             <button class="rounded-xl bg-red-50 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-100">{{ __('admin.plugin_uninstall') }}</button>
                         </form>
                     @endif
