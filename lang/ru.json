@@ -2986,5 +2986,8 @@
   "websites.tracking_mode": "Режим отслеживания",
   "websites.unlimited": "Без ограничений",
   "websites.url_hint": "Must start with http:// or https://. www. prefix is automatically removed.",
-  "websites.url_label": "Адрес сайта"
+  "websites.url_label": "Адрес сайта",
+  "settings.captcha.geetest": "Geetest v3",
+  "settings.captcha.geetest_id": "Geetest ID (captcha_id)",
+  "settings.captcha.geetest_key": "Geetest KEY (secret, used for challenge salting & validation)"
 }

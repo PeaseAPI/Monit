@@ -267,6 +267,8 @@
             </header>
 
             <main class="flex-1 p-4 md:p-8">
+                {{-- 内容限宽居中（宽屏可读性）：页面自带 max-w-* 的仍会正常嵌套 --}}
+                <div class="mx-auto w-full max-w-7xl">
                 @if (session('success'))
                     <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                         {{ session('success') }}
@@ -284,6 +286,7 @@
                 @endif
 
                 @yield('content')
+                </div>
             </main>
         </div>
     </div>

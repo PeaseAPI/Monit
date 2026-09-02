@@ -2986,5 +2986,8 @@
   "websites.tracking_mode": "跟踪模式",
   "websites.unlimited": "不限",
   "websites.url_hint": "需以 http:// 或 https:// 开头；www. 前缀会自动去除。",
-  "websites.url_label": "网站地址"
+  "websites.url_label": "网站地址",
+  "settings.captcha.geetest": "极验 Geetest v3",
+  "settings.captcha.geetest_id": "极验验证 ID（captcha_id）",
+  "settings.captcha.geetest_key": "极验验证 KEY（私钥，用于 challenge 加盐与二次校验）"
 }

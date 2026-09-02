@@ -542,7 +542,7 @@ class AdminSettings extends Controller
                 'ai_insights_is_enabled' => 'boolean',
             ],
             'captcha' => [
-                'captcha_type' => 'nullable|string|in:recaptcha,recaptcha_v3,hcaptcha,turnstile,none',
+                'captcha_type' => 'nullable|string|in:recaptcha,recaptcha_v3,hcaptcha,turnstile,geetest,none',
                 'captcha_site_key' => 'nullable|string|max:256',
                 'captcha_secret_key' => 'nullable|string|max:256',
                 'captcha_on_register' => 'boolean',
@@ -555,6 +555,8 @@ class AdminSettings extends Controller
                 'hcaptcha_secret_key' => 'nullable|string|max:256',
                 'turnstile_site_key' => 'nullable|string|max:256',
                 'turnstile_secret_key' => 'nullable|string|max:256',
+                'geetest_site_key' => 'nullable|string|max:64',
+                'geetest_secret_key' => 'nullable|string|max:128',
             ],
             'socials' => [
                 'google' => 'nullable|array',

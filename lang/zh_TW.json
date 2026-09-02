@@ -2986,5 +2986,8 @@
   "websites.tracking_mode": "跟蹤模式",
   "websites.unlimited": "不限",
   "websites.url_hint": "需以 http:// 或 https:// 開頭；www. 前綴會自動去除。",
-  "websites.url_label": "網站地址"
+  "websites.url_label": "網站地址",
+  "settings.captcha.geetest": "極驗 Geetest v3",
+  "settings.captcha.geetest_id": "極驗驗證 ID（captcha_id）",
+  "settings.captcha.geetest_key": "極驗驗證 KEY（私鑰，用於 challenge 加鹽與二次校驗）"
 }

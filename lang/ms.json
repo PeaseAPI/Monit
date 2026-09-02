@@ -2986,5 +2986,8 @@
   "websites.tracking_mode": "Mod penjejakan",
   "websites.unlimited": "Tanpa had",
   "websites.url_hint": "Must start with http:// or https://. www. prefix is automatically removed.",
-  "websites.url_label": "Alamat laman web"
+  "websites.url_label": "Alamat laman web",
+  "settings.captcha.geetest": "Geetest v3",
+  "settings.captcha.geetest_id": "Geetest ID (captcha_id)",
+  "settings.captcha.geetest_key": "Geetest KEY (secret, used for challenge salting & validation)"
 }

@@ -10,6 +10,7 @@
                 <option value="recaptcha_v3" {{ ($settings['captcha.captcha_type'] ?? '') === 'recaptcha_v3' ? 'selected' : '' }}>Google reCAPTCHA v3</option>
                 <option value="hcaptcha" {{ ($settings['captcha.captcha_type'] ?? '') === 'hcaptcha' ? 'selected' : '' }}>hCaptcha</option>
                 <option value="turnstile" {{ ($settings['captcha.captcha_type'] ?? '') === 'turnstile' ? 'selected' : '' }}>Cloudflare Turnstile</option>
+                <option value="geetest" {{ ($settings['captcha.captcha_type'] ?? '') === 'geetest' ? 'selected' : '' }}>{{ __('settings.captcha.geetest') }}</option>
             </select>
         </div>
         <div>
@@ -48,6 +49,14 @@
                 <div>
                     <label class="form-label">Turnstile Secret Key</label>
                     <input type="password" name="turnstile_secret_key" class="form-input" value="{{ old('turnstile_secret_key', $settings['captcha.turnstile_secret_key'] ?? '') }}">
+                </div>
+                <div>
+                    <label class="form-label">{{ __('settings.captcha.geetest_id') }}</label>
+                    <input type="text" name="geetest_site_key" class="form-input" value="{{ old('geetest_site_key', $settings['captcha.geetest_site_key'] ?? '') }}">
+                </div>
+                <div>
+                    <label class="form-label">{{ __('settings.captcha.geetest_key') }}</label>
+                    <input type="password" name="geetest_secret_key" class="form-input" value="{{ old('geetest_secret_key', $settings['captcha.geetest_secret_key'] ?? '') }}">
                 </div>
             </div>
         </div>

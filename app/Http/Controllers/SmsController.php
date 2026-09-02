@@ -15,12 +15,12 @@ use Illuminate\Http\Request;
  */
 class SmsController extends Controller
 {
-    /** purpose → 场景开关键 */
+    /** purpose → SmsService 场景名（scenarioEnabled 拼接 sms.sms_{name}_is_enabled） */
     protected const SCENARIO_KEYS = [
-        'register' => 'sms_register_is_enabled',
-        'login' => 'sms_phone_login_is_enabled',
-        'forgot_password' => 'sms_forgot_password_is_enabled',
-        'phone_bind' => 'sms_phone_bind_is_enabled',
+        'register' => 'register',
+        'login' => 'phone_login',
+        'forgot_password' => 'forgot_password',
+        'phone_bind' => 'phone_bind',
     ];
 
     public function send(Request $request): RedirectResponse

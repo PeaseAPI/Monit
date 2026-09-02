@@ -2986,5 +2986,8 @@
   "websites.tracking_mode": "Tracking Mode",
   "websites.unlimited": "Unlimited",
   "websites.url_hint": "Must start with http:// or https://. www. prefix is automatically removed.",
-  "websites.url_label": "Website URL"
+  "websites.url_label": "Website URL",
+  "settings.captcha.geetest": "Geetest v3",
+  "settings.captcha.geetest_id": "Geetest ID (captcha_id)",
+  "settings.captcha.geetest_key": "Geetest KEY (secret, used for challenge salting & validation)"
 }

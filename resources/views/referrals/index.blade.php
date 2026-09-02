@@ -16,7 +16,7 @@
     {{-- 佣金余额与提现 --}}
     <div class="mt-6 max-w-xl rounded-2xl border border-zinc-200 bg-white p-6">
         <h3 class="text-sm font-semibold text-zinc-900">{{ __('referrals.commission_balance') }}</h3>
-        <p class="mt-2 text-2xl font-bold text-brand-600">{{ $commissionBalance ?? '0.00' }} USD</p>
+        <p class="mt-2 text-2xl font-bold text-brand-600">{{ \App\Support\Currency::format((float) ($commissionBalance ?? 0)) }}</p>
         <form method="POST" action="{{ route('referrals.withdrawal') }}" class="mt-4">@csrf
             <div>
                 <label class="block text-sm font-medium text-zinc-700">{{ __('referrals.withdrawal_amount') }}</label>
@@ -36,7 +36,7 @@
             @forelse($recentWithdrawals ?? [] as $w)
             <div class="rounded-2xl border border-zinc-200 bg-white p-4 flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-zinc-900">{{ $w->amount }} USD</p>
+                    <p class="text-sm font-medium text-zinc-900">{{ \App\Support\Currency::format((float) $w->amount) }}</p>
                     <p class="mt-1 text-xs text-zinc-400">{{ $w->datetime->format('Y-m-d H:i') }}</p>
                 </div>
                 <span class="rounded-lg px-2 py-0.5 text-xs font-medium {{ $w->status === 'completed' ? 'bg-emerald-100 text-emerald-700' : ($w->status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">{{ __('referrals.withdrawal_status_' . $w->status) }}</span>

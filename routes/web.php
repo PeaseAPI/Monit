@@ -13,6 +13,7 @@ use App\Http\Controllers\AdminBlogPosts;
 use App\Http\Controllers\AdminBlogPostsCategories;
 use App\Http\Controllers\AdminBroadcasts;
 use App\Http\Controllers\AdminCodes;
+use App\Http\Controllers\CaptchaController;
 use App\Http\Controllers\AdminDomains;
 use App\Http\Controllers\AdminHeatmaps;
 use App\Http\Controllers\AdminIndex;
@@ -204,6 +205,10 @@ Route::middleware(['seo.feature:tools', SeoGuestAccess::class])->prefix('tools')
 Route::post('/sms/send', [SmsController::class, 'send'])
     ->middleware('throttle:3,1')
     ->name('sms.send');
+
+// Geetest v3 服务端预注册（人机验证前端 widget 异步拉取 challenge）
+Route::get('/captcha/geetest/register', [CaptchaController::class, 'geetestRegister'])
+    ->name('captcha.geetest.register');
 
 // ========================================
 // 访客态路由（登录 / 注册 / 密码重置 / 邮箱激活）

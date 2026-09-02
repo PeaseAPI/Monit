@@ -64,10 +64,21 @@ class AffiliateController extends Controller
             ->where('status', 'pending')
             ->sum('amount');
 
+        // 可提现余额（视图 commissionBalance）：累计佣金 - 待审提现；货币随支付币种（非法回退默认）
+        $commissionBalance = max(0, (float) $totalCommission - (float) $pendingWithdrawals);
+        $commissionCurrency = \App\Support\Currency::normalize($user->payment_currency);
+
+        // 首页最近提现记录（完整列表在 withdrawals 页）
+        $recentWithdrawals = AffiliateWithdrawal::where('user_id', $user->user_id)
+            ->orderByDesc('datetime')
+            ->limit(5)
+            ->get();
+
         return view('referrals.index', compact(
             'referralKey', 'referralUrl', 'referrals',
             'commissionPercentage', 'totalReferrals', 'convertedReferrals',
-            'totalCommission', 'pendingWithdrawals'
+            'totalCommission', 'pendingWithdrawals',
+            'commissionBalance', 'commissionCurrency', 'recentWithdrawals'
         ));
     }
 
@@ -94,7 +105,7 @@ class AffiliateController extends Controller
         AffiliateWithdrawal::create([
             'user_id' => $user->user_id,
             'amount' => $validated['amount'],
-            'currency' => $user->payment_currency ?? 'USD',
+            'currency' => \App\Support\Currency::normalize($user->payment_currency),
             'note' => $validated['note'] ?? null,
             'status' => 'pending',
             'datetime' => now(),

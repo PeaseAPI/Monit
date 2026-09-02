@@ -592,16 +592,21 @@ class InstallController extends Controller
         // 站点信息写入平台设置（seed 的默认值之上覆盖）：
         // 必须走 Settings::set（写库 + flush 双缓存）——直接 Setting::updateOrCreate 会让
         // 进程静态缓存 + Cache('monit.settings') 残留旧值最长 12h，装完后台显示默认名
+        // 键对齐：branding.site_name / main.site_title 是 Brand::name() 的实际读取链，
+        // site_name / site_url 供完成页与旧代码读取；APP_NAME 同步 .env
         try {
             Settings::set('site_name', $data['site_name']);
             Settings::set('site_url', rtrim($data['site_url'], '/'));
+            Settings::set('branding.site_name', $data['site_name']);
+            Settings::set('main.site_title', $data['site_name']);
         } catch (\Throwable $e) {
             return $this->backToAdmin($request, ['站点信息写入失败：'.$e->getMessage()]);
         }
 
-        // APP_URL 以用户填写为准（密码重置/邮件/静态资源链接依赖）
+        // APP_URL 以用户填写为准（密码重置/邮件/静态资源链接依赖）；APP_NAME 同步站点名
         $this->env->write('APP_URL', rtrim($data['site_url'], '/'));
-        config(['app.url' => rtrim($data['site_url'], '/')]);
+        $this->env->write('APP_NAME', $data['site_name']);
+        config(['app.url' => rtrim($data['site_url'], '/'), 'app.name' => $data['site_name']]);
 
         // 写入安装锁：此后向导失效
         InstallState::complete();
