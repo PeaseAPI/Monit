@@ -54,9 +54,9 @@
                         </form>
                         {{-- 插件专属管理入口 --}}
                         @if($plugin['id'] === 'push-notifications')
-                            <a href="{{ route('admin.plugins.push-notifications.campaigns') }}" class="rounded-xl border border-zinc-200 px-4 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50">Campaign 管理 →</a>
+                            <a href="{{ route('admin.plugins.push-notifications.campaigns') }}" class="rounded-xl border border-zinc-200 px-4 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50">{{ __('plugins.push.campaign_mgmt_link') }}</a>
                         @elseif($plugin['id'] === 'image-optimizer')
-                            <a href="{{ route('admin.plugins.image-optimizer.stats') }}" class="rounded-xl border border-zinc-200 px-4 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50">压缩统计 →</a>
+                            <a href="{{ route('admin.plugins.image-optimizer.stats') }}" class="rounded-xl border border-zinc-200 px-4 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50">{{ __('plugins.imgopt.stats_link') }}</a>
                         @endif
                     @else
                         <form method="POST" action="{{ route('admin.plugins.activate', $plugin['id']) }}">@csrf
