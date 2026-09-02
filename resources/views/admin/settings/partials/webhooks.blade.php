@@ -1,52 +1,52 @@
 <div class="space-y-6">
-    <p class="text-sm text-zinc-500">配置 Webhook 回调设置（规格书 §6.3.1：开始/结束 webhook）</p>
+    <p class="text-sm text-zinc-500">{{ __('settings.webhooks.t_a446ca') }}</p>
 
     <div class="space-y-4">
         <div>
-            <label class="form-label">支付成功 Webhook URL</label>
+            <label class="form-label">{{ __('settings.webhooks.t_3c2519') }}</label>
             <input type="url" name="webhook_payment_success_url" class="form-input w-full" value="{{ old('webhook_payment_success_url', $settings['webhooks.webhook_payment_success_url'] ?? '') }}" placeholder="https://your-server.com/webhook/payment-success">
         </div>
         <div>
-            <label class="form-label">支付失败 Webhook URL</label>
+            <label class="form-label">{{ __('settings.webhooks.t_557d6c') }}</label>
             <input type="url" name="webhook_payment_failure_url" class="form-input w-full" value="{{ old('webhook_payment_failure_url', $settings['webhooks.webhook_payment_failure_url'] ?? '') }}" placeholder="https://your-server.com/webhook/payment-failure">
         </div>
         <div>
-            <label class="form-label">用户注册 Webhook URL</label>
+            <label class="form-label">{{ __('settings.webhooks.t_b5e3d0') }}</label>
             <input type="url" name="webhook_user_register_url" class="form-input w-full" value="{{ old('webhook_user_register_url', $settings['webhooks.webhook_user_register_url'] ?? '') }}" placeholder="https://your-server.com/webhook/user-register">
         </div>
         <div>
-            <label class="form-label">用户删除 Webhook URL</label>
+            <label class="form-label">{{ __('settings.webhooks.t_259c90') }}</label>
             <input type="url" name="webhook_user_delete_url" class="form-input w-full" value="{{ old('webhook_user_delete_url', $settings['webhooks.webhook_user_delete_url'] ?? '') }}" placeholder="https://your-server.com/webhook/user-delete">
         </div>
         <div>
-            <label class="form-label">用户资料更新 Webhook URL</label>
+            <label class="form-label">{{ __('settings.webhooks.t_fd698b') }}</label>
             <input type="url" name="webhook_user_update_url" class="form-input w-full" value="{{ old('webhook_user_update_url', $settings['webhooks.webhook_user_update_url'] ?? '') }}" placeholder="https://your-server.com/webhook/user-update">
         </div>
         <div>
-            <label class="form-label">优惠码核销 Webhook URL</label>
+            <label class="form-label">{{ __('settings.webhooks.t_240504') }}</label>
             <input type="url" name="webhook_code_redeemed_url" class="form-input w-full" value="{{ old('webhook_code_redeemed_url', $settings['webhooks.webhook_code_redeemed_url'] ?? '') }}" placeholder="https://your-server.com/webhook/code-redeemed">
         </div>
         <div>
-            <label class="form-label">联系我们提交 Webhook URL</label>
+            <label class="form-label">{{ __('settings.webhooks.t_132977') }}</label>
             <input type="url" name="webhook_contact_url" class="form-input w-full" value="{{ old('webhook_contact_url', $settings['webhooks.webhook_contact_url'] ?? '') }}" placeholder="https://your-server.com/webhook/contact">
         </div>
         <div>
-            <label class="form-label">新域名绑定 Webhook URL</label>
+            <label class="form-label">{{ __('settings.webhooks.t_e2baee') }}</label>
             <input type="url" name="webhook_domain_new_url" class="form-input w-full" value="{{ old('webhook_domain_new_url', $settings['webhooks.webhook_domain_new_url'] ?? '') }}" placeholder="https://your-server.com/webhook/domain-new">
         </div>
         <div>
-            <label class="form-label">域名状态变更 Webhook URL</label>
+            <label class="form-label">{{ __('settings.webhooks.t_6da02a') }}</label>
             <input type="url" name="webhook_domain_update_url" class="form-input w-full" value="{{ old('webhook_domain_update_url', $settings['webhooks.webhook_domain_update_url'] ?? '') }}" placeholder="https://your-server.com/webhook/domain-update">
         </div>
         <div>
-            <label class="form-label">定时任务开始 Webhook URL</label>
+            <label class="form-label">{{ __('settings.webhooks.t_de4163') }}</label>
             <input type="url" name="start_url" class="form-input w-full" value="{{ old('start_url', $settings['webhooks.start_url'] ?? '') }}" placeholder="https://your-server.com/webhook/cron-start">
-            <p class="form-hint">cron 启动时推送（需同时勾选下方「定时任务开始」开关）</p>
+            <p class="form-hint">{{ __('settings.webhooks.t_b8e317') }}</p>
         </div>
         <div>
-            <label class="form-label">定时任务结束 Webhook URL</label>
+            <label class="form-label">{{ __('settings.webhooks.t_a8a913') }}</label>
             <input type="url" name="end_url" class="form-input w-full" value="{{ old('end_url', $settings['webhooks.end_url'] ?? '') }}" placeholder="https://your-server.com/webhook/cron-end">
-            <p class="form-hint">cron 结束时推送执行摘要（需同时勾选下方「定时任务结束」开关）</p>
+            <p class="form-hint">{{ __('settings.webhooks.t_f9c0af') }}</p>
         </div>
     </div>
 </div>
@@ -55,34 +55,34 @@
 <section class="settings-section mt-6">
     <div class="settings-section-header">
         <div>
-            <h3 class="settings-section-title">事件订阅（原版对标）</h3>
-            <p class="settings-section-desc">勾选后随请求推送对应事件给上述端点</p>
+            <h3 class="settings-section-title">{{ __('settings.webhooks.t_0141c2') }}</h3>
+            <p class="settings-section-desc">{{ __('settings.webhooks.t_5df3a9') }}</p>
         </div>
     </div>
     <div class="settings-section-body">
         <div>
-            <label class="form-label">签名密钥</label>
-            <input type="text" name="webhooks_secret_key" class="form-input font-mono" value="{{ old('webhooks_secret_key', $settings['webhooks.webhooks_secret_key'] ?? '') }}" placeholder="webhook 签名密钥（HMAC）">
-            <p class="form-hint">原版 secret_key：接收方用其校验 X-Signature 头</p>
+            <label class="form-label">{{ __('settings.webhooks.t_95040d') }}</label>
+                        <input type="text" name="webhooks_secret_key" class="form-input font-mono" value="{{ old('webhooks_secret_key', $settings['webhooks.webhooks_secret_key'] ?? '') }}" placeholder="{{ __('settings.webhooks.signing_secret_placeholder') }}">
+            <p class="form-hint">{{ __('settings.webhooks.t_b77c01') }}</p>
         </div>
         <div>
-            <label class="form-label">等待响应的域名</label>
+            <label class="form-label">{{ __('settings.webhooks.t_446c28') }}</label>
             <textarea name="wait_for_response_domains" rows="3" class="form-input w-full font-mono text-[13px]">{{ old('wait_for_response_domains', $settings['webhooks.wait_for_response_domains'] ?? '') }}</textarea>
-            <p class="form-hint">每行一个域名：这些端点会同步等待 2xx 响应（原版）</p>
+            <p class="form-hint">{{ __('settings.webhooks.t_084cc4') }}</p>
         </div>
         <div class="grid gap-3 sm:grid-cols-2">
             @php
                 $whEvents = [
-                    'webhooks_user_new' => ['新用户注册', true],
-                    'webhooks_user_update' => ['用户资料更新', false],
-                    'webhooks_user_delete' => ['用户注销', true],
-                    'webhooks_payment_new' => ['新支付订单', true],
-                    'webhooks_code_redeemed' => ['优惠码核销', false],
-                    'webhooks_contact' => ['联系我们提交', false],
-                    'webhooks_cron_start' => ['定时任务开始', false],
-                    'webhooks_cron_end' => ['定时任务结束', false],
-                    'webhooks_domain_new' => ['新域名绑定', false],
-                    'webhooks_domain_update' => ['域名状态变更', false],
+                    'webhooks_user_new' => [__('settings.webhooks.event_user_registered'), true],
+                    'webhooks_user_update' => [__('settings.webhooks.event_user_updated'), false],
+                    'webhooks_user_delete' => [__('settings.webhooks.event_user_deleted'), true],
+                    'webhooks_payment_new' => [__('settings.webhooks.event_new_payment'), true],
+                    'webhooks_code_redeemed' => [__('settings.webhooks.event_coupon_redeemed'), false],
+                    'webhooks_contact' => [__('settings.webhooks.event_contact_submitted'), false],
+                    'webhooks_cron_start' => [__('settings.webhooks.event_cron_started'), false],
+                    'webhooks_cron_end' => [__('settings.webhooks.event_cron_finished'), false],
+                    'webhooks_domain_new' => [__('settings.webhooks.event_domain_added'), false],
+                    'webhooks_domain_update' => [__('settings.webhooks.event_domain_status_changed'), false],
                 ];
             @endphp
             @foreach ($whEvents as $name => [$label, $default])

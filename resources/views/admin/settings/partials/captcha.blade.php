@@ -1,11 +1,11 @@
 <div class="space-y-6">
-    <p class="text-sm text-zinc-500">配置验证码保护设置（规格书 §6.1：注册受验证码保护）</p>
+    <p class="text-sm text-zinc-500">{{ __('settings.captcha.t_2e0c72') }}</p>
 
     <div class="grid grid-cols-1 gap-4">
         <div>
-            <label class="form-label">验证码类型</label>
+            <label class="form-label">{{ __('settings.captcha.t_1d2a02') }}</label>
             <select name="captcha_type" class="form-select">
-                <option value="none" {{ ($settings['captcha.captcha_type'] ?? 'none') === 'none' ? 'selected' : '' }}>禁用</option>
+                <option value="none" {{ ($settings['captcha.captcha_type'] ?? 'none') === 'none' ? 'selected' : '' }}>{{ __('settings.captcha.t_710ad0') }}</option>
                 <option value="recaptcha" {{ ($settings['captcha.captcha_type'] ?? '') === 'recaptcha' ? 'selected' : '' }}>Google reCAPTCHA v2</option>
                 <option value="recaptcha_v3" {{ ($settings['captcha.captcha_type'] ?? '') === 'recaptcha_v3' ? 'selected' : '' }}>Google reCAPTCHA v3</option>
                 <option value="hcaptcha" {{ ($settings['captcha.captcha_type'] ?? '') === 'hcaptcha' ? 'selected' : '' }}>hCaptcha</option>
@@ -22,8 +22,8 @@
         </div>
 
         <div class="mt-2">
-            <h4 class="font-medium mb-1">各服务商独立密钥（可选）</h4>
-            <p class="form-hint mb-2">留空时回退上方通用 Site Key / Secret Key</p>
+            <h4 class="font-medium mb-1">{{ __('settings.captcha.t_290fc7') }}</h4>
+            <p class="form-hint mb-2">{{ __('settings.captcha.t_adf9dc') }}</p>
             <div class="grid gap-3 sm:grid-cols-2">
                 <div>
                     <label class="form-label">reCAPTCHA Site Key</label>
@@ -53,23 +53,23 @@
         </div>
 
         <div class="mt-2">
-            <h4 class="font-medium mb-2">验证码保护页面</h4>
+            <h4 class="font-medium mb-2">{{ __('settings.captcha.t_85018b') }}</h4>
             <div class="space-y-2">
                 <label class="flex items-center gap-2">
                     <input type="checkbox" name="captcha_on_register" value="1" {{ filter_var($settings['captcha.captcha_on_register'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-                    注册页面
+                                        {{ __('settings.captcha.page_register') }}
                 </label>
                 <label class="flex items-center gap-2">
                     <input type="checkbox" name="captcha_on_login" value="1" {{ filter_var($settings['captcha.captcha_on_login'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-                    登录页面
+                    {{ __('settings.captcha.page_login') }}
                 </label>
                 <label class="flex items-center gap-2">
                     <input type="checkbox" name="captcha_on_lost_password" value="1" {{ filter_var($settings['captcha.captcha_on_lost_password'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-                    找回密码页面
+                    {{ __('settings.captcha.page_lost_password') }}
                 </label>
                 <label class="flex items-center gap-2">
                     <input type="checkbox" name="captcha_on_contact" value="1" {{ filter_var($settings['captcha.captcha_on_contact'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-                    联系表单
+                    {{ __('settings.captcha.page_contact') }}
                 </label>
             </div>
         </div>

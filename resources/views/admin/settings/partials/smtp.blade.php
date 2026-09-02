@@ -2,87 +2,87 @@
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">连接参数</h3>
-                <p class="settings-section-desc">SMTP 服务器与端口（保存于 settings，发送时优先读取 .env MAIL_*）</p>
+                <h3 class="settings-section-title">{{ __('settings.smtp.t_9b5683') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.smtp.t_e5d7d9') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <div>
-                <label class="form-label">SMTP 主机</label>
+                <label class="form-label">{{ __('settings.smtp.t_599417') }}</label>
                 <input type="text" name="smtp_host" class="form-input" value="{{ old('smtp_host', $settings['smtp.smtp_host'] ?? '') }}">
-                <p class="form-hint">如 smtp.exmail.qq.com</p>
+                <p class="form-hint">{{ __('settings.smtp.t_7d4897') }}</p>
             </div>
             <div>
-                <label class="form-label">端口</label>
+                <label class="form-label">{{ __('settings.smtp.t_c76cfe') }}</label>
                 <input type="number" name="smtp_port" class="form-input" value="{{ old('smtp_port', $settings['smtp.smtp_port'] ?? '465') }}" placeholder="465">
-                <p class="form-hint">常见 25 / 465 / 587</p>
+                <p class="form-hint">{{ __('settings.smtp.t_0a786f') }}</p>
             </div>
             <div>
-                <label class="form-label">加密方式</label>
+                <label class="form-label">{{ __('settings.smtp.t_75409f') }}</label>
                 <select name="smtp_encryption" class="form-select">
-                    @foreach (['ssl' => 'SSL（465）', 'tls' => 'TLS（587）', 'none' => '无加密（25）'] as $v => $l)
+                    @foreach (['ssl' => 'SSL（465）', 'tls' => 'TLS（587）', 'none' => __('settings.smtp.t_3c62b2')] as $v => $l)
                         <option value="{{ $v }}" {{ old('smtp_encryption', $settings['smtp.smtp_encryption'] ?? 'ssl') == $v ? 'selected' : '' }}>{{ $l }}</option>
                     @endforeach
                 </select>
-                <p class="form-hint">SSL/TLS 或不加密</p>
+                <p class="form-hint">{{ __('settings.smtp.t_a33901') }}</p>
             </div>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">启用认证</span>
-                    <span class="settings-field-row-hint">大多数服务商需要开启</span>
+                    <span class="settings-field-row-label">{{ __('settings.smtp.t_4f33d2') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.smtp.t_7295ca') }}</span>
                 </span>
                 <input type="checkbox" name="smtp_auth" value="1" class="input-toggle"
                     {{ filter_var($settings['smtp.smtp_auth'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <div>
-                <label class="form-label">用户名</label>
+                <label class="form-label">{{ __('settings.smtp.t_819767') }}</label>
                 <input type="text" name="smtp_username" class="form-input" value="{{ old('smtp_username', $settings['smtp.smtp_username'] ?? '') }}">
-                <p class="form-hint">通常为发件邮箱</p>
+                <p class="form-hint">{{ __('settings.smtp.t_f03f35') }}</p>
             </div>
             <div>
-                <label class="form-label">密码 / 授权码</label>
+                <label class="form-label">{{ __('settings.smtp.t_93b75d') }}</label>
                 <input type="password" name="smtp_password" autocomplete="new-password" class="form-input" value="{{ old('smtp_password', $settings['smtp.smtp_password'] ?? '') }}">
-                <p class="form-hint">SMTP 登录凭据</p>
+                <p class="form-hint">{{ __('settings.smtp.t_81deeb') }}</p>
             </div>
         </div>
     </section>
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">发件人信息</h3>
-                <p class="settings-section-desc">邮件头部的发件与回复地址（原版）</p>
+                <h3 class="settings-section-title">{{ __('settings.smtp.t_980fab') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.smtp.t_eb979f') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <div>
-                <label class="form-label">发件人名称</label>
+                <label class="form-label">{{ __('settings.smtp.t_b85b21') }}</label>
                 <input type="text" name="smtp_from_name" class="form-input" value="{{ old('smtp_from_name', $settings['smtp.smtp_from_name'] ?? '') }}">
-                <p class="form-hint">显示在发件人一栏</p>
+                <p class="form-hint">{{ __('settings.smtp.t_feb011') }}</p>
             </div>
             <div>
-                <label class="form-label">发件邮箱</label>
+                <label class="form-label">{{ __('settings.smtp.t_5fbb35') }}</label>
                 <input type="text" name="smtp_from_email" class="form-input" value="{{ old('smtp_from_email', $settings['smtp.smtp_from_email'] ?? '') }}">
-                <p class="form-hint">发件人地址</p>
+                <p class="form-hint">{{ __('settings.smtp.t_e18051') }}</p>
             </div>
             <div>
-                <label class="form-label">回复人名称</label>
+                <label class="form-label">{{ __('settings.smtp.t_2eacb0') }}</label>
                 <input type="text" name="smtp_reply_to_name" class="form-input" value="{{ old('smtp_reply_to_name', $settings['smtp.smtp_reply_to_name'] ?? '') }}">
-                <p class="form-hint">回复时显示的名称（原版）</p>
+                <p class="form-hint">{{ __('settings.smtp.t_cb9fe1') }}</p>
             </div>
             <div>
-                <label class="form-label">回复邮箱</label>
+                <label class="form-label">{{ __('settings.smtp.t_b823e2') }}</label>
                 <input type="text" name="smtp_reply_to" class="form-input" value="{{ old('smtp_reply_to', $settings['smtp.smtp_reply_to'] ?? '') }}">
-                <p class="form-hint">回复邮件投递地址（原版）</p>
+                <p class="form-hint">{{ __('settings.smtp.t_b4ad7a') }}</p>
             </div>
             <div>
-                <label class="form-label">抄送</label>
+                <label class="form-label">{{ __('settings.smtp.t_7b8347') }}</label>
                 <input type="text" name="smtp_cc" class="form-input" value="{{ old('smtp_cc', $settings['smtp.smtp_cc'] ?? '') }}">
-                <p class="form-hint">多个地址逗号分隔（原版）</p>
+                <p class="form-hint">{{ __('settings.smtp.t_8ba5ad') }}</p>
             </div>
             <div>
-                <label class="form-label">密送</label>
+                <label class="form-label">{{ __('settings.smtp.t_d28177') }}</label>
                 <input type="text" name="smtp_bcc" class="form-input" value="{{ old('smtp_bcc', $settings['smtp.smtp_bcc'] ?? '') }}">
-                <p class="form-hint">多个地址逗号分隔（原版）</p>
+                <p class="form-hint">{{ __('settings.smtp.t_8ba5ad') }}</p>
             </div>
         </div>
     </section>

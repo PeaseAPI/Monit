@@ -14,7 +14,7 @@
 
     <div>
         <label class="mb-1.5 block text-sm font-medium text-zinc-700">{{ __('admin.maps_baidu_key') }}</label>
-        <input type="text" name="baidu_key" value="{{ $settings['maps.baidu_key'] ?? '' }}" placeholder="AK（浏览器端密钥）"
+                <input type="text" name="baidu_key" value="{{ $settings['maps.baidu_key'] ?? '' }}" placeholder="{{ __('settings.maps.baidu_key_placeholder') }}"
             class="form-input" autocomplete="off">
         <p class="mt-1.5 text-xs text-zinc-400">{{ __('admin.maps_baidu_key_hint') }}</p>
     </div>

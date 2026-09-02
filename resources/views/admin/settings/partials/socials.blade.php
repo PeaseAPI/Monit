@@ -1,7 +1,7 @@
 {{-- 社交登录设置（规格书 §12.3：8 海外 + 5 国内提供商） --}}
 @php
     $overseas = ['google','github','facebook','discord','linkedin','microsoft','apple','twitter'];
-    $chinese = ['qq'=>'QQ','wechat'=>'微信','weibo'=>'微博','gitee'=>'Gitee','feishu'=>'飞书'];
+    $chinese = ['qq'=>'QQ','wechat'=>__('settings.socials.wechat'),'weibo'=>__('settings.socials.weibo'),'gitee'=>'Gitee','feishu'=>__('settings.socials.feishu')];
     $socialSettings = [];
     foreach (array_merge($overseas, array_keys($chinese)) as $provider) {
         $raw = $settings['socials.'.$provider] ?? null;

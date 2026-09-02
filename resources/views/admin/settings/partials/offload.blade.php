@@ -1,19 +1,19 @@
 <div class="space-y-6">
-    <p class="text-sm text-zinc-500">配置外部对象存储与 CDN（规格书 §14.8：Offload 插件；M17 扩展阿里云 OSS / 腾讯云 COS）</p>
+    <p class="text-sm text-zinc-500">{{ __('settings.offload.t_f6ef68') }}</p>
 
     <div class="space-y-4">
         <label class="flex items-center gap-2">
             <input type="checkbox" name="offload_is_enabled" value="1" {{ filter_var($settings['offload.offload_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            启用 Offload
+                        {{ __('settings.offload.enable_offload') }}
         </label>
         <div>
-            <label class="form-label">存储驱动</label>
+            <label class="form-label">{{ __('settings.offload.t_dc935e') }}</label>
             <select name="offload_storage_driver" class="form-select">
                 <option value="s3" {{ ($settings['offload.offload_storage_driver'] ?? 's3') === 's3' ? 'selected' : '' }}>AWS S3</option>
                 <option value="minio" {{ ($settings['offload.offload_storage_driver'] ?? '') === 'minio' ? 'selected' : '' }}>MinIO</option>
-                <option value="custom" {{ ($settings['offload.offload_storage_driver'] ?? '') === 'custom' ? 'selected' : '' }}>自定义 S3 兼容</option>
-                <option value="aliyun_oss" {{ ($settings['offload.offload_storage_driver'] ?? '') === 'aliyun_oss' ? 'selected' : '' }}>阿里云 OSS</option>
-                <option value="tencent_cos" {{ ($settings['offload.offload_storage_driver'] ?? '') === 'tencent_cos' ? 'selected' : '' }}>腾讯云 COS</option>
+                <option value="custom" {{ ($settings['offload.offload_storage_driver'] ?? '') === 'custom' ? 'selected' : '' }}>{{ __('settings.offload.t_163063') }}</option>
+                <option value="aliyun_oss" {{ ($settings['offload.offload_storage_driver'] ?? '') === 'aliyun_oss' ? 'selected' : '' }}>{{ __('settings.offload.t_bc97e1') }}</option>
+                <option value="tencent_cos" {{ ($settings['offload.offload_storage_driver'] ?? '') === 'tencent_cos' ? 'selected' : '' }}>{{ __('settings.offload.t_b65af7') }}</option>
             </select>
         </div>
         <div>
@@ -38,7 +38,7 @@
         </div>
         {{-- 阿里云 OSS（M17 §14.8） --}}
         <fieldset class="rounded-xl border border-zinc-200 p-4 space-y-4">
-            <legend class="px-1 text-sm font-medium text-zinc-700">阿里云 OSS</legend>
+            <legend class="px-1 text-sm font-medium text-zinc-700">{{ __('settings.offload.t_bc97e1') }}</legend>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="form-label">Access Key ID</label>
@@ -61,7 +61,7 @@
 
         {{-- 腾讯云 COS（M17 §14.8） --}}
         <fieldset class="rounded-xl border border-zinc-200 p-4 space-y-4">
-            <legend class="px-1 text-sm font-medium text-zinc-700">腾讯云 COS</legend>
+            <legend class="px-1 text-sm font-medium text-zinc-700">{{ __('settings.offload.t_b65af7') }}</legend>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="form-label">SecretId</label>
@@ -72,18 +72,18 @@
                     <input type="password" name="offload_cos_secret_key" class="form-input" value="{{ old('offload_cos_secret_key', $settings['offload.offload_cos_secret_key'] ?? '') }}">
                 </div>
                 <div>
-                    <label class="form-label">Bucket（含 APPID，如 monit-1250000000）</label>
+                    <label class="form-label">{{ __('settings.offload.t_a690bb') }}</label>
                     <input type="text" name="offload_cos_bucket" class="form-input" value="{{ old('offload_cos_bucket', $settings['offload.offload_cos_bucket'] ?? '') }}">
                 </div>
                 <div>
-                    <label class="form-label">地域（如 ap-guangzhou）</label>
+                    <label class="form-label">{{ __('settings.offload.t_eca9e9') }}</label>
                     <input type="text" name="offload_cos_region" class="form-input" value="{{ old('offload_cos_region', $settings['offload.offload_cos_region'] ?? 'ap-guangzhou') }}">
                 </div>
             </div>
         </fieldset>
 
         <div>
-            <label class="form-label">CDN 前缀 URL</label>
+            <label class="form-label">{{ __('settings.offload.t_78f88d') }}</label>
             <input type="url" name="offload_cdn_url" class="form-input" value="{{ old('offload_cdn_url', $settings['offload.offload_cdn_url'] ?? '') }}" placeholder="https://cdn.example.com">
         </div>
     </div>

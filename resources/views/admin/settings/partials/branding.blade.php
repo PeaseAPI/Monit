@@ -62,7 +62,7 @@
         </div>
         <div>
             <label class="form-label">{{ __('admin.branding_footer_icp') }}</label>
-            <input type="text" name="footer_icp" class="form-input w-full" placeholder="京ICP备XXXXXXXX号-1"
+                        <input type="text" name="footer_icp" class="form-input w-full" placeholder="京ICP备XXXXXXXX号-1"
                    value="{{ old('footer_icp', $settings['branding.footer_icp'] ?? '') }}">
             <p class="mt-1 text-xs text-zinc-400">{{ __('admin.branding_footer_icp_hint') }}</p>
         </div>

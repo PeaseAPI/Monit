@@ -2,80 +2,80 @@
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">功能开关</h3>
-                <p class="settings-section-desc">SEO 审计 / 工具中心 / Sitemap 与域名监控的总闸（整合后台 seo 组全部功能设置）</p>
+                <h3 class="settings-section-title">{{ __('settings.seo.t_b96130') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.seo.t_92fef1') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">SEO 审计</span>
-                    <span class="settings-field-row-hint">关闭后站点分析、公共目录、定时复审全部停用</span>
+                    <span class="settings-field-row-label">{{ __('settings.seo.t_5e98bd') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.seo.t_70a4ad') }}</span>
                 </span>
                 <input type="checkbox" name="audits_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['seo.audits_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">SEO 工具中心</span>
-                    <span class="settings-field-row-hint">关闭后 /tools 全部入口停用（含登录用户）</span>
+                    <span class="settings-field-row-label">{{ __('settings.seo.t_ed23a7') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.seo.t_97e34c') }}</span>
                 </span>
                 <input type="checkbox" name="tools_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['seo.tools_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">访客可用工具中心</span>
-                    <span class="settings-field-row-hint">关闭后仅登录用户可使用（SeoGuestAccess 中间件）</span>
+                    <span class="settings-field-row-label">{{ __('settings.seo.t_835b47') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.seo.t_a964f7') }}</span>
                 </span>
                 <input type="checkbox" name="tools_guest_access" value="1" class="input-toggle"
                     {{ filter_var($settings['seo.tools_guest_access'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <div>
-                <label class="form-label">访客月度工具配额</label>
+                <label class="form-label">{{ __('settings.seo.t_ca2634') }}</label>
                 <input type="number" min="0" name="tools_guest_monthly_limit" class="form-input" value="{{ old('tools_guest_monthly_limit', $settings['seo.tools_guest_monthly_limit'] ?? 20) }}">
-                <p class="form-hint">0 表示禁止访客使用；-1 不限制（按 uploader_key 每月计数）</p>
+                <p class="form-hint">{{ __('settings.seo.t_34c3d4') }}</p>
             </div>
             <div>
-                <label class="form-label">停用指定工具</label>
+                <label class="form-label">{{ __('settings.seo.t_85e98d') }}</label>
                 <textarea name="seo_disabled_tools" rows="3" class="form-input w-full font-mono text-[13px]">{{ old('seo_disabled_tools', $settings['seo.seo_disabled_tools'] ?? '') }}</textarea>
-                <p class="form-hint">每行一个工具 slug（如 ahrefs_domain_rating），留空表示全部启用</p>
+                <p class="form-hint">{{ __('settings.seo.t_0e744e') }}</p>
             </div>
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">审计引擎</h3>
-                <p class="settings-section-desc">AuditEngine 抓取参数（复审 / 手动分析共用）</p>
+                <h3 class="settings-section-title">{{ __('settings.seo.t_c5e182') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.seo.t_73fe53') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <div>
-                <label class="form-label">抓取超时（秒）</label>
+                <label class="form-label">{{ __('settings.seo.t_9f9d22') }}</label>
                 <input type="number" min="5" max="120" name="seo_request_timeout" class="form-input" value="{{ old('seo_request_timeout', $settings['seo.seo_request_timeout'] ?? 20) }}">
-                <p class="form-hint">目标页 / robots / sitemap 探测的单请求超时</p>
+                <p class="form-hint">{{ __('settings.seo.t_7e7994') }}</p>
             </div>
             <div>
-                <label class="form-label">抓取 User-Agent</label>
+                <label class="form-label">{{ __('settings.seo.t_6c495c') }}</label>
                 <input type="text" name="seo_request_user_agent" class="form-input" value="{{ old('seo_request_user_agent', $settings['seo.seo_request_user_agent'] ?? 'Mozilla/5.0 (compatible; MonitBot/1.0)') }}">
-                <p class="form-hint">留空使用默认 MonitBot 标识</p>
+                <p class="form-hint">{{ __('settings.seo.t_4bb689') }}</p>
             </div>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">失败自动重试</span>
-                    <span class="settings-field-row-hint">目标站 5xx / 超时时静默重试一次（反爬偶发失败兜底）</span>
+                    <span class="settings-field-row-label">{{ __('settings.seo.t_72e451') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.seo.t_fbfa7a') }}</span>
                 </span>
                 <input type="checkbox" name="seo_double_check" value="1" class="input-toggle"
                     {{ filter_var($settings['seo.seo_double_check'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <div>
-                <label class="form-label">重试等待（秒）</label>
+                <label class="form-label">{{ __('settings.seo.t_13e168') }}</label>
                 <input type="number" min="1" max="10" name="seo_double_check_wait" class="form-input" value="{{ old('seo_double_check_wait', $settings['seo.seo_double_check_wait'] ?? 2) }}">
-                <p class="form-hint">首次失败后等待多久发起重试</p>
+                <p class="form-hint">{{ __('settings.seo.t_5ad3e4') }}</p>
             </div>
             <div>
-                <label class="form-label">SerpApi 密钥（关键词排名自动查询）</label>
+                <label class="form-label">{{ __('settings.seo.t_3fa9aa') }}</label>
                 <input type="text" name="serpapi_api_key" class="form-input font-mono text-[13px]" value="{{ old('serpapi_api_key', $settings['seo.serpapi_api_key'] ?? '') }}" autocomplete="off">
-                <p class="form-hint">配置后关键词排名跟踪支持每日/每周自动 SERP 查询（Google/Bing/Baidu）；留空则仅支持手动录入排名快照</p>
+                <p class="form-hint">{{ __('settings.seo.t_b79c80') }}</p>
             </div>
         </div>
     </section>
@@ -83,20 +83,20 @@
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">监控与保留</h3>
-                <p class="settings-section-desc">到期预警档位与历史快照保留策略</p>
+                <h3 class="settings-section-title">{{ __('settings.seo.t_dd4045') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.seo.t_740ec6') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <div>
-                <label class="form-label">域名到期预警档位（天）</label>
+                <label class="form-label">{{ __('settings.seo.t_34d672') }}</label>
                 <input type="text" name="domain_monitor_alert_days" class="form-input" value="{{ old('domain_monitor_alert_days', $settings['seo.domain_monitor_alert_days'] ?? '30,7,1') }}">
-                <p class="form-hint">逗号分隔；距到期天数命中档位当天发送通知（如 30,7,1）</p>
+                <p class="form-hint">{{ __('settings.seo.t_fb148a') }}</p>
             </div>
             <div>
-                <label class="form-label">归档保留天数（兜底）</label>
+                <label class="form-label">{{ __('settings.seo.t_06af94') }}</label>
                 <input type="number" min="0" max="3650" name="archives_retention_days" class="form-input" value="{{ old('archives_retention_days', $settings['seo.archives_retention_days'] ?? 30) }}">
-                <p class="form-hint">用户套餐未指定 seo_history_retention_days 与游客审计的保留期；0 = 永久保留</p>
+                <p class="form-hint">{{ __('settings.seo.t_acfc4d') }}</p>
             </div>
         </div>
     </section>
@@ -104,16 +104,16 @@
 
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">Sitemap 变更监控</span>
-                    <span class="settings-field-row-hint">定时任务 monit:seo-sitemaps-check 的站点级总闸</span>
+                    <span class="settings-field-row-label">{{ __('settings.seo.t_b3deff') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.seo.t_5f7629') }}</span>
                 </span>
                 <input type="checkbox" name="sitemap_monitor_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['seo.sitemap_monitor_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">域名到期监控</span>
-                    <span class="settings-field-row-hint">定时任务 monit:seo-domains-monitor 的站点级总闸</span>
+                    <span class="settings-field-row-label">{{ __('settings.seo.t_26331c') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.seo.t_6ab078') }}</span>
                 </span>
                 <input type="checkbox" name="domain_monitor_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['seo.domain_monitor_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>

@@ -2,123 +2,123 @@
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">站点基础</h3>
-                <p class="settings-section-desc">站点名称、默认语言与时区</p>
+                <h3 class="settings-section-title">{{ __('settings.main.t_193288') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.main.t_04e1d3') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <div>
-                <label class="form-label">站点标题</label>
+                <label class="form-label">{{ __('settings.main.t_b83cd9') }}</label>
                 <input type="text" name="site_title" class="form-input" value="{{ old('site_title', $settings['main.site_title'] ?? '') }}">
-                <p class="form-hint">浏览器标签与全站展示的名称</p>
+                <p class="form-hint">{{ __('settings.main.t_f97b46') }}</p>
             </div>
             <div>
-                <label class="form-label">站点描述</label>
+                <label class="form-label">{{ __('settings.main.t_fefb77') }}</label>
                 <textarea name="site_description" rows="4" class="form-input w-full font-mono text-[13px]">{{ old('site_description', $settings['main.site_description'] ?? '') }}</textarea>
-                <p class="form-hint">用于 SEO meta description 与分享卡片</p>
+                <p class="form-hint">{{ __('settings.main.t_07be48') }}</p>
             </div>
             <div>
-                <label class="form-label">默认语言</label>
+                <label class="form-label">{{ __('settings.main.t_d69990') }}</label>
                 <select name="default_language" class="form-select">
-                    @foreach (['zh_CN' => '简体中文', 'zh_TW' => '繁體中文', 'en' => 'English', 'ru' => 'Русский', 'be' => 'Беларуская', 'ms' => 'Melayu'] as $v => $l)
+                    @foreach (['zh_CN' => __('settings.main.t_d688a3'), 'zh_TW' => __('settings.main.t_46c499'), 'en' => 'English', 'ru' => 'Русский', 'be' => 'Беларуская', 'ms' => 'Melayu'] as $v => $l)
                         <option value="{{ $v }}" {{ old('default_language', $settings['main.default_language'] ?? 'zh_CN') == $v ? 'selected' : '' }}>{{ $l }}</option>
                     @endforeach
                 </select>
-                <p class="form-hint">未登录访客的界面语言</p>
+                <p class="form-hint">{{ __('settings.main.t_73b702') }}</p>
             </div>
             <div>
-                <label class="form-label">默认时区</label>
+                <label class="form-label">{{ __('settings.main.t_d1acb4') }}</label>
                 <input type="text" name="default_timezone" class="form-input" value="{{ old('default_timezone', $settings['main.default_timezone'] ?? 'Asia/Shanghai') }}" placeholder="Asia/Shanghai">
-                <p class="form-hint">如 Asia/Shanghai（PHP 时区标识）</p>
+                <p class="form-hint">{{ __('settings.main.t_8b6f6b') }}</p>
             </div>
             <div>
-                <label class="form-label">标题分隔符</label>
+                <label class="form-label">{{ __('settings.main.t_40241a') }}</label>
                 <input type="text" name="title_separator" class="form-input" value="{{ old('title_separator', $settings['main.title_separator'] ?? '·') }}" placeholder="·">
-                <p class="form-hint">页面 title 与站点名之间的分隔符</p>
+                <p class="form-hint">{{ __('settings.main.t_f1231c') }}</p>
             </div>
             <div>
-                <label class="form-label">首页地址</label>
+                <label class="form-label">{{ __('settings.main.t_c93c75') }}</label>
                 <input type="url" name="index_url" class="form-input" value="{{ old('index_url', $settings['main.index_url'] ?? '') }}">
-                <p class="form-hint">自定义落地页地址，留空使用默认 /</p>
+                <p class="form-hint">{{ __('settings.main.t_f4ab71') }}</p>
             </div>
         </div>
     </section>
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">功能开关</h3>
-                <p class="settings-section-desc">全站级功能启停</p>
+                <h3 class="settings-section-title">{{ __('settings.main.t_b96130') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.main.t_e77a08') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">开放注册</span>
-                    <span class="settings-field-row-hint">关闭后新用户无法注册账号</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_4df241') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_6d6976') }}</span>
                 </span>
                 <input type="checkbox" name="registration_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['main.registration_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">开放 API</span>
-                    <span class="settings-field-row-hint">允许用户使用 API 接口拉取统计数据</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_ce66fc') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_f3e0d0') }}</span>
                 </span>
                 <input type="checkbox" name="api_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['main.api_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">白标模式</span>
-                    <span class="settings-field-row-hint">隐藏产品品牌标识，便于代理商定制</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_aa3cfd') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_4209da') }}</span>
                 </span>
                 <input type="checkbox" name="whitelabel_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['main.whitelabel_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">强制 HTTPS</span>
-                    <span class="settings-field-row-hint">将全部 HTTP 请求 301 跳转到 HTTPS</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_7ca9f0') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_deb897') }}</span>
                 </span>
                 <input type="checkbox" name="force_https" value="1" class="input-toggle"
                     {{ filter_var($settings['main.force_https'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">搜索引擎收录</span>
-                    <span class="settings-field-row-hint">允许搜索引擎索引公开页面（原版 se_indexing）</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_d9c651') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_3e1961') }}</span>
                 </span>
                 <input type="checkbox" name="seo_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['main.seo_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">允许 iframe 嵌入</span>
-                    <span class="settings-field-row-hint">关闭后通过 X-Frame-Options 防点击劫持</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_6ad6f1') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_3363f6') }}</span>
                 </span>
                 <input type="checkbox" name="iframe_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['main.iframe_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">允许 AI 爬虫</span>
-                    <span class="settings-field-row-hint">允许 GPTBot 等 AI 爬虫抓取公开内容</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_1514c8') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_318f99') }}</span>
                 </span>
                 <input type="checkbox" name="ai_crawlers_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['main.ai_crawlers_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">自动语言检测</span>
-                    <span class="settings-field-row-hint">按浏览器语言自动切换界面</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_850ec1') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_67392f') }}</span>
                 </span>
                 <input type="checkbox" name="auto_language_detection_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['main.auto_language_detection_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">显示面包屑</span>
-                    <span class="settings-field-row-hint">在用户面板顶部显示路径导航</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_169bce') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_73023f') }}</span>
                 </span>
                 <input type="checkbox" name="breadcrumbs_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['main.breadcrumbs_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
@@ -128,39 +128,39 @@
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">首页区块</h3>
-                <p class="settings-section-desc">控制落地页展示的内容板块</p>
+                <h3 class="settings-section-title">{{ __('settings.main.t_c6354f') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.main.t_fc541f') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">展示套餐定价</span>
-                    <span class="settings-field-row-hint">在落地页显示价格区块</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_e94b4c') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_899b9f') }}</span>
                 </span>
                 <input type="checkbox" name="display_index_plans" value="1" class="input-toggle"
                     {{ filter_var($settings['main.display_index_plans'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">展示用户评价</span>
-                    <span class="settings-field-row-hint">在落地页显示评价区</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_125062') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_ec81ae') }}</span>
                 </span>
                 <input type="checkbox" name="display_index_testimonials" value="1" class="input-toggle"
                     {{ filter_var($settings['main.display_index_testimonials'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">展示常见问题</span>
-                    <span class="settings-field-row-hint">在落地页显示 FAQ 区块</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_f83cb4') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_54fc96') }}</span>
                 </span>
                 <input type="checkbox" name="display_index_faq" value="1" class="input-toggle"
                     {{ filter_var($settings['main.display_index_faq'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">展示最新博客</span>
-                    <span class="settings-field-row-hint">在落地页显示最新博文列表</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_5028d8') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_5b7e13') }}</span>
                 </span>
                 <input type="checkbox" name="display_index_latest_blog_posts" value="1" class="input-toggle"
                     {{ filter_var($settings['main.display_index_latest_blog_posts'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
@@ -170,143 +170,143 @@
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">列表与分页</h3>
-                <p class="settings-section-desc">后台与前台列表的通用行为</p>
+                <h3 class="settings-section-title">{{ __('settings.main.t_92af61') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.main.t_0699e1') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">仅一页也显示分页</span>
-                    <span class="settings-field-row-hint">关闭后单页时隐藏分页条</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_49fb0a') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_ec4d66') }}</span>
                 </span>
                 <input type="checkbox" name="display_pagination_when_no_pages" value="1" class="input-toggle"
                     {{ filter_var($settings['main.display_pagination_when_no_pages'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <div>
-                <label class="form-label">每页条数</label>
+                <label class="form-label">{{ __('settings.main.t_8e6009') }}</label>
                 <input type="number" name="default_results_per_page" class="form-input" value="{{ old('default_results_per_page', $settings['main.default_results_per_page'] ?? '25') }}" placeholder="25">
-                <p class="form-hint">列表页默认每页数量（5-100）</p>
+                <p class="form-hint">{{ __('settings.main.t_333e18') }}</p>
             </div>
             <div>
-                <label class="form-label">默认排序</label>
+                <label class="form-label">{{ __('settings.main.t_856cac') }}</label>
                 <select name="default_order_type" class="form-select">
-                    @foreach (['DESC' => '最新优先', 'ASC' => '最早优先'] as $v => $l)
+                    @foreach (['DESC' => __('settings.main.t_5093bc'), 'ASC' => __('settings.main.t_13cf78')] as $v => $l)
                         <option value="{{ $v }}" {{ old('default_order_type', $settings['main.default_order_type'] ?? 'DESC') == $v ? 'selected' : '' }}>{{ $l }}</option>
                     @endforeach
                 </select>
-                <p class="form-hint">列表默认排序方向（原版 default_order_type）</p>
+                <p class="form-hint">{{ __('settings.main.t_8e1bfa') }}</p>
             </div>
             <div>
-                <label class="form-label">头像大小上限（KB）</label>
+                <label class="form-label">{{ __('settings.main.t_1c0a9d') }}</label>
                 <input type="number" name="avatar_size_limit" class="form-input" value="{{ old('avatar_size_limit', $settings['main.avatar_size_limit'] ?? '512') }}" placeholder="512">
-                <p class="form-hint">用户头像上传大小上限</p>
+                <p class="form-hint">{{ __('settings.main.t_00d19b') }}</p>
             </div>
         </div>
     </section>
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">维护模式</h3>
-                <p class="settings-section-desc">全站维护时的只读提示页</p>
+                <h3 class="settings-section-title">{{ __('settings.main.t_972c4c') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.main.t_8c9e75') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">启用维护模式</span>
-                    <span class="settings-field-row-hint">开启后前台显示维护页，管理员不受影响</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_6bca1f') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_b31dfd') }}</span>
                 </span>
                 <input type="checkbox" name="maintenance_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['main.maintenance_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <div>
-                <label class="form-label">维护标题</label>
+                <label class="form-label">{{ __('settings.main.t_d2a86c') }}</label>
                 <input type="text" name="maintenance_title" class="form-input" value="{{ old('maintenance_title', $settings['main.maintenance_title'] ?? '') }}">
-                <p class="form-hint">如「系统升级中」</p>
+                <p class="form-hint">{{ __('settings.main.t_b34e22') }}</p>
             </div>
             <div>
-                <label class="form-label">维护说明</label>
+                <label class="form-label">{{ __('settings.main.t_aa48d5') }}</label>
                 <textarea name="maintenance_description" rows="4" class="form-input w-full font-mono text-[13px]">{{ old('maintenance_description', $settings['main.maintenance_description'] ?? '') }}</textarea>
-                <p class="form-hint">向访客解释维护原因与预计恢复时间</p>
+                <p class="form-hint">{{ __('settings.main.t_099f36') }}</p>
             </div>
             <div>
-                <label class="form-label">按钮文字</label>
+                <label class="form-label">{{ __('settings.main.t_24bdc7') }}</label>
                 <input type="text" name="maintenance_button_text" class="form-input" value="{{ old('maintenance_button_text', $settings['main.maintenance_button_text'] ?? '') }}">
-                <p class="form-hint">维护页按钮展示文字</p>
+                <p class="form-hint">{{ __('settings.main.t_44c868') }}</p>
             </div>
             <div>
-                <label class="form-label">按钮链接</label>
+                <label class="form-label">{{ __('settings.main.t_73b976') }}</label>
                 <input type="url" name="maintenance_button_url" class="form-input" value="{{ old('maintenance_button_url', $settings['main.maintenance_button_url'] ?? '') }}">
-                <p class="form-hint">维护页按钮跳转地址</p>
+                <p class="form-hint">{{ __('settings.main.t_1ea3ea') }}</p>
             </div>
         </div>
     </section>
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">SEO 与链接</h3>
-                <p class="settings-section-desc">搜索引擎与法务页面地址</p>
+                <h3 class="settings-section-title">{{ __('settings.main.t_0e5b16') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.main.t_66cc8e') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <div>
-                <label class="form-label">Referrer 策略</label>
+                <label class="form-label">{{ __('settings.main.t_5c9843') }}</label>
                 <select name="referrer_policy" class="form-select">
                     @foreach (['no-referrer' => 'no-referrer', 'origin' => 'origin', 'origin-when-cross-origin' => 'origin-when-cross-origin', 'strict-origin-when-cross-origin' => 'strict-origin-when-cross-origin', 'same-origin' => 'same-origin'] as $v => $l)
                         <option value="{{ $v }}" {{ old('referrer_policy', $settings['main.referrer_policy'] ?? 'strict-origin-when-cross-origin') == $v ? 'selected' : '' }}>{{ $l }}</option>
                     @endforeach
                 </select>
-                <p class="form-hint">控制外链携带的 Referrer 信息</p>
+                <p class="form-hint">{{ __('settings.main.t_b5bed2') }}</p>
             </div>
             <div>
-                <label class="form-label">404 跳转地址</label>
+                <label class="form-label">{{ __('settings.main.t_29131b') }}</label>
                 <input type="url" name="not_found_url" class="form-input" value="{{ old('not_found_url', $settings['main.not_found_url'] ?? '') }}">
-                <p class="form-hint">留空使用内置 404 页</p>
+                <p class="form-hint">{{ __('settings.main.t_9af865') }}</p>
             </div>
             <div>
-                <label class="form-label">服务条款地址</label>
+                <label class="form-label">{{ __('settings.main.t_8b5a67') }}</label>
                 <input type="url" name="terms_and_conditions_url" class="form-input" value="{{ old('terms_and_conditions_url', $settings['main.terms_and_conditions_url'] ?? '') }}">
-                <p class="form-hint">自定义服务条款页面链接</p>
+                <p class="form-hint">{{ __('settings.main.t_bf15bf') }}</p>
             </div>
             <div>
-                <label class="form-label">隐私政策地址</label>
+                <label class="form-label">{{ __('settings.main.t_4c26f4') }}</label>
                 <input type="url" name="privacy_policy_url" class="form-input" value="{{ old('privacy_policy_url', $settings['main.privacy_policy_url'] ?? '') }}">
-                <p class="form-hint">自定义隐私政策页面链接</p>
+                <p class="form-hint">{{ __('settings.main.t_5bb2b4') }}</p>
             </div>
             <div>
-                <label class="form-label">站点地图地址</label>
+                <label class="form-label">{{ __('settings.main.t_b8848d') }}</label>
                 <input type="url" name="sitemap_url" class="form-input" value="{{ old('sitemap_url', $settings['main.sitemap_url'] ?? '') }}">
-                <p class="form-hint">自定义 sitemap 链接</p>
+                <p class="form-hint">{{ __('settings.main.t_28bfb9') }}</p>
             </div>
             <div>
-                <label class="form-label">默认分享图</label>
+                <label class="form-label">{{ __('settings.main.t_a542b0') }}</label>
                 <input type="text" name="og_image" class="form-input" value="{{ old('og_image', $settings['main.og_image'] ?? '') }}">
-                <p class="form-hint">Open Graph 默认图片 URL</p>
+                <p class="form-hint">{{ __('settings.main.t_b43665') }}</p>
             </div>
         </div>
     </section>
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">主题样式</h3>
-                <p class="settings-section-desc">默认配色与样式切换</p>
+                <h3 class="settings-section-title">{{ __('settings.main.t_d70a43') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.main.t_49b1b5') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <div>
-                <label class="form-label">默认样式</label>
+                <label class="form-label">{{ __('settings.main.t_240210') }}</label>
                 <select name="default_theme_style" class="form-select">
-                    @foreach (['light' => '浅色', 'dark' => '深色'] as $v => $l)
+                    @foreach (['light' => __('settings.main.t_48d0a0'), 'dark' => __('settings.main.t_41e8e8')] as $v => $l)
                         <option value="{{ $v }}" {{ old('default_theme_style', $settings['main.default_theme_style'] ?? 'light') == $v ? 'selected' : '' }}>{{ $l }}</option>
                     @endforeach
                 </select>
-                <p class="form-hint">全站默认明暗风格</p>
+                <p class="form-hint">{{ __('settings.main.t_e59cd6') }}</p>
             </div>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">允许用户切换样式</span>
-                    <span class="settings-field-row-hint">用户可在账户设置里自行切换明暗</span>
+                    <span class="settings-field-row-label">{{ __('settings.main.t_acda2d') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.main.t_0f3a73') }}</span>
                 </span>
                 <input type="checkbox" name="theme_style_change_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['main.theme_style_change_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
@@ -316,20 +316,20 @@
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
-                <h3 class="settings-section-title">图表缓存</h3>
-                <p class="settings-section-desc">统计图表的缓存策略</p>
+                <h3 class="settings-section-title">{{ __('settings.main.t_35340d') }}</h3>
+                <p class="settings-section-desc">{{ __('settings.main.t_774e29') }}</p>
             </div>
         </div>
         <div class="settings-section-body">
             <div>
-                <label class="form-label">图表缓存分钟数</label>
+                <label class="form-label">{{ __('settings.main.t_771f42') }}</label>
                 <input type="number" name="chart_cache" class="form-input" value="{{ old('chart_cache', $settings['main.chart_cache'] ?? '30') }}" placeholder="30">
-                <p class="form-hint">0 为不缓存；建议 30-60 分钟</p>
+                <p class="form-hint">{{ __('settings.main.t_10ea1d') }}</p>
             </div>
             <div>
-                <label class="form-label">图表默认天数</label>
+                <label class="form-label">{{ __('settings.main.t_c94a37') }}</label>
                 <input type="number" name="chart_days" class="form-input" value="{{ old('chart_days', $settings['main.chart_days'] ?? '30') }}" placeholder="30">
-                <p class="form-hint">统计图表默认展示的天数范围</p>
+                <p class="form-hint">{{ __('settings.main.t_5b2e9a') }}</p>
             </div>
         </div>
     </section>
