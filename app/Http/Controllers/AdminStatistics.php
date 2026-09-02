@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 /**
@@ -64,7 +65,7 @@ class AdminStatistics extends Controller
         $stats = [];
         foreach ($tables as $table) {
             try {
-                $stats[$table] = \DB::table($table)->count();
+                                $stats[$table] = DB::table($table)->count();
             } catch (\Throwable) {
                 $stats[$table] = -1;
             }
