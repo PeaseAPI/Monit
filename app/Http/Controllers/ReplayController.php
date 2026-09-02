@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SessionReplay;
 use App\Models\Website;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 
 /**
@@ -50,12 +51,12 @@ class ReplayController extends Controller
 
         // 从缓存取出 chunk 索引
         $cacheKey = "session_replay_keys_{$session->session_id}";
-        $keys = \Cache::get($cacheKey, []);
+                $keys = Cache::get($cacheKey, []);
 
         // 逐个取出 chunk 数据并合并
         $events = [];
         foreach ($keys as $chunkKey) {
-            $chunk = \Cache::get($chunkKey);
+            $chunk = Cache::get($chunkKey);
             if (is_array($chunk)) {
                 $events = array_merge($events, $chunk);
             }
