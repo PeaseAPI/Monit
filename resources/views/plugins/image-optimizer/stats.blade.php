@@ -23,8 +23,8 @@
 
 <div class="mt-6 flex items-center justify-between">
     <h2 class="text-lg font-semibold text-zinc-900">{{ __('plugins.imgopt.recent_records') }}</h2>
-    <form method="POST" action="{{ route('admin.plugins.image-optimizer.batch') }}"
-          onsubmit="return confirm('{{ __("plugins.imgopt.batch_confirm") }}')">@csrf
+        <form method="POST" action="{{ route('admin.plugins.image-optimizer.batch') }}"
+          onsubmit="return confirm(@json(__('plugins.imgopt.batch_confirm')))">@csrf
         <button class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">{{ __('plugins.imgopt.batch_optimize') }}</button>
     </form>
 </div>
