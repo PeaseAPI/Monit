@@ -20,7 +20,7 @@ class NewPaymentNotification extends Mailable
     public function build(): static
     {
         return $this->subject(__('msg.new_payment_notification_subject'))
-            ->view('emails.new-payment-notification')
+            ->markdown('emails.new-payment-notification')
             ->with(['payment' => $this->payment]);
     }
 }

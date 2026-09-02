@@ -29,6 +29,11 @@ class SessionReplay extends Model
         return $this->belongsTo(VisitorSession::class, 'session_id', 'session_id');
     }
 
+    public function website()
+    {
+        return $this->belongsTo(Website::class, 'website_id', 'website_id');
+    }
+
     public function visitor()
     {
         return $this->belongsTo(WebsiteVisitor::class, 'visitor_id', 'visitor_id');

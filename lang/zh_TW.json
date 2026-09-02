@@ -2989,5 +2989,13 @@
   "websites.url_label": "網站地址",
   "settings.captcha.geetest": "極驗 Geetest v3",
   "settings.captcha.geetest_id": "極驗驗證 ID（captcha_id）",
-  "settings.captcha.geetest_key": "極驗驗證 KEY（私鑰，用於 challenge 加鹽與二次校驗）"
+  "settings.captcha.geetest_key": "極驗驗證 KEY（私鑰，用於 challenge 加鹽與二次校驗）",
+  "auth.send_sms_code": "發送驗證码",
+  "auth.activation_sent": "激活郵件已發送",
+  "auth.unsupported_provider": "不支持的登入方式",
+  "auth.provider_not_configured": "該登入方式尚未配置，请聯繫管理員",
+  "auth.oauth_state_mismatch": "登入狀態校驗失敗，请重試",
+  "auth.oauth_no_code": "授權失敗：未收到授權码",
+  "auth.oauth_token_failed": "獲取授權令牌失敗，请重試",
+  "auth.oauth_no_email": "該第三方賬號未提供信箱地址，無法完成登入"
 }

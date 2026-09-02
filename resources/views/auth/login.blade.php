@@ -11,6 +11,14 @@
         <h2 class="text-2xl font-bold tracking-tight">{{ __('auth.welcome_back') }}</h2>
         <p class="mt-2 text-sm text-zinc-500">{{ __('auth.login_subtitle') }}</p>
 
+        {{-- 社交登录 / OAuth 错误（SocialLoginController 以 withErrors(['provider'|'oauth']) 打回） --}}
+        @error('provider')
+            <p class="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{{ $message }}</p>
+        @enderror
+        @error('oauth')
+            <p class="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{{ $message }}</p>
+        @enderror
+
         <form method="POST" action="{{ route('login') }}" class="mt-8 space-y-5">
             @csrf
 

@@ -2989,5 +2989,13 @@
   "websites.url_label": "网站地址",
   "settings.captcha.geetest": "极验 Geetest v3",
   "settings.captcha.geetest_id": "极验验证 ID（captcha_id）",
-  "settings.captcha.geetest_key": "极验验证 KEY（私钥，用于 challenge 加盐与二次校验）"
+  "settings.captcha.geetest_key": "极验验证 KEY（私钥，用于 challenge 加盐与二次校验）",
+  "auth.send_sms_code": "发送验证码",
+  "auth.activation_sent": "激活邮件已发送",
+  "auth.unsupported_provider": "不支持的登录方式",
+  "auth.provider_not_configured": "该登录方式尚未配置，请联系管理员",
+  "auth.oauth_state_mismatch": "登录状态校验失败，请重试",
+  "auth.oauth_no_code": "授权失败：未收到授权码",
+  "auth.oauth_token_failed": "获取授权令牌失败，请重试",
+  "auth.oauth_no_email": "该第三方账号未提供邮箱地址，无法完成登录"
 }

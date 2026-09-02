@@ -20,7 +20,7 @@ class ActivateUser extends Mailable
     public function build(): static
     {
         return $this->subject(__('msg.activate_account_subject'))
-            ->view('emails.activate-user')
+            ->markdown('emails.activate-user')
             ->with(['user' => $this->user, 'activationUrl' => $this->activationUrl]);
     }
 }

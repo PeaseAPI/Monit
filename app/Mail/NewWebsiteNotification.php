@@ -23,7 +23,7 @@ class NewWebsiteNotification extends Mailable
     public function build(): static
     {
         return $this->subject(__('mail.new_website_subject', ['name' => $this->websiteName]))
-            ->view('emails.new-website', [
+            ->markdown('emails.new-website', [
                 'websiteName' => $this->websiteName,
                 'websiteHost' => $this->websiteHost,
                 'userName' => $this->userName,

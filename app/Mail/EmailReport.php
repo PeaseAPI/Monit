@@ -20,7 +20,7 @@ class EmailReport extends Mailable
     public function build(): static
     {
         return $this->subject(__('msg.email_report_subject', ['name' => $this->website->name]))
-            ->view('emails.email-report')
+            ->markdown('emails.email-report')
             ->with([
                 'website' => $this->website,
                 'stats' => $this->stats,

@@ -21,7 +21,7 @@ class BroadcastMessage extends Mailable
     public function build(): static
     {
         return $this->subject($this->broadcast->title)
-            ->view('emails.broadcast')
+            ->markdown('emails.broadcast')
             ->with([
                 'title' => $this->broadcast->title,
                 'content' => $this->broadcast->content,

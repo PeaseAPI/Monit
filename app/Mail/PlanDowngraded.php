@@ -19,7 +19,7 @@ class PlanDowngraded extends Mailable
     public function build(): static
     {
         return $this->subject(__('mail.plan_downgraded_subject'))
-            ->view('emails.plan-downgraded', [
+            ->markdown('emails.plan-downgraded', [
                 'user' => $this->user,
             ]);
     }

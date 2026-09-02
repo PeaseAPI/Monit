@@ -152,7 +152,7 @@ Route::prefix('v1')->middleware('api.key')->group(function (): void {
 });
 
 // 公开 API（需要 API Key）
-Route::prefix('v1/public')->middleware('throttle:60,1')->group(function (): void {
+Route::prefix('v1/public')->middleware('throttle:60,1,api-public')->group(function (): void {
     Route::post('/track', [PublicTrackerController::class, 'track']);
 });
 

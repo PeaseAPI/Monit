@@ -28,7 +28,7 @@ class PlanLimitNotice extends Mailable
     public function build(): static
     {
         return $this->subject(__('msg.plan_limit_notice_subject', ['website' => $this->website->name]))
-            ->view('emails.plan-limit-notice')
+            ->markdown('emails.plan-limit-notice')
             ->with([
                 'user' => $this->user,
                 'website' => $this->website,

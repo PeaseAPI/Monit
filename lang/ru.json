@@ -2989,5 +2989,13 @@
   "websites.url_label": "Адрес сайта",
   "settings.captcha.geetest": "Geetest v3",
   "settings.captcha.geetest_id": "Geetest ID (captcha_id)",
-  "settings.captcha.geetest_key": "Geetest KEY (secret, used for challenge salting & validation)"
+  "settings.captcha.geetest_key": "Geetest KEY (secret, used for challenge salting & validation)",
+  "auth.send_sms_code": "Отправить код",
+  "auth.activation_sent": "Письмо активации отправлено",
+  "auth.unsupported_provider": "Неподдерживаемый способ входа",
+  "auth.provider_not_configured": "Этот способ входа ещё не настроен",
+  "auth.oauth_state_mismatch": "Ошибка проверки состояния входа, попробуйте ещё раз",
+  "auth.oauth_no_code": "Ошибка авторизации: код не получен",
+  "auth.oauth_token_failed": "Не удалось получить токен доступа, попробуйте ещё раз",
+  "auth.oauth_no_email": "У этой социальной сети нет адреса электронной почты"
 }

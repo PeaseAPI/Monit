@@ -145,7 +145,7 @@ Route::get('/pages', [IndexController::class, 'pages'])->name('pages'); // 规�
 Route::get('/help', [IndexController::class, 'help'])->name('help');
 Route::get('/affiliate', [IndexController::class, 'affiliate'])->name('affiliate'); // 规格 §6.1：联盟介绍（插件启用时）
 Route::get('/contact', [IndexController::class, 'contact'])->name('contact');
-Route::post('/contact', [IndexController::class, 'contactSend'])->middleware('throttle:5,1')->name('contact.send');
+Route::post('/contact', [IndexController::class, 'contactSend'])->middleware('throttle:5,1,contact')->name('contact.send');
 Route::get('/plan', [IndexController::class, 'plan'])->name('plan');
 Route::get('/api/docs', [IndexController::class, 'apiDocs'])->name('api.docs');
 Route::get('/api-documentation', [IndexController::class, 'apiDocs'])->name('api.documentation'); // 规格 §6.1 别名
@@ -180,30 +180,30 @@ Route::post('/sso', [SsoController::class, 'login'])->name('sso.login.post');
 
 // 公开统计页（规格书 §6.2.2：/statistics/{key}）
 Route::get('/statistics/{pixel_key}', [PublicStatisticsController::class, 'show'])->name('statistics.public');
-Route::post('/statistics/{pixel_key}/auth', [PublicStatisticsController::class, 'authenticate'])->middleware('throttle:5,1')->name('statistics.public.auth');
+Route::post('/statistics/{pixel_key}/auth', [PublicStatisticsController::class, 'authenticate'])->middleware('throttle:5,1,stats-auth')->name('statistics.public.auth');
 
 // SEO 公开面（M26，融合方案 §8.1：报告分享三态 / 公共目录 / 访客分析）
 // seo.feature:audits 受后台 seo 组总开关控制（分享报告页除外：已生成报告始终可访问）
 Route::get('/seo/audits/{seoAudit}', [SeoAuditController::class, 'show'])
     ->whereNumber('seoAudit')->name('seo.audits.show');
 Route::post('/seo/audits/{seoAudit}/password', [SeoAuditController::class, 'unlock'])
-    ->middleware('throttle:10,1')->whereNumber('seoAudit')->name('seo.audits.password');
+    ->middleware('throttle:10,1,seo-pass')->whereNumber('seoAudit')->name('seo.audits.password');
 Route::get('/seo/directory', [SeoAuditController::class, 'directory'])->middleware('seo.feature:audits')->name('seo.directory');
 Route::get('/seo', [SeoAuditController::class, 'landing'])->name('seo.landing');
-Route::post('/seo/analyze', [SeoAuditController::class, 'analyze'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.analyze');
+Route::post('/seo/analyze', [SeoAuditController::class, 'analyze'])->middleware('seo.feature:audits', 'throttle:10,1,seo-analyze')->name('seo.analyze');
 
 // SEO 工具中心（访客受 seo.tools_guest_access 开关控制；整站受 seo.tools_is_enabled 控制）
 Route::middleware(['seo.feature:tools', SeoGuestAccess::class])->prefix('tools')->group(function (): void {
     Route::get('/', [SeoToolController::class, 'index'])->name('seo.tools');
     Route::get('/{slug}', [SeoToolController::class, 'show'])->name('seo.tools.show');
-    Route::post('/{slug}', [SeoToolController::class, 'process'])->middleware('throttle:20,1')->name('seo.tools.process');
+    Route::post('/{slug}', [SeoToolController::class, 'process'])->middleware('throttle:20,1,seo-tools')->name('seo.tools.process');
 });
 
 // ========================================
 // 短信验证码发送（M17 §12.5；guest/auth 通用，phone_bind 场景内部校验登录态）
 // ========================================
 Route::post('/sms/send', [SmsController::class, 'send'])
-    ->middleware('throttle:3,1')
+    ->middleware('throttle:3,1,sms')
     ->name('sms.send');
 
 // Geetest v3 服务端预注册（人机验证前端 widget 异步拉取 challenge）
@@ -215,21 +215,21 @@ Route::get('/captcha/geetest/register', [CaptchaController::class, 'geetestRegis
 // ========================================
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1,login');
 
     // 两步验证（规格书 §12.4）
     Route::get('/login/twofa', [AuthController::class, 'showTwoFactor'])->name('login.twofa');
-    Route::post('/login/twofa', [AuthController::class, 'verifyTwoFactor'])->middleware('throttle:10,1')->name('login.twofa.verify');
+    Route::post('/login/twofa', [AuthController::class, 'verifyTwoFactor'])->middleware('throttle:10,1,login')->name('login.twofa.verify');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1,register');
 
     // 密码重置（规格书 §6.1）
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware('throttle:5,1')->name('password.email');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware('throttle:5,1,password')->name('password.email');
 
     // 短信重置密码（M17 §12.5）
     Route::get('/reset-password-by-sms', [ForgotPasswordController::class, 'showResetSmsForm'])->name('password.reset_sms');
-    Route::post('/reset-password-by-sms', [ForgotPasswordController::class, 'resetBySms'])->middleware('throttle:5,1')->name('password.reset_sms.post');
+    Route::post('/reset-password-by-sms', [ForgotPasswordController::class, 'resetBySms'])->middleware('throttle:5,1,password')->name('password.reset_sms.post');
 
     // 社交登录（规格书 §12.3：Google + GitHub MVP）
     Route::get('/social-login/{provider}', [SocialLoginController::class, 'redirect'])->name('social-login.redirect');
@@ -240,7 +240,7 @@ Route::middleware('guest')->group(function (): void {
     // 邮箱激活（规格书 §6.1）
     Route::get('/activate-user/{code}', [ActivationController::class, 'activate'])->name('activation.activate');
     Route::get('/resend-activation', [ActivationController::class, 'showResendForm'])->name('activation.resend');
-    Route::post('/resend-activation', [ActivationController::class, 'resend'])->middleware('throttle:3,1')->name('activation.resend.post');
+    Route::post('/resend-activation', [ActivationController::class, 'resend'])->middleware('throttle:3,1,activation')->name('activation.resend.post');
     Route::get('/sent-activation', [ActivationController::class, 'sent'])->name('activation.sent');
 });
 
@@ -294,7 +294,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/stats/{website}/realtime/data', [StatsController::class, 'realtimeData'])
         ->middleware('can:own,website')->name('stats.realtime.data');
     Route::post('/stats/{website}/ai-insight', [StatsController::class, 'aiInsight'])
-        ->middleware(['can:own,website', 'throttle:10,1'])->name('stats.ai_insight');
+        ->middleware(['can:own,website', 'throttle:10,1,ai-insight'])->name('stats.ai_insight');
     Route::get('/stats/{website}', [StatsController::class, 'index'])
         ->middleware('can:own,website')->name('stats.index');
     Route::get('/stats/{website}/visitors', [StatsController::class, 'visitors'])
@@ -393,7 +393,7 @@ Route::middleware('auth')->group(function (): void {
 
     // SEO：审计（M26，融合方案 §8.1；seo.feature:audits 受后台 seo 组总开关控制）
     Route::get('/seo/audits', [SeoAuditController::class, 'index'])->middleware('seo.feature:audits')->name('seo.audits');
-    Route::post('/seo/audits', [SeoAuditController::class, 'store'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.audits.store');
+    Route::post('/seo/audits', [SeoAuditController::class, 'store'])->middleware('seo.feature:audits', 'throttle:10,1,seo-analyze')->name('seo.audits.store');
         Route::post('/seo/audits/{seoAudit}/share', [SeoAuditController::class, 'share'])->middleware('seo.feature:audits')->name('seo.audits.share');
         Route::post('/seo/audits/{seoAudit}/ai-summary', [SeoAuditController::class, 'aiSummary'])->middleware('seo.feature:audits')->name('seo.audits.ai');
     Route::post('/seo/audits/{seoAudit}/refresh', [SeoAuditController::class, 'refresh'])->middleware('seo.feature:audits')->name('seo.audits.refresh');
@@ -414,16 +414,16 @@ Route::middleware('auth')->group(function (): void {
 
     // SEO：关键词排名跟踪（SerpApi 自动 / 手动快照，融合方案 §8 扩展）
     Route::get('/seo/keywords', [SeoKeywordController::class, 'index'])->middleware('seo.feature:audits')->name('seo.keywords');
-    Route::post('/seo/keywords', [SeoKeywordController::class, 'store'])->middleware('seo.feature:audits', 'throttle:20,1')->name('seo.keywords.store');
+    Route::post('/seo/keywords', [SeoKeywordController::class, 'store'])->middleware('seo.feature:audits', 'throttle:20,1,seo-keywords')->name('seo.keywords.store');
     Route::put('/seo/keywords/{keyword}', [SeoKeywordController::class, 'update'])->middleware('seo.feature:audits')->name('seo.keywords.update');
     Route::post('/seo/keywords/{keyword}/snapshot', [SeoKeywordController::class, 'snapshot'])->middleware('seo.feature:audits')->name('seo.keywords.snapshot');
-    Route::post('/seo/keywords/{keyword}/refresh', [SeoKeywordController::class, 'refresh'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.keywords.refresh');
+    Route::post('/seo/keywords/{keyword}/refresh', [SeoKeywordController::class, 'refresh'])->middleware('seo.feature:audits', 'throttle:10,1,seo-keywords')->name('seo.keywords.refresh');
     Route::delete('/seo/keywords/{keyword}', [SeoKeywordController::class, 'destroy'])->middleware('seo.feature:audits')->name('seo.keywords.destroy');
 
     // SEO：反链分析（台账 + 活性重验，融合方案 §8 扩展）
     Route::get('/seo/backlinks', [SeoBacklinkController::class, 'index'])->middleware('seo.feature:audits')->name('seo.backlinks');
-    Route::post('/seo/backlinks', [SeoBacklinkController::class, 'store'])->middleware('seo.feature:audits', 'throttle:20,1')->name('seo.backlinks.store');
-    Route::post('/seo/backlinks/{backlink}/verify', [SeoBacklinkController::class, 'verify'])->middleware('seo.feature:audits', 'throttle:10,1')->name('seo.backlinks.verify');
+    Route::post('/seo/backlinks', [SeoBacklinkController::class, 'store'])->middleware('seo.feature:audits', 'throttle:20,1,seo-backlinks')->name('seo.backlinks.store');
+    Route::post('/seo/backlinks/{backlink}/verify', [SeoBacklinkController::class, 'verify'])->middleware('seo.feature:audits', 'throttle:10,1,seo-backlinks')->name('seo.backlinks.verify');
     Route::delete('/seo/backlinks/{backlink}', [SeoBacklinkController::class, 'destroy'])->middleware('seo.feature:audits')->name('seo.backlinks.destroy');
     Route::get('/seo/backlinks/export', [SeoBacklinkController::class, 'export'])->middleware('seo.feature:audits')->name('seo.backlinks.export');
 

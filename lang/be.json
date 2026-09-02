@@ -2989,5 +2989,13 @@
   "websites.url_label": "Адрес сайта",
   "settings.captcha.geetest": "Geetest v3",
   "settings.captcha.geetest_id": "Geetest ID (captcha_id)",
-  "settings.captcha.geetest_key": "Geetest KEY (secret, used for challenge salting & validation)"
+  "settings.captcha.geetest_key": "Geetest KEY (secret, used for challenge salting & validation)",
+  "auth.send_sms_code": "Адправіць код",
+  "auth.activation_sent": "Ліст актывацыі адпраўлены",
+  "auth.unsupported_provider": "Непадтрымліваемы спосаб уваходу",
+  "auth.provider_not_configured": "Гэты спосаб уваходу яшчэ не наладжаны",
+  "auth.oauth_state_mismatch": "Памылка праверкі стану ўваходу, паспрабуйце зноў",
+  "auth.oauth_no_code": "Памылка аўтарызацыі: код не атрыманы",
+  "auth.oauth_token_failed": "Не ўдалося атрымаць токен доступу, паспрабуйце зноў",
+  "auth.oauth_no_email": "У гэтага сацыяльнага акаўнта няма адрасы e-mail"
 }

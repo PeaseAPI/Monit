@@ -21,7 +21,7 @@ class WelcomeUser extends Mailable
     public function build(): static
     {
         return $this->subject(__('msg.welcome_email_subject', ['site' => \App\Support\Brand::name()]))
-            ->view('emails.welcome-user')
+            ->markdown('emails.welcome-user')
             ->with([
                 'user' => $this->user,
                 'loginUrl' => route('login'),

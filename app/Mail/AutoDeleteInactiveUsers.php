@@ -20,7 +20,7 @@ class AutoDeleteInactiveUsers extends Mailable
     public function build(): static
     {
         return $this->subject(__('msg.auto_delete_inactive_users_subject', ['days' => $this->inactivityDays]))
-            ->view('emails.auto-delete-inactive-users')
+            ->markdown('emails.auto-delete-inactive-users')
             ->with([
                 'user' => $this->user,
                 'days' => $this->inactivityDays,

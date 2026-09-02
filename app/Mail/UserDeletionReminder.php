@@ -20,7 +20,7 @@ class UserDeletionReminder extends Mailable
     public function build(): static
     {
         return $this->subject(__('msg.user_deletion_reminder_subject', ['days' => $this->daysUntilDeletion]))
-            ->view('emails.user-deletion-reminder')
+            ->markdown('emails.user-deletion-reminder')
             ->with([
                 'user' => $this->user,
                 'days' => $this->daysUntilDeletion,

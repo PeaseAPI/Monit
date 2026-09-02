@@ -20,7 +20,7 @@ class PlanExpiryReminder extends Mailable
     public function build(): static
     {
         return $this->subject(__('msg.plan_expiry_reminder_subject'))
-            ->view('emails.plan-expiry-reminder')
+            ->markdown('emails.plan-expiry-reminder')
             ->with([
                 'user' => $this->user,
                 'planName' => $this->user->plan_id,

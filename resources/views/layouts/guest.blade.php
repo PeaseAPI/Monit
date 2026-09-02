@@ -62,6 +62,19 @@
 
             {{-- 宽度扩展点：auth 页默认 max-w-md；公开统计页覆写为 max-w-7xl --}}
             <div class="relative w-full @yield('container', 'max-w-md')">
+                {{-- 页面级 flash（字段级错误由各表单 @error 内联显示） --}}
+                @if (session('success'))
+                    <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                        {{ session('success') }}
+                    </div>
+                @endif
+
+                @if (session('status'))
+                    <div class="mb-6 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-700">
+                        {{ session('status') }}
+                    </div>
+                @endif
+
                 @yield('content')
             </div>
         </main>

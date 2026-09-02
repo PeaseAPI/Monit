@@ -20,7 +20,7 @@ class NewUserNotification extends Mailable
     public function build(): static
     {
         return $this->subject(__('msg.new_user_notification_subject', ['name' => $this->newUser->name]))
-            ->view('emails.new-user-notification')
+            ->markdown('emails.new-user-notification')
             ->with(['newUser' => $this->newUser]);
     }
 }
