@@ -159,8 +159,11 @@ Route::prefix('v1/public')->middleware('throttle:60,1,api-public')->group(functi
 // ========================================
 // Admin API 路由（规格书 §7：admin-api 路由组）
 // 认证方式: Bearer Token (admin api_key) + admin 中间件
+// 注意：不用 auth:api —— 项目未定义 api guard（config/auth.php 仅 web），
+// api.key 中间件已校验 Bearer 并 auth('web')->login()，AdminMiddleware
+// 依赖默认 guard 检查认证与 type=1，语义完整
 // ========================================
-Route::prefix('v1/admin')->middleware(['api.key', 'auth:api', 'admin'])->group(function (): void {
+Route::prefix('v1/admin')->middleware(['api.key', 'admin'])->group(function (): void {
     // 系统状态
     Route::get('/status', function () {
         return response()->json([

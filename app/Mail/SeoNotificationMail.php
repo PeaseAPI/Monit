@@ -16,7 +16,10 @@ class SeoNotificationMail extends Mailable implements ShouldQueue
 
     public function __construct(
         public readonly string $title,
-        public readonly string $message,
+        // 命名不能叫 $message：Laravel 邮件视图永远注入 $message（Illuminate\Mail\Message，
+        // 供内嵌附件用），同名属性会被遮蔽，{{ $message }} 渲染将触发
+        // htmlspecialchars(): Argument #1 must be of type string, Message given
+        public readonly string $body,
         public readonly ?string $link = null,
     ) {}
 

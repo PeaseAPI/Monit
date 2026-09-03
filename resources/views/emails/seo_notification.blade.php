@@ -8,7 +8,7 @@
         </div>
         <div style="padding:24px; color:#18181b; font-size:14px; line-height:1.7;">
             <p style="margin:0 0 8px; font-weight:600;">{{ $title }}</p>
-            <p style="margin:0 0 16px; color:#52525b; white-space:pre-line;">{{ $message }}</p>
+            <p style="margin:0 0 16px; color:#52525b; white-space:pre-line;">{{ $body }}</p>
             @if ($link)
                 <a href="{{ $link }}" style="display:inline-block; background:#4f46e5; color:#fff; text-decoration:none; padding:10px 20px; border-radius:10px; font-size:13px;">{{ __('seo.view_report') }}</a>
             @endif
