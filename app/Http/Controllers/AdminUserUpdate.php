@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountLog;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
 use App\Models\Website;
+use App\Services\UserAgentParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -30,6 +32,27 @@ class AdminUserUpdate extends Controller
 
         return view('admin.users.edit', compact('user', 'plans', 'payments', 'websites'))
             ->with('adminNav', 'users');
+    }
+
+    /**
+     * admin 敏感操作审计：记入目标用户的 account_logs（规格表结构无 actor 列，
+     * 以 type 后缀 _by_{adminId} 编码操作者——目标用户档案页同时可见谁操作了他）
+     */
+    private function logAdminAction(User $target, string $action): void
+    {
+        $parser = UserAgentParser::make(request()->userAgent());
+        [$osName] = $parser->os();
+        [$browserName] = $parser->browser();
+
+        AccountLog::create([
+            'user_id' => $target->user_id,
+            'type' => $action.'_by_'.auth()->id(),
+            'ip' => request()->ip(),
+            'device_type' => $parser->deviceType(),
+            'os_name' => $osName,
+            'browser_name' => $browserName,
+            'datetime' => now(),
+        ]);
     }
 
     public function update(Request $request, int $userId): RedirectResponse
@@ -100,6 +123,8 @@ class AdminUserUpdate extends Controller
             unset($validated['password']);
         }
 
+        $wasType = (int) $user->getOriginal('type');
+
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -113,14 +138,26 @@ class AdminUserUpdate extends Controller
             'password' => $validated['password'] ?? $user->password,
         ]);
 
+        // 审计：编辑（含封禁/改密）+ 提权单独标记
+        $this->logAdminAction($user, 'admin_user_updated');
+        if ($wasType === 0 && (int) $validated['type'] === 1) {
+            $this->logAdminAction($user, 'admin_user_promoted');
+        }
+
         return back()->with('success', __('msg.user_updated'));
     }
 
     public function toggleStatus(int $userId): RedirectResponse
     {
         $user = User::findOrFail($userId);
+
+        // 封禁自己会立即失去 admin 会话（status!=1 下个请求被登出）——无意义自锁
+        abort_if($user->user_id === auth()->id(), 403, __('msg.forbidden_admin'));
+
         // 激活 ↔ 禁用 往返切换（对标原版双态切换，未确认态经编辑页调整）
         $user->update(['status' => $user->status === 1 ? 2 : 1]);
+
+        $this->logAdminAction($user, 'admin_user_status_toggled');
 
         return back()->with('success', __('msg.user_status_toggled'));
     }
@@ -128,6 +165,16 @@ class AdminUserUpdate extends Controller
     public function loginAs(int $userId): RedirectResponse
     {
         $user = User::findOrFail($userId);
+
+        // 限制一：禁止 impersonate 其他管理员——一个 admin 会话可静默接管
+        // 另一 admin 的全部权限且原会话不可恢复，横向接管风险必须封死
+        abort_if($user->type === 1, 403, __('msg.forbidden_admin'));
+        // 限制二：禁用/未确认用户不应获得有效会话（绕过 completeLogin 的状态检查）
+        abort_if($user->status !== 1, 403, __('msg.forbidden_admin'));
+
+        // 审计先行：login() 后 auth()->id() 变为目标用户，admin 身份须在切换前留痕
+        $this->logAdminAction($user, 'admin_login_as');
+
         auth()->login($user, true);
 
         return redirect()->route('dashboard');
