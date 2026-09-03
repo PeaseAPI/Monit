@@ -786,19 +786,10 @@ class PixelTracker
 
     protected function clientIp(): string
     {
-        // 优先从 X-Forwarded-For 提取真实客户端 IP（CDN/反向代理场景下
-        // $request->ip() 可能返回代理 IP 或 127.0.0.1，导致 GeoIP 全部 Unknown）
-        $forwarded = $this->request->header('X-Forwarded-For');
-        if ($forwarded !== null && $forwarded !== '') {
-            // X-Forwarded-For: client, proxy1, proxy2 → 取第一个（最左为真实客户端）
-            $ips = array_map('trim', explode(',', $forwarded));
-            foreach ($ips as $ip) {
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
-                    return $ip;
-                }
-            }
-        }
-
+        // X-Forwarded-For 的信任判定已由 TrustProxies 中间件统一处理
+        //（AppServiceProvider::boot 依据 TRUSTED_PROXIES 配置；不可信来源的
+        // 伪造头不会影响 ip()）。此处禁止再自行解析原始 XFF 头——否则直连
+        // 部署时攻击者仍可伪造访客 IP 污染统计/绕过 IP 级逻辑。
         return $this->request->ip() ?? '0.0.0.0';
     }
 

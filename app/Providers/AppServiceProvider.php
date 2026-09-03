@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Website;
 use App\Support\PluginManager;
 use App\Support\Settings;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -25,6 +26,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // 反向代理信任（config/monit.php trusted_proxies，.env TRUSTED_PROXIES）：
+        // 必须在 provider boot 阶段设置——此时 .env/config 已加载、TrustProxies
+        // 中间件尚未执行；bootstrap/app.php 的 withMiddleware 闭包过早（kernel
+        // 构造期）只能拿到 env() 默认值
+        $proxies = strtolower(trim((string) config('monit.trusted_proxies', 'private')));
+        TrustProxies::at(match (true) {
+            $proxies === '*' => '*',
+            $proxies === 'none' => [],
+            $proxies === 'private' => ['127.0.0.1', '::1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', 'fc00::/7'],
+            default => array_values(array_filter(array_map('trim', explode(',', $proxies)))),
+        });
+
         // SMTP 设置桥（后台 设置→SMTP → Laravel mail 运行时配置）
         // smtp_host 非空即启用 settings 驱动的 SMTP；留空回落 .env（MAIL_MAILER 默认 log）
         $this->applySmtpSettings();
