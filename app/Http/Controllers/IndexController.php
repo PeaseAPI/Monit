@@ -177,6 +177,7 @@ class IndexController extends Controller
         $urls = [
             ['loc' => route('index'), 'priority' => '1.0'],
             ['loc' => route('plan'), 'priority' => '0.9'],
+            ['loc' => route('seo.landing'), 'priority' => '0.8'],
             ['loc' => route('blog'), 'priority' => '0.8'],
             ['loc' => route('help'), 'priority' => '0.6'],
             ['loc' => route('contact'), 'priority' => '0.6'],
