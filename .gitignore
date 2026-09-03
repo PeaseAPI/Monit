@@ -31,3 +31,5 @@ Thumbs.db
 /tests/tmp/
 # 本机安装状态锁（部署环境各自生成，勿提交）
 /storage/installed.lock
+# 用户上传的运行时文件（头像等，各环境独立）
+/public/uploads/
