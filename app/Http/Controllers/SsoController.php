@@ -43,8 +43,14 @@ class SsoController extends Controller
             return redirect()->route('login')->withErrors(['sso' => __('auth.sso_expired')]);
         }
 
-        // 验证 HMAC 签名
-        $payload = $request->input('user_id', '').$request->input('email', '').$request->input('timestamp');
+        // 验证 HMAC 签名——payload 用冒号分隔，杜绝无分隔拼接的歧义
+        // （旧格式 '45'.'5victim@x.com' ≡ '455'.'victim@x.com' 可跨用户冒充，
+        //  修复后格式 'user_id:email:timestamp' 一一对应，无重解释空间）
+        $payload = implode(':', [
+            (string) $request->input('user_id', ''),
+            (string) $request->input('email', ''),
+            (string) $request->input('timestamp'),
+        ]);
         $expectedToken = hash_hmac('sha256', $payload, trim($ssoSecret, '"'));
 
         if (! hash_equals($expectedToken, $request->input('token'))) {

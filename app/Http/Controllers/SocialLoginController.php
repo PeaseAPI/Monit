@@ -151,7 +151,7 @@ class SocialLoginController extends Controller
         $state = Str::random(40);
         session(["oauth_state_{$provider}" => $state]);
 
-        return redirect($providerInstance->getAuthorizationUrl());
+        return redirect($providerInstance->getAuthorizationUrl($state));
     }
 
     /**
@@ -202,6 +202,14 @@ class SocialLoginController extends Controller
      */
     protected function callbackChinese(string $provider, Request $request): RedirectResponse
     {
+        // 验证 state 防止 CSRF（Login CSRF / code 注入）——与 callback() 同标准。
+        // 此前国内 5 家完全缺失校验，攻击者可将自身 code 注入受害者浏览器完成登录。
+        $state = $request->input('state');
+        if (! $state || ! hash_equals((string) session("oauth_state_{$provider}"), (string) $state)) {
+            return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_state_mismatch')]);
+        }
+        session()->forget("oauth_state_{$provider}");
+
         $config = $this->getChineseProviderConfig($provider);
         if (! $config) {
             return redirect()->route('login')->withErrors(['provider' => __('auth.provider_not_configured')]);
@@ -405,6 +413,13 @@ class SocialLoginController extends Controller
                 return null;
             }
             $payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
+
+            // 校验 aud：只接受签给本应用 client_id 的 id_token，防止其他 Apple
+            // 应用的令牌跨应用重放（纵深防御，state 校验已挡主要注入路径）
+            $clientId = config('services.apple.client_id');
+            if (! $clientId || ($payload['aud'] ?? null) !== $clientId) {
+                return null;
+            }
 
             return [
                 'id' => $payload['sub'] ?? '',

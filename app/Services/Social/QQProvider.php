@@ -15,14 +15,14 @@ class QQProvider implements ChineseSocialProvider
         protected string $redirectUri,
     ) {}
 
-    public function getAuthorizationUrl(): string
+    public function getAuthorizationUrl(?string $state = null): string
     {
         return 'https://graph.qq.com/oauth2.0/authorize?'.http_build_query([
             'response_type' => 'code',
             'client_id' => $this->appId,
             'redirect_uri' => $this->redirectUri,
             'scope' => 'get_user_info',
-            'state' => csrf_token(),
+            'state' => $state ?? csrf_token(),
         ]);
     }
 

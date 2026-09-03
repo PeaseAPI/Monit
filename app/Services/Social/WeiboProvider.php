@@ -15,14 +15,14 @@ class WeiboProvider implements ChineseSocialProvider
         protected string $redirectUri,
     ) {}
 
-    public function getAuthorizationUrl(): string
+    public function getAuthorizationUrl(?string $state = null): string
     {
         return 'https://api.weibo.com/oauth2/authorize?'.http_build_query([
             'client_id' => $this->appKey,
             'redirect_uri' => $this->redirectUri,
             'response_type' => 'code',
             'scope' => 'email',
-            'state' => csrf_token(),
+            'state' => $state ?? csrf_token(),
         ]);
     }
 

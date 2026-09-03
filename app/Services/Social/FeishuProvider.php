@@ -15,13 +15,13 @@ class FeishuProvider implements ChineseSocialProvider
         protected string $redirectUri,
     ) {}
 
-    public function getAuthorizationUrl(): string
+    public function getAuthorizationUrl(?string $state = null): string
     {
         return 'https://open.feishu.cn/open-apis/authen/v1/authorize?'.http_build_query([
             'app_id' => $this->appId,
             'redirect_uri' => $this->redirectUri,
             'response_type' => 'code',
-            'state' => csrf_token(),
+            'state' => $state ?? csrf_token(),
         ]);
     }
 
