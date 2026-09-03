@@ -152,6 +152,8 @@ Route::get('/api-documentation', [IndexController::class, 'apiDocs'])->name('api
 
 // 站点地图 / Cookie 同意 / 退订 / 维护页（规格书 §6.1）
 Route::get('/sitemap', [IndexController::class, 'sitemap'])->name('sitemap');
+// 标准约定路径别名：搜索引擎默认探测 /sitemap.xml（同控制器输出 XML）
+Route::get('/sitemap.xml', [IndexController::class, 'sitemap'])->name('sitemap.xml');
 
 // 法务静态页（content.terms_html / content.privacy_html，对标原版 /terms /privacy）
 Route::get('/terms', [IndexController::class, 'terms'])->name('terms');
@@ -830,10 +832,11 @@ Route::get('/robots.txt', function () {
         ]);
     }
 
-    if ($sitemap = trim((string) Settings::get('main.sitemap_url', ''))) {
-        $lines[] = '';
-        $lines[] = 'Sitemap: '.$sitemap;
-    }
+    // Sitemap 声明：后台 main.sitemap_url 优先；未配置时默认指向自身 /sitemap.xml
+    // （平台内置 XML sitemap 总是存在，robots 不声明会让搜索引擎漏发现）
+    $sitemap = trim((string) Settings::get('main.sitemap_url', ''));
+    $lines[] = '';
+    $lines[] = 'Sitemap: '.($sitemap !== '' ? $sitemap : url('/sitemap.xml'));
 
     return response(implode("\n", $lines), 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
 })->name('robots.txt');
