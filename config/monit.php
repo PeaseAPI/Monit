@@ -28,6 +28,9 @@ return [
         'session_timeout' => 1800,
         // M23：pixel_key → Website 查询缓存 TTL（秒）；0 = 关闭缓存
         'website_cache_ttl' => 60,
+        // 缓存未命中回源 DB 的每 IP 每分钟上限（防随机 pixel_key 扫描打穿 DB/缓存）；
+        // 正常流量几乎全部命中缓存不受影响；0 = 关闭该防护
+        'website_miss_rate_limit' => 60,
         // 单页最大自定义参数键值对
         'max_custom_parameters' => 10,
         // 事件过期天数（数据保留）

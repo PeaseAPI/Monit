@@ -7,6 +7,7 @@ use App\Services\PixelTracker;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\RateLimiter;
 
 /**
  * Monit 像素采集端点
@@ -47,8 +48,23 @@ class PixelTrackController extends Controller
                 // 未命中 或 坏缓存（database 驱动 value 列截断产生的 __PHP_Incomplete_Class 等）：
                 // 回源重建并覆盖坏条目——直接使用坏对象会触发 TypeError 逐请求上报
                 //（关联：PixelTracker::handle 强类型 Website 参数；生产 cache.value 需 mediumtext）
-                $website = $fetchWebsite();
-                Cache::put($cacheKey, $website ?? self::CACHE_NOT_FOUND, $cacheTtl);
+                //
+                // 负向限流：每 IP 未命中回源次数限流（config: website_miss_rate_limit / 分钟）。
+                // 命中缓存的正常流量零开销；随机 pixel_key 扫描因每请求必 miss 被快速熔断，
+                // 避免攻击者持续回源 DB / 向缓存灌入垃圾条目。超限后静默按无站点处理。
+                $missLimit = (int) config('monit.pixel.website_miss_rate_limit', 60);
+                $missKey = 'pixel.miss:'.$request->ip();
+
+                if ($missLimit > 0 && RateLimiter::tooManyAttempts($missKey, $missLimit)) {
+                    $website = null;
+                    $reason = 'miss_throttled';
+                } else {
+                    if ($missLimit > 0) {
+                        RateLimiter::hit($missKey, 60);
+                    }
+                    $website = $fetchWebsite();
+                    Cache::put($cacheKey, $website ?? self::CACHE_NOT_FOUND, $cacheTtl);
+                }
             }
         }
 
@@ -62,7 +78,8 @@ class PixelTrackController extends Controller
                 $reason = 'exception';
             }
         } else {
-            $reason = 'website_not_found';
+            // 保留 miss_throttled 标记（区别于真正的无站点，便于观测熔断是否生效）
+            $reason = $reason === 'miss_throttled' ? $reason : 'website_not_found';
         }
 
         // 简单跳过原因计数（供 Admin 观测，不记录 PII）
