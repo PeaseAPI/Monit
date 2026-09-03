@@ -273,7 +273,9 @@ class AccountController extends Controller
 
         $user = $request->user();
 
-        if (! TotpService::verify((string) $user->twofa_token, $validated['code'])) {
+        // 一次性消费：关闭 2FA 的码与登录共用判重池——防止钓鱼拿到「密码+码」后
+        // 在有效窗口内重放同一码绕过双重确认
+        if (! TotpService::consume((string) $user->twofa_token, $validated['code'], "user.{$user->user_id}")) {
             return back()->withErrors(['code' => __('account.twofa_code_invalid')]);
         }
 

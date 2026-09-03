@@ -178,8 +178,9 @@ class AuthController extends Controller
 
         $user = User::find($userId);
 
+        // 一次性消费：同一窗口的码登录后不可复用（RFC 6238 §5.2，防钓鱼重放）
         if (! $user || ! $user->twofa_is_enabled
-            || ! TotpService::verify((string) $user->twofa_token, $validated['code'])) {
+            || ! TotpService::consume((string) $user->twofa_token, $validated['code'], "user.{$user->user_id}")) {
             return back()->withErrors(['code' => __('account.twofa_code_invalid')]);
         }
 

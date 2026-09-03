@@ -50,16 +50,57 @@ class TotpService
      */
     public static function verify(string $secret, ?string $code): bool
     {
+        return self::verifyCounter($secret, $code) !== null;
+    }
+
+    /**
+     * 校验动态码并返回命中的时间计数器（RFC 6238 ±1 窗口；恒定时间比较防时序攻击）
+     *
+     * 返回 null 表示不匹配；返回 int 供一次性消费（consume）判重使用
+     */
+    public static function verifyCounter(string $secret, ?string $code): ?int
+    {
         if (! $code || ! preg_match('/^\d{'.self::DIGITS.'}$/', $code)) {
+            return null;
+        }
+
+        $counter = intdiv(time(), self::PERIOD);
+
+        foreach ([$counter - 1, $counter, $counter + 1] as $candidate) {
+            if (hash_equals(self::code($secret, $candidate), $code)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 一次性消费动态码（RFC 6238 §5.2 建议的 last-used counter 判重）
+     *
+     * 同一时间窗口的码只允许使用一次：命中后把 counter 记入 cache
+     * （TTL 120s 覆盖 counter+1 窗口的最长有效期 90s），
+     * 后续相同或更小 counter 的码一律拒绝——阻断钓鱼/拦截后的 30~90 秒重放窗口。
+     * cache 不可用（null 驱动）时退化为纯校验，不阻断可用性。
+     */
+    public static function consume(string $secret, ?string $code, string $consumerKey): bool
+    {
+        $matched = self::verifyCounter($secret, $code);
+
+        if ($matched === null) {
             return false;
         }
 
-        // 恒定时间比较，防时序攻击
-        $counter = intdiv(time(), self::PERIOD);
+        $cacheKey = 'twofa.last_counter.'.$consumerKey;
+        $lastUsed = (int) cache()->get($cacheKey, 0);
 
-        return hash_equals(self::code($secret, $counter - 1), $code)
-            || hash_equals(self::code($secret, $counter), $code)
-            || hash_equals(self::code($secret, $counter + 1), $code);
+        if ($matched <= $lastUsed) {
+            return false;
+        }
+
+        cache()->put($cacheKey, $matched, now()->addSeconds(120));
+
+        return true;
     }
 
     /**
