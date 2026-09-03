@@ -183,12 +183,16 @@ class IndexController extends Controller
             ['loc' => route('contact'), 'priority' => '0.6'],
         ];
 
+        // lastmod：文章用发布时间、CMS 页用更新时间（搜索引擎抓取调度信号；
+        // 静态路由无自然修改时间，省略该元素比编造值更符合规范）
         foreach (BlogPost::where('is_published', true)->orderByDesc('datetime')->limit(500)->get() as $post) {
-            $urls[] = ['loc' => route('blog.post', $post->url), 'priority' => '0.7'];
+            $urls[] = ['loc' => route('blog.post', $post->url), 'priority' => '0.7',
+                'lastmod' => optional($post->updated_at ?? $post->datetime)->toAtomString()];
         }
 
         foreach (Page::where('is_published', true)->limit(200)->get() as $page) {
-            $urls[] = ['loc' => route('page', $page->url), 'priority' => '0.5'];
+            $urls[] = ['loc' => route('page', $page->url), 'priority' => '0.5',
+                'lastmod' => optional($page->updated_at)->toAtomString()];
         }
 
         return response()
