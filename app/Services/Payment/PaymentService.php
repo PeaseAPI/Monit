@@ -179,6 +179,16 @@ class PaymentService
             return $payment;
         }
 
+        return $this->settlePayment($payment, $externalId, $subscriptionId);
+    }
+
+    /**
+     * 入账收尾（handlePaymentSuccess / handleExternalPaymentNotification 共用）：
+     * 置 paid + 累计用户支付总额 + 激活套餐 + 派发平台 webhook。
+     * 调用方负责幂等守卫（status===1 跳过）
+     */
+    private function settlePayment(Payment $payment, string $externalId, ?string $subscriptionId = null): Payment
+    {
         $payment->update([
             'external_id' => $externalId,
             'status' => 1, // paid
@@ -187,22 +197,24 @@ class PaymentService
 
         $user = $payment->user;
 
-        // 更新用户支付信息
-        $user->update([
-            'payment_subscription_id' => $subscriptionId,
-            'payment_processor' => $payment->payment_processor,
-            'payment_total_amount' => ($user->payment_total_amount ?? 0) + $payment->total_amount,
-            'payment_currency' => $payment->currency,
-        ]);
+        if ($user) {
+            // 更新用户支付信息（记账口径与直接入账路径一致）
+            $user->update([
+                'payment_subscription_id' => $subscriptionId,
+                'payment_processor' => $payment->payment_processor,
+                'payment_total_amount' => ($user->payment_total_amount ?? 0) + $payment->total_amount,
+                'payment_currency' => $payment->currency,
+            ]);
 
-        // 激活套餐
-        $this->activatePlan($user, $payment);
+            // 激活套餐
+            $this->activatePlan($user, $payment);
+        }
 
         // 平台 Webhook 派发（规格 §6.3.1：webhooks.webhook_payment_success_url）
         app(WebhookService::class)->paymentSuccess([
             'payment_id' => $payment->payment_id,
-            'user_id' => $user->user_id,
-            'email' => $user->email,
+            'user_id' => $payment->user_id,
+            'email' => $payment->email,
             'plan_id' => $payment->plan_id,
             'amount' => $payment->total_amount,
             'currency' => $payment->currency,
@@ -340,15 +352,9 @@ class PaymentService
             ->first();
 
         if ($payment && $payment->status !== 1) {
-            $payment->update([
-                'status' => 1,
-                'last_datetime' => now(),
-            ]);
-
-            $user = $payment->user;
-            if ($user) {
-                $this->activatePlan($user, $payment);
-            }
+            // 记账口径与直接入账路径统一（周期 #14：此前不累计
+            // payment_total_amount、不派发平台 webhook）
+            $this->settlePayment($payment, $externalId);
         }
     }
 }

@@ -92,6 +92,13 @@ class AuthController extends Controller
             'sms_code.digits' => __('auth.sms_code_invalid'),
         ]);
 
+        // 失败锁定检查（对标邮箱路径：锁定期间正确凭证也被拒绝；
+        // 置于验证码校验之前，避免锁定期间消费验证码）
+        if (LoginLockout::blocked('login', 'phone:'.$phone)) {
+            return back()->withInput($request->only('email'))
+                ->withErrors(['email' => __('auth.login_locked')]);
+        }
+
         $user = User::where('phone', $phone)->first();
 
         // 短信验证码登录（免密码）

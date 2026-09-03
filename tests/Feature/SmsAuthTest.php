@@ -94,6 +94,83 @@ class SmsAuthTest extends TestCase
         $this->assertAuthenticatedAs(User::where('phone', '13900139000')->first());
     }
 
+    /**
+     * 安全审计周期 #14：手机号登录失败锁定绕过修复
+     * 邮箱路径锁定期间正确凭证也被拒绝；手机路径此前缺 blocked 前置检查，
+     * 锁定期间正确密码/验证码可直接登录（暴力破解防护被绕过）
+     */
+    public function test_locked_phone_login_rejects_correct_password(): void
+    {
+        User::create([
+            'name' => '锁定用户', 'email' => 'locked@test.dev',
+            'password' => bcrypt('secret123'), 'phone' => '13611112222',
+            'status' => 1, 'plan_id' => 'free',
+        ]);
+
+        // 默认 5 次失败触发锁定
+        for ($i = 0; $i < 5; $i++) {
+            $this->post('/login', [
+                'email' => '13611112222',
+                'password' => 'wrong-password',
+            ]);
+        }
+
+        // 锁定期间正确密码也必须被拒绝
+        $response = $this->post('/login', [
+            'email' => '13611112222',
+            'password' => 'secret123',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_locked_phone_login_rejects_valid_sms_code(): void
+    {
+        User::create([
+            'name' => '锁定验证码用户', 'email' => 'lockedcode@test.dev',
+            'password' => bcrypt('secret123'), 'phone' => '13633334444',
+            'status' => 1, 'plan_id' => 'free',
+        ]);
+
+        SmsService::send('13633334444', 'login');
+        $code = $this->codeFromCache('13633334444', 'login');
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->post('/login', [
+                'email' => '13633334444',
+                'password' => 'wrong-password',
+            ]);
+        }
+
+        // 锁定期间正确验证码也必须被拒绝
+        $response = $this->post('/login', [
+            'email' => '13633334444',
+            'sms_code' => $code,
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    /** 显式回归：被封禁用户（status!==1）即使凭证正确也不得登录 */
+    public function test_disabled_user_cannot_login_by_phone(): void
+    {
+        User::create([
+            'name' => '封禁用户', 'email' => 'banned@test.dev',
+            'password' => bcrypt('secret123'), 'phone' => '13555556666',
+            'status' => 0, 'plan_id' => 'free',
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => '13555556666',
+            'password' => 'secret123',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
     public function test_login_with_phone_and_sms_code(): void
     {
         $user = User::create([
