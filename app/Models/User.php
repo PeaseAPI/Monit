@@ -30,7 +30,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'type', 'name', 'email', 'password', 'billing', 'api_key',
-        'email_activation_code', 'lost_password_code', 'is_newsletter_subscribed',
+        'email_activation_code', 'lost_password_code', 'lost_password_sent_at', 'is_newsletter_subscribed',
         'phone', 'phone_verified_at',
         'plan_id', 'plan_expiration_date', 'plan_settings', 'plan_trial_done',
         'plan_expiry_reminder', 'user_deletion_reminder', 'referral_key', 'referred_by',
@@ -51,6 +51,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
+            'lost_password_sent_at' => 'datetime',
             'password' => 'hashed',
             'billing' => 'array',
             'plan_settings' => 'array',

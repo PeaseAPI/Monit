@@ -3000,5 +3000,6 @@
   "auth.oauth_state_mismatch": "登录状态校验失败，请重试",
   "auth.oauth_no_code": "授权失败：未收到授权码",
   "auth.oauth_token_failed": "获取授权令牌失败，请重试",
-  "auth.oauth_no_email": "该第三方账号未提供邮箱地址，无法完成登录"
+  "auth.oauth_no_email": "该第三方账号未提供邮箱地址，无法完成登录",
+  "auth.oauth_account_mismatch": "该邮箱对应的账号无法通过此登录方式登录，请使用原有登录方式"
 }

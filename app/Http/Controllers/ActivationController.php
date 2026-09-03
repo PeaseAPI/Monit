@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\ActivateUser;
 use App\Models\User;
+use App\Services\LoginLockout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -60,6 +61,17 @@ class ActivationController extends Controller
             'email.required' => __('validation.email_required'),
             'email.email' => __('validation.email_email'),
         ]);
+
+        $identifier = strtolower(trim($validated['email']));
+
+        // 重发激活邮件锁定（默认 3 次/30 分钟）：路由层 throttle 是 IP 维度，
+        // 换 IP/分布式请求可绕过；per-email 锁定与找回密码同标准，补齐邮件轰炸面。
+        // 无论邮箱是否注册都计数——不引入存在性差异。
+        if (LoginLockout::blocked('activation', $identifier)) {
+            return back()->withInput($request->only('email'))
+                ->withErrors(['email' => __('auth.login_locked')]);
+        }
+        LoginLockout::recordFailure('activation', $identifier);
 
         $user = User::where('email', $validated['email'])->first();
 

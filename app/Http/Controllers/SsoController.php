@@ -69,6 +69,9 @@ class SsoController extends Controller
             return redirect()->route('login')->withErrors(['sso' => __('auth.sso_user_not_found')]);
         }
 
+        // 会话固定防护：SSO 签名验证通过即更换 session id
+        $request->session()->regenerate();
+
         Auth::login($user);
         $user->increment('total_logins');
         $user->update(['last_activity' => now()]);

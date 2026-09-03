@@ -3000,5 +3000,6 @@
   "auth.oauth_state_mismatch": "Login state validation failed, please try again",
   "auth.oauth_no_code": "Authorization failed: no code received",
   "auth.oauth_token_failed": "Failed to obtain access token, please try again",
-  "auth.oauth_no_email": "This social account has no email address"
+  "auth.oauth_no_email": "This social account has no email address",
+  "auth.oauth_account_mismatch": "This account cannot be signed in via this provider, please use your original login method"
 }

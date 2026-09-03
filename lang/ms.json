@@ -3000,5 +3000,6 @@
   "auth.oauth_state_mismatch": "Pengesahan status log masuk gagal, sila cuba lagi",
   "auth.oauth_no_code": "Kegagalan kebenaran: tiada kod diterima",
   "auth.oauth_token_failed": "Gagal mendapatkan token akses, sila cuba lagi",
-  "auth.oauth_no_email": "Akaun sosial ini tiada alamat e-mel"
+  "auth.oauth_no_email": "Akaun sosial ini tiada alamat e-mel",
+  "auth.oauth_account_mismatch": "Akaun ini tidak boleh log masuk melalui penyedia ini, sila gunakan kaedah log masuk asal"
 }

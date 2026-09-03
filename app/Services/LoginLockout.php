@@ -27,6 +27,10 @@ class LoginLockout
             'users.lost_password_lockout_is_enabled', 'users.lost_password_lockout_max_retries', 'users.lost_password_lockout_time',
             3,
         ],
+        'activation' => [
+            'users.activation_resend_lockout_is_enabled', 'users.activation_resend_lockout_max_retries', 'users.activation_resend_lockout_time',
+            3,
+        ],
     ];
 
     public static function blocked(string $scope, string $identifier): bool

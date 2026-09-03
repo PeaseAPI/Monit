@@ -168,9 +168,9 @@ class SocialLoginController extends Controller
             return redirect()->route('login')->withErrors(['provider' => __('auth.unsupported_provider')]);
         }
 
-        // 验证 state 防止 CSRF
+        // 验证 state 防止 CSRF（与国内提供商同标准：hash_equals 时序安全比较）
         $state = $request->input('state');
-        if ($state !== session("oauth_state_{$provider}")) {
+        if (! $state || ! hash_equals((string) session("oauth_state_{$provider}"), (string) $state)) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_state_mismatch')]);
         }
         session()->forget("oauth_state_{$provider}");
@@ -253,7 +253,7 @@ class SocialLoginController extends Controller
      */
     protected function getChineseProviderConfig(string $provider): ?array
     {
-        return match ($provider) {
+        $config = match ($provider) {
             'qq' => [
                 'appId' => config('services.qq.client_id'),
                 'appKey' => config('services.qq.client_secret'),
@@ -281,6 +281,19 @@ class SocialLoginController extends Controller
             ],
             default => null,
         };
+
+        // 未配置（id/secret 为 null）时视为未配置：null 传入提供商类型化 string
+        // 构造参数会抛 TypeError——此前未配置时 /social-login/{provider} 直接 500
+        if ($config) {
+            $id = $config['appId'] ?? $config['clientId'] ?? $config['appKey'] ?? null;
+            $secret = $config['appSecret'] ?? $config['clientSecret'] ?? $config['appKey'] ?? null;
+
+            if (! $id || ! $secret) {
+                return null;
+            }
+        }
+
+        return $config;
     }
 
     /**
@@ -347,20 +360,26 @@ class SocialLoginController extends Controller
             $response = $request->get($config['userinfo_url'], $queryParams);
             $data = $response->json();
 
-            // GitHub 需要单独获取邮箱
+            // GitHub 需要单独获取邮箱——只接受 GitHub 已验证（verified）邮箱：
+            // primary 可以是未验证邮箱（GitHub 允许设未验证邮箱为 primary），
+            // 未验证 email 直接用于匹配本地账号 = 账号接管
             if ($provider === 'github' && empty($data['email'])) {
                 $emailResponse = Http::withToken($accessToken)
                     ->get($config['userinfo_email_url']);
-                $emails = $emailResponse->json();
-                $primaryEmail = collect($emails)->firstWhere('primary', true);
-                $data['email'] = $primaryEmail['email'] ?? ($emails[0]['email'] ?? null);
+                $emails = collect($emailResponse->json() ?? []);
+
+                $verified = $emails->filter(fn ($e) => ($e['verified'] ?? false) === true);
+                $pick = $verified->firstWhere('primary', true) ?? $verified->first();
+
+                $data['email'] = $pick['email'] ?? null;
             }
 
-            // Discord 用户信息
+            // Discord 用户信息——email 仅在 Discord 标记 verified 时可用（防未验证
+            // email 匹配本地账号）
             if ($provider === 'discord') {
                 return [
                     'id' => (string) $data['id'],
-                    'email' => $data['email'] ?? null,
+                    'email' => (($data['verified'] ?? false) === true) ? ($data['email'] ?? null) : null,
                     'name' => $data['global_name'] ?? ($data['username'] ?? ''),
                     'avatar' => isset($data['avatar'])
                         ? "https://cdn.discordapp.com/avatars/{$data['id']}/{$data['avatar']}.png"
@@ -472,6 +491,16 @@ class SocialLoginController extends Controller
                 return redirect()->route('login')->withErrors(['email' => __('validation.account_disabled')]);
             }
 
+            // 虚拟邮箱（国内 provider 无邮箱时构造的 {provider}_{id}@social.login）：
+            // 该域名是合法 email 格式、本地可注册——攻击者可抢先本地注册承接
+            // 真实用户的社交登录（pre-hijacking）。只允许匹配同一 provider 创建的账号。
+            if (str_ends_with($email, '@social.login') && $user->source !== $provider) {
+                return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_account_mismatch')]);
+            }
+
+            // 会话固定防护：社交登录成功同样更换 session id
+            session()->regenerate();
+
             Auth::login($user, true);
             $user->forceFill(['last_activity' => now(), 'total_logins' => $user->total_logins + 1])->save();
 
@@ -503,6 +532,9 @@ class SocialLoginController extends Controller
             'avatar' => $userInfo['avatar'],
             'referred_by' => $referredBy,
         ]);
+
+        // 会话固定防护：新注册即登录同样更换 session id
+        session()->regenerate();
 
         Auth::login($user, true);
         $user->forceFill(['last_activity' => now(), 'total_logins' => 1])->save();

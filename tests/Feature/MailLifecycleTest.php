@@ -124,7 +124,12 @@ class MailLifecycleTest extends TestCase
 
     public function test_reset_password_via_email_code(): void
     {
-        $user = $this->makeUser(['email' => 'reset2@test.dev', 'lost_password_code' => 'valid-code-64']);
+        // 周期 #18 起重置码 60 分钟过期，测试数据需携带签发时间
+        $user = $this->makeUser([
+            'email' => 'reset2@test.dev',
+            'lost_password_code' => 'valid-code-64',
+            'lost_password_sent_at' => now(),
+        ]);
 
         $this->get(route('password.reset', 'valid-code-64'))->assertOk();
 

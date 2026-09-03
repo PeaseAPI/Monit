@@ -98,10 +98,11 @@ class ForgotPasswordController extends Controller
             return back()->with('status', __('auth.reset_link_sent'));
         }
 
-        // 生成重置码
+        // 生成重置码（记录签发时间，TTL 消费方：showResetForm/reset）
         $code = Str::random(64);
         $user->forceFill([
             'lost_password_code' => $code,
+            'lost_password_sent_at' => now(),
         ])->save();
 
         Mail::to($user->email)->send(
@@ -169,12 +170,22 @@ class ForgotPasswordController extends Controller
     {
         $user = User::where('lost_password_code', $code)->first();
 
-        if (! $user) {
+        if (! $user || $this->resetCodeExpired($user)) {
             return redirect()->route('password.request')
                 ->withErrors(['email' => __('auth.reset_token_invalid')]);
         }
 
         return view('auth.passwords.reset', ['code' => $code, 'email' => $user->email]);
+    }
+
+    /**
+     * 重置码有效期：60 分钟。lost_password_code 此前永久有效——泄露的
+     * 重置链接（邮件转发/日志残留/收件箱失窃）在用户重新申请前一直可用。
+     */
+    protected function resetCodeExpired(User $user): bool
+    {
+        return ! $user->lost_password_sent_at
+            || $user->lost_password_sent_at->lt(now()->subMinutes(60));
     }
 
     /**
@@ -198,7 +209,7 @@ class ForgotPasswordController extends Controller
             ->where('lost_password_code', $validated['code'])
             ->first();
 
-        if (! $user) {
+        if (! $user || $this->resetCodeExpired($user)) {
             return back()->withErrors(['email' => __('auth.reset_token_invalid')]);
         }
 

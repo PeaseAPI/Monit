@@ -139,6 +139,10 @@ class AuthController extends Controller
             LoginLockout::clear('login', 'phone:'.$user->phone);
         }
 
+        // 会话固定防护：凭证验证通过即更换 session id（保留会话数据；
+        // 登录前的旧 id 失效，预置/窃取的旧 id 无法携带认证态）
+        $request->session()->regenerate();
+
         // 两步验证（规格书 §12.4）：平台开关 users.two_fa_is_enabled 开启且用户已启用时进入二步验证流程
         if ($user->twofa_is_enabled && self::twoFaEnabled()) {
             $request->session()->put([
@@ -211,6 +215,10 @@ class AuthController extends Controller
         }
 
         $request->session()->forget(['twofa_user_id', 'twofa_remember', 'twofa_expires_at']);
+
+        // 会话固定防护：2FA 通过即更换 session id（2FA pending 期间用户携带的
+        // 旧 id 在拿到认证态前失效）
+        $request->session()->regenerate();
 
         Auth::guard('web')->setRememberDuration(self::rememberLifetimeMinutes());
         Auth::login($user, $request->session()->get('twofa_remember', false));
@@ -386,6 +394,9 @@ class AuthController extends Controller
         }
 
         Auth::login($user);
+
+        // 会话固定防护：注册即登录同样更换 session id
+        $request->session()->regenerate();
 
         // 欢迎邮件（users.welcome_email_is_enabled）：免激活注册立即发送
         if (self::welcomeEmailEnabled()) {
