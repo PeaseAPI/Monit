@@ -28,7 +28,17 @@ class AdminAffiliatesWithdrawals extends Controller
     public function approve(int $withdrawalId): RedirectResponse
     {
         $withdrawal = AffiliateWithdrawal::findOrFail($withdrawalId);
-        $withdrawal->update(['status' => 'approved', 'processed_datetime' => now()]);
+
+        // 状态机：仅 pending 可审批（安全审计周期 #16）。对齐同模型的
+        // AdminPayments::approveWithdrawal 入口与 bulkUpdate 的
+        // where('status','pending')，防止已终态提现被翻转/重复审批
+        // （重复支付风险）。注：processed_datetime 此前指向不存在的列
+        // 且不在 fillable，属静默丢弃的死代码，一并移除
+        if ($withdrawal->status !== 'pending') {
+            return back()->withErrors(['status' => __('referrals.withdrawal_not_pending')]);
+        }
+
+        $withdrawal->update(['status' => 'approved']);
 
         return back()->with('success', __('msg.withdrawal_approved'));
     }
@@ -36,7 +46,12 @@ class AdminAffiliatesWithdrawals extends Controller
     public function reject(int $withdrawalId): RedirectResponse
     {
         $withdrawal = AffiliateWithdrawal::findOrFail($withdrawalId);
-        $withdrawal->update(['status' => 'rejected', 'processed_datetime' => now()]);
+
+        if ($withdrawal->status !== 'pending') {
+            return back()->withErrors(['status' => __('referrals.withdrawal_not_pending')]);
+        }
+
+        $withdrawal->update(['status' => 'rejected']);
 
         return back()->with('success', __('msg.withdrawal_rejected'));
     }

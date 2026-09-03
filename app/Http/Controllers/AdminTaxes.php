@@ -71,7 +71,9 @@ class AdminTaxes extends Controller
 
     public function destroy(int $taxId): RedirectResponse
     {
-        Tax::find($taxId)->delete();
+        // findOrFail：安全审计周期 #16，此前 Tax::find() 无 null 保护，
+        // 记录不存在时 null->delete() 抛 500
+        Tax::findOrFail($taxId)->delete();
 
         return redirect()->route('admin.taxes.index')
             ->with('success', __('msg.tax_deleted'));
