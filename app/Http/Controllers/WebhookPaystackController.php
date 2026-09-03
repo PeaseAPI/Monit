@@ -35,7 +35,17 @@ class WebhookPaystackController extends Controller
             $paymentId = $metadata['payment_id'] ?? null;
             $externalId = $data['id'] ?? null;
 
-            if ($paymentId) {
+            // 金额/币种防篡改：amount 为分/派萨（最小单位），须与本地订单一致方可入账
+            if ($paymentId
+                && $paymentService->verifyGatewayAmount(
+                    (int) $paymentId,
+                    PaymentService::majorUnits(
+                        $data['amount'] ?? null,
+                        (string) ($data['currency'] ?? '')
+                    ),
+                    (string) ($data['currency'] ?? ''),
+                    'paystack',
+                )) {
                 $paymentService->handlePaymentSuccess((int) $paymentId, (string) $externalId);
             }
         }

@@ -38,7 +38,13 @@ class WebhookPaymentController extends Controller
         if ($request->input('alert_name') === 'payment_succeeded') {
             $data = json_decode($request->input('passthrough', ''), true) ?? [];
             $paymentId = $data['payment_id'] ?? null;
-            if ($paymentId) {
+            if ($paymentId
+                && $this->paymentService->verifyGatewayAmount(
+                    (int) $paymentId,
+                    is_numeric($request->input('sale_gross')) ? (float) $request->input('sale_gross') : null,
+                    (string) $request->input('currency', ''),
+                    'paddle',
+                )) {
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('order_id'));
             }
         }
@@ -57,7 +63,16 @@ class WebhookPaymentController extends Controller
 
         if ($request->input('event_type') === 'transaction.completed') {
             $paymentId = $request->input('data.custom_data.payment_id');
-            if ($paymentId) {
+            if ($paymentId
+                && $this->paymentService->verifyGatewayAmount(
+                    (int) $paymentId,
+                    PaymentService::majorUnits(
+                        $request->input('data.attributes.totals.total'),
+                        (string) $request->input('data.attributes.currency_code', '')
+                    ),
+                    (string) $request->input('data.attributes.currency_code', ''),
+                    'paddle_billing',
+                )) {
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('data.id'));
             }
         }
@@ -133,7 +148,16 @@ class WebhookPaymentController extends Controller
 
         if ($request->input('meta.event_name') === 'order_created') {
             $paymentId = $request->input('data.attributes.custom_data.payment_id');
-            if ($paymentId) {
+            if ($paymentId
+                && $this->paymentService->verifyGatewayAmount(
+                    (int) $paymentId,
+                    PaymentService::majorUnits(
+                        $request->input('data.attributes.total'),
+                        (string) $request->input('data.attributes.currency', '')
+                    ),
+                    (string) $request->input('data.attributes.currency', ''),
+                    'lemonsqueezy',
+                )) {
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('data.id'));
             }
         }
@@ -164,7 +188,14 @@ class WebhookPaymentController extends Controller
             return response()->json(['error' => 'Verification failed'], 400);
         }
 
-        if ($paymentId) {
+        if ($paymentId
+            && $this->paymentService->verifyGatewayAmount(
+                (int) $paymentId,
+                isset($verified['amount']['value']) && is_numeric($verified['amount']['value'])
+                    ? (float) $verified['amount']['value'] : null,
+                (string) ($verified['amount']['currency'] ?? ''),
+                'yookassa',
+            )) {
             $this->paymentService->handlePaymentSuccess((int) $paymentId, $externalId);
         }
 
@@ -229,7 +260,13 @@ class WebhookPaymentController extends Controller
         $data = $request->input('object', []);
         if ($request->input('type') === 'payment.created' && ($data['status'] ?? '') === 'completed') {
             $paymentId = $data['metadata']['payment_id'] ?? null;
-            if ($paymentId) {
+            if ($paymentId
+                && $this->paymentService->verifyGatewayAmount(
+                    (int) $paymentId,
+                    PaymentService::majorUnits($data['amount'] ?? null, (string) ($data['currency'] ?? '')),
+                    (string) ($data['currency'] ?? ''),
+                    'cryptocom',
+                )) {
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) ($data['id'] ?? ''));
             }
         }
@@ -296,7 +333,16 @@ class WebhookPaymentController extends Controller
 
         if ($request->input('event') === 'ORDER_COMPLETED') {
             $paymentId = $request->input('data.metadata.payment_id');
-            if ($paymentId) {
+            if ($paymentId
+                && $this->paymentService->verifyGatewayAmount(
+                    (int) $paymentId,
+                    PaymentService::majorUnits(
+                        $request->input('data.total_amount'),
+                        (string) $request->input('data.currency', '')
+                    ),
+                    (string) $request->input('data.currency', ''),
+                    'revolut',
+                )) {
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('data.id'));
             }
         }

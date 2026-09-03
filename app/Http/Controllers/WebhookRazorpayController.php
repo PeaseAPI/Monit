@@ -37,7 +37,17 @@ class WebhookRazorpayController extends Controller
             $paymentId = $paymentEntity['notes']['payment_id'] ?? null;
             $externalId = $paymentEntity['id'] ?? null;
 
-            if ($paymentId) {
+            // 金额/币种防篡改：amount 为派萨（最小单位），须与本地订单一致方可入账
+            if ($paymentId
+                && $paymentService->verifyGatewayAmount(
+                    (int) $paymentId,
+                    PaymentService::majorUnits(
+                        $paymentEntity['amount'] ?? null,
+                        (string) ($paymentEntity['currency'] ?? '')
+                    ),
+                    (string) ($paymentEntity['currency'] ?? ''),
+                    'razorpay',
+                )) {
                 $paymentService->handlePaymentSuccess((int) $paymentId, $externalId);
             }
         }

@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Services\WebhookService;
 use App\Support\Currency;
+use Illuminate\Support\Facades\Log;
 
 /**
  * 支付服务 - 统一处理支付下单/回调/订阅
@@ -15,6 +16,71 @@ use App\Support\Currency;
  */
 class PaymentService
 {
+    /**
+     * ISO 4217 零小数币种（最小单位 == 主单位，不除 100）
+     */
+    public const ZERO_DECIMAL_CURRENCIES = [
+        'JPY', 'KRW', 'VND', 'CLP', 'ISK', 'UGX', 'KMF', 'XAF', 'XOF', 'XPF',
+        'DJF', 'GNF', 'PYG', 'RWF', 'VUV',
+    ];
+
+    /**
+     * 网关最小单位金额 → 主单位（ISO 4217 零小数币种表）
+     * 非数值/缺失返回 null（调用方比对必败 → fail-closed）
+     */
+    public static function majorUnits(int|string|null $minorAmount, string $currency): ?float
+    {
+        if ($minorAmount === null || ! is_numeric($minorAmount)) {
+            return null;
+        }
+
+        $factor = in_array(strtoupper(trim($currency)), self::ZERO_DECIMAL_CURRENCIES, true) ? 1 : 100;
+
+        return round(((float) $minorAmount) / $factor, 2);
+    }
+
+    /**
+     * 网关金额/币种防篡改校验：验签只证明「通知来自网关」，
+     * 不证明「结算金额 == 本地订单金额」。金额缺失/币种不匹配/超容差 → false
+     */
+    public function assertAmountMatches(Payment $payment, ?float $gatewayAmount, ?string $gatewayCurrency = null): bool
+    {
+        if ($gatewayAmount === null || $gatewayAmount < 0) {
+            return false;
+        }
+
+        if ($gatewayCurrency !== null
+            && strcasecmp(trim($gatewayCurrency), (string) $payment->currency) !== 0) {
+            return false;
+        }
+
+        return abs($gatewayAmount - (float) $payment->total_amount) < 0.005;
+    }
+
+    /**
+     * 网关回调入账前统一校验入口：按 payment_id 取本地订单，
+     * 校验金额/币种；不通过记 warning（含两侧金额币种，便于对账排查）并返回 false
+     */
+    public function verifyGatewayAmount(int $paymentId, ?float $gatewayAmount, ?string $gatewayCurrency, string $gateway): bool
+    {
+        $payment = Payment::find($paymentId);
+
+        if (! $payment || ! $this->assertAmountMatches($payment, $gatewayAmount, $gatewayCurrency)) {
+            Log::warning('webhook.amount_mismatch', [
+                'gateway' => $gateway,
+                'payment_id' => $paymentId,
+                'gateway_amount' => $gatewayAmount,
+                'gateway_currency' => $gatewayCurrency,
+                'local_amount' => $payment?->total_amount,
+                'local_currency' => $payment?->currency,
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * 创建支付订单
      */
