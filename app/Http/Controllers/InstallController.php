@@ -9,6 +9,7 @@ use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -530,6 +531,15 @@ class InstallController extends Controller
             return redirect('/');
         }
 
+        // 互斥锁（非阻塞）：installed() 检查与 InstallState::complete() 落锁之间存在
+        // TOCTOU 窗口——部署窗口期攻击者并发抢注可创建第二个 type=1 超管。
+        // 持锁请求串行化，其余并发请求直接拒绝；请求结束时 PHP 自动关闭句柄并释放锁，
+        // 失败重试路径无需手动解锁
+        $mutex = @fopen(storage_path('framework/install-mutex.lock'), 'c');
+        if ($mutex === false || ! flock($mutex, LOCK_EX | LOCK_NB)) {
+            return $this->backToAdmin($request, ['安装正在进行中，请勿重复提交。']);
+        }
+
         $validated = Validator::make($request->all(), [
             'site_name' => ['required', 'string', 'min:2', 'max:64'],
             'site_url' => ['required', 'url', 'max:255'],
@@ -623,6 +633,21 @@ class InstallController extends Controller
     {
         if (! InstallState::installed()) {
             return redirect()->route('install');
+        }
+
+        // 完成页含管理员邮箱/数据库名：仅安装完成后的短窗口内可访问（安装锁记录完成时刻），
+        // 过期即 302 首页——否则管理员信息永久对匿名访客暴露（邮箱 = 用户枚举/钓鱼辅助）
+        $completedAt = trim((string) @file_get_contents(InstallState::lockPath()));
+
+        try {
+            $withinWindow = $completedAt !== ''
+                && Carbon::parse($completedAt)->addMinutes(15)->isFuture();
+        } catch (\Throwable) {
+            $withinWindow = false; // 锁内容异常（CLI 部署兜底无锁文件）→ 保守跳转
+        }
+
+        if (! $withinWindow) {
+            return redirect('/');
         }
 
         $admin = User::where('type', 1)->orderBy('user_id')->first();

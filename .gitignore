@@ -31,5 +31,9 @@ Thumbs.db
 /tests/tmp/
 # 本机安装状态锁（部署环境各自生成，勿提交）
 /storage/installed.lock
+# 安装向导运行时互斥锁（admin 提交竞态串行化）
+/storage/framework/install-mutex.lock
+# 安装向导测试临时 .env（InstallSecurityTest / InstallWizardTest）
+/storage/framework/testing
 # 用户上传的运行时文件（头像等，各环境独立）
 /public/uploads/
