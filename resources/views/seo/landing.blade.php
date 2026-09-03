@@ -1,5 +1,7 @@
 @extends('layouts.public')
 @section('title', __('seo.landing_title'))
+@section('meta_description', __('seo.landing_description'))
+@section('canonical', route('seo.landing'))
 @section('content')
 <div>
     {{-- Hero --}}
