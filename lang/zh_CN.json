@@ -840,6 +840,7 @@
   "api_docs.list_websites": "获取网站列表",
   "api_docs.title": "API 文档",
   "app.tagline": "网站分析",
+  "auth.login_locked": "登录失败次数过多，账户已临时锁定，请稍后再试",
   "auth.activation_code_invalid": "激活链接无效或已过期",
   "auth.activation_sent_desc": "请检查你的邮箱，点击激活链接完成注册。",
   "auth.activation_sent_title": "激活邮件已发送",

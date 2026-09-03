@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\LoginLockout;
 use App\Services\Sms\SmsService;
 use App\Mail\ResetPassword;
 use Illuminate\Http\RedirectResponse;
@@ -47,6 +48,13 @@ class ForgotPasswordController extends Controller
         ]);
 
         $identifier = trim($validated['email']);
+
+        // 找回密码锁定（users.lost_password_lockout_*：防邮件轰炸，默认 3 次/30 分钟）
+        if (LoginLockout::blocked('lost_password', $identifier)) {
+            return back()->withInput($request->only('email'))
+                ->withErrors(['email' => __('auth.login_locked')]);
+        }
+        LoginLockout::recordFailure('lost_password', $identifier);
 
         // 手机号 + 短信验证码找回（M17 §12.5）
         if (SmsService::scenarioEnabled('forgot_password') && SmsService::isPhone($identifier)) {

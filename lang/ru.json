@@ -840,6 +840,7 @@
   "api_docs.list_websites": "List Websites",
   "api_docs.title": "API Documentation",
   "app.tagline": "Web Analytics",
+  "auth.login_locked": "Слишком много неудачных попыток. Аккаунт временно заблокирован. Повторите попытку позже.",
   "auth.activation_code_invalid": "The activation link is invalid or has expired",
   "auth.activation_sent_desc": "Please check your email and click the activation link to complete registration.",
   "auth.activation_sent_title": "Activation Email Sent",

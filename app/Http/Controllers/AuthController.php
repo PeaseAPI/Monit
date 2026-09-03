@@ -6,6 +6,7 @@ use App\Mail\ActivateUser;
 use App\Mail\WelcomeUser;
 use App\Models\AccountLog;
 use App\Models\User;
+use App\Services\LoginLockout;
 use App\Services\Sms\SmsService;
 use App\Services\TotpService;
 use App\Services\UserAgentParser;
@@ -57,11 +58,20 @@ class AuthController extends Controller
             'password.required' => __('validation.password_required'),
         ]);
 
+        // 失败锁定检查（锁定期间正确凭证也被拒绝——对标原版语义）
+        if (LoginLockout::blocked('login', $credentials['email'])) {
+            return back()->withInput($request->only('email'))
+                ->withErrors(['email' => __('auth.login_locked')]);
+        }
+
         $remember = $request->boolean('remember');
 
         $user = User::where('email', $credentials['email'])->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+            // 失败锁定（users.login_lockout_*：N 次失败锁 M 分钟，默认 5/30）
+            LoginLockout::recordFailure('login', $credentials['email']);
+
             return back()
                 ->withInput($request->only('email'))
                 ->withErrors(['email' => __('validation.auth_failed')]);
@@ -93,6 +103,9 @@ class AuthController extends Controller
             }
         } else {
             if (! $user || ! $request->filled('password') || ! Hash::check((string) $request->input('password'), $user->password)) {
+                // 手机号登录失败同样计入锁定（与邮箱共用 login scope 计数语义）
+                LoginLockout::recordFailure('login', 'phone:'.$phone);
+
                 return back()
                     ->withInput($request->only('email'))
                     ->withErrors(['email' => __('validation.auth_failed')]);
@@ -111,6 +124,12 @@ class AuthController extends Controller
             return back()
                 ->withInput($request->only('email'))
                 ->withErrors(['email' => __('validation.account_disabled')]);
+        }
+
+        // 密码已验证正确：清零失败计数/锁定（邮箱 + 手机号两个维度）
+        LoginLockout::clear('login', (string) $user->email);
+        if ($user->phone) {
+            LoginLockout::clear('login', 'phone:'.$user->phone);
         }
 
         // 两步验证（规格书 §12.4）：平台开关 users.two_fa_is_enabled 开启且用户已启用时进入二步验证流程

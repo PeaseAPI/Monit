@@ -840,6 +840,7 @@
   "api_docs.list_websites": "取得網站列表",
   "api_docs.title": "API 文檔",
   "app.tagline": "網站分析",
+  "auth.login_locked": "登入失敗次數過多，帳戶已臨時鎖定，請稍後再試",
   "auth.activation_code_invalid": "啟用鏈接無效或已過期",
   "auth.activation_sent_desc": "请檢查你的信箱，點擊啟用鏈接完成注冊。",
   "auth.activation_sent_title": "啟用郵件已發送",
