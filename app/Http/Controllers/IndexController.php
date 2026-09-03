@@ -174,11 +174,13 @@ class IndexController extends Controller
      */
     public function sitemap()
     {
+        // changefreq 按真实更新频率声明；Google 已声明忽略该 hint，
+        // 不准确的值比省略更糟 → 静态帮助页/文章页省略（文章已有 lastmod 信号）
         $urls = [
-            ['loc' => route('index'), 'priority' => '1.0'],
-            ['loc' => route('plan'), 'priority' => '0.9'],
-            ['loc' => route('seo.landing'), 'priority' => '0.8'],
-            ['loc' => route('blog'), 'priority' => '0.8'],
+            ['loc' => route('index'), 'priority' => '1.0', 'changefreq' => 'daily'],
+            ['loc' => route('plan'), 'priority' => '0.9', 'changefreq' => 'weekly'],
+            ['loc' => route('seo.landing'), 'priority' => '0.8', 'changefreq' => 'weekly'],
+            ['loc' => route('blog'), 'priority' => '0.8', 'changefreq' => 'daily'],
             ['loc' => route('help'), 'priority' => '0.6'],
             ['loc' => route('contact'), 'priority' => '0.6'],
         ];

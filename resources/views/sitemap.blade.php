@@ -6,7 +6,9 @@
 @if(!empty($u['lastmod']))
         <lastmod>{{ $u['lastmod'] }}</lastmod>
 @endif
-        <changefreq>weekly</changefreq>
+@if(!empty($u['changefreq']))
+        <changefreq>{{ $u['changefreq'] }}</changefreq>
+@endif
         <priority>{{ $u['priority'] }}</priority>
     </url>
 @endforeach

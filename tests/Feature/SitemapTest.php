@@ -39,6 +39,27 @@ class SitemapTest extends TestCase
         $this->assertStringContainsString('<loc>'.route('blog').'</loc>', $xml);
     }
 
+    public function test_changefreq_按语义声明_静态页不编造(): void
+    {
+        $xml = $this->get('/sitemap.xml')->assertStatus(200)->getContent();
+
+        // 首页/博客索引内容常变 → daily
+        $this->assertStringContainsString(
+            '<loc>'.route('index').'</loc>'."\n        ".'<changefreq>daily</changefreq>',
+            $xml,
+            '首页应为 daily'
+        );
+        // 定价页 → weekly
+        $this->assertStringContainsString(
+            '<loc>'.route('plan').'</loc>'."\n        ".'<changefreq>weekly</changefreq>',
+            $xml,
+            '定价页应为 weekly'
+        );
+        // help/contact 几乎不变 → 省略 changefreq（编造值比省略更糟）
+        $helpEntry = substr($xml, (int) strpos($xml, '<loc>'.route('help').'</loc>'), 160);
+        $this->assertStringNotContainsString('<changefreq>', $helpEntry, '帮助页应省略 changefreq');
+    }
+
     public function test_已发布文章带_lastmod_且草稿不收录(): void
     {
         BlogPost::create([
