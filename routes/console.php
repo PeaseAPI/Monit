@@ -94,6 +94,11 @@ Schedule::command('geoip:update')->monthlyOn(1, '02:00');
 |（关联 bug：SEO 单页审计曾因此失效改同步）。每分钟消费一次积压队列，
 | --stop-when-empty 保证无任务时立即退出零阻塞；若已部署常驻 worker
 |（supervisor 等）此任务消费同一 jobs 表亦安全（队列本身并发安全）。
+| --timeout=120：单任务上限（AI 摘要/SEO 复审含 HTTP 抓取，默认 60s 偏紧）；
+| withoutOverlapping：长任务跨分钟时阻止 scheduler 再启新 worker，防进程堆积。
 */
-Schedule::command('queue:work --stop-when-empty --sleep=0 --tries=1')->everyMinute()->name('queue-drain-fallback');
+Schedule::command('queue:work --stop-when-empty --sleep=0 --tries=1 --timeout=120')
+    ->everyMinute()
+    ->name('queue-drain-fallback')
+    ->withoutOverlapping(10);
 
