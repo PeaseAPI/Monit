@@ -46,9 +46,12 @@ class AccountController extends Controller
     {
         $avatarMax = (int) (\App\Support\Settings::get('main.avatar_size_limit') ?: 512);
 
-        $validated = $request->validate([
+        $user = $request->user();
+        $emailChanged = strtolower((string) $request->input('email')) !== strtolower((string) $user->email);
+
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$request->user()->user_id.',user_id'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->user_id.',user_id'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:'.$avatarMax,
                 // 尺寸上限：防解压炸弹（GD 渲染超大分辨率位图耗尽内存）
                 'dimensions:max_width=4096,max_height=4096'],
@@ -65,10 +68,11 @@ class AccountController extends Controller
             'billing_phone' => ['nullable', 'string', 'max:32'],
             'billing_tax_id' => ['nullable', 'string', 'max:64'],
             'billing_notes' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $user = $request->user();
-        $emailChanged = strtolower((string) $validated['email']) !== strtolower((string) $user->email);
+        ], $emailChanged ? [
+            // 敏感操作确认（与其余入口一致：改密码/删账户/关 2FA 均已要求 current_password）：
+            // 阻断会话窃取场景下的「改邮箱 → 忘记密码 → 重置邮件发往新邮箱」接管链
+            'current_password' => ['required', 'current_password'],
+        ] : []));
 
         // ---- 头像：上传 / 移除（存储于 public/uploads/avatars，DB 存相对 URL） ----
         $avatarUrl = $user->avatar;
