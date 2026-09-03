@@ -8,7 +8,9 @@ use App\Services\TotpService;
 use App\Services\WebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Monit 账号设置
@@ -47,7 +49,9 @@ class AccountController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$request->user()->user_id.',user_id'],
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:'.$avatarMax],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:'.$avatarMax,
+                // 尺寸上限：防解压炸弹（GD 渲染超大分辨率位图耗尽内存）
+                'dimensions:max_width=4096,max_height=4096'],
             'avatar_remove' => ['nullable', 'boolean'],
             'anti_phishing_code' => ['nullable', 'string', 'max:64'],
             'billing_type' => ['nullable', 'in:personal,business'],
@@ -78,12 +82,27 @@ class AccountController extends Controller
         }
 
         if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
+            $file = $request->file('avatar');
+
+            // 扩展名白名单：getClientOriginalExtension() 是客户端可控的原始值。
+            // image/mimes 规则只做内容嗅探（finfo）——「GIF89a 头 + HTML」的多态
+            // 文件可整体通过验证；若按原始扩展名落盘 public/uploads/avatars/
+            // （Web 直达目录）→ .html/.shtml 被浏览器按 text/html 渲染即存储 XSS
+            //（.php 系另有 Laravel shouldBlockPhpUpload 兜底，此处白名单为根本防线）。
+            $ext = strtolower(trim($file->getClientOriginalExtension()));
+            if (! in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
+                throw ValidationException::withMessages([
+                    'avatar' => __('validation.image', ['attribute' => 'avatar']),
+                ]);
+            }
+
             $dir = public_path('uploads/avatars');
             if (! is_dir($dir)) {
                 mkdir($dir, 0775, true);
             }
-            $file = $request->file('avatar');
-            $filename = 'user_'.$user->user_id.'_'.time().'.'.$file->getClientOriginalExtension();
+
+            // 随机文件名：time() 同秒内重复上传会互相覆盖；随机名消除可预测性
+            $filename = 'user_'.$user->user_id.'_'.Str::random(16).'.'.$ext;
             $file->move($dir, $filename);
             $avatarUrl = '/uploads/avatars/'.$filename;
         }
