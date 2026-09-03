@@ -67,11 +67,15 @@
                 $faqs[] = ['@type' => 'Question', 'name' => $q, 'acceptedAnswer' => ['@type' => 'Answer', 'text' => $a]];
             }
         }
+        // 注意：整个 schema 必须在 @php 块内构造后 json_encode 输出——
+        // Blade 会把 HTML 部分里 JSON-LD 的 "@context"/"@type" 当作 @context/@type 指令解析，
+        // 导致编译产物语法错误且结构化数据损坏
+        $schema = $faqs !== []
+            ? ['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => $faqs]
+            : null;
     @endphp
-    @if($faqs)
-    <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"FAQPage","mainEntity":{{ json_encode($faqs) }}}
-    </script>
+    @if($schema)
+    <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!}</script>
     @endif
 </div>
 @endsection

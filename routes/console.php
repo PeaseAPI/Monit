@@ -84,3 +84,16 @@ Schedule::command('monit:seo-backlinks-verify')->dailyAt('05:30');
 // 每月 1 日 02:00：GeoIP 数据库更新（db-ip.com 免费 country lite）
 Schedule::command('geoip:update')->monthlyOn(1, '02:00');
 
+/*
+|--------------------------------------------------------------------------
+| 队列兜底消费（无 supervisor/queue worker 部署形态）
+|--------------------------------------------------------------------------
+| 本项目生产部署不依赖 supervisor：若 QUEUE_CONNECTION=database 而无常驻 worker，
+| dispatch 的 job（SEO 定时复审 RunSeoAuditJob / AI 摘要 SeoAiSummaryJob /
+| 广播邮件 / 邮件报告 / Push Campaign / bulk 审计闭包）将静默积压永不执行
+|（关联 bug：SEO 单页审计曾因此失效改同步）。每分钟消费一次积压队列，
+| --stop-when-empty 保证无任务时立即退出零阻塞；若已部署常驻 worker
+|（supervisor 等）此任务消费同一 jobs 表亦安全（队列本身并发安全）。
+*/
+Schedule::command('queue:work --stop-when-empty --sleep=0 --tries=1')->everyMinute()->name('queue-drain-fallback');
+

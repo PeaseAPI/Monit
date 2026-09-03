@@ -41,7 +41,8 @@ class WebsiteMaintenanceCommand extends Command
         // 3. 清理过期的轻事件
         LightweightEvent::where('expiration_date', '<', $now->format('Y-m-d'))->delete();
 
-        // 4. 更新每月的计数（重置到0如果月份改变）
+        // 4. 更新每月的计数（重置到0如果月份改变；stats_month 为重置标记，
+        //    由迁移 2026_09_03_000100 回填当前月，跨月时归零 current_month_* 配额计数）
         Website::where('is_enabled', true)->get()->each(function ($website) use ($now) {
             $currentMonth = $now->format('Y-m');
             $statsMonth = $website->stats_month;

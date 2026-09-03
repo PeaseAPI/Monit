@@ -76,8 +76,9 @@ class AnalyticsCleanupCommand extends Command
 
         $this->info("已删除 {$outboundDeleted} 条出站点击");
 
-        // 7. 清理过期的目标转化
-        $conversionsDeleted = GoalConversion::where('datetime', '<', $now->copy()->subDays($retentionDays))
+        // 7. 清理过期的目标转化（goals_conversions 无 datetime 列：时间轴用 created_at；
+        //    expiration_date 在转化创建时并未写入，恒为 null 不可作清理依据）
+        $conversionsDeleted = GoalConversion::where('created_at', '<', $now->copy()->subDays($retentionDays))
             ->limit(5000)
             ->delete();
 

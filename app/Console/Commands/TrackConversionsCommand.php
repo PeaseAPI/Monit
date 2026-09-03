@@ -27,10 +27,10 @@ class TrackConversionsCommand extends Command
     {
         $now = now();
 
-        // 查找最近1小时内的新页面浏览事件
+        // 查找最近1小时内的新页面浏览事件（sessions_events 的时间列为 date，非 datetime）
         $events = SessionEvent::where('type', 'pageview')
-            ->where('datetime', '>=', $now->copy()->subHour())
-            ->where('datetime', '<', $now)
+            ->where('date', '>=', $now->copy()->subHour())
+            ->where('date', '<', $now)
             ->get();
 
         $conversions = 0;
@@ -41,8 +41,8 @@ class TrackConversionsCommand extends Command
                 continue;
             }
 
-            $url = $event->url ?? '';
-            $path = parse_url($url, PHP_URL_PATH) ?? '/';
+            // sessions_events.path 存的是纯路径（PixelTracker 写入时已 parse_url 拆解）
+            $path = $event->path ?? '/';
 
             // 查找匹配的目标
             $goals = WebsiteGoal::where('website_id', $website->website_id)
@@ -69,12 +69,14 @@ class TrackConversionsCommand extends Command
                         ->exists();
 
                     if (! $existing) {
+                        // goals_conversions 无 url 列（表结构：goal_id/event_id/session_id/
+                        // visitor_id/website_id/expiration_date），事件路径经 event_id 可回溯
                         GoalConversion::create([
                             'goal_id' => $goal->goal_id,
                             'website_id' => $website->website_id,
                             'session_id' => $event->session_id,
                             'visitor_id' => $event->visitor_id,
-                            'url' => $url,
+                            'event_id' => $event->event_id,
                         ]);
 
                         $conversions++;
