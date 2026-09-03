@@ -167,8 +167,12 @@ class WebsiteController extends Controller
         $query = Website::where('user_id', $request->user()->user_id);
 
         if ($search = $request->query('search')) {
-            $query->where('name', 'like', "%{$search}%")
-                ->orWhere('host', 'like', "%{$search}%");
+            // 分组括号必须包住 or 条件：否则 SQL 中 AND 优先于 OR，
+            // (user_id=X AND name LIKE) OR (host LIKE) 会跨租户返回他人网站
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('host', 'like', "%{$search}%");
+            });
         }
 
         return response()->json(

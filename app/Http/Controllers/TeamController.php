@@ -130,7 +130,9 @@ class TeamController extends Controller
             ->where('user_id', $request->user()->user_id)
             ->firstOrFail();
 
-        $team->members()->delete();
+        // 逐条删除以触发 TeamMember::deleting 钩子（级联清理关联；
+        // 批量 delete() 不触发模型事件）
+        $team->members()->get()->each->delete();
         $team->delete();
 
         return redirect()->route('teams.index')

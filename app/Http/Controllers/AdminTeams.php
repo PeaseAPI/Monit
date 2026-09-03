@@ -33,7 +33,9 @@ class AdminTeams extends Controller
     public function destroy(int $teamId): RedirectResponse
     {
         $team = Team::findOrFail($teamId);
-        $team->members()->delete();
+        // 逐条删除以触发 TeamMember::deleting 钩子（级联清理关联；
+        // 批量 delete() 不触发模型事件）
+        $team->members()->get()->each->delete();
         $team->delete();
 
         return redirect()->route('admin.teams.index')
