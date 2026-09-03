@@ -174,8 +174,86 @@ class WebhookSignature
     }
 
     /**
-     * 回调 URL 安全校验：仅允许 http/https（拒绝 file://、ftp:// 等 SSRF 向量）
+     * 回调 URL 安全校验（出站 SSRF 防御）：
+     * - 仅允许 http/https scheme（拒绝 file://、ftp:// 等）
+     * - 目标地址不得命中环回/私网/链路本地/保留网段（127/8、10/8、172.16/12、
+     *   192.168/16、169.254/16 云元数据、::1、fc00::/7 等）——字面 IP 直接判定，
+     *   域名经 DNS 解析后判定
+     * - DNS 解析失败（离线环境）放行，不阻断正常派发；DNS 重绑定为已知残余风险
+     * - 部署级逃生阀 services.webhooks.allow_private_targets（默认关）供本地调试
      */
+    public static function isSafeHttpUrl(string $url): bool
+    {
+        $parsed = parse_url(trim($url));
+
+        if ($parsed === false || ! isset($parsed['scheme'], $parsed['host'])) {
+            return false;
+        }
+
+        if (! in_array(strtolower($parsed['scheme']), ['http', 'https'], true)) {
+            return false;
+        }
+
+        if (config('services.webhooks.allow_private_targets')) {
+            return true;
+        }
+
+        return ! self::resolvesToPrivateAddress((string) $parsed['host']);
+    }
+
+    /**
+     * host 是否解析到私有/保留地址（字面 IP 直接判定，域名解析后判定）
+     */
+    protected static function resolvesToPrivateAddress(string $host): bool
+    {
+        // IPv6 字面量：parse_url 返回 [::1] 形式，去掉方括号
+        $host = trim($host, '[]');
+
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return self::isPrivateAddress($host);
+        }
+
+        $resolved = @gethostbyname($host);
+
+        if ($resolved !== false && $resolved !== $host) {
+            return self::isPrivateAddress($resolved);
+        }
+
+        // IPv6 / 多记录域名（gethostbyname 仅查 A 记录）
+        if (function_exists('dns_get_record')) {
+            $records = @dns_get_record($host, DNS_A + DNS_AAAA);
+
+            foreach ($records ?: [] as $record) {
+                $ip = $record['ip'] ?? $record['ipv6'] ?? null;
+
+                if ($ip !== null && self::isPrivateAddress($ip)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 是否私有/保留地址（FILTER_FLAG_NO_PRIV_RANGE|NO_RES_RANGE 权威网段集：
+     * 私网段 + 环回 + 链路本地 + 保留段，IPv4/IPv6 双栈）
+     */
+    protected static function isPrivateAddress(string $ip): bool
+    {
+        $flags = FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE;
+
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
+            return filter_var($ip, FILTER_VALIDATE_IP, $flags) === false;
+        }
+
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false) {
+            return filter_var($ip, FILTER_VALIDATE_IP, $flags) === false;
+        }
+
+        return true; // 无法识别的地址串按私网处理（fail-closed）
+    }
+
     /**
      * 出站 Webhook 签名（webhooks.webhooks_secret_key）
      * HMAC-SHA256(json(body))，hex 输出，接收方可用同算法验证
@@ -183,14 +261,5 @@ class WebhookSignature
     public static function sign(array $body, string $secret): string
     {
         return hash_hmac('sha256', json_encode($body, JSON_UNESCAPED_UNICODE) ?: '', $secret);
-    }
-
-    public static function isSafeHttpUrl(string $url): bool
-    {
-        $parsed = parse_url(trim($url));
-
-        return $parsed !== false
-            && isset($parsed['scheme'], $parsed['host'])
-            && in_array(strtolower($parsed['scheme']), ['http', 'https'], true);
     }
 }

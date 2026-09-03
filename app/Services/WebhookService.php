@@ -54,8 +54,10 @@ class WebhookService
         }
 
         try {
+            // allow_redirects=false：阻断「公网 URL 30x → 内网目标」的重定向绕过
             Http::timeout(5)
                 ->acceptJson()
+                ->withOptions(['allow_redirects' => false])
                 ->withHeaders($headers)
                 ->post($url, $body);
         } catch (\Throwable $e) {
@@ -195,7 +197,8 @@ class WebhookService
         }
 
         try {
-            Http::timeout(5)->acceptJson()->withHeaders($headers)->post($url, $body);
+            // allow_redirects=false：阻断「公网 URL 30x → 内网目标」的重定向绕过
+            Http::timeout(5)->acceptJson()->withOptions(['allow_redirects' => false])->withHeaders($headers)->post($url, $body);
         } catch (\Throwable $e) {
             Log::warning('webhook.dispatch_failed', ['event' => $event, 'url' => $url, 'error' => $e->getMessage()]);
         }

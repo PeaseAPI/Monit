@@ -318,4 +318,16 @@ return [
         'mmdb_path' => env('GEOIP_MMDB_PATH', storage_path('app/geoip/country.mmdb')),
     ],
 
+    /*
+    |----------------------------------------------------------------------
+    | 平台出站 Webhook（WebhookService）
+    |----------------------------------------------------------------------
+    | SSRF 防御：默认拒绝环回/私网/链路本地（含云元数据）目标，
+    | 见 App\Support\WebhookSignature::isSafeHttpUrl。
+    | 本地调试 webhook 接收端（如 localhost:8000）时临时置 true。
+    */
+    'webhooks' => [
+        'allow_private_targets' => env('WEBHOOK_ALLOW_PRIVATE_TARGETS', false),
+    ],
+
 ];
