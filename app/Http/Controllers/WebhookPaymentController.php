@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Payment;
 use App\Services\Payment\AlipayProcessor;
 use App\Services\Payment\PaymentService;
 use App\Services\Payment\WeChatPayProcessor;
@@ -328,10 +329,16 @@ class WebhookPaymentController extends Controller
      */
     public function wechatPay(Request $request)
     {
+        $processor = new WeChatPayProcessor;
+
+        // fail-closed：api_key 未配置时空 key MD5 签名可被任何人伪造，
+        // 直接 400 拒绝（verifyCallback 另有空 key 守卫双层防御）
+        if (empty(config('services.wechat_pay.api_key'))) {
+            return response()->json(['error' => 'Not configured'], 400);
+        }
+
         $xml = simplexml_load_string((string) $request->getContent(), null, LIBXML_NONET);
         $data = $xml ? (array) $xml : [];
-
-        $processor = new WeChatPayProcessor;
 
         if (($data['return_code'] ?? '') === 'SUCCESS'
             && ($data['result_code'] ?? '') === 'SUCCESS'
@@ -339,14 +346,18 @@ class WebhookPaymentController extends Controller
 
             $attach = json_decode((string) ($data['attach'] ?? '{}'), true);
             $paymentId = (int) ($attach['payment_id'] ?? 0);
+            $payment = $paymentId ? Payment::find($paymentId) : null;
 
-            if ($paymentId) {
+            // 金额防篡改：total_fee 虽被签名覆盖（网关可信），但仍须与订单金额
+            // 完全一致方可入账（分），防止同商户低额订单嫁接 / 记账错误
+            if ($payment
+                && (int) ($data['total_fee'] ?? 0) === (int) round(((float) $payment->total_amount) * 100)) {
                 $this->paymentService->handlePaymentSuccess($paymentId, (string) ($data['transaction_id'] ?? ''));
-            }
 
-            // 微信要求应答 XML success
-            return response('<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>', 200)
-                ->header('Content-Type', 'text/xml');
+                // 微信要求应答 XML success
+                return response('<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>', 200)
+                    ->header('Content-Type', 'text/xml');
+            }
         }
 
         return response('<xml><return_code><![CDATA[FAIL]]></return_code><return_msg><![CDATA[Signature mismatch]]></return_msg></xml>', 200)
@@ -360,6 +371,12 @@ class WebhookPaymentController extends Controller
     {
         $processor = new AlipayProcessor;
 
+        // fail-closed：验签依赖支付宝公钥，未配置显式拒绝
+        // （不再依赖 openssl 无效 key 副作用返回 false）
+        if (empty(config('services.alipay.alipay_public_key'))) {
+            return response()->json(['error' => 'Not configured'], 400);
+        }
+
         $data = $request->all();
 
         if (($data['trade_status'] ?? '') === 'TRADE_SUCCESS'
@@ -368,12 +385,16 @@ class WebhookPaymentController extends Controller
             $outTradeNo = (string) ($data['out_trade_no'] ?? '');
             $passback = json_decode(urldecode((string) ($data['passback_params'] ?? '{}')), true);
             $paymentId = (int) ($passback['payment_id'] ?? 0);
+            $payment = $paymentId ? Payment::find($paymentId) : null;
 
-            if ($paymentId) {
+            // 金额防篡改：total_amount 虽被 RSA 签名覆盖（网关可信），但仍须与
+            // 订单金额一致方可入账（容差 0.001 元），防止低额订单嫁接 / 记账错误
+            if ($payment
+                && abs((float) ($data['total_amount'] ?? 0) - (float) $payment->total_amount) < 0.001) {
                 $this->paymentService->handlePaymentSuccess($paymentId, (string) ($data['trade_no'] ?? $outTradeNo));
-            }
 
-            return $processor->successResponse();
+                return $processor->successResponse();
+            }
         }
 
         return response('fail', 200)->header('Content-Type', 'text/plain');

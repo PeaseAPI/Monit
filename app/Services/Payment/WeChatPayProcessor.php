@@ -62,7 +62,11 @@ class WeChatPayProcessor
      */
     public function verifyCallback(array $data): bool
     {
-        if (empty($data['sign'])) {
+        $apiKey = (string) config('services.wechat_pay.api_key');
+
+        // fail-closed：密钥未配置时空 key MD5 签名可被任何人复现（算法公开），
+        // 伪造回调即可免费激活任意订单，必须显式拒绝
+        if ($apiKey === '' || empty($data['sign'])) {
             return false;
         }
 
