@@ -51,11 +51,15 @@ class WebsiteController
 
     public function show(Request $request, Website $website): JsonResponse
     {
+        $this->authorizeWebsite($website);
+
         return response()->json($website);
     }
 
     public function update(Request $request, Website $website): JsonResponse
     {
+        $this->authorizeWebsite($website);
+
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:256'],
             'host' => ['sometimes', 'string', 'max:256'],
@@ -71,8 +75,22 @@ class WebsiteController
 
     public function destroy(Request $request, Website $website): JsonResponse
     {
+        $this->authorizeWebsite($website);
+
         $website->delete();
 
         return response()->json(['message' => __('msg.website_deleted_api')]);
+    }
+
+    /**
+     * 所有权检查（安全审计周期 #15）：此前 show/update/destroy 无任何
+     * 校验，任意 API Key 可读/改/删任意用户网站。与兄弟控制器
+     * （ApiSessions/ApiVisitors 等）保持一致的 owner/admin 语义
+     */
+    protected function authorizeWebsite(Website $website): void
+    {
+        if ((int) $website->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
+            abort(403, 'Unauthorized');
+        }
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TeamMemberAssociation;
 use App\Models\VisitorSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,11 +18,16 @@ class SessionAjaxController extends Controller
         $session = VisitorSession::with(['events', 'visitor', 'website'])
             ->findOrFail($sessionId);
 
-        // 验证权限
-        if ($request->user() && $session->website->user_id !== $request->user()->id) {
-            // 检查团队成员权限
-            $isTeamMember = $session->website->teamMembers()
-                ->where('user_id', $request->user()->id)
+        // 验证权限（安全审计周期 #15 修复双重缺陷）：
+        // - User 主键为 user_id，此前误用 ->id（恒为 null）导致所有权比对永假
+        // - Website::teamMembers() 关系并不存在，触发 BadMethodCall 500；
+        //   改为查询 team_member_associations（成员↔网站关联网，周期 #12
+        //   起由 TeamMember 级联清理维护，与团队成员数据流一致）
+        $user = $request->user();
+        if ($user && (int) $session->website->user_id !== (int) $user->user_id) {
+            $isTeamMember = TeamMemberAssociation::query()
+                ->where('website_id', $session->website->website_id)
+                ->whereHas('member', fn ($q) => $q->where('user_id', $user->user_id))
                 ->exists();
             if (! $isTeamMember) {
                 abort(403, '无权访问此会话');

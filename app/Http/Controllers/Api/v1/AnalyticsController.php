@@ -25,6 +25,7 @@ class AnalyticsController
 
     public function realtime(Website $website)
     {
+        $this->authorizeWebsite($website);
         $stats = StatisticsService::for($website);
 
         return response()->json(['realtime' => $stats->realtime()]);
@@ -32,6 +33,7 @@ class AnalyticsController
 
     public function visitors(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $stats = $this->resolveStats($website, $range);
 
@@ -40,6 +42,7 @@ class AnalyticsController
 
     public function events(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $stats = $this->resolveStats($website, $range);
 
@@ -51,6 +54,7 @@ class AnalyticsController
 
     public function metrics(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $stats = $this->resolveStats($website, $range);
 
@@ -62,6 +66,7 @@ class AnalyticsController
 
     public function topPages(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $limit = (int) $request->query('limit', 50);
         $stats = $this->resolveStats($website, $range);
@@ -71,6 +76,7 @@ class AnalyticsController
 
     public function topReferrers(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $limit = (int) $request->query('limit', 50);
         $stats = $this->resolveStats($website, $range);
@@ -80,6 +86,7 @@ class AnalyticsController
 
     public function topCountries(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $limit = (int) $request->query('limit', 50);
         $stats = $this->resolveStats($website, $range);
@@ -89,6 +96,7 @@ class AnalyticsController
 
     public function topBrowsers(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $limit = (int) $request->query('limit', 50);
         $stats = $this->resolveStats($website, $range);
@@ -98,6 +106,7 @@ class AnalyticsController
 
     public function topDevices(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $limit = (int) $request->query('limit', 50);
         $stats = $this->resolveStats($website, $range);
@@ -107,6 +116,7 @@ class AnalyticsController
 
     public function topOperatingSystems(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $limit = (int) $request->query('limit', 50);
         $stats = $this->resolveStats($website, $range);
@@ -116,6 +126,7 @@ class AnalyticsController
 
     public function sessions(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $stats = $this->resolveStats($website, $range);
 
@@ -127,6 +138,7 @@ class AnalyticsController
 
     public function goals(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $stats = $this->resolveStats($website, $range);
 
@@ -135,6 +147,7 @@ class AnalyticsController
 
     public function utm(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $stats = $this->resolveStats($website, $range);
 
@@ -147,6 +160,7 @@ class AnalyticsController
      */
     public function statistics(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $limit = min(100, max(1, (int) $request->query('limit', 50)));
         $stats = $this->resolveStats($website, $range);
@@ -177,6 +191,7 @@ class AnalyticsController
      */
     public function pageviewsAdvanced(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $limit = min(200, max(1, (int) $request->query('limit', 50)));
         [$start, $end] = $this->resolveRangeDates($range);
@@ -208,6 +223,7 @@ class AnalyticsController
      */
     public function pageviewsLightweight(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $range = $this->validateRange((int) $request->query('range', 7));
         $limit = min(200, max(1, (int) $request->query('limit', 50)));
         [$start, $end] = $this->resolveRangeDates($range);
@@ -237,6 +253,7 @@ class AnalyticsController
      */
     public function replays(Website $website, Request $request)
     {
+        $this->authorizeWebsite($website);
         $limit = min(100, max(1, (int) $request->query('limit', 25)));
 
         $replays = SessionReplay::with(['session', 'visitor'])
@@ -258,6 +275,18 @@ class AnalyticsController
                 'browser_name' => $replay->visitor?->browser_name,
             ])->all(),
         ]);
+    }
+
+    /**
+     * 所有权检查（安全审计周期 #15）：此前本控制器全部端点无任何授权，
+     * 任意 API Key 可读取任意网站的分析数据。与兄弟控制器
+     * （ApiSessions/ApiVisitors 等）保持一致的 owner/admin 语义
+     */
+    protected function authorizeWebsite(Website $website): void
+    {
+        if ((int) $website->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
+            abort(403, 'Unauthorized');
+        }
     }
 
     /** 把 range 天数换算为 [start, end] 日期（与 StatisticsService::lastDays 对齐） */

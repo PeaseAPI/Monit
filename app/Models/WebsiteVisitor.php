@@ -21,6 +21,12 @@ class WebsiteVisitor extends Model
         'total_sessions', 'last_event_id', 'goals_conversions_ids',
     ];
 
+    // 安全审计周期 #15：二进制 UUID 列不能直接 JSON 序列化
+    // （Malformed UTF-8 → 500），隐藏并以字符串 accessor 输出
+    protected $hidden = ['visitor_uuid_binary'];
+
+    protected $appends = ['visitor_uuid'];
+
     protected function casts(): array
     {
         return [

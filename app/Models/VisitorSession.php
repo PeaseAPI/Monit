@@ -17,6 +17,12 @@ class VisitorSession extends Model
         'session_uuid_binary', 'visitor_id', 'website_id', 'date', 'total_events',
     ];
 
+    // 安全审计周期 #15：二进制 UUID 列不能直接 JSON 序列化
+    // （Malformed UTF-8 → 500），隐藏并以字符串 accessor 输出
+    protected $hidden = ['session_uuid_binary'];
+
+    protected $appends = ['session_uuid'];
+
     protected function casts(): array
     {
         return [
