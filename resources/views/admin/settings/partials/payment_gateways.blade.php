@@ -10,7 +10,7 @@
         @php
             $sigOk = true;
             foreach ($meta['webhook_keys'] as $wk) {
-                if (empty($settings['payment_gateways'][$wk])) { $sigOk = false; break; }
+                if (empty($settings[$wk])) { $sigOk = false; break; }
             }
         @endphp
         <details class="rounded-xl border border-zinc-200 bg-white" @if($loop->first) open @endif>
@@ -28,17 +28,29 @@
                         <label class="block text-xs font-mono font-medium text-zinc-500">{{ $envKey }}</label>
                         @if ($type === 'bool')
                             <select name="{{ $envKey }}" class="form-input">
-                                <option value="true" @if(old($envKey, $settings['payment_gateways'][$envKey] ?? 'true') === 'true') selected @endif>true</option>
-                                <option value="false" @if(old($envKey, $settings['payment_gateways'][$envKey] ?? 'true') === 'false') selected @endif>false</option>
+                                <option value="true" @if(old($envKey, $settings[$envKey] ?? 'true') === 'true') selected @endif>true</option>
+                                <option value="false" @if(old($envKey, $settings[$envKey] ?? 'true') === 'false') selected @endif>false</option>
                             </select>
                         @elseif ($type === 'password')
+                            {{-- 机密键：value 不回显当前值（防 HTML 源码/缓存/XSS 泄露），仅掩码提示后 4 位；
+                                 空提交 = 保持不变（见 AdminSettings::updatePaymentGateways） --}}
+                            @php
+                                $currentSecret = (string) ($settings[$envKey] ?? '');
+                                $secretMask = $currentSecret !== '' ? str_repeat('•', 8).substr($currentSecret, -4) : '';
+                            @endphp
                             <div class="mt-1 flex">
-                                <input type="password" name="{{ $envKey }}" value="{{ old($envKey, $settings['payment_gateways'][$envKey] ?? '') }}" autocomplete="off"
-                                    class="form-input font-mono" oninput="this.dataset.dirty=this.value!==''">
+                                <input type="password" name="{{ $envKey }}" value="{{ old($envKey) }}" autocomplete="off"
+                                    placeholder="{{ $secretMask }}" class="form-input font-mono">
                                 <button type="button" onclick="const i=this.previousElementSibling; i.type=i.type==='password'?'text':'password'" class="ml-2 rounded-lg border border-zinc-200 px-3 text-xs text-zinc-500 hover:bg-zinc-50">👁</button>
                             </div>
+                            @if ($currentSecret !== '')
+                                <label class="mt-1 flex items-center gap-1.5 text-xs text-zinc-400">
+                                    <input type="checkbox" name="{{ $envKey }}__clear" class="rounded border-zinc-300">
+                                    {{ __('admin.payment_gateways_clear_secret') }}
+                                </label>
+                            @endif
                         @else
-                            <input type="text" name="{{ $envKey }}" value="{{ old($envKey, $settings['payment_gateways'][$envKey] ?? '') }}" autocomplete="off"
+                            <input type="text" name="{{ $envKey }}" value="{{ old($envKey, $settings[$envKey] ?? '') }}" autocomplete="off"
                                 class="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 font-mono text-sm">
                         @endif
                     </div>

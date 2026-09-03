@@ -137,12 +137,16 @@ class AdminSettings extends Controller
      * 安全要点：
      * - 只接受 PaymentGatewayCatalog::keys() 登记的键（请求中的 APP_KEY/DB_* 等一律忽略）
      * - 值经 EnvWriter 转义（引号/井号/换行），无法注入额外 env 行
-     * - 空值 = 清除该键；布尔键归一为 true/false 字符串
+     * - 密钥键（type=password）：空值 = 保持不变（页面仅掩码显示，空提交属常态，
+     *   防止整表单保存时误清空未编辑的密钥）；勾选配套 {key}__clear 复选框才显式清除
+     * - text/bool 键：空值 = 清除（原语义，公开 ID 无机密性）
+     * - 布尔键归一为 true/false 字符串
      */
     protected function updatePaymentGateways(Request $request): RedirectResponse
     {
         $allowed = PaymentGatewayCatalog::keys();
         $boolKeys = PaymentGatewayCatalog::boolKeys();
+        $secretKeys = PaymentGatewayCatalog::passwordKeys();
 
         $rules = [];
         foreach ($allowed as $key) {
@@ -165,8 +169,20 @@ class AdminSettings extends Controller
 
             if (in_array($key, $boolKeys, true)) {
                 $value = in_array($value, ['true', '1'], true) ? 'true' : 'false';
-            } else {
-                $value = trim((string) $value);
+                $writer->write($key, $value);
+
+                continue;
+            }
+
+            $value = trim((string) $value);
+
+            // 密钥键空值 = 保持不变；显式勾选 {key}__clear 才清除
+            if (in_array($key, $secretKeys, true) && $value === '') {
+                if ($request->boolean($key.'__clear')) {
+                    $writer->write($key, '');
+                }
+
+                continue;
             }
 
             $writer->write($key, $value);

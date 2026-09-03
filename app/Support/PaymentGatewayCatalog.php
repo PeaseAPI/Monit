@@ -144,4 +144,27 @@ class PaymentGatewayCatalog
 
         return $bools;
     }
+
+    /**
+     * 密钥型键（type=password：机密值，页面掩码显示、空提交保持不变）
+     *
+     * 上游 AdminSettings::updatePaymentGateways 依此区分「空值=清除」
+     * 与「空值=保持不变」语义（text 类型为公开 ID，维持清空即删）。
+     *
+     * @return list<string>
+     */
+    public static function passwordKeys(): array
+    {
+        $secrets = [];
+
+        foreach (self::gateways() as $meta) {
+            foreach ($meta['keys'] as $key => $type) {
+                if ($type === 'password') {
+                    $secrets[] = $key;
+                }
+            }
+        }
+
+        return $secrets;
+    }
 }
