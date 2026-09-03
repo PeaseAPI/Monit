@@ -22,13 +22,30 @@
 @if ($seoEnabled !== null && ! in_array($seoEnabled, [true, 1, '1', 'true', 'on'], true))
     <meta name="robots" content="noindex, nofollow">
 @endif
-@php($ogImage = trim((string) \App\Support\Settings::get('custom_images.og_image', '')))
-@if ($ogImage)
-    <meta property="og:image" content="{{ $ogImage }}">
-@endif
 @php($sitemapUrl = trim((string) \App\Support\Settings::get('main.sitemap_url', '')))
 @if ($sitemapUrl)
     <link rel="sitemap" type="application/xml" href="{{ $sitemapUrl }}">
+@endif
+{{-- Open Graph / Twitter 卡片：社交分享预览。
+     og:title 与 <title>（layouts/public L10）同源表达式：页面 @section('title')
+     → 全局默认 seo.tools_title → 站名后缀；og:url 复用 canonical，
+     og:description 复用 description 覆盖链，避免第三套文案来源 --}}
+<meta property="og:site_name" content="{{ \App\Support\Brand::name() }}">
+@php($pageTitle = trim((string) view()->getSection('title')))
+<meta property="og:title" content="{{ $pageTitle !== '' ? $pageTitle.' '.\App\Support\Brand::titleSeparator().' '.\App\Support\Brand::name() : \App\Support\Brand::name() }}">
+<meta property="og:type" content="website">
+@if ($canonical)
+    <meta property="og:url" content="{{ $canonical }}">
+@endif
+@if ($description)
+    <meta property="og:description" content="{{ $description }}">
+@endif
+@php($ogImage = trim((string) \App\Support\Settings::get('custom_images.og_image', '')))
+@if ($ogImage)
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta name="twitter:card" content="summary_large_image">
+@else
+    <meta name="twitter:card" content="summary">
 @endif
 {!! \App\Support\Brand::colorStyleTag() !!}
 @php($headCss = \App\Support\Settings::get('custom.custom_head_css'))
