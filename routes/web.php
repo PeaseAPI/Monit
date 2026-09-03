@@ -87,6 +87,7 @@ use App\Http\Middleware\SeoGuestAccess;
 use App\Models\PushNotificationSubscriber;
 use App\Models\Setting;
 use App\Services\DynamicOgImageService;
+use App\Support\WebhookSignature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -771,12 +772,25 @@ Route::get('/pwa/sw.js', function () {
 // Push Notifications 前端订阅（规格书 §14.5）
 Route::post('/push-notifications/subscribe', function (Request $request) {
     $validated = $request->validate([
-        'endpoint' => ['required', 'url'],
+        // SSRF 防护（安全审计周期 #17）：endpoint 必须是 https 公网地址。
+        // 此前仅 required|url，认证用户可注册 http://192.168.1.1/x 之类
+        // 内网目标，广播发送时平台向其 POST。复用 WebhookSignature 的
+        // 私网/保留地址判定（字面 IP 直接判定，域名 DNS 解析后判定）
+        'endpoint' => ['required', 'url:https', 'max:2048', function (string $attribute, mixed $value, \Closure $fail) {
+            if (! WebhookSignature::isSafeHttpUrl((string) $value)) {
+                $fail(__('validation.url', ['attribute' => $attribute]));
+            }
+        }],
+        // 订阅归属站点（营销推送按站点发送；此前闭包不接收该字段，
+        // 而 push_notifications_subscribers.website_id NOT NULL 无默认值，
+        // 任何调用必 500——安全审计周期 #17 顺带修复端点可用性）
+        'website_id' => ['required', 'integer', 'exists:websites,website_id'],
         'keys.auth' => ['required', 'string'],
         'keys.p256dh' => ['required', 'string'],
     ]);
     PushNotificationSubscriber::create([
                 'user_id' => Auth::id(),
+        'website_id' => $validated['website_id'],
         'endpoint' => $validated['endpoint'],
         'keys_auth' => $validated['keys']['auth'],
         'keys_p256dh' => $validated['keys']['p256dh'],

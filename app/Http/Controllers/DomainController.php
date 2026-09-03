@@ -12,6 +12,18 @@ use Illuminate\Http\Request;
  */
 class DomainController extends Controller
 {
+    /**
+     * host 格式规则（安全审计周期 #17）：仅允许点分域名（ASCII，punycode
+     * 形式的 IDN 亦兼容）。此前无格式校验，javascript:alert(1)、
+     * http://127.0.0.1/admin、带路径/空格的垃圾可入库并流入
+     * whois 监控链路（DomainMonitor::refresh -> whois($host)）。
+     * regex 的 i 修饰符放行大写输入，入库前统一 strtolower。
+     */
+    private const HOST_RULES = [
+        'string', 'max:253',
+        'regex:/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i',
+    ];
+
     public function index(Request $request)
     {
         $domains = $request->user()->domains()->orderBy('domain_id')->get();
@@ -27,7 +39,7 @@ class DomainController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'host' => ['required', 'string', 'max:256'],
+            'host' => array_merge(['required'], self::HOST_RULES),
         ]);
 
         $host = strtolower(preg_replace('/^www\./', '', trim($validated['host'])));
@@ -53,7 +65,7 @@ class DomainController extends Controller
     {
         $validated = $request->validate([
             'domain_id' => ['required', 'exists:domains,domain_id'],
-            'host' => ['sometimes', 'string', 'max:256'],
+            'host' => array_merge(['sometimes'], self::HOST_RULES),
             'is_enabled' => ['sometimes', 'boolean'],
             'monitor_is_enabled' => ['sometimes', 'boolean'],
         ]);

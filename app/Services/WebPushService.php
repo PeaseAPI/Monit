@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PushNotificationSubscriber;
 use App\Support\PluginManager;
+use App\Support\WebhookSignature;
 
 /**
  * Web Push 推送服务（纯 PHP 实现，规格书 §14.5）
@@ -47,6 +48,13 @@ class WebPushService
         string $vapidPrivateKey,
         string $subject = 'mailto:admin@example.com',
     ): bool {
+        // SSRF 纵深防御（安全审计周期 #17）：订阅入口已做 https + 非私网
+        // 校验，此处兜底拦截存量脏 endpoint——不安全目标一律不发起连接
+        //（区别于连接失败：lastResults 保持空 = 未尝试）
+        if (! WebhookSignature::isSafeHttpUrl($endpoint)) {
+            return false;
+        }
+
         $payloadJson = json_encode([
             'title' => $payload['title'] ?? '',
             'body' => $payload['body'] ?? '',
