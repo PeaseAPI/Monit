@@ -162,6 +162,17 @@ class TeamController extends Controller
             return response()->json([]);
         }
 
+        // 归属校验：仅该成员本人或其所属团队 owner 可读取关联
+        // （with('website') 会带出 Website 全字段，无校验则任意登录用户
+        //  可枚举 member_id 跨租户读取 —— IDOR）
+        $member = TeamMember::with('team')->find((int) $memberId);
+
+        if ($member === null
+            || ((int) $member->user_id !== (int) $request->user()->user_id
+                && (int) $member->team->user_id !== (int) $request->user()->user_id)) {
+            return response()->json([]);
+        }
+
         $associations = TeamMemberAssociation::where('team_member_id', (int) $memberId)
             ->with('website')
             ->get();

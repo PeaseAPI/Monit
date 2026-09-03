@@ -17,6 +17,7 @@ class TeamMemberAssociation extends Model
         'team_member_id',
         'website_id',
         'access',
+        'datetime',
     ];
 
     protected function casts(): array
