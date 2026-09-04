@@ -7,6 +7,7 @@ use App\Models\SessionReplay;
 use App\Support\ObjectStorage;
 use App\Support\PluginManager;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * 会话回放 Offload Cron（规格书 §13.1 websites_replays_offload）
@@ -41,8 +42,7 @@ class WebsitesReplaysOffloadCommand extends Command
         $deleteAfterUpload = (bool) PluginManager::setting('offload', 'delete_after_upload', true);
 
         // 24h 前未 offload 的回放
-        $replays = SessionReplay::with('session')
-            ->where('is_offloaded', false)
+        $replays = SessionReplay::where('is_offloaded', false)
             ->where('datetime', '<', now()->subDay())
             ->orderBy('replay_id')
             ->limit($batchSize)
@@ -58,16 +58,36 @@ class WebsitesReplaysOffloadCommand extends Command
         $skipped = 0;
 
         foreach ($replays as $replay) {
-            // 序列化该回放的全部事件子项
-            $events = EventChild::where('session_id', $replay->session_id)
-                ->orderBy('event_child_id')
-                ->get(['type', 'data', 'count', 'date'])
-                ->map(fn ($e) => [
-                    'type' => $e->type,
-                    'data' => $e->data,
-                    'count' => $e->count,
-                    'date' => (string) $e->date,
-                ]);
+            $session = $replay->session;
+
+            // 优先从缓存取回放事件（handleReplayChunk 存入缓存）
+            $events = [];
+            if ($session) {
+                $cacheKey = "session_replay_keys_{$session->session_id}";
+                $keys = Cache::get($cacheKey, []);
+
+                foreach ($keys as $chunkKey) {
+                    $chunk = Cache::get($chunkKey);
+                    if (is_array($chunk)) {
+                        $events = array_merge($events, $chunk);
+                    }
+                }
+            }
+
+            // 回退：如果缓存无数据，从 EventChild 取（兼容旧数据）
+            if (empty($events)) {
+                $events = EventChild::where('session_id', $replay->session_id)
+                    ->orderBy('event_child_id')
+                    ->get(['type', 'data', 'count', 'date'])
+                    ->map(fn ($e) => [
+                        'type' => $e->type,
+                        'data' => $e->data,
+                        'count' => $e->count,
+                        'date' => (string) $e->date,
+                    ])
+                    ->values()
+                    ->all();
+            }
 
             $key = 'replays/'.$replay->website_id.'/'.$replay->session_id.'.json';
             $payload = json_encode([
@@ -84,12 +104,21 @@ class WebsitesReplaysOffloadCommand extends Command
             if ($status >= 200 && $status < 300) {
                 $replay->update(['is_offloaded' => true]);
 
-                if ($deleteAfterUpload) {
+                // offload 后清理缓存 chunk
+                if ($session && $deleteAfterUpload) {
+                    $cacheKey = "session_replay_keys_{$session->session_id}";
+                    $keys = Cache::get($cacheKey, []);
+                    foreach ($keys as $chunkKey) {
+                        Cache::forget($chunkKey);
+                    }
+                    Cache::forget($cacheKey);
+
+                    // 同时清理 EventChild 中的旧回放数据
                     EventChild::where('session_id', $replay->session_id)->delete();
                 }
 
                 $uploaded++;
-                $this->line("  [OK] {$key}");
+                $this->line("  [OK] {$key} (".count($events).' events)');
             } else {
                 $skipped++;
                 $this->warn("  [FAIL {$status}] {$key}".($error !== '' ? " ({$error})" : ''));

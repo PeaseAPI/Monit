@@ -15,10 +15,10 @@
     @include('parts.announcement_bar')
 
     {{-- 顶部导航条 --}}
-    <header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/90 backdrop-blur">
+        <header class="sticky top-0 z-40 border-b border-zinc-100 bg-white/80 backdrop-blur-lg">
         <div class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
             <div class="flex min-w-0 items-center gap-6">
-                <x-brand-logo class="shrink-0" href="{{ route('index') }}"/>
+                                <x-brand-logo class="h-8 w-8 shrink-0" text-class="text-base" href="{{ route('index') }}"/>
                 <nav class="hidden items-center gap-5 sm:flex">
                     <a href="{{ route('index') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_home') }}</a>
                     @if (\App\Support\Settings::get('seo.tools_is_enabled', true)
@@ -30,7 +30,29 @@
                     @endif
                 </nav>
             </div>
-            <div class="flex shrink-0 items-center gap-3">
+                        <div class="flex shrink-0 items-center gap-3">
+                {{-- 语言切换器（与首页风格一致，原生 details 实现，无 JS 依赖） --}}
+                @if (count((array) config('monit.locales')) > 1)
+                <details class="group relative">
+                    <summary class="flex cursor-pointer list-none items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 [&::-webkit-details-marker]:hidden">
+                        <span>{{ config('monit.locales.'.app()->getLocale().'.flag', '🌐') }}</span>
+                        <span class="hidden sm:inline">{{ config('monit.locales.'.app()->getLocale().'.label', app()->getLocale()) }}</span>
+                        <svg class="h-3 w-3 text-zinc-400 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-zinc-100 bg-white py-1 shadow-lg shadow-zinc-900/5">
+                        @foreach (config('monit.locales') as $code => $meta)
+                        <a href="{{ route('locale.switch', $code) }}"
+                            class="flex items-center justify-between px-4 py-2 text-sm {{ $code === app()->getLocale() ? 'bg-brand-50 font-medium text-brand-700' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900' }}">
+                            <span>{{ $meta['flag'] }} {{ $meta['label'] }}</span>
+                            @if ($code === app()->getLocale())
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>
+                            @endif
+                        </a>
+                        @endforeach
+                    </div>
+                </details>
+                @endif
+
                 @auth
                     <a href="{{ route('dashboard') }}" class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700">{{ __('dashboard.title') }}</a>
                 @else

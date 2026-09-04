@@ -505,6 +505,20 @@ class PixelTracker
             ->first();
 
         if (! $session) {
+            // 回放数据先于 session 事件到达时，自动补建 visitor + session（防丟数据）
+            $visitor = $this->findOrCreateVisitor();
+            if ($visitor) {
+                $session = VisitorSession::create([
+                    'session_uuid_binary' => $sessionIdBinary,
+                    'visitor_id' => $visitor->visitor_id,
+                    'website_id' => $this->website->website_id,
+                    'date' => now(),
+                    'total_events' => 0,
+                ]);
+            }
+        }
+
+        if (! $session) {
             $this->skip('session_not_found');
 
             return;
@@ -521,10 +535,11 @@ class PixelTracker
                 return;
             }
 
-            SessionReplay::create([
+                        SessionReplay::create([
                 'session_id' => $session->session_id,
                 'visitor_id' => $session->visitor_id,
                 'website_id' => $this->website->website_id,
+                'user_id' => $this->website->user_id ?? $this->website->user?->user_id,
                 'datetime' => now(),
             ]);
 
@@ -569,18 +584,31 @@ class PixelTracker
         $json = json_encode($this->payload['data'] ?? [], JSON_UNESCAPED_UNICODE);
         $compressed = gzencode((string) $json, 9);
 
-        $snapshot = HeatmapSnapshot::create([
-            'heatmap_id' => $heatmap->heatmap_id,
-            'website_id' => $this->website->website_id,
-            'type' => $device,
-            'data' => $compressed,
-            'date' => now()->toDateString(),
-        ]);
+        // 检查是否已有该设备的 snapshot（可能由 click/scroll 先到达时自动创建的空快照）
+        $existingSnapshotId = $heatmap->{"snapshot_id_{$device}"};
+        if ($existingSnapshotId) {
+            // 更新已有快照的真实 DOM 数据
+            HeatmapSnapshot::where('snapshot_id', $existingSnapshotId)->update([
+                'data' => $compressed,
+            ]);
+            $heatmap->forceFill([
+                "{$device}_size" => strlen((string) $compressed),
+            ])->save();
+        } else {
+            // 创建新快照
+            $snapshot = HeatmapSnapshot::create([
+                'heatmap_id' => $heatmap->heatmap_id,
+                'website_id' => $this->website->website_id,
+                'type' => $device,
+                'data' => $compressed,
+                'date' => now()->toDateString(),
+            ]);
 
-        $heatmap->forceFill([
-            "snapshot_id_{$device}" => $snapshot->snapshot_id,
-            "{$device}_size" => strlen((string) $compressed),
-        ])->save();
+            $heatmap->forceFill([
+                "snapshot_id_{$device}" => $snapshot->snapshot_id,
+                "{$device}_size" => strlen((string) $compressed),
+            ])->save();
+        }
 
         $this->website->increment('current_month_sessions_replays');
     }
@@ -596,11 +624,6 @@ class PixelTracker
         }
 
         $device = $this->currentDeviceColumn($heatmap);
-        if (! $device) {
-            $this->skip('heatmap_snapshot_missing');
-
-            return;
-        }
 
         $x = max(0, min(100, (float) ($this->payload['x_normalized'] ?? 0)));
         $y = max(0, min(100, (float) ($this->payload['y_normalized'] ?? 0)));
@@ -628,11 +651,6 @@ class PixelTracker
         }
 
         $device = $this->currentDeviceColumn($heatmap);
-        if (! $device) {
-            $this->skip('heatmap_snapshot_missing');
-
-            return;
-        }
 
         $maxScroll = (int) round(max(0, min(100, (int) ($this->payload['max_scroll'] ?? 0))) / 10) * 10;
 
@@ -679,6 +697,7 @@ class PixelTracker
 
     /**
      * 当前设备列名 + 对应 snapshot_id 是否已生成
+     * 如果 snapshot 不存在则自动创建一个空快照（修复快照未到达时 click/scroll 数据丢失问题）
      *
      * @return string|null desktop|tablet|mobile 或 null（快照未采集）
      */
@@ -689,7 +708,27 @@ class PixelTracker
             $device = 'desktop';
         }
 
-        return $heatmap->{"snapshot_id_{$device}"} ? $device : null;
+        // snapshot_id 已存在 → 直接返回
+        if ($heatmap->{"snapshot_id_{$device}"}) {
+            return $device;
+        }
+
+        // snapshot_id 不存在 → 自动创建空快照（click/scroll 先于 snapshot 到达时保障数据不丢）
+        $emptyCompressed = gzencode('{}', 9);
+        $snapshot = HeatmapSnapshot::create([
+            'heatmap_id' => $heatmap->heatmap_id,
+            'website_id' => $this->website->website_id,
+            'type' => $device,
+            'data' => $emptyCompressed,
+            'date' => now()->toDateString(),
+        ]);
+
+        $heatmap->forceFill([
+            "snapshot_id_{$device}" => $snapshot->snapshot_id,
+            "{$device}_size" => strlen((string) $emptyCompressed),
+        ])->save();
+
+        return $device;
     }
 
     /* ---------------------------------------------------------------------

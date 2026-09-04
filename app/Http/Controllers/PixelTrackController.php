@@ -129,14 +129,36 @@ class PixelTrackController extends Controller
             ->first();
 
         if (! $heatmap) {
-            // 也支持通配符匹配 /path/*
+            // 通配符匹配 /path/*
             $heatmap = Heatmap::where('website_id', $website->website_id)
                 ->where('is_enabled', true)
                 ->whereRaw('? LIKE CONCAT(REPLACE(path, "*", "%"))', [$path])
                 ->first();
         }
 
-        $data = $heatmap ? json_encode(['heatmap_id' => $heatmap->heatmap_id]) : '{}';
+                // 全局热图开关开启但无匹配 Heatmap → 自动创建（修复热图无数据根因）
+        $globalHeatmapsEnabled = (bool) settings()->analytics->websites_heatmaps_is_enabled;
+        if (! $heatmap && $globalHeatmapsEnabled) {
+            $heatmap = Heatmap::create([
+                'website_id' => $website->website_id,
+                'user_id' => $website->user_id,
+                'path' => $path,
+                'name' => $path === '/' ? 'Homepage' : ltrim($path, '/'),
+                'is_enabled' => true,
+                'datetime' => now(),
+            ]);
+        }
+
+        // 判断回放是否启用：全局开关 + 网站开关 + 套餐配额
+        $replayEnabled = false;
+        if ((bool) settings()->analytics->sessions_replays_is_enabled && $website->sessions_replays_is_enabled) {
+            $replayLimit = $website->user?->getPlanSettings()['sessions_replays_limit'] ?? 0;
+            $replayEnabled = ($replayLimit === -1) || ($replayLimit > 0 && $website->current_month_sessions_replays < $replayLimit);
+        }
+
+        $data = $heatmap
+            ? json_encode(['heatmap_id' => $heatmap->heatmap_id, 'replay_enabled' => $replayEnabled])
+            : json_encode(['replay_enabled' => $replayEnabled]);
 
         return response($data, 200)
             ->header('Access-Control-Allow-Origin', '*')

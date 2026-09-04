@@ -106,9 +106,9 @@
     </div>
 </div>
 
-{{-- rrweb-player CDN + 初始化 --}}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/rrweb-player@2.0.0-alpha.17/dist/style.css">
-<script src="https://cdn.jsdelivr.net/npm/rrweb-player@2.0.0-alpha.17/dist/index.js"></script>
+{{-- rrweb-player 自托管 + 初始化（国内 CDN 访问不稳定，改用同源静态资源） --}}
+<link rel="stylesheet" href="{{ asset('assets/pixel/rrweb-player.min.css') }}">
+<script src="{{ asset('assets/pixel/rrweb-player.min.js') }}"></script>
 <script>
 (function () {
     const eventsUrl = document.getElementById('replay-container').dataset.eventsUrl;

@@ -13,9 +13,9 @@ class Heatmap extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'website_id', 'path', 'name', 'snapshot_id_desktop', 'snapshot_id_tablet',
+        'website_id', 'user_id', 'path', 'name', 'snapshot_id_desktop', 'snapshot_id_tablet',
         'snapshot_id_mobile', 'desktop_size', 'tablet_size', 'mobile_size',
-        'is_enabled', 'datetime',
+        'is_enabled', 'datetime', 'last_datetime',
     ];
 
     protected function casts(): array

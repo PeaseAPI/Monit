@@ -172,7 +172,7 @@
 
     /* ---------------- 热图自动检测（不再需要 data-heatmap-id） ---------------- */
 
-    function autoDetectHeatmap() {
+    function autoDetectHeatmap(cb) {
         if (settings.mode === 'lightweight') return;
 
         var checkUrl = endpoint + '?action=heatmap_check&path=' + encodeURIComponent(location.pathname + location.search);
@@ -185,10 +185,14 @@
             }).then(function (r) { return r.ok ? r.json() : {}; }).then(function (data) {
                 if (data && data.heatmap_id) {
                     settings.heatmapId = data.heatmap_id;
-                    heatmaps.snapshot();
                 }
-            }).catch(function () {});
-        } catch (e) {}
+                // 后端告知回放功能已启用 → 自动覆盖 settings.replay
+                if (data && data.replay_enabled) {
+                    settings.replay = true;
+                }
+                if (cb) cb();
+            }).catch(function () { if (cb) cb(); });
+        } catch (e) { if (cb) cb(); }
     }
 
         var heatmaps = {
@@ -440,9 +444,11 @@
         }
 
         setTimeout(function () {
-            heatmaps.snapshot();
-            replays.start();
-            autoDetectHeatmap();
+            // 先自动检测热图 → 拿到 heatmap_id 后再发快照/开始回放
+            autoDetectHeatmap(function () {
+                heatmaps.snapshot();
+                replays.start();
+            });
         }, 300);
     }
 

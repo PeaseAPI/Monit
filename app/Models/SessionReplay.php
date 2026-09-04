@@ -13,7 +13,8 @@ class SessionReplay extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'session_id', 'visitor_id', 'website_id', 'is_offloaded', 'datetime',
+        'session_id', 'visitor_id', 'website_id', 'user_id', 'events', 'size',
+        'is_offloaded', 'is_too_short', 'datetime', 'last_datetime', 'expiration_date',
     ];
 
     protected function casts(): array

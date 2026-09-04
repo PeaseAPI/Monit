@@ -14,7 +14,7 @@
 @endphp
 <{{ $tag }}@if ($href) href="{{ $href }}"@endif class="inline-flex items-center gap-2.5">
     @if ($logo)
-        <img src="{{ $logo }}" alt="{{ $name }}" class="{{ $class }} w-auto object-contain">
+        <img src="{{ $logo }}" alt="{{ $name }}" class="{{ $class }} object-contain">
     @else
         <span class="flex {{ $class }} items-center justify-center rounded-xl bg-gradient-to-br {{ $dark ? 'from-brand-400 to-brand-600' : 'from-brand-500 to-brand-700' }} text-base font-bold text-white">{{ mb_substr($name, 0, 1) }}</span>
     @endif
