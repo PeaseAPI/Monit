@@ -7,10 +7,10 @@
     @foreach($features as $key => $meta)
         @php($type = $meta['type'] ?? 'bool')
         @php($value = array_key_exists($key, $settings) ? $settings[$key] : ($meta['default'] ?? ($type === 'bool' ? false : 0)))
+        @php($label = $meta['label'] ?? \Illuminate\Support\Str::headline($key))
         <div class="flex items-center justify-between gap-2 rounded-xl border border-zinc-200 px-3 py-2">
             <label class="text-xs text-zinc-600" @if($type === 'bool') for="feature-{{ $key }}" @endif>
-                {{ $meta['label'] ?? $key }}
-                <span class="block font-mono text-[10px] text-zinc-400">{{ $key }}</span>
+                {{ __("admin.plan_feature.{$key}", [], app()->getLocale()) !== "admin.plan_feature.{$key}" ? __("admin.plan_feature.{$key}") : $label }}
             </label>
             @if($type === 'bool')
                 <input id="feature-{{ $key }}" type="checkbox" name="features[{{ $key }}]" value="1"

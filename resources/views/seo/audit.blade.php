@@ -104,6 +104,7 @@
                     $catColor = $catBand === 'good' ? 'emerald' : ($catBand === 'decent' ? 'amber' : 'red');
                     $catPassed = collect($audit->results)->filter(fn($r) => ($r['category'] ?? '') === $category && ($r['passed'] ?? false))->count();
                     $catTotal = collect($audit->results)->filter(fn($r) => ($r['category'] ?? '') === $category)->count();
+                    $catBarStyle = $catScore !== null ? 'style="width:'.$catScore.'%"' : '';
                 @endphp
                 <div class="rounded-2xl border border-zinc-200 bg-white p-5 transition hover:shadow-sm">
                     <div class="flex items-center justify-between">
@@ -111,7 +112,7 @@
                         <span class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold {{ $catBand === 'good' ? 'bg-emerald-50 text-emerald-700' : ($catBand === 'decent' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700') }}">{{ $catScore }}</span>
                     </div>
                     <div class="mt-3 h-1.5 w-full rounded-full bg-zinc-100">
-                        <div class="h-1.5 rounded-full transition-all {{ $catBand === 'good' ? 'bg-emerald-500' : ($catBand === 'decent' ? 'bg-amber-400' : 'bg-red-500') }}" style="width:{{ $catScore }}%"></div>
+                        <div class="h-1.5 rounded-full transition-all {{ $catBand === 'good' ? 'bg-emerald-500' : ($catBand === 'decent' ? 'bg-amber-400' : 'bg-red-500') }}" {!! $catBarStyle !!}></div>
                     </div>
                     <p class="mt-2 text-xs text-zinc-400">{{ $catPassed }}/{{ $catTotal }} {{ __('seo.passed') }}</p>
                 </div>

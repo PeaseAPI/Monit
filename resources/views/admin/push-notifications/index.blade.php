@@ -20,11 +20,11 @@
                 <tr>
                     <td class="px-6 py-3 font-medium text-zinc-900">{{ $campaign->name }}</td>
                     <td class="px-6 py-3 text-zinc-500">{{ $campaign->title }}</td>
-                    <td class="px-6 py-3"><span class="rounded-full px-2 py-0.5 text-xs {{ $campaign->status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">{{ $campaign->status }}</span></td>
+                    <td class="px-6 py-3"><span class="rounded-full px-2 py-0.5 text-xs {{ $campaign->status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">{{ $campaign->status === 'sent' ? __('admin.status_sent') : __('admin.status_pending') }}</span></td>
                     <td class="px-6 py-3 text-zinc-500">{{ $campaign->datetime }}</td>
                     <td class="px-6 py-3 text-right whitespace-nowrap">
                         <a href="{{ route('admin.push-notifications.edit', $campaign) }}" class="mr-3 text-sm text-zinc-500 hover:text-brand-600">{{ __('common.edit') }}</a>
-                        <form method="POST" action="{{ route('admin.push-notifications.destroy', $campaign) }}" class="inline">@csrf @method('DELETE')<button class="text-sm text-red-500 hover:text-red-700" onclick="return confirm('{{ __('common.confirm_delete') }}')">{{ __('common.delete') }}</button></form>
+                        <form method="POST" action="{{ route('admin.push-notifications.destroy', $campaign) }}" class="inline">@csrf @method('DELETE')<button class="text-sm text-red-500 hover:text-red-700" data-confirm="{{ __('common.confirm_delete') }}" onclick="return confirm(this.dataset.confirm)">{{ __('common.delete') }}</button></form>
                     </td>
                 </tr>
                 @empty<tr><td class="px-6 py-8 text-center text-zinc-500" colspan="5">{{ __('common.no_data') }}</td></tr>@endforelse

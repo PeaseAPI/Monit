@@ -151,15 +151,20 @@
 
     {{-- 主内容区（对标 admin-content）--}}
     <div class="flex w-full min-w-0 flex-col md:pl-64">
-        <header class="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/80 backdrop-blur">
+        <header class="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md shadow-sm shadow-zinc-200/40">
             <div class="flex h-16 items-center gap-3 px-4 md:px-8">
                 <button type="button" class="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 md:hidden" onclick="window.adminToggleSidebar()" aria-label="{{ __('admin.toggle_menu') }}">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
                 <h1 class="truncate text-base font-semibold text-zinc-900 md:text-lg">@yield('title', __('admin.admin_panel'))</h1>
-                <a href="{{ route('dashboard') }}" class="ml-auto hidden shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 sm:flex">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l-3 3m3-3v12M4 7l8-4 8 4"/></svg>
-                    {{ __('admin.user_panel') }}</a>
+                <div class="ml-auto flex items-center gap-2">
+                    <a href="#" data-href="{{ route('dashboard') }}" onclick="window.open(this.dataset.href,'_blank');return false;" class="shrink-0 rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-brand-600" title="{{ __('admin.help') }}">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg>
+                    </a>
+                    <a href="{{ route('dashboard') }}" class="hidden shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 sm:flex">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l-3 3m3-3v12M4 7l8-4 8 4"/></svg>
+                        {{ __('admin.user_panel') }}</a>
+                </div>
             </div>
         </header>
 

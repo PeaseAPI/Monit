@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'API 文档')
+@section('title', __('api.documentation_title', 'API 文档'))
 
 @section('content')
 <div class="container py-5">

@@ -9,36 +9,49 @@
             <h1 class="text-2xl font-bold text-zinc-900">{{ __('admin.plugins_title') }}</h1>
             <p class="mt-2 text-sm text-zinc-500">{{ __('admin.plugins_desc') }}</p>
         </div>
-        <div class="text-right text-sm">
-            <p class="text-zinc-500">{{ __('admin.plugins_total') }}: <span class="font-semibold text-zinc-900">{{ count($plugins) }}</span></p>
-            <p class="text-zinc-500">{{ __('admin.plugins_active') }}: <span class="font-semibold text-emerald-600">{{ $totalActive }}</span></p>
+        <div class="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm">
+            <div class="text-center">
+                <p class="text-lg font-bold text-zinc-900">{{ count($plugins) }}</p>
+                <p class="text-[11px] text-zinc-400">{{ __('admin.plugins_total') }}</p>
+            </div>
+            <div class="h-8 w-px bg-zinc-200"></div>
+            <div class="text-center">
+                <p class="text-lg font-bold text-emerald-600">{{ $totalActive }}</p>
+                <p class="text-[11px] text-zinc-400">{{ __('admin.plugins_active') }}</p>
+            </div>
         </div>
     </div>
 
     @if(count($plugins) === 0)
-        <div class="mt-8 rounded-2xl border border-zinc-200 bg-white p-8 text-center text-sm text-zinc-500">
-            {{ __('admin.plugins_empty') }}
+        <div class="mt-8 rounded-2xl border border-zinc-200 bg-white p-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-zinc-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
+            <p class="mt-3 text-sm text-zinc-500">{{ __('admin.plugins_empty') }}</p>
         </div>
     @endif
 
     <div class="mt-6 space-y-4">
         @foreach($plugins as $plugin)
-        <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <div class="group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md">
             <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h3 class="text-base font-semibold text-zinc-900">{{ $plugin['title'] }}</h3>
-                        <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">v{{ $plugin['version'] }}</span>
-                        @if($plugin['active'])
-                            <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">{{ __('admin.plugin_active') }}</span>
-                        @elseif($plugin['installed'])
-                            <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">{{ __('admin.plugin_installed') }}</span>
-                        @else
-                            <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-400">{{ __('admin.plugin_not_installed') }}</span>
-                        @endif
+                <div class="flex items-start gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ $plugin['active'] ? 'bg-emerald-50 text-emerald-600' : ($plugin['installed'] ? 'bg-amber-50 text-amber-500' : 'bg-zinc-100 text-zinc-400') }}">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
+                    </span>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base font-semibold text-zinc-900">{{ $plugin['title'] }}</h3>
+                            <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-500">v{{ $plugin['version'] }}</span>
+                            @if($plugin['active'])
+                                <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">{{ __('admin.plugin_active') }}</span>
+                            @elseif($plugin['installed'])
+                                <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">{{ __('admin.plugin_installed') }}</span>
+                            @else
+                                <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-400">{{ __('admin.plugin_not_installed') }}</span>
+                            @endif
+                        </div>
+                        <p class="mt-1 text-sm text-zinc-500">{{ $plugin['description'] }}</p>
+                        <p class="mt-0.5 text-xs text-zinc-400">{{ __('admin.plugin_author') }}: {{ $plugin['author'] }}</p>
                     </div>
-                    <p class="mt-1.5 text-sm text-zinc-500">{{ $plugin['description'] }}</p>
-                    <p class="mt-1 text-xs text-zinc-500">{{ __('admin.plugin_author') }}: {{ $plugin['author'] }}</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     @if(! $plugin['installed'])
@@ -88,7 +101,7 @@
                             @endif
                         </div>
                     @endforeach
-                    <button class="rounded-xl bg-brand-600 px-4 py-2 text-xs font-medium text-white hover:bg-brand-700">{{ __('admin.plugin_settings') }}</button>
+                                        <button class="rounded-xl bg-brand-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-brand-700">{{ __('common.save') }}</button>
                 </form>
             </div>
             @endif

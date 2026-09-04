@@ -9,6 +9,7 @@ use App\Services\Seo\Tools\SearchPreviewTools;
 use App\Services\Seo\Tools\SeoCheckTools;
 use App\Services\Seo\Tools\TextTools;
 use App\Support\Settings;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 /**
@@ -83,7 +84,15 @@ class ToolRunner
             return ['ok' => false, 'error' => __('seo.tool_not_available'), 'data' => []];
         }
 
-        return $this->instance($class)->{$meta['handler']}($input);
+        try {
+            return $this->instance($class)->{$meta['handler']}($input);
+        } catch (\Throwable $e) {
+            Log::error("SEO tool {$slug} error: " . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return ['ok' => false, 'error' => __('seo.tool_not_available'), 'data' => []];
+        }
     }
 
     protected function instance(string $class): object

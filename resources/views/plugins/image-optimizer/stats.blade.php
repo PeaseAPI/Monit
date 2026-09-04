@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Image Optimizer')
+@section('title', __('plugins.imgopt.stats_title', 'Image Optimizer'))
 @section('content')
 <div class="mb-6">
     <a href="{{ route('admin.plugins.index') }}" class="text-sm text-zinc-500 hover:underline">&larr; {{ __('plugins.back_to_list') }}</a>

@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Push Notifications')
+@section('title', __('plugins.push.campaigns_title', 'Push Notifications'))
 @section('content')
 <div class="mb-6">
     <a href="{{ route('admin.plugins.index') }}" class="text-sm text-zinc-500 hover:underline">&larr; {{ __('plugins.back_to_list') }}</a>
