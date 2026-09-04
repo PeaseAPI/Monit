@@ -51,13 +51,19 @@
         &nbsp;·&nbsp; {{ $audit->created_at?->format('Y-m-d H:i') }}
     </p>
 
-    @php $total = max(1, $audit->total_tests); @endphp
+        @php
+        $total = max(1, $audit->total_tests);
+        $majorBarStyle   = $audit->major_issues   ? 'style="width:'.round($audit->major_issues  /$total*100,1).'%;background:#ef4444"' : '';
+        $moderateBarStyle = $audit->moderate_issues ? 'style="width:'.round($audit->moderate_issues/$total*100,1).'%;background:#eab308"' : '';
+        $minorBarStyle   = $audit->minor_issues   ? 'style="width:'.round($audit->minor_issues  /$total*100,1).'%;background:#a1a1aa"' : '';
+        $passedBarStyle  = $audit->passed_tests    ? 'style="width:'.round($audit->passed_tests  /$total*100,1).'%;background:#10b981"' : '';
+    @endphp
     <div class="overview">
         <div class="overview-bar">
-            @if($audit->major_issues)<div style="width:{{ round($audit->major_issues/$total*100,1) }}%;background:#ef4444"></div>@endif
-            @if($audit->moderate_issues)<div style="width:{{ round($audit->moderate_issues/$total*100,1) }}%;background:#eab308"></div>@endif
-            @if($audit->minor_issues)<div style="width:{{ round($audit->minor_issues/$total*100,1) }}%;background:#a1a1aa"></div>@endif
-            @if($audit->passed_tests)<div style="width:{{ round($audit->passed_tests/$total*100,1) }}%;background:#10b981"></div>@endif
+            @if($audit->major_issues)<div {!! $majorBarStyle !!}></div>@endif
+            @if($audit->moderate_issues)<div {!! $moderateBarStyle !!}></div>@endif
+            @if($audit->minor_issues)<div {!! $minorBarStyle !!}></div>@endif
+            @if($audit->passed_tests)<div {!! $passedBarStyle !!}></div>@endif
         </div>
         <div class="overview-legend">
             <span class="legend-major">{{ __('seo.major_issue') }}: {{ $audit->major_issues }}</span>
@@ -70,9 +76,10 @@
     @if($audit->category_scores)
         <div class="cat-scores">
             @foreach($audit->category_scores as $category => $catScore)
+                @php $catColorStyle = 'style="color:'.($catScore > 79 ? '#047857' : ($catScore > 49 ? '#a16207' : '#b91c1c')).'"'; @endphp
                 <div class="cat-card">
                     <h3>{{ __("seo.category_{$category}") }}</h3>
-                    <div class="score" style="color:{{ $catScore > 79 ? '#047857' : ($catScore > 49 ? '#a16207' : '#b91c1c') }}">{{ $catScore }}</div>
+                    <div class="score" {!! $catColorStyle !!}>{{ $catScore }}</div>
                 </div>
             @endforeach
         </div>
