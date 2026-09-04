@@ -49,7 +49,7 @@ class DomainController extends Controller
             return back()->withErrors(['host' => __('msg.domain_exists')])->withInput();
         }
 
-        Domain::create([
+        $domain = Domain::create([
             'user_id' => $request->user()->user_id,
             'host' => $host,
             'scheme' => 'https',
@@ -57,8 +57,26 @@ class DomainController extends Controller
             'datetime' => now(),
         ]);
 
+        // 添加即查 whois（用户反馈 #9）：注册商/到期日期无需等次日 cron
+        // （06:30 才跑 monit:seo-domains-monitor）；查询失败静默——
+        // DomainMonitor 内部已容错，监控列仍由 cron 后续补齐
+        if ($domain->monitor_is_enabled) {
+            try {
+                app(\App\Services\Seo\DomainMonitor::class)->refresh($domain);
+            } catch (\Throwable) {
+                // whois 暂时不可达不影响添加流程
+            }
+        }
+
         return redirect()->route('domains.index')
             ->with('success', __('msg.domain_created', ['host' => $host]));
+    }
+
+    public function show(Request $request, int $domainId)
+    {
+        $domain = $request->user()->domains()->findOrFail($domainId);
+
+        return view('domains.show', compact('domain'));
     }
 
     public function update(Request $request): RedirectResponse

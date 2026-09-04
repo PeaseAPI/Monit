@@ -66,7 +66,9 @@ Route::prefix('v1')->middleware('api.key')->group(function (): void {
     Route::put('/websites/{website}', [ApiWebsiteController::class, 'update']);
     Route::delete('/websites/{website}', [ApiWebsiteController::class, 'destroy']);
 
-    // 数据查询
+    // 数据查询（路由级所有权校验 · 安全审计周期 #19：can:own,website 为第一道
+// 防线，控制器内 authorizeWebsite 保留作纵深防御——新增方法不再可能漏检）
+Route::middleware('can:own,website')->group(function (): void {
     Route::get('/websites/{website}/realtime', [AnalyticsController::class, 'realtime']);
     Route::get('/websites/{website}/visitors', [AnalyticsController::class, 'visitors']);
     Route::get('/websites/{website}/events', [AnalyticsController::class, 'events']);
@@ -86,6 +88,7 @@ Route::prefix('v1')->middleware('api.key')->group(function (): void {
     Route::get('/websites/{website}/pageviews-advanced', [AnalyticsController::class, 'pageviewsAdvanced']);
     Route::get('/websites/{website}/pageviews-lightweight', [AnalyticsController::class, 'pageviewsLightweight']);
     Route::get('/websites/{website}/replays', [AnalyticsController::class, 'replays']);
+});
 
     // 目标 CRUD（规格书 §8：/api/goals）
     Route::get('/websites/{website}/goals/list', [ResourcesController::class, 'goalsIndex']);

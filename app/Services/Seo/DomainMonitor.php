@@ -24,10 +24,16 @@ class DomainMonitor
         $raw = $this->query($server, $domain);
 
         if ($raw === null) {
-            // 尝试 whois.iana.org 引导跳转
+            // whois.iana.org 引导跳转（referral-hop 断言 · 安全审计周期 #19）：
+            // - referral 目标必须是合法 whois 主机（纯域名格式，杜绝端口/路径注入）
+            // - 不得指回 whois.iana.org 自身（无意义循环）
+            // - 仅允许一跳（跳转后仍返回 referral 时不再继续追，防无限链）
             $raw = $this->query('whois.iana.org', $domain);
 
-            if ($raw !== null && preg_match('/whois:\s*(\S+)/i', $raw, $m)) {
+            if ($raw !== null
+                && preg_match('/whois:\s*(\S+)/i', $raw, $m)
+                && strcasecmp($m[1], 'whois.iana.org') !== 0
+                && preg_match('/^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+\.?$/i', rtrim($m[1], '.'))) {
                 $raw = $this->query($m[1], $domain) ?? $raw;
             }
         }

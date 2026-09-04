@@ -122,12 +122,14 @@ class HeatmapController extends Controller
 
         $snapshotIds = $heatmap->snapshotIds();
 
-        $clicks = HeatmapSnapshotClick::whereIn('snapshot_id', $snapshotIds)
+        $clicks = HeatmapSnapshotClick::where('website_id', $website->website_id)
+            ->whereIn('snapshot_id', $snapshotIds)
             ->selectRaw('x_normalized, y_normalized, SUM(count) as count')
             ->groupBy('x_normalized', 'y_normalized')
             ->get();
 
-        $scrolls = HeatmapSnapshotScroll::whereIn('snapshot_id', $snapshotIds)
+        $scrolls = HeatmapSnapshotScroll::where('website_id', $website->website_id)
+            ->whereIn('snapshot_id', $snapshotIds)
             ->selectRaw('max_scroll, count(*) as count')
             ->groupBy('max_scroll')
             ->get();

@@ -50,7 +50,7 @@ class Brand
         $url ??= self::trimOrNull((string) Settings::get('branding.logo_url', ''));
         $url ??= self::trimOrNull((string) Settings::get('custom_images.logo', ''));
 
-        return $url ?? '/logo.png';
+        return $url ?? (file_exists(public_path('logo.png')) ? '/logo.png' : null);
     }
 
     /**
@@ -60,7 +60,7 @@ class Brand
     {
         return self::trimOrNull((string) Settings::get('branding.favicon_url', ''))
             ?? self::trimOrNull((string) Settings::get('custom_images.favicon', ''))
-            ?? '/favicon.ico';
+            ?? (file_exists(public_path('favicon.ico')) ? '/favicon.ico' : null);
     }
 
     /**

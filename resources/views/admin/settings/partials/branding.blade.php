@@ -12,19 +12,23 @@
             <label class="form-label">{{ __('admin.branding_logo_url') }}</label>
             <input type="url" name="logo_url" class="form-input w-full" placeholder="https://cdn.example.com/logo.png"
                    value="{{ old('logo_url', $settings['branding.logo_url'] ?? '') }}">
-            <p class="mt-1 text-xs text-zinc-400">{{ __('admin.branding_logo_url_hint') }}</p>
+            {{-- 直接上传（用户反馈 #21）：与 URL 直填二选一，上传后自动覆盖 URL --}}
+            <input type="file" name="logo_upload" accept="image/*" class="mt-2 block w-full text-xs text-zinc-500 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-brand-700 hover:file:bg-brand-100">
+            <p class="mt-1 text-xs text-zinc-400">{{ __('admin.branding_upload_hint') }}</p>
         </div>
         <div>
             <label class="form-label">{{ __('admin.branding_logo_dark_url') }}</label>
             <input type="url" name="logo_dark_url" class="form-input w-full" placeholder="https://cdn.example.com/logo-dark.png"
                    value="{{ old('logo_dark_url', $settings['branding.logo_dark_url'] ?? '') }}">
-            <p class="mt-1 text-xs text-zinc-400">{{ __('admin.branding_logo_dark_url_hint') }}</p>
+            <input type="file" name="logo_dark_upload" accept="image/*" class="mt-2 block w-full text-xs text-zinc-500 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-brand-700 hover:file:bg-brand-100">
+            <p class="mt-1 text-xs text-zinc-400">{{ __('admin.branding_upload_hint') }}</p>
         </div>
         <div>
             <label class="form-label">{{ __('admin.branding_favicon_url') }}</label>
             <input type="url" name="favicon_url" class="form-input w-full" placeholder="https://cdn.example.com/favicon.ico"
                    value="{{ old('favicon_url', $settings['branding.favicon_url'] ?? '') }}">
-            <p class="mt-1 text-xs text-zinc-400">{{ __('admin.branding_favicon_url_hint') }}</p>
+            <input type="file" name="favicon_upload" accept=".ico,image/*" class="mt-2 block w-full text-xs text-zinc-500 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-brand-700 hover:file:bg-brand-100">
+            <p class="mt-1 text-xs text-zinc-400">{{ __('admin.branding_favicon_upload_hint') }}</p>
         </div>
         <div>
             <label class="form-label">{{ __('admin.branding_primary_color') }}</label>
@@ -37,7 +41,7 @@
         <div>
             <label class="form-label">{{ __('admin.branding_landing_theme') }}</label>
             <select name="landing_theme" class="form-input w-full">
-                @foreach (['default' => __('admin.branding_theme_default')] as $theme => $label)
+                @foreach (['default' => __('admin.branding_theme_default'), 'dark' => __('admin.branding_theme_dark')] as $theme => $label)
                     <option value="{{ $theme }}" @selected(old('landing_theme', $settings['branding.landing_theme'] ?? 'default') === $theme)>{{ $label }}</option>
                 @endforeach
             </select>

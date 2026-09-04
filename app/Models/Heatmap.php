@@ -50,6 +50,13 @@ class Heatmap extends Model
 
     public function clicks()
     {
-        return $this->hasMany(HeatmapSnapshotClick::class, 'snapshot_id', 'snapshot_id_desktop');
+        return HeatmapSnapshotClick::where('website_id', $this->website_id)
+            ->whereIn('snapshot_id', $this->snapshotIds());
+    }
+
+    public function scrolls()
+    {
+        return HeatmapSnapshotScroll::where('website_id', $this->website_id)
+            ->whereIn('snapshot_id', $this->snapshotIds());
     }
 }

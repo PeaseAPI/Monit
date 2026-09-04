@@ -14,7 +14,7 @@
         <tbody class="divide-y divide-zinc-100">
             @forelse ($domains ?? [] as $d)
             <tr>
-                <td class="px-6 py-3 font-medium text-zinc-900">{{ $d->host }}</td>
+                <td class="px-6 py-3 font-medium text-zinc-900"><a href="{{ route('domains.show', $d->domain_id) }}" class="hover:underline">{{ $d->host }}</a></td>
                 <td class="px-6 py-3"><span class="rounded-full px-2 py-1 text-xs {{ $d->is_enabled ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500' }}">{{ $d->is_enabled ? __('domains.status_enabled') : __('domains.status_disabled') }}</span></td>
                 <td class="px-6 py-3">
                     <form method="POST" action="{{ route('domains.update') }}" class="inline">@csrf @method('PUT')

@@ -45,6 +45,17 @@
             <dd class="font-mono text-sm font-medium text-zinc-900">{{ $settings['timezone'] ?? '-' }}</dd>
         </div>
         <div class="flex items-center justify-between px-4 py-3">
+            <dt class="text-sm text-zinc-500">{{ __('settings.health.geoip') }}</dt>
+            <dd class="text-right text-sm font-medium {{ !empty($settings['geoip_available']) ? 'text-green-600' : 'text-amber-600' }}">
+                @if(!empty($settings['geoip_available']))
+                    {{ __('settings.health.geoip_ok') }}
+                @else
+                    {{ __('settings.health.geoip_missing') }}<br>
+                    <code class="text-xs text-zinc-500">php artisan geoip:update</code>
+                @endif
+            </dd>
+        </div>
+        <div class="flex items-center justify-between px-4 py-3">
             <dt class="text-sm text-zinc-500">{{ __('settings.health.settings_count') }}</dt>
             <dd class="text-sm font-medium text-zinc-900">{{ number_format((float) ($settings['settings_count'] ?? 0)) }}</dd>
         </div>

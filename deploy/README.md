@@ -60,7 +60,8 @@ chmod -R ug+rwX storage bootstrap/cache
 5. `php artisan storage:link`（公开磁盘软链）
 6. `php artisan config:cache && php artisan route:cache && php artisan view:cache`（⚠️ 必须在 1-4 步全部完成后执行——config 缓存会把当时的 `APP_KEY` / `DB_*` 值固化，之后改 `.env` 不生效；每次修改 `.env` 后需先 `php artisan config:clear` 再重建缓存）
 7. Cron 条目：`* * * * * cd /var/www/monit && php artisan schedule:run >> /dev/null 2>&1`
-8. 队列Worker（启用队列时）：`php artisan queue:work --tries=3`（修改 `.env` / 重建缓存后需重启 Worker）
+8. **GeoIP 库文件（重要！缺失时统计的国家/大洲维度全部显示"未知"）**：`sudo -u www php artisan geoip:update`——自动下载 db-ip 免费国家库（~5MB，免注册）到 `storage/app/geoip/country.mmdb`；调度器每月 1 日 02:00 自动更新。状态可在 后台 → 设置 → 健康检查 查看。
+9. 队列Worker（启用队列时）：`php artisan queue:work --tries=3`（修改 `.env` / 重建缓存后需重启 Worker）
 
 ## 常见 500 排查（生产实录）
 

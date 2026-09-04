@@ -23,9 +23,7 @@
         {{-- 品牌头（渐变徽标 + 管理后台徽章）--}}
         <div class="flex h-16 shrink-0 items-center gap-2 border-b border-white/5 bg-gradient-to-r from-brand-600/10 via-transparent to-transparent px-5">
             <a href="{{ route('admin.index') }}" class="flex min-w-0 items-center gap-2.5">
-                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-700 shadow-lg shadow-brand-600/30">
-                    <x-brand-logo class="h-9 w-9" text-class="hidden" />
-                </span>
+                <x-brand-logo class="h-9 w-9" text-class="hidden" />
                 <span class="truncate text-base font-bold tracking-tight text-white">{{ \App\Support\Brand::name() }}</span>
             </a>
             <span class="ml-auto shrink-0 rounded-md bg-brand-500/15 px-2 py-1 text-[11px] font-semibold text-brand-300 ring-1 ring-inset ring-brand-400/20">{{ __('admin.admin_label') }}</span>

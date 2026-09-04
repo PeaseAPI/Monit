@@ -95,6 +95,11 @@
                 <input type="checkbox" name="sms_phone_bind_is_enabled" value="1" {{ filter_var($settings['sms.sms_phone_bind_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                 {{ __('settings.sms.account_center_hint') }}
             </label>
+            {{-- 登录二次校验（用户反馈 #16）：已绑手机号用户登录强制验证码 --}}
+            <label class="flex items-center gap-2 border-t border-zinc-100 pt-3">
+                <input type="checkbox" name="sms_login_verify_enabled" value="1" {{ filter_var($settings['sms.sms_login_verify_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+                <span>{{ __('settings.sms.login_verify_hint') }}</span>
+            </label>
         </fieldset>
     </div>
 </div>

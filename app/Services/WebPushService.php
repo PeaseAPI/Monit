@@ -18,6 +18,51 @@ class WebPushService
     public array $lastResults = [];
 
     /**
+     * 推送服务商 endpoint 域名白名单（安全审计周期 #19）：
+     * 订阅 endpoint 只能指向浏览器厂商官方推送服务，防止
+     * ①平台被当跳板向任意 URL 发 POST ②未来新增攻击面。
+     * 自建推送服务可经 config services.webpush.extra_endpoint_domains 追加。
+     */
+    protected const PUSH_ENDPOINT_SUFFIXES = [
+        '.googleapis.com',              // Chrome / Android FCM（含 fcm.googleapis.com）
+        '.push.services.mozilla.com',   // Firefox / Gecko autopush
+        '.mozaws.net',                  // Mozilla AWS 基础设施（autopush 备用）
+        '.push.apple.com',              // Safari / WebKit（含 apns.compat.push.apple.com）
+        '.notify.windows.com',          // Microsoft Edge / IE 经典推送
+        '.windows.com',                 // WNS 新版
+    ];
+
+    /**
+     * endpoint 主机是否命中白名单（后缀匹配 + 精确匹配）
+     */
+    protected function endpointAllowed(string $endpoint): bool
+    {
+        $host = strtolower((string) (parse_url(trim($endpoint), PHP_URL_HOST) ?? ''));
+
+        if ($host === '') {
+            return false;
+        }
+
+        $suffixes = self::PUSH_ENDPOINT_SUFFIXES;
+
+        foreach ((array) config('services.webpush.extra_endpoint_domains', []) as $extra) {
+            $extra = strtolower(trim((string) $extra));
+
+            if ($extra !== '') {
+                $suffixes[] = str_starts_with($extra, '.') ? $extra : '.'.$extra;
+            }
+        }
+
+        foreach ($suffixes as $suffix) {
+            if (str_ends_with($host, $suffix) || $host === substr($suffix, 1)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * 向单个订阅发送推送（活动营销批量任务使用，规格书 §14.5）
      * VAPID 密钥取自 push-notifications 插件设置。
      */
@@ -31,6 +76,14 @@ class WebPushService
             (string) PluginManager::setting('push-notifications', 'vapid_public_key', ''),
             (string) PluginManager::setting('push-notifications', 'vapid_private_key', ''),
         );
+    }
+
+    /**
+     * endpoint 是否允许（供订阅入口校验复用）
+     */
+    public function isEndpointAllowed(string $endpoint): bool
+    {
+        return $this->endpointAllowed($endpoint);
     }
 
     /**
@@ -52,6 +105,12 @@ class WebPushService
         // 校验，此处兜底拦截存量脏 endpoint——不安全目标一律不发起连接
         //（区别于连接失败：lastResults 保持空 = 未尝试）
         if (! WebhookSignature::isSafeHttpUrl($endpoint)) {
+            return false;
+        }
+
+        // 域名白名单（安全审计周期 #19）：endpoint 必须指向浏览器厂商
+        // 官方推送服务（FCM/Mozilla/APNs/WNS），非白名单目标一律拒绝
+        if (! $this->endpointAllowed($endpoint)) {
             return false;
         }
 

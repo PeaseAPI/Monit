@@ -224,11 +224,20 @@ class PaymentController extends Controller
         $event = $stripeProcessor->parseWebhookEvent($request);
 
         if ($event['event'] === 'payment_success' && isset($event['payment_id'])) {
-            $this->paymentService->handlePaymentSuccess(
+            // 金额防篡改（安全审计周期 #19）：验签只证明通知来自 Stripe，
+            // 结算金额仍须与本地订单一致（amount_total 最小单位 → 主单位换算）
+            if ($this->paymentService->verifyGatewayAmount(
                 (int) $event['payment_id'],
-                $event['external_id'],
-                $event['subscription_id'] ?? null
-            );
+                PaymentService::majorUnits($event['amount_total'] ?? null, (string) ($event['currency'] ?? '')),
+                (string) ($event['currency'] ?? ''),
+                'stripe',
+            )) {
+                $this->paymentService->handlePaymentSuccess(
+                    (int) $event['payment_id'],
+                    $event['external_id'],
+                    $event['subscription_id'] ?? null
+                );
+            }
         }
 
         if ($event['event'] === 'payment_failure' && isset($event['payment_id'])) {
@@ -260,7 +269,15 @@ class PaymentController extends Controller
             $paymentId = $resource['custom_id'] ?? null;
             $externalId = $resource['id'] ?? null;
 
-            if ($paymentId) {
+            // 金额防篡改（安全审计周期 #19）：resource.amount.total 为主单位字符串，
+            // 须与本地订单一致方可入账（缺失/不符 fail-closed 拒绝）
+            if ($paymentId
+                && $this->paymentService->verifyGatewayAmount(
+                    (int) $paymentId,
+                    is_numeric($resource['amount']['total'] ?? null) ? (float) $resource['amount']['total'] : null,
+                    (string) ($resource['amount']['currency'] ?? ''),
+                    'paypal',
+                )) {
                 $this->paymentService->handlePaymentSuccess((int) $paymentId, $externalId);
             }
         }

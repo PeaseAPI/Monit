@@ -382,7 +382,7 @@ class PaymentAmountTamperTest extends TestCase
 
     /* ---------------- helper 单元 ---------------- */
 
-    #[Test]
+        #[Test]
     public function major_units_handles_zero_decimal_currencies(): void
     {
         $this->assertSame(1000.0, PaymentService::majorUnits(1000, 'JPY'));
@@ -391,4 +391,244 @@ class PaymentAmountTamperTest extends TestCase
         $this->assertNull(PaymentService::majorUnits(null, 'USD'));
         $this->assertNull(PaymentService::majorUnits('abc', 'USD'));
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  安全审计周期 #19：Stripe / PayPal / Mollie 金额防篡改校验           */
+    /* ------------------------------------------------------------------ */
+
+    #[Test]
+        public function stripe_rejects_tampered_amount(): void
+    {
+        config()->set('services.stripe.webhook_secret', 'whsec_c19');
+
+        $user = User::create([
+            'name' => 'Stripe Tamper', 'email' => 'st@example.com',
+            'password' => bcrypt('secret123'), 'status' => 1, 'plan_id' => 'free',
+        ]);
+        Plan::create([
+            'plan_id' => 'c19_stripe', 'name' => 'C19 Stripe', 'order' => 99,
+            'monthly_price' => 9.99, 'yearly_price' => 99.99, 'currency' => 'USD',
+        ]);
+        $payment = Payment::create([
+            'user_id' => $user->user_id, 'name' => $user->name, 'email' => $user->email,
+            'plan_id' => 'c19_stripe', 'payment_processor' => 'stripe',
+            'type' => 'one_time', 'frequency' => 'monthly',
+            'status' => 0, 'total_amount' => 9.99,
+            'currency' => 'USD', 'datetime' => now(),
+        ]);
+
+        $payload = [
+            'type' => 'checkout.session.completed',
+            'data' => ['object' => [
+                'id' => 'cs_tamper', 'payment_intent' => 'pi_tamper',
+                'metadata' => ['payment_id' => (string) $payment->payment_id],
+                'amount_total' => 100, 'currency' => 'usd',
+            ]],
+        ];
+        $body = json_encode($payload);
+        $timestamp = time();
+        $signature = hash_hmac('sha256', "{$timestamp}.{$body}", 'whsec_c19');
+
+        $this->call('POST', '/webhooks/stripe', [], [], [], $this->transformHeadersToServerVars([
+            'Content-Type' => 'application/json',
+            'Stripe-Signature' => "t={$timestamp},v1={$signature}",
+        ]), $body)->assertOk();
+
+        $this->assertSame(0, (int) $payment->fresh()->status);
+    }
+
+    #[Test]
+    public function stripe_rejects_currency_mismatch(): void
+    {
+        config()->set('services.stripe.webhook_secret', 'whsec_c19');
+
+        $user = User::create([
+            'name' => 'Stripe Curr', 'email' => 'stcurr@example.com',
+            'password' => bcrypt('secret123'), 'status' => 1, 'plan_id' => 'free',
+        ]);
+        Plan::create([
+            'plan_id' => 'pro2', 'name' => 'Pro2', 'order' => 2,
+            'monthly_price' => 9.99, 'yearly_price' => 99.99, 'currency' => 'USD',
+        ]);
+        $payment = Payment::create([
+            'user_id' => $user->user_id, 'name' => $user->name, 'email' => $user->email,
+            'plan_id' => 'pro2', 'payment_processor' => 'stripe',
+            'type' => 'one_time', 'frequency' => 'monthly',
+            'status' => 0, 'total_amount' => 9.99,
+            'currency' => 'USD', 'datetime' => now(),
+        ]);
+
+        $payload = [
+            'type' => 'checkout.session.completed',
+            'data' => ['object' => [
+                'id' => 'cs_curr', 'payment_intent' => 'pi_curr',
+                'metadata' => ['payment_id' => (string) $payment->payment_id],
+                'amount_total' => 999, 'currency' => 'eur',
+            ]],
+        ];
+        $body = json_encode($payload);
+        $timestamp = time();
+        $signature = hash_hmac('sha256', "{$timestamp}.{$body}", 'whsec_c19');
+
+        $this->call('POST', '/webhooks/stripe', [], [], [], $this->transformHeadersToServerVars([
+            'Content-Type' => 'application/json',
+            'Stripe-Signature' => "t={$timestamp},v1={$signature}",
+        ]), $body)->assertOk();
+
+                $this->assertSame(0, (int) $payment->fresh()->status);
+    }
+
+    /* ---------------- Mollie（amount.value：主单位，API 回查） ---------------- */
+
+    #[Test]
+    public function mollie_verify_gateway_amount_rejects_underpayment(): void
+    {
+        $user = User::create([
+            'name' => 'Mollie Tamper', 'email' => 'mollie@example.com',
+            'password' => bcrypt('secret123'), 'status' => 1, 'plan_id' => 'free',
+        ]);
+        Plan::create([
+            'plan_id' => 'mollie_pro', 'name' => 'Mollie Pro', 'order' => 3,
+            'monthly_price' => 9.99, 'yearly_price' => 99.99, 'currency' => 'EUR',
+        ]);
+        $payment = Payment::create([
+            'user_id' => $user->user_id, 'name' => $user->name, 'email' => $user->email,
+            'plan_id' => 'mollie_pro', 'payment_processor' => 'mollie',
+            'type' => 'one_time', 'frequency' => 'monthly',
+            'status' => 0, 'total_amount' => 9.99,
+            'currency' => 'EUR', 'datetime' => now(),
+        ]);
+
+        $service = app(PaymentService::class);
+        $this->assertFalse(
+            $service->verifyGatewayAmount($payment->payment_id, 1.00, 'EUR', 'mollie')
+        );
+        $this->assertTrue(
+            $service->verifyGatewayAmount($payment->payment_id, 9.99, 'EUR', 'mollie')
+        );
+    }
+
+    #[Test]
+    public function mollie_rejects_currency_mismatch(): void
+    {
+        $user = User::create([
+            'name' => 'Mollie Curr', 'email' => 'mollcurr@example.com',
+            'password' => bcrypt('secret123'), 'status' => 1, 'plan_id' => 'free',
+        ]);
+        Plan::create([
+            'plan_id' => 'mollie2', 'name' => 'M2', 'order' => 4,
+            'monthly_price' => 9.99, 'yearly_price' => 99.99, 'currency' => 'EUR',
+        ]);
+        $payment = Payment::create([
+            'user_id' => $user->user_id, 'name' => $user->name, 'email' => $user->email,
+            'plan_id' => 'mollie2', 'payment_processor' => 'mollie',
+            'type' => 'one_time', 'frequency' => 'monthly',
+            'status' => 0, 'total_amount' => 9.99,
+            'currency' => 'EUR', 'datetime' => now(),
+        ]);
+
+                $service = app(PaymentService::class);
+        $this->assertFalse(
+            $service->verifyGatewayAmount($payment->payment_id, 9.99, 'USD', 'mollie')
+        );
+    }
+
+    /* ---------------- PayPal（capture 回查 amount.value：主单位） ---------------- */
+
+    #[Test]
+    public function paypal_verify_gateway_amount_rejects_underpayment(): void
+    {
+        $user = User::create([
+            'name' => 'PayPal Tamper', 'email' => 'pp@example.com',
+            'password' => bcrypt('secret123'), 'status' => 1, 'plan_id' => 'free',
+        ]);
+        Plan::create([
+            'plan_id' => 'pp_pro', 'name' => 'PP Pro', 'order' => 5,
+            'monthly_price' => 9.99, 'yearly_price' => 99.99, 'currency' => 'USD',
+        ]);
+        $payment = Payment::create([
+            'user_id' => $user->user_id, 'name' => $user->name, 'email' => $user->email,
+            'plan_id' => 'pp_pro', 'payment_processor' => 'paypal',
+            'type' => 'one_time', 'frequency' => 'monthly',
+            'status' => 0, 'total_amount' => 9.99,
+            'currency' => 'USD', 'datetime' => now(),
+        ]);
+
+        $service = app(PaymentService::class);
+        $this->assertFalse(
+            $service->verifyGatewayAmount($payment->payment_id, 1.00, 'USD', 'paypal')
+        );
+        $this->assertTrue(
+            $service->verifyGatewayAmount($payment->payment_id, 9.99, 'USD', 'paypal')
+        );
+    }
+
+    #[Test]
+    public function paypal_rejects_currency_mismatch(): void
+    {
+        $user = User::create([
+            'name' => 'PayPal Curr', 'email' => 'ppcurr@example.com',
+            'password' => bcrypt('secret123'), 'status' => 1, 'plan_id' => 'free',
+        ]);
+        Plan::create([
+            'plan_id' => 'pp2', 'name' => 'PP2', 'order' => 6,
+            'monthly_price' => 9.99, 'yearly_price' => 99.99, 'currency' => 'USD',
+        ]);
+        $payment = Payment::create([
+            'user_id' => $user->user_id, 'name' => $user->name, 'email' => $user->email,
+            'plan_id' => 'pp2', 'payment_processor' => 'paypal',
+            'type' => 'one_time', 'frequency' => 'monthly',
+            'status' => 0, 'total_amount' => 9.99,
+            'currency' => 'USD', 'datetime' => now(),
+        ]);
+
+        $service = app(PaymentService::class);
+        $this->assertFalse(
+            $service->verifyGatewayAmount($payment->payment_id, 9.99, 'EUR', 'paypal')
+        );
+    }
+
+    /* ---------------- 零小数币种（JPY）Stripe 金额校验 ---------------- */
+
+    #[Test]
+    public function stripe_jpy_order_rejects_tampered_amount(): void
+    {
+        config()->set('services.stripe.webhook_secret', 'whsec_jpy');
+
+        $user = User::create([
+            'name' => 'JPY Tamper', 'email' => 'jpy@example.com',
+            'password' => bcrypt('secret123'), 'status' => 1, 'plan_id' => 'free',
+        ]);
+        Plan::create([
+            'plan_id' => 'jpy_pro', 'name' => 'JPY Pro', 'order' => 7,
+            'monthly_price' => 1000, 'yearly_price' => 10000, 'currency' => 'JPY',
+        ]);
+        $payment = Payment::create([
+            'user_id' => $user->user_id, 'name' => $user->name, 'email' => $user->email,
+            'plan_id' => 'jpy_pro', 'payment_processor' => 'stripe',
+            'type' => 'one_time', 'frequency' => 'monthly',
+            'status' => 0, 'total_amount' => 1000,
+            'currency' => 'JPY', 'datetime' => now(),
+        ]);
+
+        $payload = [
+            'type' => 'checkout.session.completed',
+            'data' => ['object' => [
+                'id' => 'cs_jpy', 'payment_intent' => 'pi_jpy',
+                'metadata' => ['payment_id' => (string) $payment->payment_id],
+                'amount_total' => 100, 'currency' => 'jpy',
+            ]],
+        ];
+        $body = json_encode($payload);
+        $timestamp = time();
+        $signature = hash_hmac('sha256', "{$timestamp}.{$body}", 'whsec_jpy');
+
+        $this->call('POST', '/webhooks/stripe', [], [], [], $this->transformHeadersToServerVars([
+            'Content-Type' => 'application/json',
+            'Stripe-Signature' => "t={$timestamp},v1={$signature}",
+        ]), $body)->assertOk();
+
+        $this->assertSame(0, (int) $payment->fresh()->status);
+    }
 }
+

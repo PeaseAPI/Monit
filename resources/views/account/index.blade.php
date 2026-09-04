@@ -20,6 +20,67 @@
         </span>
     </div>
 
+    {{-- 标签页导航（用户反馈 #14：基础资料 / 账单信息 / 安全设置） --}}
+    <div class="mt-6 flex gap-1 rounded-2xl border border-zinc-200 bg-white p-1.5" role="tablist">
+        <button type="button" data-account-tab="profile" class="account-tab-btn flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition">
+            {{ __('account.tab_profile') }}</button>
+        <button type="button" data-account-tab="billing" class="account-tab-btn flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition">
+            {{ __('account.tab_billing') }}</button>
+        <button type="button" data-account-tab="security" class="account-tab-btn flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition">
+            {{ __('account.tab_security') }}</button>
+    </div>
+
+    {{-- ========== 标签：基础资料 ========== --}}
+    <div data-account-panel="profile" class="account-tab-panel">
+
+    {{-- 登录方式（用户反馈 #14：绑定邮箱 / 账户 ID / 第三方社交登录一栏可见） --}}
+    <div class="card mt-6">
+        <div class="card-header">{{ __('account.signin_methods') }}</div>
+        <div class="divide-y divide-zinc-100">
+            <div class="flex items-center justify-between gap-4 px-6 py-3.5">
+                <div>
+                    <p class="text-sm font-medium text-zinc-800">{{ __('account.user_id_label') }}</p>
+                    <code class="text-xs text-zinc-500">#{{ $user->user_id }}</code>
+                </div>
+                <span class="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs text-zinc-500">{{ __('account.registered_at') }}: {{ optional($user->datetime ?? $user->created_at)->format('Y-m-d') ?? '—' }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-4 px-6 py-3.5">
+                <div>
+                    <p class="text-sm font-medium text-zinc-800">{{ __('account.email_label') }}</p>
+                    <p class="text-xs text-zinc-500 break-all">{{ $user->email }}</p>
+                </div>
+                <span class="rounded-full px-2.5 py-0.5 text-xs {{ $user->email_verified_at ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">
+                    {{ $user->email_verified_at ? __('account.email_verified') : __('account.email_unverified') }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-4 px-6 py-3.5">
+                <div>
+                    <p class="text-sm font-medium text-zinc-800">{{ __('auth.phone') }}</p>
+                    <p class="text-xs text-zinc-500">{{ $user->phone ?? __('account.not_bound') }}</p>
+                </div>
+                @if($user->phone)
+                    <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs text-emerald-700">{{ __('account.bound') }}</span>
+                @endif
+            </div>
+            <div class="px-6 py-3.5">
+                <p class="text-sm font-medium text-zinc-800">{{ __('account.social_signin') }}</p>
+                @if($user->source && $user->source !== 'direct')
+                    <p class="mt-1 text-xs text-emerald-600">{{ __('account.social_source', ['provider' => ucfirst($user->source)]) }}</p>
+                @endif
+                <div class="mt-2 flex flex-wrap gap-2">
+                    @forelse($socialProviders ?? [] as $provider => $label)
+                        <a href="{{ route('social-login.redirect', $provider) }}"
+                           class="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-brand-400 hover:text-brand-600">
+                            {{ $label }}
+                        </a>
+                    @empty
+                        <p class="text-xs text-zinc-400">{{ __('account.social_none_enabled') }}</p>
+                    @endforelse
+                </div>
+                <p class="mt-2 text-xs text-zinc-400">{{ __('account.social_hint') }}</p>
+            </div>
+        </div>
+    </div>
+
     {{-- 个人资料（含头像上传 / 防钓鱼码，对标 monit.cn /account） --}}
     <form method="POST" action="{{ route('account.update') }}" enctype="multipart/form-data" class="card mt-6">@csrf @method('PUT')
         <div class="card-header flex items-center gap-2">
@@ -62,6 +123,10 @@
     </form>
 
     {{-- 账单信息（对标 monit.cn /account billing；users.billing JSON 列） --}}
+    </div>{{-- /tab:profile --}}
+
+    {{-- ========== 标签：账单信息 ========== --}}
+    <div data-account-panel="billing" class="account-tab-panel hidden">
     @php($billing = old('billing', $user->billing ?? []))
     <form method="POST" action="{{ route('account.update') }}" class="card mt-6">@csrf @method('PUT')
         <input type="hidden" name="name" value="{{ $user->name }}">
@@ -98,6 +163,10 @@
     </form>
 
     {{-- 修改密码 --}}
+    </div>{{-- /tab:billing --}}
+
+    {{-- ========== 标签：安全设置（改密 / 手机绑定 / 两步验证 / 注销账户） ========== --}}
+    <div data-account-panel="security" class="account-tab-panel hidden">
     <div class="card mt-6">
         <div class="card-header flex items-center gap-2">
             <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
@@ -238,5 +307,26 @@
         </form>
         </div>
     </div>
+    </div>{{-- /tab:security --}}
+    </div>
+
+    {{-- 标签页切换（hash 记忆 + 首个默认） --}}
+    <script>
+    (function () {
+        var btns = document.querySelectorAll('.account-tab-btn');
+        var panels = document.querySelectorAll('[data-account-panel]');
+
+        function activate(name) {
+            btns.forEach(function (b) {
+                var on = b.dataset.accountTab === name;
+                b.className = 'account-tab-btn flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ' + (on ? 'bg-brand-600 text-white shadow-sm' : 'text-zinc-500 hover:bg-zinc-100');
+            });
+            panels.forEach(function (p) { p.classList.toggle('hidden', p.dataset.accountPanel !== name); });
+        }
+
+        btns.forEach(function (b) { b.addEventListener('click', function () { activate(b.dataset.accountTab); history.replaceState(null, '', '#tab-' + b.dataset.accountTab); }); });
+        activate((location.hash.match(/^#tab-(profile|billing|security)$/) || [])[1] || 'profile');
+    })();
+    </script>
 </div>
 @endsection

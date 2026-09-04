@@ -23,8 +23,20 @@ class AccountController extends Controller
      */
     public function index(Request $request)
     {
+        // 已启用的社交登录提供商（用户反馈 #14：账号页展示可用的第三方登录方式）
+        $socialProviders = [];
+        foreach (['qq', 'wechat', 'weibo', 'gitee', 'feishu', 'google', 'github', 'facebook', 'discord', 'linkedin', 'microsoft', 'apple', 'twitter'] as $provider) {
+            $raw = \App\Support\Settings::get('socials.'.$provider);
+            $config = is_string($raw) ? (json_decode($raw, true) ?? []) : (array) $raw;
+
+            if (! empty($config['is_enabled'])) {
+                $socialProviders[$provider] = ucfirst($provider);
+            }
+        }
+
         return view('account.index', [
             'user' => $request->user()->load('plan'),
+            'socialProviders' => $socialProviders,
         ]);
     }
 

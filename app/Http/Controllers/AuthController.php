@@ -31,7 +31,28 @@ class AuthController extends Controller
     {
         return view('auth.login', [
             'phoneLoginEnabled' => SmsService::scenarioEnabled('phone_login'),
+            'smsLoginVerifyEnabled' => self::smsLoginVerifyEnabled(),
         ]);
+    }
+
+    /**
+     * 登录短信二次校验总开关（用户反馈 #16）：
+     * sms.sms_login_verify_enabled 开启（且 phone_login 场景可用——发码复用
+     * 该场景）时，已绑定手机号的用户登录必须提供短信验证码；
+     * 未绑定手机号的用户不受影响（防止历史用户被锁死在登录页外）。
+     */
+    public static function smsLoginVerifyEnabled(): bool
+    {
+        return SmsService::scenarioEnabled('phone_login')
+            && filter_var(\App\Support\Settings::get('sms.sms_login_verify_enabled', false), FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * 该用户登录是否必须短信验证码（开关开启 + 已绑手机号）
+     */
+    protected function smsLoginVerifyRequired(?User $user): bool
+    {
+        return $user !== null && $user->phone !== null && self::smsLoginVerifyEnabled();
     }
 
     public function login(Request $request): RedirectResponse
@@ -77,6 +98,22 @@ class AuthController extends Controller
                 ->withErrors(['email' => __('validation.auth_failed')]);
         }
 
+        // 登录短信二次校验（用户反馈 #16）：已绑手机号 + 后台开关开启时，
+        // 密码正确也必须提供短信验证码（防"密码即可绕过短信"）
+        if ($this->smsLoginVerifyRequired($user)) {
+            $code = (string) $request->input('sms_code', '');
+
+            if ($code === '') {
+                return back()->withInput($request->only('email'))
+                    ->withErrors(['sms_code' => __('auth.sms_code_required_for_login')]);
+            }
+
+            if (! SmsService::verify((string) $user->phone, 'login', $code)) {
+                return back()->withInput($request->only('email'))
+                    ->withErrors(['sms_code' => __('auth.sms_code_invalid')]);
+            }
+        }
+
         return $this->completeLogin($request, $user, $remember);
     }
 
@@ -101,6 +138,9 @@ class AuthController extends Controller
 
         $user = User::where('phone', $phone)->first();
 
+        // 强制验证码（用户反馈 #16）：开关开启时手机号登录不再接受纯密码
+        $forceSms = $this->smsLoginVerifyRequired($user);
+
         // 短信验证码登录（免密码）
         if ($request->filled('sms_code')) {
             if (! $user || ! SmsService::verify($phone, 'login', (string) $request->input('sms_code'))) {
@@ -108,6 +148,10 @@ class AuthController extends Controller
                     ->withInput($request->only('email'))
                     ->withErrors(['sms_code' => __('auth.sms_code_invalid')]);
             }
+        } elseif ($forceSms) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['sms_code' => __('auth.sms_code_required_for_login')]);
         } else {
             if (! $user || ! $request->filled('password') || ! Hash::check((string) $request->input('password'), $user->password)) {
                 // 手机号登录失败同样计入锁定（与邮箱共用 login scope 计数语义）

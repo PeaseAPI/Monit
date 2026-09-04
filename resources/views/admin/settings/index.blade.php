@@ -90,13 +90,14 @@
             @if(in_array($tab, $readonlyTabs, true))
                 @include("admin.settings.partials.{$tab}", ['settings' => $settings[$tab] ?? []])
             @else
-            <form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-6">
+            <form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-6" enctype="multipart/form-data">
                 @csrf @method('PUT')
                 <input type="hidden" name="group" value="{{ $tab }}">
 
                 @include("admin.settings.partials.{$tab}", ['settings' => $settings[$tab] ?? []])
 
-                <div class="sticky bottom-4 flex justify-end rounded-2xl border border-zinc-200/80 bg-white/90 px-5 py-3 shadow-lg shadow-zinc-900/5 backdrop-blur">
+                {{-- 独立保存按钮（用户反馈 #19：弃用 sticky 底部大条，改为表单内常规右对齐按钮） --}}
+                <div class="flex justify-end border-t border-zinc-100 pt-5">
                     <button type="submit" class="rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition hover:from-brand-700 hover:to-brand-800">
                         {{ __('admin.save') }}
                     </button>

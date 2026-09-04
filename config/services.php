@@ -330,4 +330,17 @@ return [
         'allow_private_targets' => env('WEBHOOK_ALLOW_PRIVATE_TARGETS', false),
     ],
 
+    /*
+    |----------------------------------------------------------------------
+    | Web Push 推送服务（WebPushService）
+    |----------------------------------------------------------------------
+    | endpoint 域名白名单（安全审计周期 #19）：订阅 endpoint 仅接受浏览器
+    | 厂商官方推送服务（FCM/Mozilla/APNs/WNS，见 WebPushService 常量表）。
+    | 自建推送服务（如自托管 autopush）在此追加域名，逗号分隔：
+    |   WEBPUSH_EXTRA_ENDPOINT_DOMAINS=push.example.com,alt.example.org
+    */
+    'webpush' => [
+        'extra_endpoint_domains' => array_filter(explode(',', (string) env('WEBPUSH_EXTRA_ENDPOINT_DOMAINS', ''))),
+    ],
+
 ];

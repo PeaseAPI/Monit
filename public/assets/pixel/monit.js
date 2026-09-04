@@ -225,26 +225,60 @@
         }
     };
 
-    /* ---------------- 回放采集（页面已加载 rrweb 时启用） ---------------- */
+    /* ---------------- 回放采集（自动加载 rrweb · 周期 #19 #8 修复） ---------------- */
+    /* 此前依赖站点页面自行引入 window.rrweb，导致回放功能永远静默不录制；
+       现按需动态加载：与像素脚本同源的 rrweb.min.js（自托管，离线可用）→
+       失败回退 jsDelivr 公共 CDN → 仍失败静默放弃（不影响其他采集）。 */
 
     var replays = {
         started: false,
+        loading: false,
 
-        start: function () {
-            if (!settings.replay || this.started || !window.rrweb) return;
-            this.started = true;
+        ensureRrweb: function (cb) {
+            if (window.rrweb) return cb();
+            if (this.loading) return;
+            this.loading = true;
 
             var self = this;
+            var local = (host || '') + '/assets/pixel/rrweb.min.js';
+            var candidates = host
+                ? [local, 'https://cdn.jsdelivr.net/npm/rrweb@2.0.0-alpha.18/dist/rrweb.min.js']
+                : ['https://cdn.jsdelivr.net/npm/rrweb@2.0.0-alpha.18/dist/rrweb.min.js'];
 
-            window.rrweb.record({
-                emit: function (event) {
-                    if (!self._buffer) self._buffer = [];
-                    self._buffer.push(event);
-                    if (!self._timer) {
-                        self._timer = setTimeout(function () { self.flush(); }, 1000); // 1s 间隔
-                    }
-                },
-                checkoutEveryNms: 10000
+            var tryLoad = function (i) {
+                if (i >= candidates.length) return; // 全部失败：静默放弃
+                var s = document.createElement('script');
+                s.src = candidates[i];
+                s.async = true;
+                s.onload = function () {
+                    if (window.rrweb) { self.loading = false; cb(); }
+                    else tryLoad(i + 1);
+                };
+                s.onerror = function () { tryLoad(i + 1); };
+                document.head.appendChild(s);
+            };
+
+            tryLoad(0);
+        },
+
+        start: function () {
+            if (!settings.replay || this.started) return;
+            var self = this;
+
+            this.ensureRrweb(function () {
+                if (!window.rrweb || self.started) return;
+                self.started = true;
+
+                window.rrweb.record({
+                    emit: function (event) {
+                        if (!self._buffer) self._buffer = [];
+                        self._buffer.push(event);
+                        if (!self._timer) {
+                            self._timer = setTimeout(function () { self.flush(); }, 1000); // 1s 间隔
+                        }
+                    },
+                    checkoutEveryNms: 10000
+                });
             });
         },
 

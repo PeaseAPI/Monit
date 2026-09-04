@@ -391,6 +391,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/domains', [DomainController::class, 'index'])->name('domains.index');
     Route::get('/domains/create', [DomainController::class, 'create'])->name('domains.create');
     Route::post('/domains', [DomainController::class, 'store'])->middleware('plan_limit:domains_limit')->name('domains.store');
+    Route::get('/domains/{domainId}', [DomainController::class, 'show'])->name('domains.show');
     Route::put('/domains', [DomainController::class, 'update'])->name('domains.update');
     Route::delete('/domains/{domainId}', [DomainController::class, 'destroy'])->name('domains.destroy');
 
@@ -779,6 +780,10 @@ Route::post('/push-notifications/subscribe', function (Request $request) {
         'endpoint' => ['required', 'url:https', 'max:2048', function (string $attribute, mixed $value, \Closure $fail) {
             if (! WebhookSignature::isSafeHttpUrl((string) $value)) {
                 $fail(__('validation.url', ['attribute' => $attribute]));
+            }
+            // 域名白名单（安全审计周期 #19）：仅接受浏览器厂商官方推送服务
+            if (! app(\App\Services\WebPushService::class)->isEndpointAllowed((string) $value)) {
+                $fail(__('validation.push_endpoint_not_allowed'));
             }
         }],
         // 订阅归属站点（营销推送按站点发送；此前闭包不接收该字段，

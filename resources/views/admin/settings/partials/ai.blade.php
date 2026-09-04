@@ -1,6 +1,17 @@
 {{-- AI 助手设置（规格书 §12.6：国内大模型统一接入） --}}
 @php($providers = \App\Services\Ai\AiService::providers())
 <div class="space-y-4">
+    {{-- 用途说明（用户反馈 #24：说明 AI 助手配置完成后在哪里生效） --}}
+    <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-xs leading-relaxed text-blue-800">
+        <p class="font-semibold">{{ __('admin.ai_usage_title') }}</p>
+        <ul class="mt-1.5 list-inside list-disc space-y-0.5">
+            <li>{{ __('admin.ai_usage_seo_audit') }}</li>
+            <li>{{ __('admin.ai_usage_insights') }}</li>
+            <li>{{ __('admin.ai_usage_keyword') }}</li>
+        </ul>
+        <p class="mt-1.5 text-blue-600">{{ __('admin.ai_usage_hint') }}</p>
+    </div>
+
     <div class="flex items-center gap-3"><input type="checkbox" name="ai_is_enabled" value="1" {{ old('ai_is_enabled', ($settings['ai.ai_is_enabled'] ?? 'false') === 'true') ? 'checked' : '' }}><label class="text-sm">{{ __('admin.ai_is_enabled') }}</label></div>
 
     <div>

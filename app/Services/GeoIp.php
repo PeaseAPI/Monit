@@ -43,7 +43,8 @@ class GeoIp
 
         if ($record !== null) {
             $result['country_code'] = $record['country']['iso_code'] ?? null;
-            $result['continent_code'] = $record['continent']['code'] ?? null;
+            $result['continent_code'] = $record['continent']['code']
+                ?? static::continentFromCountry($result['country_code']);
             $result['city_name'] = $record['city']['names']['zh-CN']
                 ?? $record['city']['names']['en']
                 ?? null;

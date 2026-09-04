@@ -136,11 +136,14 @@ class PaymentWebhookSecurityTest extends TestCase
         $user = $this->makeUser();
         $payment = $this->makePaidPendingPayment($user);
 
-        $body = json_encode([
+                $body = json_encode([
             'type' => 'checkout.session.completed',
             'data' => ['object' => [
                 'id' => 'cs_real',
+                'payment_intent' => 'pi_real',
                 'metadata' => ['payment_id' => (string) $payment->payment_id],
+                'amount_total' => 999, // 9.99 USD in cents
+                'currency' => 'usd',
             ]],
         ]);
 

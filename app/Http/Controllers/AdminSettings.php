@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * 管理后台 - 系统设置（AdminSettings，94K 最大控制器）
@@ -90,6 +92,12 @@ class AdminSettings extends Controller
                 (array) $validated['currencies'],
                 strtoupper((string) ($validated['currency'] ?? 'CNY')),
             );
+        }
+
+        // 品牌文件上传（用户反馈 #21）：logo/favicon/logo_dark 文件上传后存入 storage，
+        // 覆盖对应 URL 字段（上传优先于 URL 直填）；未上传则保留原 URL
+        if ($group === 'branding') {
+            $validated = $this->handleBrandingUploads($request, $validated);
         }
 
         $this->saveSettings($group, $validated);
@@ -257,6 +265,10 @@ class AdminSettings extends Controller
             'disk_total' => $diskTotal === false ? null : $diskTotal,
             'timezone' => (string) config('app.timezone'),
             'settings_count' => Setting::count(),
+            // GeoIP 库状态（用户反馈 #2：国家/大洲显示"未知"的排查入口——
+            // 未放置 mmdb 库文件时地理维度全部为空，页面提示一键修复命令）
+            'geoip_available' => app(\App\Services\GeoIp::class)->isAvailable(),
+            'geoip_path' => (string) config('services.geoip.mmdb_path'),
         ];
     }
 
@@ -545,6 +557,9 @@ class AdminSettings extends Controller
                 'sms_phone_login_is_enabled' => 'boolean',
                 'sms_forgot_password_is_enabled' => 'boolean',
                 'sms_phone_bind_is_enabled' => 'boolean',
+                // 登录二次校验（用户反馈 #16）：开启后已绑手机号的用户
+                // 登录（邮箱/手机号路径）必须提供短信验证码
+                'sms_login_verify_enabled' => 'boolean',
             ],
             'ai' => [
                 'ai_is_enabled' => 'boolean',
@@ -699,6 +714,10 @@ class AdminSettings extends Controller
                 'landing_hero_subtitle' => 'nullable|string|max:512',
                 'footer_icp' => 'nullable|string|max:256',
                 'footer_custom_html' => 'nullable|string|max:8192',
+                // 用户反馈 #21：文件上传（上传优先于 URL 直填）
+                'logo_upload' => 'nullable|image|max:2048',
+                'logo_dark_upload' => 'nullable|image|max:2048',
+                'favicon_upload' => 'nullable|file|mimes:ico,png,svg,webp|max:2048',
             ],
             'custom' => [
                 'custom_head_js' => 'nullable|string',
@@ -835,5 +854,50 @@ class AdminSettings extends Controller
         };
 
         return $rules;
+    }
+
+    /**
+     * 处理品牌设置组文件上传（用户反馈 #21）
+     *
+     * 上传的文件存入 storage/app/public/branding/，并将 URL 写入对应 _url 字段。
+     * 上传优先于 URL 直填：有文件上传则覆盖 URL 字段，无则保留原 URL。
+     */
+    protected function handleBrandingUploads(Request $request, array $validated): array
+    {
+        $disk = Storage::disk('public');
+        $uploadMap = [
+            'logo_upload' => 'logo_url',
+            'logo_dark_upload' => 'logo_dark_url',
+            'favicon_upload' => 'favicon_url',
+        ];
+
+        foreach ($uploadMap as $uploadField => $urlField) {
+            if (! $request->hasFile($uploadField) || ! $request->file($uploadField)->isValid()) {
+                continue;
+            }
+
+            $file = $request->file($uploadField);
+            $filename = Str::random(16) . '.' . $file->getClientOriginalExtension();
+
+            // 删除旧文件（如有）
+            $oldUrl = $validated[$urlField] ?? Settings::get("branding.{$urlField}", '');
+            if ($oldUrl && str_starts_with($oldUrl, '/storage/branding/')) {
+                $oldPath = str_replace('/storage/', '', $oldUrl);
+                $disk->delete($oldPath);
+            }
+
+            // 存储新文件
+            $path = $file->storeAs('branding', $filename, 'public');
+
+            // 用本地 URL 覆盖 URL 字段
+            $validated[$urlField] = '/storage/' . $path;
+        }
+
+        // 移除上传字段（非 settings 表字段）
+        foreach (array_keys($uploadMap) as $uploadField) {
+            unset($validated[$uploadField]);
+        }
+
+        return $validated;
     }
 }

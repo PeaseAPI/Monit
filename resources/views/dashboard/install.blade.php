@@ -6,7 +6,12 @@
     @php
         $pixelUrl = url('/assets/pixel/monit.js');
         $mode = $website->isLightweight() ? 'lightweight' : 'advanced';
-        $snippet = '<script src="' . $pixelUrl . '" data-website-id="' . $website->pixel_key . '" data-mode="' . $mode . '" async></script>';
+        // data-replay="1"（周期 #19 #8 修复）：默认开启会话回放采集
+        //（SDK 将自动加载同源 rrweb.min.js，无需站点另行引入；
+        //  轻量模式不支持回放，不输出该属性；服务端按套餐配额控制落库）
+        $snippet = '<script src="' . $pixelUrl . '" data-website-id="' . $website->pixel_key . '" data-mode="' . $mode . '"'
+            . ($website->isLightweight() ? '' : ' data-replay="1"')
+            . ' async></script>';
 
         // SPA / 手动初始化示例（monit.js 真实 API：自动 hook pushState/replaceState/popstate/hashchange，暴露 MonitPixel.init）
         $spaExample = <<<HTML

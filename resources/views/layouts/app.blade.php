@@ -13,7 +13,10 @@
     <div class="flex min-h-screen">
         {{-- Sidebar --}}
         <aside class="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col bg-zinc-950 md:flex">
-            <x-brand-logo dark href="{{ route('dashboard') }}" text-class="text-lg" />
+            {{-- 品牌 logo 留出呼吸空间（用户反馈 #4：不再贴着左上角） --}}
+            <div class="px-4 pt-5 pb-3">
+                <x-brand-logo dark href="{{ route('dashboard') }}" text-class="text-lg" />
+            </div>
 
             <nav class="mt-2 flex-1 space-y-1 px-3">
                 {{--

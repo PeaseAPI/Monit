@@ -26,7 +26,7 @@ class ReplayController extends Controller
         return view('stats.replays.index', compact('website', 'replays', 'range'));
     }
 
-        public function show(Request $request, Website $website, int $replayId)
+    public function show(Request $request, Website $website, int $replayId)
     {
         $replay = SessionReplay::with(['visitor', 'session.events'])
             ->where('website_id', $website->website_id)
@@ -51,7 +51,7 @@ class ReplayController extends Controller
 
         // 从缓存取出 chunk 索引
         $cacheKey = "session_replay_keys_{$session->session_id}";
-                $keys = Cache::get($cacheKey, []);
+        $keys = Cache::get($cacheKey, []);
 
         // 逐个取出 chunk 数据并合并
         $events = [];

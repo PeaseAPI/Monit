@@ -104,6 +104,10 @@ class StripeProcessor
                 'external_id' => $payload['data']['object']['payment_intent'] ?? $payload['data']['object']['id'] ?? null,
                 'subscription_id' => $payload['data']['object']['subscription'] ?? null,
                 'payment_id' => $payload['data']['object']['metadata']['payment_id'] ?? null,
+                // 金额防篡改（安全审计周期 #19）：amount_total 为最小单位（分），
+                // 由 PaymentController 换算主单位后与本地订单比对
+                'amount_total' => $payload['data']['object']['amount_total'] ?? null,
+                'currency' => strtoupper((string) ($payload['data']['object']['currency'] ?? '')),
             ],
             'customer.subscription.deleted' => [
                 'event' => 'subscription_cancelled',
