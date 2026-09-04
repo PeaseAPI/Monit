@@ -37,7 +37,7 @@
                 </td>
                 <td class="px-6 py-3 text-zinc-600">{{ $d->monitor_registrar ?: '—' }}</td>
                 <td class="px-6 py-3 text-right">
-                    <form method="POST" action="{{ route('domains.destroy', $d->domain_id) }}" onsubmit="return confirm('{{ __('domains.delete_confirm') }}')">@csrf @method('DELETE')
+                    <form method="POST" action="{{ route('domains.destroy', $d->domain_id) }}" data-confirm="{{ __('domains.delete_confirm') }}">@csrf @method('DELETE')
                         <button type="submit" class="text-xs text-zinc-400 transition hover:text-rose-600">{{ __('common.delete') }}</button>
                     </form>
                 </td>
@@ -45,8 +45,17 @@
             @empty<tr><td class="px-6 py-10 text-center text-zinc-500" colspan="6">{{ __('common.no_domains') }}</td></tr>@endforelse
         </tbody></table>
     </div>
+
     @if (($domains ?? collect())->isNotEmpty())
     <p class="mt-3 text-xs text-zinc-400">{{ __('domains.monitor_hint') }}</p>
     @endif
 </div>
+
+<script>
+document.querySelectorAll('form[data-confirm]').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+        if (!confirm(this.dataset.confirm)) e.preventDefault();
+    });
+});
+</script>
 @endsection
