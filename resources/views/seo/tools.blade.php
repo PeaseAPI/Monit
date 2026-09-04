@@ -14,10 +14,10 @@
                 @foreach($tools as $slug => $meta)
                     <a href="{{ route('seo.tools.show', $slug) }}"
                        class="tool-card rounded-2xl border border-zinc-200 bg-white p-4 transition hover:border-zinc-400"
-                       data-name="{{ $meta['name'] ?? \Illuminate\Support\Str::headline($slug) }}"
-                       data-desc="{{ $meta['description'] ?? '' }}">
-                        <div class="font-medium text-zinc-900">{{ $meta['name'] ?? \Illuminate\Support\Str::headline($slug) }}</div>
-                        <div class="mt-1 line-clamp-2 text-sm text-zinc-500">{{ $meta['description'] ?? '' }}</div>
+                       data-name="{{ __("seo.tool_name.{$slug}") }}"
+                       data-desc="{{ __("seo.tool_desc.{$slug}") }}">
+                        <div class="font-medium text-zinc-900">{{ __("seo.tool_name.{$slug}") }}</div>
+                        <div class="mt-1 line-clamp-2 text-sm text-zinc-500">{{ __("seo.tool_desc.{$slug}") }}</div>
                     </a>
                 @endforeach
             </div>

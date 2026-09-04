@@ -189,6 +189,8 @@ Route::post('/statistics/{pixel_key}/auth', [PublicStatisticsController::class, 
 // seo.feature:audits 受后台 seo 组总开关控制（分享报告页除外：已生成报告始终可访问）
 Route::get('/seo/audits/{seoAudit}', [SeoAuditController::class, 'show'])
     ->whereNumber('seoAudit')->name('seo.audits.show');
+Route::get('/seo/audits/{seoAudit}/pdf', [SeoAuditController::class, 'pdf'])
+    ->whereNumber('seoAudit')->name('seo.audits.pdf');
 Route::post('/seo/audits/{seoAudit}/password', [SeoAuditController::class, 'unlock'])
     ->middleware('throttle:10,1,seo-pass')->whereNumber('seoAudit')->name('seo.audits.password');
 Route::get('/seo/directory', [SeoAuditController::class, 'directory'])->middleware('seo.feature:audits')->name('seo.directory');

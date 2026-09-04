@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Heatmap;
 use App\Models\Website;
 use App\Services\PixelTracker;
 use Illuminate\Http\Request;
@@ -22,6 +23,11 @@ class PixelTrackController extends Controller
 
     public function __invoke(Request $request, string $pixel_key, PixelTracker $tracker): Response
     {
+        // 热图自动检测：GET ?action=heatmap_check&path=/some/page
+        if ($request->isMethod('GET') && $request->query('action') === 'heatmap_check') {
+            return $this->heatmapCheck($pixel_key, $request);
+        }
+
         // 静默标记：无论处理/跳过均返回 204（不向客户端泄露信息）
         $reason = 'untracked';
 
@@ -92,6 +98,49 @@ class PixelTrackController extends Controller
             ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
             ->header('Access-Control-Allow-Headers', 'Content-Type')
             ->header('Cache-Control', 'no-store');
+    }
+
+        /**
+     * 热图自动检测：给定 pixel_key + path，返回匹配的 heatmap_id
+     * 客户端 SDK 在页面加载时自动调用，无需站点手动配置 data-heatmap-id
+     */
+    protected function heatmapCheck(string $pixel_key, Request $request): Response
+    {
+        $cacheTtl = (int) config('monit.pixel.website_cache_ttl', 60);
+        $cacheKey = 'pixel.website.'.$pixel_key;
+        $website = $cacheTtl > 0 ? Cache::get($cacheKey) : null;
+
+        if (! $website instanceof Website) {
+            $website = Website::where('pixel_key', $pixel_key)->first();
+        }
+
+        if (! $website || ! $website->is_enabled) {
+            return response('{}', 200)
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Content-Type', 'application/json')
+                ->header('Cache-Control', 'no-store');
+        }
+
+        $path = $request->query('path', '/');
+        $heatmap = Heatmap::where('website_id', $website->website_id)
+            ->where('is_enabled', true)
+            ->where('path', $path)
+            ->first();
+
+        if (! $heatmap) {
+            // 也支持通配符匹配 /path/*
+            $heatmap = Heatmap::where('website_id', $website->website_id)
+                ->where('is_enabled', true)
+                ->whereRaw('? LIKE CONCAT(REPLACE(path, "*", "%"))', [$path])
+                ->first();
+        }
+
+        $data = $heatmap ? json_encode(['heatmap_id' => $heatmap->heatmap_id]) : '{}';
+
+        return response($data, 200)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Content-Type', 'application/json')
+            ->header('Cache-Control', 'public, max-age=60');
     }
 
     /**

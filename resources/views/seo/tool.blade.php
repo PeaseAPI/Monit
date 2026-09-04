@@ -1,20 +1,27 @@
 @extends('layouts.public')
-@section('title', $meta['name'] ?? \Illuminate\Support\Str::headline($slug))
+@section('title', __("seo.tool_name.{$slug}"))
 @section('content')
 <div>
     <a href="{{ route('seo.tools') }}" class="text-sm text-zinc-500 hover:underline">← {{ __('seo.tools_title') }}</a>
-    <h1 class="mt-2 text-2xl font-bold text-zinc-900">{{ $meta['name'] ?? \Illuminate\Support\Str::headline($slug) }}</h1>
-    <p class="mt-1 text-sm text-zinc-500">{{ $meta['description'] ?? '' }}</p>
+    <h1 class="mt-2 text-2xl font-bold text-zinc-900">{{ __("seo.tool_name.{$slug}") }}</h1>
+    <p class="mt-1 text-sm text-zinc-500">{{ __("seo.tool_desc.{$slug}") }}</p>
 
     <form method="POST" action="{{ route('seo.tools.process', $slug) }}" class="mt-6 space-y-3 rounded-2xl border border-zinc-200 bg-white p-6">
         @csrf
         @foreach(($meta['fields'] ?? []) as $field => $type)
             <label class="block">
-                <span class="text-sm font-medium text-zinc-700">{{ \Illuminate\Support\Str::headline($field) }}</span>
+                <span class="text-sm font-medium text-zinc-700">{{ __("seo.field.{$field}", [], app()->getLocale()) !== "seo.field.{$field}" ? __("seo.field.{$field}") : \Illuminate\Support\Str::headline($field) }}</span>
                 @if($type === 'textarea')
                     <textarea name="input[{{ $field }}]" rows="6" class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm">{{ old("input.{$field}") }}</textarea>
                 @elseif($type === 'number')
                     <input type="number" name="input[{{ $field }}]" value="{{ old("input.{$field}") }}" class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm">
+                @elseif(str_starts_with($type, 'select:'))
+                    @php $options = explode(',', substr($type, 7)); @endphp
+                    <select name="input[{{ $field }}]" class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm">
+                        @foreach($options as $opt)
+                            <option value="{{ $opt }}">{{ __("seo.option.{$opt}", [], app()->getLocale()) !== "seo.option.{$opt}" ? __("seo.option.{$opt}") : ucfirst($opt) }}</option>
+                        @endforeach
+                    </select>
                 @else
                     <input type="text" name="input[{{ $field }}]" value="{{ old("input.{$field}") }}" class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm">
                 @endif

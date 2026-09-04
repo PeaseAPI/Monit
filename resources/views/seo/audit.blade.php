@@ -1,10 +1,12 @@
-@extends('layouts.guest')
+@extends('layouts.public')
+@section('title', $audit->url)
 @section('content')
-<div class="max-w-7xl">
+<div>
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="max-w-2xl truncate text-2xl font-bold text-zinc-900">{{ $audit->url }}</h1>
         <div class="flex items-center gap-3">
             <span class="rounded-full px-3 py-1 text-sm font-semibold {{ ['poor' => 'bg-red-50 text-red-700', 'decent' => 'bg-yellow-50 text-yellow-700', 'good' => 'bg-emerald-50 text-emerald-700'][$audit->band] }}">{{ $audit->score }}/100 · {{ $audit->passed_tests }}/{{ $audit->total_tests }}</span>
+            <a href="{{ route('seo.audits.pdf', $audit->seo_audit_id) }}" target="_blank" class="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50">{{ __('seo.download_pdf') }}</a>
             @auth
                 <form method="POST" action="{{ route('seo.audits.refresh', $audit->seo_audit_id) }}" class="inline">
                     @csrf

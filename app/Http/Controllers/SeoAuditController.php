@@ -150,6 +150,28 @@ class SeoAuditController extends Controller
     }
 
     /**
+     * PDF 导出（打印友好版，浏览器 Ctrl+P 保存为 PDF）
+     */
+    public function pdf(Request $request, SeoAudit $seoAudit): View
+    {
+        $state = $this->accessState($request, $seoAudit);
+
+        if ($state === 'denied') {
+            abort(403, __('seo.report_private'));
+        }
+
+        if ($state === 'password') {
+            return view('seo.locked', ['audit' => $seoAudit]);
+        }
+
+        return view('seo.audit-pdf', [
+            'audit' => $seoAudit,
+            'grouped' => $seoAudit->resultsByCategory(),
+            'registry' => app(AuditTestRegistry::class),
+        ]);
+    }
+
+    /**
      * 密码解锁（写入 session 后回报告页）
      */
     public function unlock(Request $request, SeoAudit $seoAudit)

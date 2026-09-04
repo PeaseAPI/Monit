@@ -22,7 +22,10 @@
     var scriptSrc = (currentScript && currentScript.src) || '';
     var host = '';
     try { host = scriptSrc ? new URL(scriptSrc, location.href).origin : ''; } catch (e) {}
-    if (!host || host === location.origin) host = '';
+    // 即使同源也保留 host，确保 rrweb 和 heatmap_check 请求可正确路由
+    if (!host) {
+        try { host = location.origin; } catch (e) {}
+    }
 
     var endpoint = host + '/pixel-track/' + encodeURIComponent(pixelKey);
 
@@ -167,7 +170,28 @@
 
     /* ---------------- 热图采集（data-heatmap-id） ---------------- */
 
-    var heatmaps = {
+    /* ---------------- 热图自动检测（不再需要 data-heatmap-id） ---------------- */
+
+    function autoDetectHeatmap() {
+        if (settings.mode === 'lightweight') return;
+
+        var checkUrl = endpoint + '?action=heatmap_check&path=' + encodeURIComponent(location.pathname + location.search);
+        try {
+            fetch(checkUrl, {
+                method: 'GET',
+                credentials: 'omit',
+                cache: 'no-store',
+                mode: 'cors'
+            }).then(function (r) { return r.ok ? r.json() : {}; }).then(function (data) {
+                if (data && data.heatmap_id) {
+                    settings.heatmapId = data.heatmap_id;
+                    heatmaps.snapshot();
+                }
+            }).catch(function () {});
+        } catch (e) {}
+    }
+
+        var heatmaps = {
         maxScroll: 0,
 
         snapshot: function () {
@@ -216,10 +240,12 @@
         flushScroll: function () {
             if (!settings.heatmapId || !this.maxScroll) return;
 
+            var scrollUuid = uuid();
             send({
                 type: 'heatmap_snapshot_scroll',
                 heatmap_id: settings.heatmapId,
                 max_scroll: Math.round(this.maxScroll),
+                visitor_session_event_uuid: scrollUuid,
                 data: {}
             }, true);
         }
@@ -240,10 +266,11 @@
             this.loading = true;
 
             var self = this;
-            var local = (host || '') + '/assets/pixel/rrweb.min.js';
-            var candidates = host
-                ? [local, 'https://cdn.jsdelivr.net/npm/rrweb@2.0.0-alpha.18/dist/rrweb.min.js']
-                : ['https://cdn.jsdelivr.net/npm/rrweb@2.0.0-alpha.18/dist/rrweb.min.js'];
+            var local = host + '/assets/pixel/rrweb.min.js';
+            var candidates = [
+                local,
+                'https://cdn.jsdelivr.net/npm/rrweb@2.0.0-alpha.18/dist/rrweb.min.js'
+            ];
 
             var tryLoad = function (i) {
                 if (i >= candidates.length) return; // 全部失败：静默放弃
@@ -415,6 +442,7 @@
         setTimeout(function () {
             heatmaps.snapshot();
             replays.start();
+            autoDetectHeatmap();
         }, 300);
     }
 
