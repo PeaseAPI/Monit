@@ -99,7 +99,7 @@
             <h3 class="text-sm font-medium text-zinc-700">{{ __('seo.share_link') }}</h3>
             <div class="mt-2 flex items-center gap-3">
                 <input type="text" readonly value="{{ route('seo.audits.show', $audit->seo_audit_id) }}" class="flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm" onclick="this.select()">
-                <button onclick="navigator.clipboard.writeText('{{ route('seo.audits.show', $audit->seo_audit_id) }}')" class="rounded-lg bg-zinc-900 px-3 py-2 text-sm text-white">{{ __('seo.copy_link') }}</button>
+                <button data-copy="{{ route('seo.audits.show', $audit->seo_audit_id) }}" class="rounded-lg bg-zinc-900 px-3 py-2 text-sm text-white">{{ __('seo.copy_link') }}</button>
             </div>
             @php
                 $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' . urlencode(route('seo.audits.show', $audit->seo_audit_id));
@@ -144,4 +144,12 @@
         </div>
     @endforeach
 </div>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        navigator.clipboard.writeText(this.dataset.copy);
+    });
+});
+</script>
 @endsection
