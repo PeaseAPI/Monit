@@ -34,9 +34,11 @@
     </div>
 </div>
 
+<script id="json-clicks" type="application/json">@json($clicks)</script>
+<script id="json-scrolls" type="application/json">@json($scrolls)</script>
 <script>
-const clicksData = @json($clicks);
-const scrollsData = @json($scrolls);
+const clicksData = JSON.parse(document.getElementById('json-clicks').textContent);
+const scrollsData = JSON.parse(document.getElementById('json-scrolls').textContent);
 
 function switchTab(tab) {
     document.getElementById('panel-clicks').classList.toggle('hidden', tab !== 'clicks');
