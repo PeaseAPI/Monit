@@ -18,17 +18,23 @@
     <p class="mt-1 text-sm text-zinc-500">{{ __('seo.response_time') }}: {{ $audit->response_time_ms }} ms · {{ __('seo.page_size') }}: {{ number_format($audit->page_size_bytes / 1024, 1) }} KB · {{ $audit->created_at?->format('Y-m-d H:i') }}</p>
 
     {{-- Issues 总览横条 --}}
-    @php $total = max(1, $audit->total_tests); @endphp
+    @php
+        $total = max(1, $audit->total_tests);
+        $majorPctStyle   = $audit->major_issues   ? 'style="width:'.round($audit->major_issues  /$total*100,1).'%"' : '';
+        $moderatePctStyle = $audit->moderate_issues ? 'style="width:'.round($audit->moderate_issues/$total*100,1).'%"' : '';
+        $minorPctStyle   = $audit->minor_issues   ? 'style="width:'.round($audit->minor_issues  /$total*100,1).'%"' : '';
+        $passedPctStyle  = $audit->passed_tests    ? 'style="width:'.round($audit->passed_tests  /$total*100,1).'%"' : '';
+    @endphp
     <div class="mt-4 rounded-2xl border border-zinc-200 bg-white p-4">
         <div class="mb-2 flex items-center justify-between">
             <span class="text-sm font-medium text-zinc-700">{{ __('seo.issues_overview') }}</span>
             <span class="text-sm text-zinc-500">{{ $audit->passed_tests }}/{{ $total }} {{ __('seo.passed') }}</span>
         </div>
         <div class="flex h-3 w-full overflow-hidden rounded-full bg-zinc-100">
-            @if($audit->major_issues)<div class="bg-red-500" style="width:{{ round($audit->major_issues/$total*100,1) }}%"></div>@endif
-            @if($audit->moderate_issues)<div class="bg-yellow-500" style="width:{{ round($audit->moderate_issues/$total*100,1) }}%"></div>@endif
-            @if($audit->minor_issues)<div class="bg-zinc-400" style="width:{{ round($audit->minor_issues/$total*100,1) }}%"></div>@endif
-            @if($audit->passed_tests)<div class="bg-emerald-500" style="width:{{ round($audit->passed_tests/$total*100,1) }}%"></div>@endif
+            @if($audit->major_issues)<div class="bg-red-500" {!! $majorPctStyle !!}></div>@endif
+            @if($audit->moderate_issues)<div class="bg-yellow-500" {!! $moderatePctStyle !!}></div>@endif
+            @if($audit->minor_issues)<div class="bg-zinc-400" {!! $minorPctStyle !!}></div>@endif
+            @if($audit->passed_tests)<div class="bg-emerald-500" {!! $passedPctStyle !!}></div>@endif
         </div>
         <div class="mt-2 flex flex-wrap gap-4 text-xs text-zinc-500">
             <span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-full bg-red-500"></span> {{ __('seo.major_issue') }}: {{ $audit->major_issues }}</span>
@@ -48,7 +54,8 @@
                         <span class="text-sm text-zinc-400">/100</span>
                     </div>
                     <div class="mt-2 h-2 w-full rounded-full bg-zinc-100">
-                        <div class="h-2 rounded-full {{ $catScore > 79 ? 'bg-emerald-500' : ($catScore > 49 ? 'bg-yellow-500' : 'bg-red-500') }}" style="width: {{ $catScore }}%"></div>
+                        @php $catBarStyle = 'style="width:'.$catScore.'%"'; @endphp
+                        <div class="h-2 rounded-full {{ $catScore > 79 ? 'bg-emerald-500' : ($catScore > 49 ? 'bg-yellow-500' : 'bg-red-500') }}" {!! $catBarStyle !!}></div>
                     </div>
                     @php
                         $catResults = collect($audit->results)->filter(fn($r) => ($r['category'] ?? '') === $category);
