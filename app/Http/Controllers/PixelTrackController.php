@@ -8,6 +8,7 @@ use App\Services\PixelTracker;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
@@ -90,7 +91,7 @@ class PixelTrackController extends Controller
 
         // 简单跳过原因计数（供 Admin 观测，不记录 PII）
         if ($reason !== 'untracked') {
-            logger()->channel('single')->debug('pixel skipped: '.$reason);
+            Log::channel('single')->debug('pixel skipped: '.$reason);
         }
 
         return response('', 204)
@@ -100,7 +101,7 @@ class PixelTrackController extends Controller
             ->header('Cache-Control', 'no-store');
     }
 
-        /**
+    /**
      * 热图自动检测：给定 pixel_key + path，返回匹配的 heatmap_id
      * 客户端 SDK 在页面加载时自动调用，无需站点手动配置 data-heatmap-id
      */
