@@ -315,7 +315,7 @@ return [
     | 未放置库文件时国家维度显示为空，不影响其余采集。
     */
     'geoip' => [
-        'mmdb_path' => env('GEOIP_MMDB_PATH', storage_path('app/geoip/country.mmdb')),
+        'mmdb_path' => env('GEOIP_MMDB_PATH') ?: storage_path('app/geoip/country.mmdb'),
     ],
 
     /*

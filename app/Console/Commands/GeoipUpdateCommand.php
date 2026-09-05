@@ -18,10 +18,26 @@ class GeoipUpdateCommand extends Command
     public function handle(): int
     {
         $path = config('services.geoip.mmdb_path', storage_path('app/geoip/country.mmdb'));
+
+        // 确保路径非空且为绝对路径
+        if (empty($path)) {
+            $path = storage_path('app/geoip/country.mmdb');
+        }
+
         $dir = dirname($path);
 
+        if ($dir === '.' || $dir === '/') {
+            $this->error("解析出的目录路径无效：{$dir}，请检查 GEOIP_MMDB_PATH 环境变量或 storage_path() 配置。");
+
+            return self::FAILURE;
+        }
+
         if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            if (! mkdir($dir, 0755, true)) {
+                $this->error("无法创建目录：{$dir}，请检查 storage 目录权限。");
+
+                return self::FAILURE;
+            }
             $this->info("已创建目录：{$dir}");
         }
 
