@@ -24,6 +24,7 @@
 <script src="{{ asset('vendor/svgmap/svgMap.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    var countryValues = @json(collect($topCountries)->mapWithKeys(fn($item) => [$item['key'] => ['visitors' => $item['count']]]));
     var mapData = {
         data: {
             visitors: {
@@ -33,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
         applyDataParameters: {},
-        values: {{ Js::from(collect($topCountries)->mapWithKeys(fn($item) => [$item['key'] => ['visitors' => $item['count']]])) }}
+        values: countryValues
     };
     new svgMap({
         targetElementID: 'svgMapCountries',
