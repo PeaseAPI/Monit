@@ -44,12 +44,19 @@
                 @enderror
             </div>
 
-            @if($smsRegisterEnabled ?? false)
+                        @if($smsRegisterEnabled ?? false)
                 <div>
                     <label for="phone" class="form-label">{{ __('auth.phone') }}</label>
-                    <input id="phone" type="tel" name="phone" value="{{ old('phone') }}" maxlength="20" required
-                           placeholder="{{ __('auth.phone_placeholder') }}"
-                           class="form-input @error('phone') border-red-400 focus:border-red-500 focus:ring-red-500/30 @enderror">
+                    <div class="flex gap-2">
+                        <input id="phone" type="tel" name="phone" value="{{ old('phone') }}" maxlength="20" required
+                               placeholder="{{ __('auth.phone_placeholder') }}"
+                               class="form-input flex-1 @error('phone') border-red-400 focus:border-red-500 focus:ring-red-500/30 @enderror">
+                        <button type="button" id="btn-send-sms"
+                                class="whitespace-nowrap rounded-xl border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 transition hover:bg-brand-50"
+                                onclick="document.getElementById('sms-send-form').submit()">
+                            {{ __('auth.send_sms_code') }}
+                        </button>
+                    </div>
                     @error('phone')
                         <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -102,23 +109,20 @@
     </div>
 
     @if($smsRegisterEnabled ?? false)
-        <form method="POST" action="{{ route('sms.send') }}" class="mt-4 rounded-2xl border border-zinc-200/70 bg-white p-4">
+        <form id="sms-send-form" method="POST" action="{{ route('sms.send') }}" class="hidden">
             @csrf
             <input type="hidden" name="purpose" value="register">
-            <p class="text-xs font-medium text-zinc-500">{{ __('auth.get_sms_code') }}</p>
-            <div class="mt-2 flex gap-2">
-                <input type="tel" name="phone" value="{{ old('phone') }}" maxlength="20" required
-                       placeholder="{{ __('auth.phone_placeholder') }}"
-                       class="form-input !w-auto flex-1 @error('phone') border-red-400 focus:border-red-500 focus:ring-red-500/30 @enderror">
-                <button type="submit"
-                        class="whitespace-nowrap rounded-xl border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 transition hover:bg-brand-50">
-                    {{ __('auth.send_sms_code') }}
-                </button>
-            </div>
-            @error('phone')
-                <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
-            @enderror
+            <input type="hidden" name="phone" id="sms-send-phone">
         </form>
+        <script>
+            document.getElementById('btn-send-sms').addEventListener('click', function() {
+                var phoneInput = document.getElementById('phone');
+                var smsPhoneInput = document.getElementById('sms-send-phone');
+                if (phoneInput && smsPhoneInput) {
+                    smsPhoneInput.value = phoneInput.value;
+                }
+            });
+        </script>
     @endif
 
     <p class="mt-6 text-sm text-zinc-500">

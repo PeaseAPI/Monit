@@ -7,7 +7,7 @@
         <div class="relative">
             <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3.5 py-1.5 text-sm font-medium text-emerald-400">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                {{ $categories->count() * 3 }}+ {{ __('seo.landing_tests_available', 'Tools Available') }}
+                {{ $categories->count() * 3 }}+ {{ __('seo.landing_tests_available') }}
             </span>
             <h1 class="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">{{ __('seo.tools_title') }}</h1>
             <p class="mx-auto mt-4 max-w-2xl text-lg text-zinc-400">{{ __('seo.tools_subtitle') }}</p>
@@ -22,7 +22,7 @@
     </div>
 
     <div class="mt-8 flex flex-wrap items-center justify-center gap-2" id="cat-nav">
-        <button data-cat="all" class="cat-btn active rounded-xl px-4 py-2 text-sm font-medium transition">{{ __('seo.category_all', 'All') }}</button>
+        <button data-cat="all" class="cat-btn active rounded-xl px-4 py-2 text-sm font-medium transition">{{ __('seo.category_all') }}</button>
         @foreach($categories as $category => $tools)
             <button data-cat="{{ $category }}" class="cat-btn rounded-xl px-4 py-2 text-sm font-medium transition">{{ __("seo.category_{$category}") }}</button>
         @endforeach

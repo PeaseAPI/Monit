@@ -383,11 +383,12 @@ class StatisticsService
                 ->whereBetween('date', [$this->startDate, $this->endDate])
                 ->whereNotNull('visitor_uuid')
                 ->groupBy('visitor_uuid')
-                ->selectRaw("HEX(visitor_uuid) as visitor_uuid,
+                                ->selectRaw("HEX(visitor_uuid) as visitor_uuid,
                     COUNT(*) as total_events,
                     MIN(date) as first_date,
                     MAX(date) as last_date,
                     MAX(country_code) as country_code,
+                    MAX(city_name) as city_name,
                     MAX(device_type) as device_type,
                     MAX(os_name) as os_name,
                     MAX(browser_name) as browser_name,
@@ -400,6 +401,7 @@ class StatisticsService
                 'visitor_id' => null,
                 'visitor_uuid' => strtolower((string) $row->visitor_uuid),
                 'country_code' => $row->country_code,
+                'city_name' => $row->city_name,
                 'device_type' => $row->device_type,
                 'os_name' => $row->os_name,
                 'browser_name' => $row->browser_name,
@@ -418,7 +420,7 @@ class StatisticsService
             ->where('websites_visitors.website_id', $this->website->website_id)
             ->whereBetween('sessions_events.date', [$this->startDate, $this->endDate])
             ->groupBy('websites_visitors.visitor_id')
-            ->selectRaw("websites_visitors.visitor_id, {$hexFunc} as visitor_uuid, websites_visitors.country_code, websites_visitors.device_type, websites_visitors.os_name, websites_visitors.browser_name,
+            ->selectRaw("websites_visitors.visitor_id, {$hexFunc} as visitor_uuid, websites_visitors.country_code, websites_visitors.city_name, websites_visitors.ip, websites_visitors.device_type, websites_visitors.os_name, websites_visitors.browser_name,
                 COUNT(sessions_events.event_id) as total_events,
                 MIN(sessions_events.date) as first_date,
                 MAX(sessions_events.date) as last_date,
@@ -427,10 +429,12 @@ class StatisticsService
             ->limit($limit)
             ->get();
 
-        return collect($rows)->map(fn ($row) => [
+                return collect($rows)->map(fn ($row) => [
             'visitor_id' => (int) $row->visitor_id,
             'visitor_uuid' => strtolower((string) $row->visitor_uuid),
             'country_code' => $row->country_code,
+            'city_name' => $row->city_name,
+            'ip' => $row->ip,
             'device_type' => $row->device_type,
             'os_name' => $row->os_name,
             'browser_name' => $row->browser_name,

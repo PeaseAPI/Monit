@@ -6,7 +6,8 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', __('Dashboard')) {{ \App\Support\Brand::titleSeparator() }} {{ \App\Support\Brand::name() }}</title>
     @include('parts.brand_head')
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
 </head>
 <body class="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
     @include('parts.announcement_bar')
@@ -305,5 +306,6 @@
 
     @include('parts.cookie_consent')
     @include('parts.brand_footer_scripts')
+    @stack('scripts')
 </body>
 </html>

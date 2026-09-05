@@ -25,7 +25,16 @@
                     {{ __('stats.unknown') }}
                 @endif
             </p>
+            @if ($profile['city_name'])
+                <p class="mt-1 text-xs text-zinc-400">{{ $profile['city_name'] }}</p>
+            @endif
         </div>
+        @if ($profile['ip'])
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5">
+            <p class="text-xs font-medium text-zinc-400">IP</p>
+            <p class="mt-2 font-mono text-sm font-semibold text-zinc-900">{{ $profile['ip'] }}</p>
+        </div>
+        @endif
         <div class="rounded-2xl border border-zinc-200 bg-white p-5">
             <p class="text-xs font-medium text-zinc-400">{{ __('stats.os') }}</p>
             <p class="mt-2 text-sm font-semibold text-zinc-900">{{ $profile['os_name'] ?? __('stats.unknown') }}</p>
@@ -33,10 +42,6 @@
         <div class="rounded-2xl border border-zinc-200 bg-white p-5">
             <p class="text-xs font-medium text-zinc-400">{{ __('stats.browser') }}</p>
             <p class="mt-2 text-sm font-semibold text-zinc-900">{{ $profile['browser_name'] ?? __('stats.unknown') }}</p>
-        </div>
-        <div class="rounded-2xl border border-zinc-200 bg-white p-5">
-            <p class="text-xs font-medium text-zinc-400">{{ __('stats.first_source') }}</p>
-            <p class="mt-2 truncate text-sm font-semibold text-zinc-900">{{ $profile['first_referrer'] ?? __('stats.direct_visit') }}</p>
         </div>
     </div>
 

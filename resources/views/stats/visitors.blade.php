@@ -44,6 +44,9 @@
                         <td class="px-5 py-3">
                             @if ($v['country_code'])
                                 <span class="whitespace-nowrap">{{ \App\Support\CountryNames::flag($v['country_code']) }} {{ \App\Support\CountryNames::name($v['country_code'], app()->getLocale()) }}</span>
+                                @if ($v['city_name'])
+                                    <span class="text-zinc-400">· {{ $v['city_name'] }}</span>
+                                @endif
                             @else
                                 <span class="text-zinc-400">{{ __('stats.unknown') }}</span>
                             @endif

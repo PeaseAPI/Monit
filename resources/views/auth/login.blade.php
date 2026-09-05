@@ -42,14 +42,14 @@
                 @enderror
             </div>
 
-            @if($phoneLoginEnabled || ($smsLoginVerifyEnabled ?? false))
+            @if($smsLoginVerifyEnabled ?? false)
                 <div>
                     <label for="sms_code" class="form-label">{{ __('auth.sms_code') }}</label>
                     <input id="sms_code" type="text" inputmode="numeric" maxlength="6" name="sms_code" value="{{ old('sms_code') }}" autocomplete="one-time-code"
                            placeholder="{{ __('auth.sms_code_placeholder') }}"{!! ($smsLoginVerifyEnabled ?? false) ? ' required' : '' !!}"
                            class="form-input @error('sms_code') border-red-400 focus:border-red-500 focus:ring-red-500/30 @enderror">
                     <p class="mt-1 text-xs text-zinc-400">
-                        {{ ($smsLoginVerifyEnabled ?? false) ? __('auth.sms_code_required_hint') : __('auth.sms_code_optional_hint') }}
+                        {{ __('auth.sms_code_required_hint') }}
                     </p>
                     @error('sms_code')
                         <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
@@ -83,7 +83,7 @@
         </form>
     </div>
 
-    @if($phoneLoginEnabled || ($smsLoginVerifyEnabled ?? false))
+    @if($phoneLoginEnabled)
         <form method="POST" action="{{ route('sms.send') }}" class="mt-4 rounded-2xl border border-zinc-200/70 bg-white p-4">
             @csrf
             <input type="hidden" name="purpose" value="login">

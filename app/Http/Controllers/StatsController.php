@@ -688,6 +688,8 @@ class StatsController extends Controller
             $profile = [
                 'label' => substr($visitorId, 0, 8).'…',
                 'country_code' => $first->country_code,
+                'city_name' => $first->city_name,
+                'ip' => null,
                 'os_name' => $first->os_name,
                 'browser_name' => $first->browser_name,
                 'device_type' => $first->device_type,
@@ -724,6 +726,8 @@ class StatsController extends Controller
         $profile = [
             'label' => '#'.$visitor->visitor_id,
             'country_code' => $visitor->country_code,
+            'city_name' => $visitor->city_name,
+            'ip' => $website->ip_tracking_is_enabled ? $visitor->ip : null,
             'os_name' => $visitor->os_name,
             'browser_name' => $visitor->browser_name,
             'device_type' => $visitor->device_type,

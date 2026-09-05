@@ -389,58 +389,7 @@
         </div>
     </section>
     @endif
-
-    {{-- ===== 用户评价（原站 index testimonials 区 · 后台可关闭） ===== --}}
-    @php($showTestimonials = filter_var(\App\Support\Settings::get('main.display_index_testimonials', true), FILTER_VALIDATE_BOOLEAN))
-    @if ($showTestimonials)
-    <section class="relative overflow-hidden border-t border-zinc-100 bg-zinc-50/50 py-20 md:py-24">
-        <div class="pointer-events-none absolute -top-24 right-0 h-72 w-72 rounded-full bg-brand-100/60 blur-3xl"></div>
-        <div class="pointer-events-none absolute -bottom-24 left-0 h-72 w-72 rounded-full bg-brand-50 blur-3xl"></div>
-        <div class="relative mx-auto max-w-7xl px-6">
-            <div class="mx-auto max-w-2xl text-center">
-                <p class="text-sm font-semibold tracking-widest text-brand-600 uppercase">{{ __('landing.testimonials_eyebrow') }}</p>
-                <h2 class="mt-3 text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl">{{ __('landing.testimonials_title') }}</h2>
-                <p class="mt-4 text-base text-zinc-500">{{ __('landing.testimonials_subtitle') }}</p>
-            </div>
-            </div>
-            {{-- 信任徽章条 --}}
-            <div class="reveal mt-14 grid gap-4 sm:grid-cols-3">
-                @foreach ([
-                    ['key' => 'landing.trust_data_own', 'path' => 'M4.5 12h15m-15 0a1.5 1.5 0 0 1-1.5-1.5v-3A1.5 1.5 0 0 1 4.5 6h15a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5m-15 0a1.5 1.5 0 0 0-1.5 1.5v3a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5v-3a1.5 1.5 0 0 0-1.5-1.5M9 9h.01M9 15h.01'],
-                    ['key' => 'landing.trust_privacy', 'path' => 'M9 12.75 11.25 15 15 9.75m-3-7.036A11.96 11.96 0 0 1 3.598 6 12 12 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.249-8.25-3.286Z'],
-                    ['key' => 'landing.trust_support', 'path' => 'M2.25 13.5h3.75a.75.75 0 0 0 .75-.75V9a.75.75 0 0 0-.75-.75H3.375a.375.375 0 0 0-.375.375v4.875c0 .207.168.375.375.375Zm0 0v3.375c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V13.5m-12 0v-3.375m12 3.375h3.75a.375.375 0 0 0 .375-.375V9a.75.75 0 0 0-.75-.75h-2.625a.375.375 0 0 0-.375.375V13.5Z'],
-                ] as $badge)
-                <div class="flex items-center gap-3 rounded-2xl border border-zinc-200/70 bg-white/70 px-5 py-4 backdrop-blur transition hover:border-brand-200">
-                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600"><svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $badge['path'] }}"/></svg></span>
-                    <p class="text-sm font-medium text-zinc-700">{{ __($badge['key']) }}</p>
-                </div>
-                @endforeach
-            </div>
-
-            {{-- 用户评价卡片 --}}
-            <div class="reveal mt-10 grid gap-6 md:grid-cols-3">
-                @foreach ([
-                    ['quote' => 'landing.testimonial_1_quote', 'author' => 'landing.testimonial_1_author', 'role' => 'landing.testimonial_1_role'],
-                    ['quote' => 'landing.testimonial_2_quote', 'author' => 'landing.testimonial_2_author', 'role' => 'landing.testimonial_2_role'],
-                    ['quote' => 'landing.testimonial_3_quote', 'author' => 'landing.testimonial_3_author', 'role' => 'landing.testimonial_3_role'],
-                ] as $testimonial)
-                <figure class="flex h-full flex-col justify-between rounded-2xl border border-zinc-200/70 bg-white/70 p-7 backdrop-blur transition hover:border-brand-200">
-                    <blockquote class="text-sm leading-relaxed text-zinc-600">“{{ __($testimonial['quote']) }}”</blockquote>
-                    <figcaption class="mt-5 flex items-center gap-3">
-                        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-indigo-500 text-sm font-bold text-white">{{ mb_substr(__($testimonial['author']), 0, 1) }}</span>
-                        <div>
-                            <p class="text-sm font-semibold text-zinc-900">{{ __($testimonial['author']) }}</p>
-                            <p class="text-xs text-zinc-400">{{ __($testimonial['role']) }}</p>
-                        </div>
-                    </figcaption>
-                </figure>
-                @endforeach
-            </div>
-        </div>
-    </section>
-    @endif
-
-    {{-- ===== FAQ（后台 设置→主要→首页区块 可关闭） ===== --}}
+{{-- ===== FAQ（后台 设置→主要→首页区块 可关闭） ===== --}}
     @php($showFaq = filter_var(\App\Support\Settings::get('main.display_index_faq', true), FILTER_VALIDATE_BOOLEAN))
     @if ($showFaq)
     <section class="border-t border-zinc-100 bg-white py-20 md:py-24">
