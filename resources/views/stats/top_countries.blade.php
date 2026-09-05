@@ -7,10 +7,11 @@
     <x-stats-header :website="$website" :title="__('stats.top_countries_title')" />
     <x-range-switcher :route-name="'stats.top_countries'" :website="$website" :range="$range" />
 
-    {{-- World map visualization --}}
+        {{-- World map visualization --}}
     <div class="mt-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
         <h3 class="text-sm font-semibold text-zinc-700">{{ __('stats.country_distribution') }}</h3>
-        <div id="svgMapCountries" class="mt-4"></div>
+        <div id="svgMapCountries" class="mt-4"
+             data-values="{{ json_encode($countryMapData) }}"></div>
     </div>
 
     <x-rank-panel :title="__('stats.country_distribution')" :items="$topCountries" :show-rank="true" />
@@ -27,7 +28,8 @@
 <script src="{{ asset('vendor/svgmap/svgMap.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var countryValues = @json($countryMapData);
+    var el = document.getElementById('svgMapCountries');
+    var countryValues = JSON.parse(el.getAttribute('data-values'));
     var mapData = {
         data: {
             visitors: {
