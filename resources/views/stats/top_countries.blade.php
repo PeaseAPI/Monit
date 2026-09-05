@@ -1,5 +1,8 @@
 @extends('layouts.app')
 @section('content')
+@php
+    $countryMapData = collect($topCountries)->mapWithKeys(fn($item) => [$item['key'] => ['visitors' => $item['count']]]);
+@endphp
 <div class="max-w-7xl">
     <x-stats-header :website="$website" :title="__('stats.top_countries_title')" />
     <x-range-switcher :route-name="'stats.top_countries'" :website="$website" :range="$range" />
@@ -24,7 +27,7 @@
 <script src="{{ asset('vendor/svgmap/svgMap.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var countryValues = @json(collect($topCountries)->mapWithKeys(fn($item) => [$item['key'] => ['visitors' => $item['count']]]));
+    var countryValues = @json($countryMapData);
     var mapData = {
         data: {
             visitors: {
