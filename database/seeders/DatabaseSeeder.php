@@ -11,7 +11,11 @@ use Illuminate\Database\Seeder;
  * 演示数据（admin@monit.dev 等演示账户）不随默认 seed 执行，需要时手动运行：
  *   php artisan db:seed --class=DemoDataSeeder --force
  *
- * 网页安装向导（InstallController）同样只跑 CoreDataSeeder。
+ * 热图/回放演示数据（不创建用户，仅填充热图和会话回放记录）：
+ *   php artisan db:seed --class=DemoHeatmapReplaySeeder --force
+ * （安装向导已自动执行此 seeder）
+ *
+ * 网页安装向导（InstallController）同样只跑 CoreDataSeeder + DemoHeatmapReplaySeeder。
  *
  * 生产配置导入（www_monit_cn.sql 提取的三档定价/税费/品牌备案）不随默认 seed 执行：
  *   php artisan db:seed --class=ProductionSeeder --force

@@ -241,9 +241,11 @@
         <div class="note">
             <strong>后续建议：</strong><br>
             1. 系统已写入安装锁（<code>storage/installed.lock</code>），安装向导自动失效，无需删除任何文件；<br>
-            2. 请配置计划任务以保证统计汇总与数据归档按时执行（宝塔 → 计划任务，每 5 分钟）：<br>
+            2. 请配置计划任务以保证统计汇总与数据归档按时执行（宝塔 → 计划任务，每分钟）：<br>
             <code>* * * * * cd {{ base_path() }} && php artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1</code><br>
-            3. 线上环境建议将 <code>public/</code> 设为站点根目录，并通过 HTTPS 访问。
+            3. 线上环境建议将 <code>public/</code> 设为站点根目录，并通过 HTTPS 访问。<br>
+            4. GeoIP 库已自动下载，国家/城市维度统计数据可正常显示；调度器每月自动更新。<br>
+            5. 已写入热图与会话回放演示数据，登录后即可体验完整功能。
         </div>
     @endif
     </div>

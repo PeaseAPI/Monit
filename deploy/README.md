@@ -32,7 +32,12 @@ sudo apachectl configtest && sudo systemctl reload apache2
 
 ## 首次部署：网页安装向导（推荐）
 
-自 v1.1 起，**无需手动执行任何初始化命令**：代码上传 + 目录权限就绪后，直接浏览器访问站点域名，会自动 302 跳转到 `/install` 五步向导（环境检测 → 目录权限 → 数据库配置（MySQL 连接测试 + 自动建库 + 自动生成 `APP_KEY` + 迁移） → 站点与管理员 → 完成）。向导只写入核心数据（free/pro 套餐 + 平台设置），**不会**创建演示账号；完成后写入 `storage/installed.lock`，向导自动失效。
+自 v1.1 起，**无需手动执行任何初始化命令**：代码上传 + 目录权限就绪后，直接浏览器访问站点域名，会自动 302 跳转到 `/install` 五步向导（环境检测 → 目录权限 → 数据库配置（MySQL 连接测试 + 自动建库 + 自动生成 `APP_KEY` + 迁移） → 站点与管理员 → 完成）。向导完成时自动执行以下操作：
+- 写入核心数据（free/pro 套餐 + 平台设置）
+- 自动下载 GeoIP 库（国家/城市维度统计可正常显示）
+- 写入热图与会话回放演示数据（安装后即可体验完整功能）
+
+完成后写入 `storage/installed.lock`，向导自动失效。
 
 前置条件只有两条（SSH 执行一次）：
 
@@ -56,11 +61,11 @@ chmod -R ug+rwX storage bootstrap/cache
 1. `cp .env.example .env && php artisan key:generate`（生成并写入 `APP_KEY`，缺失会导致首页 500：`MissingAppKeyException - No application encryption key has been specified`；同时确认 `APP_ENV=production`、`APP_DEBUG=false`，避免线上暴露堆栈）
 2. 目录权限（PHP-FPM 运行用户，宝塔为 `www`）：`chown -R www:www storage bootstrap/cache && chmod -R ug+rwX storage bootstrap/cache`（storage 需写缓存/会话/日志，bootstrap/cache 需写配置缓存）
 3. 准备 MySQL 数据库：`mysql -e "CREATE DATABASE monit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"` 并授权业务账户（也可直接走网页向导，由向导自动建库）；随后 `php artisan migrate --force` 建表
-4. `php artisan db:seed --force`（写入 free/pro 套餐 + 平台设置，缺套餐前台无法正常工作；**默认不含任何演示账号**——本地需要演示数据时另跑 `php artisan db:seed --class=DemoDataSeeder --force`）
+4. `php artisan db:seed --force`（写入 free/pro 套餐 + 平台设置，缺套餐前台无法正常工作）；`php artisan db:seed --class=DemoHeatmapReplaySeeder --force`（写入热图/回放演示数据，可选）
 5. `php artisan storage:link`（公开磁盘软链）
 6. `php artisan config:cache && php artisan route:cache && php artisan view:cache`（⚠️ 必须在 1-4 步全部完成后执行——config 缓存会把当时的 `APP_KEY` / `DB_*` 值固化，之后改 `.env` 不生效；每次修改 `.env` 后需先 `php artisan config:clear` 再重建缓存）
 7. Cron 条目：`* * * * * cd /var/www/monit && php artisan schedule:run >> /dev/null 2>&1`
-8. **GeoIP 库文件（重要！缺失时统计的国家/大洲维度全部显示"未知"）**：`sudo -u www php artisan geoip:update`——自动下载 db-ip 免费国家库（~5MB，免注册）到 `storage/app/geoip/country.mmdb`；调度器每月 1 日 02:00 自动更新。状态可在 后台 → 设置 → 健康检查 查看。
+8. **GeoIP 库文件（重要！缺失时统计的国家/大洲维度全部显示"未知"）**：`sudo -u www php artisan geoip:update`——自动下载 db-ip 免费国家库（~5MB，免注册）到 `storage/app/geoip/country.mmdb`；调度器每月 1 日 02:00 自动更新。状态可在 后台 → 设置 → 健康检查 查看。（网页向导已自动执行此步）
 9. 队列Worker（启用队列时）：`php artisan queue:work --tries=3`（修改 `.env` / 重建缓存后需重启 Worker）
 
 ## 常见 500 排查（生产实录）

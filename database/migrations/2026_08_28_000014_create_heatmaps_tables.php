@@ -13,6 +13,7 @@ return new class extends Migration
         Schema::create('websites_heatmaps', function (Blueprint $table) {
             $table->increments('heatmap_id');
             $table->unsignedInteger('website_id');
+            $table->unsignedInteger('user_id')->nullable()->after('heatmap_id');
             $table->string('path', 2048);
             $table->string('name', 256);
             $table->unsignedInteger('snapshot_id_desktop')->nullable();
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->string('mobile_size', 16)->nullable();
             $table->boolean('is_enabled')->default(true);
             $table->dateTime('datetime');
+            $table->dateTime('last_datetime')->nullable()->after('datetime');
         });
 
         // heatmaps_snapshots

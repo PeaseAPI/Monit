@@ -5,14 +5,17 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * 补齐 sessions_replays 表缺失列（对齐生产数据库 schema）
- * 生产库有 user_id / events / size / is_too_short / last_datetime / expiration_date，
- * 但迁移文件遗漏；回放录制/展示/offload 均依赖这些列
+ * 确保 sessions_replays 和 websites_heatmaps 表包含完整列
+ *
+ * 旧安装：基础建表迁移已运行但缺少 user_id/events/size/... 等列，
+ *         本迁移检测并补齐（替换已删除的 2026_09_04_000001/000002 补丁迁移）
+ * 新安装：基础建表迁移已包含所有列，本迁移为空操作（hasColumn 检查跳过）
  */
 return new class extends Migration
 {
     public function up(): void
     {
+        // ── sessions_replays ──
         Schema::table('sessions_replays', function (Blueprint $table) {
             if (! Schema::hasColumn('sessions_replays', 'user_id')) {
                 $table->unsignedBigInteger('user_id')->nullable()->after('replay_id');
@@ -33,18 +36,20 @@ return new class extends Migration
                 $table->date('expiration_date')->nullable()->after('last_datetime');
             }
         });
+
+        // ── websites_heatmaps ──
+        Schema::table('websites_heatmaps', function (Blueprint $table) {
+            if (! Schema::hasColumn('websites_heatmaps', 'user_id')) {
+                $table->unsignedInteger('user_id')->nullable()->after('heatmap_id');
+            }
+            if (! Schema::hasColumn('websites_heatmaps', 'last_datetime')) {
+                $table->dateTime('last_datetime')->nullable()->after('datetime');
+            }
+        });
     }
 
     public function down(): void
     {
-        Schema::table('sessions_replays', function (Blueprint $table) {
-            $columns = ['user_id', 'events', 'size', 'is_too_short', 'last_datetime', 'expiration_date'];
-            foreach ($columns as $col) {
-                if (Schema::hasColumn('sessions_replays', $col)) {
-                    $table->dropColumn($col);
-                }
-            }
-        });
+        // 不做回退——这些列是功能必需的
     }
 };
-

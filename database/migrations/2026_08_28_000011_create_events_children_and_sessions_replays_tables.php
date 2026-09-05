@@ -33,8 +33,14 @@ return new class extends Migration
             $table->foreignId('session_id')->constrained('visitors_sessions', 'session_id')->cascadeOnDelete();
             $table->foreignId('visitor_id')->constrained('websites_visitors', 'visitor_id')->cascadeOnDelete();
             $table->foreignId('website_id')->constrained('websites', 'website_id')->cascadeOnDelete();
+            $table->unsignedBigInteger('user_id')->nullable()->after('replay_id');
+            $table->unsignedInteger('events')->nullable()->after('website_id');
+            $table->unsignedBigInteger('size')->default(0)->after('events');
             $table->boolean('is_offloaded')->default(false);
+            $table->boolean('is_too_short')->default(true)->after('is_offloaded');
             $table->timestamp('datetime')->nullable()->index();
+            $table->timestamp('last_datetime')->nullable()->after('datetime');
+            $table->date('expiration_date')->nullable()->after('last_datetime');
 
             $table->index(['website_id', 'datetime']);
         });

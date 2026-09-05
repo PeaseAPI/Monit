@@ -618,6 +618,13 @@ class InstallController extends Controller
         $this->env->write('APP_NAME', $data['site_name']);
         config(['app.url' => rtrim($data['site_url'], '/'), 'app.name' => $data['site_name']]);
 
+        // 自动下载 GeoIP 库（缺失时国家/城市维度全部显示"未知"，安装后即开箱可用）
+        // 静默执行：网络不通或磁盘不足不影响安装完成，用户可稍后手动 geoip:update
+        Artisan::call('geoip:update');
+
+        // 写入演示数据（热图 + 会话回放，让安装后即可体验完整功能）
+        Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\DemoHeatmapReplaySeeder', '--force' => true]);
+
         // 写入安装锁：此后向导失效
         InstallState::complete();
 

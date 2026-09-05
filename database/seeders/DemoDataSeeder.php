@@ -67,6 +67,9 @@ class DemoDataSeeder extends Seeder
 
         $this->command?->info('✅ 用户：admin / pro / free（密码均为 password）');
         $this->seedWebsites($proUser, $freeUser);
+
+        // 热图 + 会话回放演示数据
+        $this->call(DemoHeatmapReplaySeeder::class);
     }
 
     protected function seedWebsites(User $proUser, User $freeUser): void
