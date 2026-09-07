@@ -90,13 +90,13 @@ class PixelTrackController extends Controller
         }
 
         // 简单跳过原因计数（供 Admin 观测，不记录 PII）
-        if ($reason !== 'untracked') {
+                if ($reason !== 'untracked') {
             Log::channel('single')->debug('pixel skipped: '.$reason);
         }
 
         return response('', 204)
             ->header('Access-Control-Allow-Origin', '*')
-            ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
             ->header('Access-Control-Allow-Headers', 'Content-Type')
             ->header('Cache-Control', 'no-store');
     }
@@ -106,6 +106,22 @@ class PixelTrackController extends Controller
      * 客户端 SDK 在页面加载时自动调用，无需站点手动配置 data-heatmap-id
      */
     protected function heatmapCheck(string $pixel_key, Request $request): Response
+    {
+        try {
+            return $this->doHeatmapCheck($pixel_key, $request);
+        } catch (\Throwable $e) {
+            // 采集端点永不 500：异常时返回空 JSON + CORS 头，
+            // 避免 CORS 头缺失导致浏览器拦截 → 后续 snapshot/replay 全链路中断
+            report($e);
+
+            return response('{}', 200)
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Content-Type', 'application/json')
+                ->header('Cache-Control', 'no-store');
+        }
+    }
+
+    protected function doHeatmapCheck(string $pixel_key, Request $request): Response
     {
         $cacheTtl = (int) config('monit.pixel.website_cache_ttl', 60);
         $cacheKey = 'pixel.website.'.$pixel_key;
@@ -136,8 +152,12 @@ class PixelTrackController extends Controller
                 ->first();
         }
 
-                // 全局热图开关开启但无匹配 Heatmap → 自动创建（修复热图无数据根因）
-        $globalHeatmapsEnabled = (bool) settings()->analytics->websites_heatmaps_is_enabled;
+        // 全局热图开关开启但无匹配 Heatmap → 自动创建（修复热图无数据根因）
+        $analyticsSettings = settings()->analytics ?? null;
+        $globalHeatmapsEnabled = $analyticsSettings
+            && ! empty($analyticsSettings->websites_heatmaps_is_enabled)
+            && (bool) $analyticsSettings->websites_heatmaps_is_enabled;
+
         if (! $heatmap && $globalHeatmapsEnabled) {
             $heatmap = Heatmap::create([
                 'website_id' => $website->website_id,
@@ -151,7 +171,10 @@ class PixelTrackController extends Controller
 
         // 判断回放是否启用：全局开关 + 网站开关 + 套餐配额
         $replayEnabled = false;
-        if ((bool) settings()->analytics->sessions_replays_is_enabled && $website->sessions_replays_is_enabled) {
+        $globalReplayEnabled = $analyticsSettings
+            && ! empty($analyticsSettings->sessions_replays_is_enabled)
+            && (bool) $analyticsSettings->sessions_replays_is_enabled;
+        if ($globalReplayEnabled && $website->sessions_replays_is_enabled) {
             $replayLimit = $website->user?->getPlanSettings()['sessions_replays_limit'] ?? 0;
             $replayEnabled = ($replayLimit === -1) || ($replayLimit > 0 && $website->current_month_sessions_replays < $replayLimit);
         }
@@ -173,7 +196,7 @@ class PixelTrackController extends Controller
     {
         return response('', 204)
             ->header('Access-Control-Allow-Origin', '*')
-            ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
             ->header('Access-Control-Allow-Headers', 'Content-Type')
             ->header('Access-Control-Max-Age', '86400')
             ->header('Cache-Control', 'no-store');

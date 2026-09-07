@@ -83,8 +83,18 @@ function switchTab(tab) {
 function initSnapshotReplayer(containerId, onReady) {
     fetch(snapshotUrl)
         .then(r => r.ok ? r.json() : [])
-        .then(snapshotData => {
-            if (!snapshotData || !Array.isArray(snapshotData) || snapshotData.length === 0) {
+        .then(rawData => {
+            // The snapshot API returns the stored data object.
+            // New format: { events: [...], viewport: {...} } — extract events array
+            // Old format: { dom: {...}, viewport: {...} } — cannot be rendered by rrweb-player
+            let snapshotData = null;
+            if (rawData && Array.isArray(rawData.events)) {
+                snapshotData = rawData.events;
+            } else if (Array.isArray(rawData) && rawData.length > 0) {
+                snapshotData = rawData;
+            }
+
+            if (!snapshotData || snapshotData.length === 0) {
                 if (onReady) onReady(null);
                 return;
             }

@@ -40,17 +40,19 @@ class DemoHeatmapReplaySeeder extends Seeder
                 'datetime'   => now(),
             ]);
 
+            $snapshotEvents = $this->generateSnapshotEvents($path === '/' ? 'Homepage' : ltrim($path, '/'));
             $snap = HeatmapSnapshot::create([
                 'heatmap_id' => $heatmap->heatmap_id,
                 'website_id' => $website->website_id,
                 'type'       => 'desktop',
-                'data'       => gzencode('{}', 9),
+                'data'       => gzencode(json_encode(['events' => $snapshotEvents, 'viewport' => ['width' => 1920, 'height' => 1080]]), 9),
                 'date'       => now()->toDateString(),
             ]);
 
+            $compressed = gzencode(json_encode(['events' => $snapshotEvents, 'viewport' => ['width' => 1920, 'height' => 1080]]), 9);
             $heatmap->update([
                 'snapshot_id_desktop' => $snap->snapshot_id,
-                'desktop_size'        => strlen(gzencode('{}', 9)),
+                'desktop_size'        => strlen($compressed),
             ]);
 
             // Click data
@@ -128,7 +130,7 @@ class DemoHeatmapReplaySeeder extends Seeder
         $this->command->info('Demo data created!');
     }
 
-    protected function generateRrwebEvents(): array
+        protected function generateRrwebEvents(): array
     {
         $ts = now()->subMinutes(5)->getPreciseTimestamp(3);
 
@@ -145,12 +147,55 @@ class DemoHeatmapReplaySeeder extends Seeder
                     'type' => 0,
                     'childNodes' => [[
                         'type' => 1, 'name' => 'html', 'childNodes' => [
-                            ['type' => 1, 'name' => 'head'],
-                            ['type' => 1, 'name' => 'body', 'childNodes' => [[
-                                'type' => 1, 'name' => 'h1', 'childNodes' => [
-                                    ['type' => 3, 'textContent' => 'Welcome'],
+                            [
+                                'type' => 1, 'name' => 'head', 'childNodes' => [
+                                    ['type' => 1, 'name' => 'title', 'childNodes' => [
+                                        ['type' => 3, 'textContent' => 'Example Page'],
+                                    ]],
+                                    ['type' => 1, 'name' => 'style', 'attributes' => ['type' => 'text/css'], 'childNodes' => [
+                                        ['type' => 3, 'textContent' => 'body{font-family:system-ui,sans-serif;margin:0;padding:40px;color:#333}h1{color:#1a1a1a;margin-bottom:16px}p{line-height:1.6;margin-bottom:12px}nav{margin-bottom:24px}nav a{margin-right:16px;color:#0066cc;text-decoration:none}.hero{background:#f8f9fa;padding:32px;border-radius:8px;margin-bottom:24px}.content{display:grid;grid-template-columns:1fr 1fr;gap:24px}'],
+                                    ]],
                                 ],
-                            ]]],
+                            ],
+                            [
+                                'type' => 1, 'name' => 'body', 'childNodes' => [
+                                    [
+                                        'type' => 1, 'name' => 'nav', 'childNodes' => [
+                                            ['type' => 1, 'name' => 'a', 'attributes' => ['href' => '/'], 'childNodes' => [['type' => 3, 'textContent' => 'Home']]],
+                                            ['type' => 1, 'name' => 'a', 'attributes' => ['href' => '/about'], 'childNodes' => [['type' => 3, 'textContent' => 'About']]],
+                                            ['type' => 1, 'name' => 'a', 'attributes' => ['href' => '/contact'], 'childNodes' => [['type' => 3, 'textContent' => 'Contact']]],
+                                        ],
+                                    ],
+                                    [
+                                        'type' => 1, 'name' => 'div', 'attributes' => ['class' => 'hero'], 'childNodes' => [
+                                            ['type' => 1, 'name' => 'h1', 'childNodes' => [['type' => 3, 'textContent' => 'Welcome to Our Website']]],
+                                            ['type' => 1, 'name' => 'p', 'childNodes' => [['type' => 3, 'textContent' => 'We are glad you are here. Explore our services and get in touch.']]],
+                                        ],
+                                    ],
+                                    [
+                                        'type' => 1, 'name' => 'div', 'attributes' => ['class' => 'content'], 'childNodes' => [
+                                            [
+                                                'type' => 1, 'name' => 'div', 'childNodes' => [
+                                                    ['type' => 1, 'name' => 'h2', 'childNodes' => [['type' => 3, 'textContent' => 'Our Services']]],
+                                                    ['type' => 1, 'name' => 'p', 'childNodes' => [['type' => 3, 'textContent' => 'We offer a range of analytics and monitoring solutions for your business.']]],
+                                                ],
+                                            ],
+                                            [
+                                                'type' => 1, 'name' => 'div', 'childNodes' => [
+                                                    ['type' => 1, 'name' => 'h2', 'childNodes' => [['type' => 3, 'textContent' => 'Get Started']]],
+                                                    ['type' => 1, 'name' => 'p', 'childNodes' => [['type' => 3, 'textContent' => 'Sign up today and start tracking your website performance.']]],
+                                                    ['type' => 1, 'name' => 'a', 'attributes' => ['href' => '/signup', 'class' => 'btn'], 'childNodes' => [['type' => 3, 'textContent' => 'Sign Up Now']]],
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                    [
+                                        'type' => 1, 'name' => 'footer', 'childNodes' => [
+                                            ['type' => 1, 'name' => 'p', 'childNodes' => [['type' => 3, 'textContent' => '© 2026 Example Company. All rights reserved.']]],
+                                        ],
+                                    ],
+                                ],
+                            ],
                         ],
                     ]],
                 ],
@@ -176,6 +221,60 @@ class DemoHeatmapReplaySeeder extends Seeder
             }
         }
 
-        return $events;
+                return $events;
+    }
+
+    /**
+     * Generate rrweb snapshot events for heatmap DOM snapshot (new format)
+     * These events can be rendered by rrweb-player to show the actual webpage
+     */
+    protected function generateSnapshotEvents(string $pageName): array
+    {
+        $ts = now()->getPreciseTimestamp(3);
+
+        return [
+            [
+                'type' => 4,
+                'data' => ['href' => 'https://example.com/' . ($pageName === 'Homepage' ? '' : $pageName), 'width' => 1920, 'height' => 1080],
+                'timestamp' => $ts,
+            ],
+            [
+                'type' => 2,
+                'data' => [
+                    'node' => [
+                        'type' => 0,
+                        'childNodes' => [[
+                            'type' => 1, 'name' => 'html', 'childNodes' => [
+                                [
+                                    'type' => 1, 'name' => 'head', 'childNodes' => [
+                                        ['type' => 1, 'name' => 'title', 'childNodes' => [
+                                            ['type' => 3, 'textContent' => $pageName . ' - Example'],
+                                        ]],
+                                        ['type' => 1, 'name' => 'style', 'attributes' => ['type' => 'text/css'], 'childNodes' => [
+                                            ['type' => 3, 'textContent' => 'body{font-family:system-ui,sans-serif;margin:0;padding:40px;color:#333}h1{color:#1a1a1a;margin-bottom:16px}p{line-height:1.6;margin-bottom:12px}nav{margin-bottom:24px}nav a{margin-right:16px;color:#0066cc}'],
+                                        ]],
+                                    ],
+                                ],
+                                [
+                                    'type' => 1, 'name' => 'body', 'childNodes' => [
+                                        [
+                                            'type' => 1, 'name' => 'h1', 'childNodes' => [
+                                                ['type' => 3, 'textContent' => $pageName],
+                                            ],
+                                        ],
+                                        [
+                                            'type' => 1, 'name' => 'p', 'childNodes' => [
+                                                ['type' => 3, 'textContent' => 'This is the ' . strtolower($pageName) . ' page content.'],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ]],
+                    ],
+                ],
+                'timestamp' => $ts + 1,
+            ],
+        ];
     }
 }

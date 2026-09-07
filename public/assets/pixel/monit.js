@@ -198,9 +198,30 @@
         var heatmaps = {
         maxScroll: 0,
 
-        snapshot: function () {
+            snapshot: function () {
             if (!settings.heatmapId) return;
 
+            // If rrweb recording is already active (replays started), the initial
+            // full-snapshot event is already captured via the shared snapshot buffer.
+            // Otherwise, capture a standalone snapshot for the heatmap.
+            if (replays._lastFullSnapshot) {
+                var events = [];
+                var ts = Date.now();
+                events.push({
+                    type: 4,
+                    data: { href: location.href, width: window.innerWidth, height: window.innerHeight },
+                    timestamp: ts
+                });
+                events.push(replays._lastFullSnapshot);
+                send({
+                    type: 'heatmap_snapshot',
+                    heatmap_id: settings.heatmapId,
+                    data: { events: events, viewport: pageData().viewport }
+                });
+                return;
+            }
+
+            // No rrweb snapshot available — send minimal metadata as fallback
             var de = document.documentElement;
             var dom = {
                 w: de.scrollWidth,
@@ -208,7 +229,6 @@
                 url: location.href,
                 nodes: (document.body ? document.body.innerText || '' : '').slice(0, 4096)
             };
-
             send({
                 type: 'heatmap_snapshot',
                 heatmap_id: settings.heatmapId,
@@ -286,22 +306,32 @@
                     else tryLoad(i + 1);
                 };
                 s.onerror = function () { tryLoad(i + 1); };
-                document.head.appendChild(s);
+                            document.head.appendChild(s);
             };
 
             tryLoad(0);
         },
 
-        start: function () {
-            if (!settings.replay || this.started) return;
+        start: function (onReady) {
+            if (!settings.replay || this.started) {
+                if (onReady) onReady();
+                return;
+            }
             var self = this;
 
             this.ensureRrweb(function () {
-                if (!window.rrweb || self.started) return;
+                if (!window.rrweb || self.started) {
+                    if (onReady) onReady();
+                    return;
+                }
                 self.started = true;
 
                 window.rrweb.record({
                     emit: function (event) {
+                        // Capture the first full-snapshot event (type 2) for heatmap use
+                        if (!self._lastFullSnapshot && event.type === 2) {
+                            self._lastFullSnapshot = event;
+                        }
                         if (!self._buffer) self._buffer = [];
                         self._buffer.push(event);
                         if (!self._timer) {
@@ -310,6 +340,10 @@
                     },
                     checkoutEveryNms: 10000
                 });
+
+                // rrweb.record synchronously emits the initial full snapshot,
+                // so _lastFullSnapshot is already set by this point.
+                if (onReady) onReady();
             });
         },
 
@@ -444,10 +478,15 @@
         }
 
         setTimeout(function () {
-            // 先自动检测热图 → 拿到 heatmap_id 后再发快照/开始回放
+            // 先自动检测热图 → 拿到 heatmap_id 后再开始回放录制 + 发快照
             autoDetectHeatmap(function () {
-                heatmaps.snapshot();
-                replays.start();
+                // Start replay recording FIRST — rrweb.record emits a full-snapshot
+                // event (type 2) synchronously on start. We capture it in
+                // replays._lastFullSnapshot so heatmaps.snapshot() can send it
+                // as the heatmap's DOM snapshot for rrweb-player rendering.
+                replays.start(function () {
+                    heatmaps.snapshot();
+                });
             });
         }, 300);
     }
