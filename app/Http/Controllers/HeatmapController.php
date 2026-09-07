@@ -8,6 +8,7 @@ use App\Models\HeatmapSnapshotScroll;
 use App\Models\Website;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 用户中心 - 热图管理
@@ -51,7 +52,7 @@ class HeatmapController extends Controller
             ->with('success', __('msg.heatmap_created'));
     }
 
-    public function show(Request $request, Website $website, int $heatmapId)
+        public function show(Request $request, Website $website, int $heatmapId)
     {
         $heatmap = $website->heatmaps()->findOrFail($heatmapId);
 
@@ -69,7 +70,22 @@ class HeatmapController extends Controller
             ->groupBy('max_scroll')
             ->map(fn ($group) => $group->count());
 
-        return view('stats.heatmaps.show', compact('website', 'heatmap', 'clicks', 'scrolls'));
+        // 设备类型（前端设备选择器 & 快照 AJAX 请求参数）
+        $device = $request->query('device', 'desktop');
+        if (! in_array($device, ['desktop', 'tablet', 'mobile'], true)) {
+            $device = 'desktop';
+        }
+
+        // 检查是否有 DOM 快照（用于前端判断是否显示"无截图"提示）
+        $hasSnapshot = false;
+        foreach (['desktop', 'tablet', 'mobile'] as $d) {
+            if ($heatmap->{"snapshot_id_{$d}"}) {
+                $hasSnapshot = true;
+                break;
+            }
+        }
+
+        return view('stats.heatmaps.show', compact('website', 'heatmap', 'clicks', 'scrolls', 'device', 'hasSnapshot'));
     }
 
     public function update(Request $request): RedirectResponse
@@ -139,5 +155,50 @@ class HeatmapController extends Controller
             'clicks' => $clicks,
             'scrolls' => $scrolls,
         ]);
+    }
+
+    /**
+     * 返回热图 DOM 快照 JSON（供 rrweb-player 渲染网页截图）
+     * 数据是 gzencode 压缩的，解压后直接输出 JSON
+     */
+    public function snapshot(Request $request, Website $website, int $heatmapId)
+    {
+        $heatmap = Heatmap::where('website_id', $website->website_id)
+            ->findOrFail($heatmapId);
+
+        $device = $request->query('device', 'desktop');
+        if (! in_array($device, ['desktop', 'tablet', 'mobile'], true)) {
+            $device = 'desktop';
+        }
+
+        // 优先取请求的设备，无数据则回退到其他设备
+        $devices = [$device];
+        foreach (['desktop', 'tablet', 'mobile'] as $d) {
+            if ($d !== $device) {
+                $devices[] = $d;
+            }
+        }
+
+        foreach ($devices as $d) {
+            $snapshotId = $heatmap->{"snapshot_id_{$d}"};
+            if (! $snapshotId) {
+                continue;
+            }
+
+            // 用原生查询读取 BLOB，避免 Eloquent 对二进制数据的编码问题
+            $row = DB::selectOne(
+                'SELECT `data` FROM `heatmaps_snapshots` WHERE `snapshot_id` = ?',
+                [$snapshotId],
+            );
+
+            if ($row && $row->data) {
+                $decompressed = @gzdecode($row->data);
+                if ($decompressed !== false) {
+                    return response($decompressed, 200, ['Content-Type' => 'application/json']);
+                }
+            }
+        }
+
+        return response()->json([]);
     }
 }

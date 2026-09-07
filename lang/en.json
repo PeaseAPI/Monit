@@ -951,6 +951,8 @@
     "auth.sso_invalid_token": "Invalid SSO token",
     "auth.sso_not_enabled": "SSO login is not enabled",
     "auth.sso_user_not_found": "SSO user not found or disabled",
+    "auth.tab_password_login": "Email / Phone",
+    "auth.tab_sms_login": "SMS Code",
     "auth.terms_consent": "I have read and agree to the",
     "auth.terms_link": "Terms of Service",
     "auth.terms_required": "Please accept the Terms of Service",

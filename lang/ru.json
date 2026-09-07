@@ -951,6 +951,8 @@
     "auth.sso_invalid_token": "Недействительный токен SSO",
     "auth.sso_not_enabled": "Вход через SSO не включён",
     "auth.sso_user_not_found": "Пользователь SSO не найден или отключён",
+    "auth.tab_password_login": "Email / Телефон",
+    "auth.tab_sms_login": "SMS-код",
     "auth.terms_consent": "Я прочитал и соглашаюсь с",
     "auth.terms_link": "Условиями обслуживания",
     "auth.terms_required": "Пожалуйста, примите условия обслуживания",

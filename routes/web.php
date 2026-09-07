@@ -519,6 +519,10 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/stats/{website}/heatmaps-ajax/{heatmapId}', [HeatmapController::class, 'ajax'])
         ->middleware('can:own,website')->name('stats.heatmaps.ajax');
 
+    // 热图DOM快照（供 rrweb-player 渲染网页截图）
+    Route::get('/stats/{website}/heatmaps/{heatmapId}/snapshot', [HeatmapController::class, 'snapshot'])
+        ->middleware('can:own,website')->name('stats.heatmaps.snapshot');
+
     // 页面浏览 - 高级模式（规格书 §6.2.2：/pageviews-advanced）
     Route::get('/stats/{website}/pageviews-advanced', [PageviewsAdvancedController::class, 'index'])
         ->middleware('can:own,website')->name('stats.pageviews-advanced');

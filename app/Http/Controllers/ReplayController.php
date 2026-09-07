@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EventChild;
 use App\Models\SessionReplay;
 use App\Models\Website;
+use App\Support\ObjectStorage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 
@@ -35,9 +37,9 @@ class ReplayController extends Controller
         return view('stats.replays.show', compact('website', 'replay'));
     }
 
-    /**
+        /**
      * 返回回放事件 JSON（供 rrweb-player 消费）
-     * 从缓存中取出 chunk keys → 逐个取出 chunk 数据 → 合并为 rrweb 事件数组
+     * 读取优先级：Cache → 对象存储（is_offloaded）→ EventChild 回退
      */
     public function events(Request $request, Website $website, int $replayId)
     {
@@ -45,21 +47,57 @@ class ReplayController extends Controller
             ->findOrFail($replayId);
 
         $session = $replay->session;
-        if (! $session) {
-            return response()->json([]);
+
+        // 1. 尝试从缓存读取
+        $events = [];
+        if ($session) {
+            $cacheKey = "session_replay_keys_{$session->session_id}";
+            $keys = Cache::get($cacheKey, []);
+
+            foreach ($keys as $chunkKey) {
+                $chunk = Cache::get($chunkKey);
+                if (is_array($chunk)) {
+                    $events = array_merge($events, $chunk);
+                }
+            }
         }
 
-        // 从缓存取出 chunk 索引
-        $cacheKey = "session_replay_keys_{$session->session_id}";
-        $keys = Cache::get($cacheKey, []);
+        // 2. 缓存无数据 → 尝试从对象存储读取（is_offloaded）
+        if (empty($events) && $replay->is_offloaded) {
+            try {
+                if (ObjectStorage::isConfigured()) {
+                    $storage = ObjectStorage::make();
+                    $key = 'replays/'.$replay->website_id.'/'.$replay->session_id.'.json';
+                    [$status, $body] = $storage->get($key);
 
-        // 逐个取出 chunk 数据并合并
-        $events = [];
-        foreach ($keys as $chunkKey) {
-            $chunk = Cache::get($chunkKey);
-            if (is_array($chunk)) {
-                $events = array_merge($events, $chunk);
+                    if ($status >= 200 && $status < 300 && $body !== '') {
+                        $data = json_decode($body, true);
+                        if (is_array($data) && isset($data['events']) && is_array($data['events'])) {
+                            $events = $data['events'];
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                logger()->warning('Replay offload read failed', [
+                    'replay_id' => $replayId,
+                    'error' => $e->getMessage(),
+                ]);
             }
+        }
+
+        // 3. 仍无数据 → 从 EventChild 回退读取（与 OffloadCommand 逻辑一致）
+        if (empty($events)) {
+            $events = EventChild::where('session_id', $replay->session_id)
+                ->orderBy('event_child_id')
+                ->get(['type', 'data', 'count', 'date'])
+                ->map(fn ($e) => [
+                    'type' => $e->type,
+                    'data' => $e->data,
+                    'count' => $e->count,
+                    'date' => (string) $e->date,
+                ])
+                ->values()
+                ->all();
         }
 
         return response()->json($events);
