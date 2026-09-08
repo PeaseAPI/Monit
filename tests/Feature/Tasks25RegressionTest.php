@@ -203,7 +203,7 @@ class Tasks25RegressionTest extends TestCase
         $js = file_get_contents(public_path('assets/pixel/monit.js'));
 
         $this->assertStringContainsString('ensureRrweb', $js);
-        $this->assertStringContainsString('rrweb.min.js', $js);
+        $this->assertStringContainsString('rrweb-all.umd.min.js', $js);
         $this->assertStringContainsString('cdn.jsdelivr.net', $js);
         $this->assertStringContainsString('data-replay', $js);
     }
