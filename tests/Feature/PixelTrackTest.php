@@ -179,6 +179,19 @@ class PixelTrackTest extends TestCase
         $this->assertNotNull($heatmap->snapshot_id_desktop);
         $this->assertGreaterThan(0, $heatmap->desktop_size);
 
+        // 验证快照数据可被正确读取和解压
+        $snapshotRow = \Illuminate\Support\Facades\DB::selectOne(
+            'SELECT data FROM heatmaps_snapshots WHERE snapshot_id = ?',
+            [$heatmap->snapshot_id_desktop],
+        );
+        $this->assertNotNull($snapshotRow);
+        $this->assertNotNull($snapshotRow->data);
+        $decompressed = @gzdecode($snapshotRow->data);
+        $this->assertNotFalse($decompressed, 'Snapshot data should be valid gzencode compressed');
+        $snapshotData = json_decode($decompressed, true);
+        $this->assertIsArray($snapshotData);
+        $this->assertArrayHasKey('events', $snapshotData);
+
         // 点击坐标
         $this->track(array_merge($this->basePayload('heatmap_snapshot_click'), [
             'heatmap_id' => $heatmap->heatmap_id,
@@ -205,6 +218,72 @@ class PixelTrackTest extends TestCase
 
         $this->assertDatabaseCount('heatmap_snapshot_scrolls', 1);
         $this->assertDatabaseHas('heatmap_snapshot_scrolls', ['max_scroll' => 100]);
+    }
+
+    public function test_replay_data_stored_in_db(): void
+    {
+        // 1. 创建 visitor + session
+        $this->track(array_merge($this->basePayload('initiate_visitor'), [
+            'data' => ['resolution' => ['width' => 1920, 'height' => 1080], 'timezone' => 'UTC'],
+        ]))->assertStatus(204);
+
+        $this->track(array_merge($this->basePayload('landing_page'), [
+            'data' => ['url' => 'https://example.com/', 'title' => 'Home'],
+        ]))->assertStatus(204);
+
+        // 2. 发送回放事件数据
+        $replayEvents = [
+            ['type' => 4, 'data' => ['href' => 'https://example.com/'], 'timestamp' => 1000],
+            ['type' => 2, 'data' => ['node' => ['type' => 0]], 'timestamp' => 1001],
+            ['type' => 3, 'data' => ['source' => 0], 'timestamp' => 1500],
+        ];
+
+        $this->track(array_merge($this->basePayload('replays'), [
+            'data' => ['events' => $replayEvents],
+        ]))->assertStatus(204);
+
+        // 3. 验证 SessionReplay 记录已创建，events 和 size 字段非空
+        $this->assertDatabaseCount('sessions_replays', 1);
+
+        $replay = \App\Models\SessionReplay::first();
+        $this->assertNotNull($replay);
+        $this->assertEquals(3, $replay->events);
+        $this->assertGreaterThan(0, $replay->size);
+
+        // 4. 验证 data 列（LONGBLOB）有压缩数据，可被正确解压
+        $row = \Illuminate\Support\Facades\DB::selectOne(
+            'SELECT data FROM sessions_replays WHERE replay_id = ?',
+            [$replay->replay_id],
+        );
+        $this->assertNotNull($row);
+        $this->assertNotNull($row->data, 'Replay data column should not be null');
+        $decompressed = @gzdecode($row->data);
+        $this->assertNotFalse($decompressed, 'Replay data should be valid gzencode compressed');
+        $storedEvents = json_decode($decompressed, true);
+        $this->assertIsArray($storedEvents);
+        // 数据格式为事件数组
+        $this->assertCount(3, $storedEvents);
+
+        // 5. 发送第二批事件 → 应追加到已有数据
+        $moreEvents = [
+            ['type' => 3, 'data' => ['source' => 1], 'timestamp' => 2000],
+            ['type' => 3, 'data' => ['source' => 2], 'timestamp' => 2500],
+        ];
+
+        $this->track(array_merge($this->basePayload('replays'), [
+            'data' => ['events' => $moreEvents],
+        ]))->assertStatus(204);
+
+        $replay->refresh();
+        $this->assertEquals(5, $replay->events);
+
+        $row = \Illuminate\Support\Facades\DB::selectOne(
+            'SELECT data FROM sessions_replays WHERE replay_id = ?',
+            [$replay->replay_id],
+        );
+        $decompressed = @gzdecode($row->data);
+        $allEvents = json_decode($decompressed, true);
+        $this->assertCount(5, $allEvents);
     }
 
     public function test_lightweight_mode_writes_single_table(): void

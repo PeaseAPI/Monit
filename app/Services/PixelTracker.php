@@ -524,31 +524,7 @@ class PixelTracker
             return;
         }
 
-        // 确保 replay 主记录存在
-        $exists = SessionReplay::where('session_id', $session->session_id)->exists();
-        if (! $exists) {
-            // 回放配额（规格 §10.2：sessions_replays_limit；-1 不限）
-            $replayLimit = $this->website->user?->getPlanSettings()['sessions_replays_limit'] ?? 0;
-            if ($replayLimit > 0 && $this->website->current_month_sessions_replays >= $replayLimit) {
-                $this->skip('replays_limit');
-
-                return;
-            }
-
-                        SessionReplay::create([
-                'session_id' => $session->session_id,
-                'visitor_id' => $session->visitor_id,
-                'website_id' => $this->website->website_id,
-                'user_id' => $this->website->user_id ?? $this->website->user?->user_id,
-                'datetime' => now(),
-            ]);
-
-            $this->website->increment('current_month_sessions_replays');
-        }
-
-        // chunk 索引：缓存存储（key = session_replay_keys_{session_id}）
-        // monit.js 发送 { type: 'replays', data: { events: [...] } }；
-        // 兼容旧协议直接传事件数组（type: 'replay_chunk'）
+        // 解析事件
         $data = $this->payload['data'] ?? [];
         $events = is_array($data) ? ($data['events'] ?? $data) : [];
         if (! is_array($events) || $events === []) {
@@ -557,7 +533,67 @@ class PixelTracker
             return;
         }
         $events = array_values($events);
+        $chunkSize = strlen(json_encode($events, JSON_UNESCAPED_UNICODE));
 
+        // 确保 replay 主记录存在
+        $replay = SessionReplay::where('session_id', $session->session_id)->first();
+        if (! $replay) {
+            // 回放配额（规格 §10.2：sessions_replays_limit；-1 不限）
+            $replayLimit = $this->website->user?->getPlanSettings()['sessions_replays_limit'] ?? 0;
+            if ($replayLimit > 0 && $this->website->current_month_sessions_replays >= $replayLimit) {
+                $this->skip('replays_limit');
+
+                return;
+            }
+
+            // 压缩初始事件数据
+            $compressed = gzencode(json_encode($events, JSON_UNESCAPED_UNICODE), 9);
+
+            $replay = SessionReplay::create([
+                'session_id' => $session->session_id,
+                'visitor_id' => $session->visitor_id,
+                'website_id' => $this->website->website_id,
+                'user_id' => $this->website->user_id ?? $this->website->user?->user_id,
+                'events' => count($events),
+                'size' => $chunkSize,
+                'datetime' => now(),
+                'is_too_short' => count($events) < 5,
+            ]);
+
+            // 用原生 SQL 写入 LONGBLOB data 列（Eloquent 对二进制数据有编码问题）
+            if ($compressed !== false) {
+                DB::statement(
+                    'UPDATE sessions_replays SET data = ? WHERE replay_id = ?',
+                    [$compressed, $replay->replay_id],
+                );
+            }
+
+            $this->website->increment('current_month_sessions_replays');
+        } else {
+            // 追加事件到已有 replay：读取 → 解压 → 合并 → 重新压缩 → 写回
+            $existingEvents = [];
+            $row = DB::selectOne(
+                'SELECT data FROM sessions_replays WHERE replay_id = ?',
+                [$replay->replay_id],
+            );
+            if ($row && $row->data) {
+                $decompressed = @gzdecode($row->data);
+                if ($decompressed !== false) {
+                    $existingEvents = json_decode($decompressed, true) ?: [];
+                }
+            }
+
+            // 合并新事件
+            $allEvents = array_merge($existingEvents, $events);
+            $compressed = gzencode(json_encode($allEvents, JSON_UNESCAPED_UNICODE), 9);
+
+            DB::statement(
+                'UPDATE sessions_replays SET data = ?, events = ?, size = ?, last_datetime = ? WHERE replay_id = ?',
+                [$compressed !== false ? $compressed : null, count($allEvents), strlen(json_encode($allEvents, JSON_UNESCAPED_UNICODE)), now(), $replay->replay_id],
+            );
+        }
+
+        // Cache 仍保留（供 OffloadCommand 中间缓冲 & 回退兼容）
         $cacheKey = "session_replay_keys_{$session->session_id}";
         $keys = Cache::get($cacheKey, []);
         $chunkKey = 'session_replay_chunk_'.md5($session->session_id.'_'.count($keys).'_'.uniqid('', true));
@@ -609,22 +645,31 @@ class PixelTracker
             // 检查是否已有该设备的 snapshot（可能由 click/scroll 先到达时自动创建的空快照）
             $existingSnapshotId = $heatmap->{"snapshot_id_{$device}"};
             if ($existingSnapshotId) {
-                // 更新已有快照的真实 DOM 数据
-                HeatmapSnapshot::where('snapshot_id', $existingSnapshotId)->update([
-                    'data' => $compressed,
-                ]);
+                // 更新已有快照的真实 DOM 数据（原生 SQL 写 LONGBLOB，避免 Eloquent 编码问题）
+                DB::statement(
+                    'UPDATE heatmaps_snapshots SET data = ? WHERE snapshot_id = ?',
+                    [$compressed, $existingSnapshotId],
+                );
                 $heatmap->forceFill([
                     "{$device}_size" => strlen((string) $compressed),
                 ])->save();
-            } else {
-                // 创建新快照
+        } else {
+                // 创建新快照（先 Eloquent 创建获取 snapshot_id，再原生 SQL 写 data）
+                // 临时填入空对象压缩值以满足 NOT NULL 约束
+                $placeholder = gzencode('{}', 9);
                 $snapshot = HeatmapSnapshot::create([
                     'heatmap_id' => $heatmap->heatmap_id,
                     'website_id' => $this->website->website_id,
                     'type' => $device,
-                    'data' => $compressed,
+                    'data' => $placeholder,
                     'date' => now()->toDateString(),
                 ]);
+
+                // 原生 SQL 写入真实 LONGBLOB data
+                DB::statement(
+                    'UPDATE heatmaps_snapshots SET data = ? WHERE snapshot_id = ?',
+                    [$compressed, $snapshot->snapshot_id],
+                );
 
                 $heatmap->forceFill([
                     "snapshot_id_{$device}" => $snapshot->snapshot_id,
@@ -736,7 +781,7 @@ class PixelTracker
             return $device;
         }
 
-        // snapshot_id 不存在 → 自动创建空快照（click/scroll 先于 snapshot 到达时保障数据不丢）
+                // snapshot_id 不存在 → 自动创建空快照（click/scroll 先于 snapshot 到达时保障数据不丢）
         $emptyCompressed = gzencode('{}', 9);
         $snapshot = HeatmapSnapshot::create([
             'heatmap_id' => $heatmap->heatmap_id,

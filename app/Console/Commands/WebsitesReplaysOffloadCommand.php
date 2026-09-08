@@ -2,12 +2,12 @@
 
 namespace App\Console\Commands;
 
-use App\Models\EventChild;
 use App\Models\SessionReplay;
 use App\Support\ObjectStorage;
 use App\Support\PluginManager;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 会话回放 Offload Cron（规格书 §13.1 websites_replays_offload）
@@ -60,33 +60,37 @@ class WebsitesReplaysOffloadCommand extends Command
         foreach ($replays as $replay) {
             $session = $replay->session;
 
-            // 优先从缓存取回放事件（handleReplayChunk 存入缓存）
+                        // 优先从 DB data 列读取回放事件（gzencode 压缩，最可靠）
             $events = [];
-            if ($session) {
-                $cacheKey = "session_replay_keys_{$session->session_id}";
-                $keys = Cache::get($cacheKey, []);
-
-                foreach ($keys as $chunkKey) {
-                    $chunk = Cache::get($chunkKey);
-                    if (is_array($chunk)) {
-                        $events = array_merge($events, $chunk);
+            $row = DB::selectOne(
+                'SELECT data FROM sessions_replays WHERE replay_id = ?',
+                [$replay->replay_id],
+            );
+            if ($row && $row->data) {
+                $decompressed = @gzdecode($row->data);
+                if ($decompressed !== false) {
+                    $data = json_decode($decompressed, true);
+                    if (is_array($data) && isset($data['events']) && is_array($data['events'])) {
+                        $events = $data['events'];
+                    } elseif (is_array($data) && array_is_list($data)) {
+                        $events = $data;
                     }
                 }
             }
 
-            // 回退：如果缓存无数据，从 EventChild 取（兼容旧数据）
+            // 回退1：如果 DB 无数据，尝试从缓存取回放事件
             if (empty($events)) {
-                $events = EventChild::where('session_id', $replay->session_id)
-                    ->orderBy('event_child_id')
-                    ->get(['type', 'data', 'count', 'date'])
-                    ->map(fn ($e) => [
-                        'type' => $e->type,
-                        'data' => $e->data,
-                        'count' => $e->count,
-                        'date' => (string) $e->date,
-                    ])
-                    ->values()
-                    ->all();
+                if ($session) {
+                    $cacheKey = "session_replay_keys_{$session->session_id}";
+                    $keys = Cache::get($cacheKey, []);
+
+                    foreach ($keys as $chunkKey) {
+                        $chunk = Cache::get($chunkKey);
+                        if (is_array($chunk)) {
+                            $events = array_merge($events, $chunk);
+                        }
+                    }
+                }
             }
 
             $key = 'replays/'.$replay->website_id.'/'.$replay->session_id.'.json';
