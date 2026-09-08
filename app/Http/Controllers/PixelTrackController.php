@@ -146,9 +146,9 @@ class PixelTrackController extends Controller
 
         if (! $heatmap) {
             // 通配符匹配 /path/*
-            $heatmap = Heatmap::where('website_id', $website->website_id)
+                        $heatmap = Heatmap::where('website_id', $website->website_id)
                 ->where('is_enabled', true)
-                ->whereRaw('? LIKE CONCAT(REPLACE(path, "*", "%"))', [$path])
+                ->whereRaw('? LIKE CONCAT(REPLACE(path, \'*\', \'%\'))', [$path])
                 ->first();
         }
 
@@ -186,7 +186,7 @@ class PixelTrackController extends Controller
         return response($data, 200)
             ->header('Access-Control-Allow-Origin', '*')
             ->header('Content-Type', 'application/json')
-            ->header('Cache-Control', 'public, max-age=60');
+            ->header('Cache-Control', 'no-store');
     }
 
     /**

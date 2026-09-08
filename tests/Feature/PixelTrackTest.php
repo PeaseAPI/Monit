@@ -163,10 +163,16 @@ class PixelTrackTest extends TestCase
             'datetime' => now(),
         ]);
 
-        // 快照
+        // 快照（模拟 rrweb Meta+FullSnapshot 事件对）
         $this->track(array_merge($this->basePayload('heatmap_snapshot'), [
             'heatmap_id' => $heatmap->heatmap_id,
-            'data' => ['type' => 'FullSnapshot', 'dom' => '<html>…</html>'],
+            'data' => [
+                'events' => [
+                    ['type' => 4, 'data' => ['href' => 'https://example.com/']],
+                    ['type' => 2, 'data' => ['node' => ['type' => 0, 'childNodes' => []]]],
+                ],
+                'viewport' => ['width' => 1920, 'height' => 1080],
+            ],
         ]))->assertStatus(204);
 
         $heatmap->refresh();

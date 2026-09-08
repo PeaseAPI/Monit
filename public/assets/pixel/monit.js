@@ -183,12 +183,12 @@
                 cache: 'no-store',
                 mode: 'cors'
             }).then(function (r) { return r.ok ? r.json() : {}; }).then(function (data) {
-                if (data && data.heatmap_id) {
+                            if (data && data.heatmap_id) {
                     settings.heatmapId = data.heatmap_id;
                 }
-                // 后端告知回放功能已启用 → 自动覆盖 settings.replay
-                if (data && data.replay_enabled) {
-                    settings.replay = true;
+                // 后端告知回放功能状态 → 同步 settings.replay（防止配额满时仍录制浪费资源）
+                if (data && typeof data.replay_enabled !== 'undefined') {
+                    settings.replay = !!data.replay_enabled;
                 }
                 if (cb) cb();
             }).catch(function () { if (cb) cb(); });
@@ -287,26 +287,44 @@
         _heatmapOnly: false,
         _stopFn: null,
 
-        ensureRrweb: function (cb) {
+                ensureRrweb: function (cb) {
             if (window.rrweb) return cb();
-            if (this.loading) return;
+            if (this.loading) {
+                // 正在加载：排队回调，加载完成后统一触发
+                if (!this._pendingCbs) this._pendingCbs = [];
+                this._pendingCbs.push(cb);
+                return;
+            }
             this.loading = true;
 
             var self = this;
             var local = host + '/assets/pixel/rrweb-all.umd.min.js';
             var candidates = [
                 local,
-                'https://cdn.jsdelivr.net/npm/rrweb@2.0.0-alpha.18/dist/rrweb.umd.min.cjs'
+                'https://cdn.jsdelivr.net/npm/rrweb@2.0.0-alpha.18/dist/rrweb.umd.min.js'
             ];
 
             var tryLoad = function (i) {
-                if (i >= candidates.length) return; // 全部失败：静默放弃
+                if (i >= candidates.length) {
+                    // 全部失败：仍然回调（让调用方继续，只是 rrweb 不可用）
+                    self.loading = false;
+                    cb();
+                    return;
+                }
                 var s = document.createElement('script');
                 s.src = candidates[i];
                 s.async = true;
                 s.onload = function () {
-                    if (window.rrweb) { self.loading = false; cb(); }
-                    else tryLoad(i + 1);
+                    if (window.rrweb) {
+                        self.loading = false;
+                        cb();
+                        // 触发排队回调
+                        if (self._pendingCbs) {
+                            var pending = self._pendingCbs;
+                            self._pendingCbs = null;
+                            pending.forEach(function (fn) { fn(); });
+                        }
+                    } else tryLoad(i + 1);
                 };
                 s.onerror = function () { tryLoad(i + 1); };
                 document.head.appendChild(s);

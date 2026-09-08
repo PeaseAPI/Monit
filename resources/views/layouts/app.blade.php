@@ -24,8 +24,38 @@
                     Nav items (active highlight)
                     $nav = 'dashboard'|'websites'
                 --}}
-                @php
-                    $nav = $nav ?? 'dashboard';
+                                @php
+                    // 自动推断当前导航高亮项：优先使用视图显式传入的 $nav，否则按路由名前缀匹配
+                                        if (!isset($nav)) {
+                        $routeName = Route::currentRouteName() ?? '';
+                        $navMap = [
+                            'dashboard'       => ['dashboard'],
+                            'stats'           => ['stats.index', 'stats.overview', 'stats.behavior', 'stats.events', 'stats.goals', 'stats.goals.create', 'stats.referrers', 'stats.top_referrers', 'stats.utm_drilldown', 'stats.referrer_paths', 'stats.referral_categories', 'stats.outbound-clicks', 'stats.outbound_click_paths', 'stats.annotations', 'stats.annotations.create', 'stats.goals.create', 'stats.top_pages', 'stats.top_countries', 'stats.top_cities', 'stats.top_continents', 'stats.top_browsers', 'stats.top_os', 'stats.top_devices', 'stats.top_resolutions', 'stats.top_languages', 'stats.top_timezones', 'stats.top_themes', 'stats.session', 'stats.pageviews-advanced', 'stats.pageviews-lightweight', 'stats.ai_insight'],
+                            'stats_realtime'  => ['stats.realtime'],
+                            'stats_visitors'  => ['stats.visitors', 'stats.visitor', 'stats.visitor-show'],
+                            'stats_heatmaps'  => ['stats.heatmaps', 'stats.heatmaps.create', 'stats.heatmaps.show', 'stats.heatmaps.snapshot'],
+                            'stats_replays'   => ['stats.replays', 'stats.replays.show'],
+                            'websites'        => ['websites.index', 'websites.create', 'websites.edit', 'websites.import'],
+                            'domains'         => ['domains.index', 'domains.create', 'domains.show'],
+                            'teams'           => ['teams.index', 'teams.show'],
+                            'seo_audits'      => ['seo.audits'],
+                            'seo_keywords'    => ['seo.keywords'],
+                            'seo_backlinks'   => ['seo.backlinks'],
+                            'seo_tools'       => ['seo.tools', 'seo.website', 'seo.handlers', 'seo.compare'],
+                            'payments'        => ['payments.index', 'payments.history', 'payments.success', 'payments.cancel', 'payments.redeem', 'payments.offline-instructions', 'payments.wechat-pay', 'payments.processor-checkout', 'pay.billing', 'pay.thank_you'],
+                            'referrals'       => ['referrals.index', 'referrals.withdrawals'],
+                            'notifications'   => ['notifications.index'],
+                            'account'         => ['account.index', 'account.plan', 'account.payments', 'account.redeem-code', 'account.delete', 'account.logs', 'account.preferences', 'account.api'],
+                            'invoices'        => ['invoices.index', 'invoices.credit_notes'],
+                        ];
+                        $nav = 'dashboard'; // fallback
+                        foreach ($navMap as $key => $routes) {
+                            if (in_array($routeName, $routes)) {
+                                $nav = $key;
+                                break;
+                            }
+                        }
+                    }
                     $unreadNotifications = auth()->user()->internalNotifications()->where('is_read', false)->count();
                     $topWebsites = auth()->user()->websites()->orderBy('website_id')->get();
                     $currentWebsite = $topWebsites->firstWhere('website_id', (int) session('current_website_id')) ?? $topWebsites->first();
