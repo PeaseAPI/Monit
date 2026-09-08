@@ -201,39 +201,39 @@
             snapshot: function () {
             if (!settings.heatmapId) return;
 
-            // If rrweb recording is already active (replays started), the initial
-            // full-snapshot event is already captured via the shared snapshot buffer.
-            // Otherwise, capture a standalone snapshot for the heatmap.
+            // The heatmap snapshot requires rrweb's full-snapshot event (type 2)
+            // to render the page screenshot via rrweb-player.
+            // replays.start() is called before this function, so _lastFullSnapshot
+            // should be available (rrweb emits it synchronously on start).
             if (replays._lastFullSnapshot) {
                 var events = [];
-                var ts = Date.now();
+                // rrweb-player requires a Meta event (type 4) before the FullSnapshot (type 2).
+                // Build one from the actual snapshot's timestamp to keep them aligned.
+                var snapshot = replays._lastFullSnapshot;
                 events.push({
                     type: 4,
                     data: { href: location.href, width: window.innerWidth, height: window.innerHeight },
-                    timestamp: ts
+                    timestamp: snapshot.timestamp
                 });
-                events.push(replays._lastFullSnapshot);
+                events.push(snapshot);
                 send({
                     type: 'heatmap_snapshot',
                     heatmap_id: settings.heatmapId,
                     data: { events: events, viewport: pageData().viewport }
                 });
-                return;
+            } else {
+                // rrweb failed to start — send viewport-only metadata so the backend
+                // can still create a placeholder snapshot for click/scroll data.
+                send({
+                    type: 'heatmap_snapshot',
+                    heatmap_id: settings.heatmapId,
+                    data: { events: [], viewport: pageData().viewport }
+                });
             }
 
-            // No rrweb snapshot available — send minimal metadata as fallback
-            var de = document.documentElement;
-            var dom = {
-                w: de.scrollWidth,
-                h: Math.max(de.scrollHeight, document.body ? document.body.scrollHeight : 0),
-                url: location.href,
-                nodes: (document.body ? document.body.innerText || '' : '').slice(0, 4096)
-            };
-            send({
-                type: 'heatmap_snapshot',
-                heatmap_id: settings.heatmapId,
-                data: { dom: dom, viewport: pageData().viewport }
-            });
+            // If rrweb was started only for the heatmap snapshot (replay not enabled),
+            // stop recording now to free resources.
+            replays.stopForHeatmap();
         },
 
         click: function (e) {
@@ -283,6 +283,9 @@
     var replays = {
         started: false,
         loading: false,
+        // Whether rrweb was started solely for heatmap snapshot (not replay)
+        _heatmapOnly: false,
+        _stopFn: null,
 
         ensureRrweb: function (cb) {
             if (window.rrweb) return cb();
@@ -306,18 +309,30 @@
                     else tryLoad(i + 1);
                 };
                 s.onerror = function () { tryLoad(i + 1); };
-                            document.head.appendChild(s);
+                document.head.appendChild(s);
             };
 
             tryLoad(0);
         },
 
+        // Start rrweb recording if replay OR heatmap needs it.
+        // After heatmap snapshot is captured, if replay is not enabled,
+        // recording will be stopped to save resources.
         start: function (onReady) {
-            if (!settings.replay || this.started) {
+            if (this.started) {
                 if (onReady) onReady();
                 return;
             }
+
+            // Need rrweb if replay is enabled OR heatmap snapshot is needed
+            var needRrweb = settings.replay || settings.heatmapId;
+            if (!needRrweb) {
+                if (onReady) onReady();
+                return;
+            }
+
             var self = this;
+            this._heatmapOnly = !settings.replay && !!settings.heatmapId;
 
             this.ensureRrweb(function () {
                 if (!window.rrweb || self.started) {
@@ -326,16 +341,19 @@
                 }
                 self.started = true;
 
-                window.rrweb.record({
+                self._stopFn = window.rrweb.record({
                     emit: function (event) {
                         // Capture the first full-snapshot event (type 2) for heatmap use
                         if (!self._lastFullSnapshot && event.type === 2) {
                             self._lastFullSnapshot = event;
                         }
-                        if (!self._buffer) self._buffer = [];
-                        self._buffer.push(event);
-                        if (!self._timer) {
-                            self._timer = setTimeout(function () { self.flush(); }, 1000); // 1s 间隔
+                        // Only buffer events for replay if replay is enabled
+                        if (settings.replay) {
+                            if (!self._buffer) self._buffer = [];
+                            self._buffer.push(event);
+                            if (!self._timer) {
+                                self._timer = setTimeout(function () { self.flush(); }, 1000);
+                            }
                         }
                     },
                     checkoutEveryNms: 10000
@@ -347,10 +365,23 @@
             });
         },
 
+        // Stop rrweb recording (called after heatmap snapshot if replay not needed)
+        stopForHeatmap: function () {
+            if (!this._heatmapOnly || !this.started) return;
+            if (typeof this._stopFn === 'function') {
+                try { this._stopFn(); } catch (e) {}
+            }
+            this._stopFn = null;
+            this._heatmapOnly = false;
+            // Don't set started=false; we don't want to restart accidentally
+        },
+
         flush: function () {
             clearTimeout(this._timer);
             this._timer = null;
             if (!this._buffer || !this._buffer.length) return;
+            // Only send replay data if replay is enabled
+            if (!settings.replay) { this._buffer = []; return; }
 
             send({ type: 'replays', data: { events: this._buffer.splice(0) } }, true);
         }

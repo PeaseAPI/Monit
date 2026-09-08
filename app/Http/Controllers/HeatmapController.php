@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Heatmap;
+use App\Models\HeatmapSnapshot;
 use App\Models\HeatmapSnapshotClick;
 use App\Models\HeatmapSnapshotScroll;
 use App\Models\Website;
@@ -76,12 +77,13 @@ class HeatmapController extends Controller
             $device = 'desktop';
         }
 
-        // 检查是否有 DOM 快照（用于前端判断是否显示"无截图"提示）
+        // 检查是否有可渲染的 DOM 快照（需要 snapshot_id 存在且 data 不为空压缩）
         $hasSnapshot = false;
-        foreach (['desktop', 'tablet', 'mobile'] as $d) {
-            if ($heatmap->{"snapshot_id_{$d}"}) {
+        $snapshotId = $heatmap->{"snapshot_id_{$device}"};
+        if ($snapshotId) {
+            $snapshotRow = HeatmapSnapshot::where('snapshot_id', $snapshotId)->first();
+            if ($snapshotRow && strlen($snapshotRow->data ?? '') > 10) {
                 $hasSnapshot = true;
-                break;
             }
         }
 

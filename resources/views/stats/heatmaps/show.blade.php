@@ -85,8 +85,8 @@ function initSnapshotReplayer(containerId, onReady) {
         .then(r => r.ok ? r.json() : [])
         .then(rawData => {
             // The snapshot API returns the stored data object.
-            // New format: { events: [...], viewport: {...} } — extract events array
-            // Old format: { dom: {...}, viewport: {...} } — cannot be rendered by rrweb-player
+            // Format: { events: [...], viewport: {...} } — extract events array
+            // Fallback: raw event array (legacy)
             let snapshotData = null;
             if (rawData && Array.isArray(rawData.events)) {
                 snapshotData = rawData.events;
@@ -98,6 +98,17 @@ function initSnapshotReplayer(containerId, onReady) {
                 if (onReady) onReady(null);
                 return;
             }
+
+            // rrweb-player requires at minimum [Meta(type 4), FullSnapshot(type 2)].
+            // Validate that we have both event types.
+            var hasMeta = snapshotData.some(function(e) { return e.type === 4; });
+            var hasFull = snapshotData.some(function(e) { return e.type === 2; });
+            if (!hasMeta || !hasFull) {
+                console.warn('Heatmap snapshot missing required events (meta=' + hasMeta + ', full=' + hasFull + ')');
+                if (onReady) onReady(null);
+                return;
+            }
+
             const container = document.getElementById(containerId);
             if (!container) { if (onReady) onReady(null); return; }
             const playerRoot = document.createElement('div');
@@ -106,7 +117,14 @@ function initSnapshotReplayer(containerId, onReady) {
             try {
                 const replayer = new rrwebPlayer({
                     target: playerRoot,
-                    props: { events: snapshotData, width: container.clientWidth || 1024, height: 600, autoPlay: true, showController: false, UNSAFE_replayCanvas: true },
+                    props: {
+                        events: snapshotData,
+                        width: container.clientWidth || 1024,
+                        height: 600,
+                        autoPlay: true,
+                        showController: false,
+                        UNSAFE_replayCanvas: true,
+                    },
                 });
                 setTimeout(() => { try { replayer.pause(); } catch(e) {} if (onReady) onReady(replayer); }, 500);
                 return replayer;

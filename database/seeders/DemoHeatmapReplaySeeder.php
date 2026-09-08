@@ -31,9 +31,8 @@ class DemoHeatmapReplaySeeder extends Seeder
                 continue;
             }
 
-            $heatmap = Heatmap::create([
+                        $heatmap = Heatmap::create([
                 'website_id' => $website->website_id,
-                'user_id'    => $userId,
                 'path'       => $path,
                 'name'       => $path === '/' ? 'Homepage' : ltrim($path, '/'),
                 'is_enabled' => true,
@@ -111,14 +110,8 @@ class DemoHeatmapReplaySeeder extends Seeder
                 'session_id'      => $session->session_id,
                 'visitor_id'      => $visitor->visitor_id,
                 'website_id'      => $website->website_id,
-                'user_id'         => $userId,
-                'events'          => mt_rand(10, 50),
-                'size'            => mt_rand(50000, 500000),
                 'is_offloaded'    => false,
-                'is_too_short'    => false,
                 'datetime'        => now()->subHours(mt_rand(1, 72)),
-                'last_datetime'   => now()->subHours(mt_rand(0, 2)),
-                'expiration_date' => now()->addDays(30)->toDateString(),
             ]);
 
             $events = $this->generateRrwebEvents();

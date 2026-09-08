@@ -581,36 +581,59 @@ class PixelTracker
             $device = 'desktop';
         }
 
-        $json = json_encode($this->payload['data'] ?? [], JSON_UNESCAPED_UNICODE);
-        $compressed = gzencode((string) $json, 9);
+        $data = $this->payload['data'] ?? [];
 
-        // 检查是否已有该设备的 snapshot（可能由 click/scroll 先到达时自动创建的空快照）
-        $existingSnapshotId = $heatmap->{"snapshot_id_{$device}"};
-        if ($existingSnapshotId) {
-            // 更新已有快照的真实 DOM 数据
-            HeatmapSnapshot::where('snapshot_id', $existingSnapshotId)->update([
-                'data' => $compressed,
-            ]);
-            $heatmap->forceFill([
-                "{$device}_size" => strlen((string) $compressed),
-            ])->save();
-        } else {
-            // 创建新快照
-            $snapshot = HeatmapSnapshot::create([
-                'heatmap_id' => $heatmap->heatmap_id,
-                'website_id' => $this->website->website_id,
-                'type' => $device,
-                'data' => $compressed,
-                'date' => now()->toDateString(),
-            ]);
-
-            $heatmap->forceFill([
-                "snapshot_id_{$device}" => $snapshot->snapshot_id,
-                "{$device}_size" => strlen((string) $compressed),
-            ])->save();
+        // Only store snapshots that contain valid rrweb events (Meta type 4 + FullSnapshot type 2).
+        // If rrweb failed to start, the client sends { events: [], viewport: {...} } — skip storing
+        // to avoid filling the DB with useless data; click/scroll coordinates still work without a snapshot.
+        $events = $data['events'] ?? [];
+        $hasMeta = false;
+        $hasFull = false;
+        if (is_array($events)) {
+            foreach ($events as $event) {
+                if (isset($event['type'])) {
+                    if ((int) $event['type'] === 4) {
+                        $hasMeta = true;
+                    }
+                    if ((int) $event['type'] === 2) {
+                        $hasFull = true;
+                    }
+                }
+            }
         }
 
-        $this->website->increment('current_month_sessions_replays');
+        if ($hasMeta && $hasFull) {
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE);
+            $compressed = gzencode((string) $json, 9);
+
+            // 检查是否已有该设备的 snapshot（可能由 click/scroll 先到达时自动创建的空快照）
+            $existingSnapshotId = $heatmap->{"snapshot_id_{$device}"};
+            if ($existingSnapshotId) {
+                // 更新已有快照的真实 DOM 数据
+                HeatmapSnapshot::where('snapshot_id', $existingSnapshotId)->update([
+                    'data' => $compressed,
+                ]);
+                $heatmap->forceFill([
+                    "{$device}_size" => strlen((string) $compressed),
+                ])->save();
+            } else {
+                // 创建新快照
+                $snapshot = HeatmapSnapshot::create([
+                    'heatmap_id' => $heatmap->heatmap_id,
+                    'website_id' => $this->website->website_id,
+                    'type' => $device,
+                    'data' => $compressed,
+                    'date' => now()->toDateString(),
+                ]);
+
+                $heatmap->forceFill([
+                    "snapshot_id_{$device}" => $snapshot->snapshot_id,
+                    "{$device}_size" => strlen((string) $compressed),
+                ])->save();
+            }
+
+            $this->website->increment('current_month_sessions_replays');
+        }
     }
 
     /**
