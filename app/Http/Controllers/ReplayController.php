@@ -37,7 +37,7 @@ class ReplayController extends Controller
         return view('stats.replays.show', compact('website', 'replay'));
     }
 
-        /**
+    /**
      * 返回回放事件 JSON（供 rrweb-player 消费）
      * 读取优先级：DB LONGBLOB（data 列）→ Cache → 对象存储（is_offloaded）→ EventChild 回退
      */

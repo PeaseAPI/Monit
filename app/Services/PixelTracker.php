@@ -653,7 +653,7 @@ class PixelTracker
                 $heatmap->forceFill([
                     "{$device}_size" => strlen((string) $compressed),
                 ])->save();
-        } else {
+            } else {
                 // 创建新快照（先 Eloquent 创建获取 snapshot_id，再原生 SQL 写 data）
                 // 临时填入空对象压缩值以满足 NOT NULL 约束
                 $placeholder = gzencode('{}', 9);
@@ -676,8 +676,6 @@ class PixelTracker
                     "{$device}_size" => strlen((string) $compressed),
                 ])->save();
             }
-
-            $this->website->increment('current_month_sessions_replays');
         }
     }
 
@@ -739,7 +737,7 @@ class PixelTracker
                 'last_datetime' => now(),
                 'datetime' => now(),
             ]],
-            ['event_uuid_binary'],
+            ['website_id', 'snapshot_id', 'event_uuid_binary'],
             ['max_scroll', 'last_datetime']
         );
     }
@@ -781,7 +779,7 @@ class PixelTracker
             return $device;
         }
 
-                // snapshot_id 不存在 → 自动创建空快照（click/scroll 先于 snapshot 到达时保障数据不丢）
+        // snapshot_id not present -> auto-create empty snapshot (preserve click/scroll data when snapshot arrives later)
         $emptyCompressed = gzencode('{}', 9);
         $snapshot = HeatmapSnapshot::create([
             'heatmap_id' => $heatmap->heatmap_id,

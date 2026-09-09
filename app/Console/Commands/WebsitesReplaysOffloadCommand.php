@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\EventChild;
 use App\Models\SessionReplay;
 use App\Support\ObjectStorage;
 use App\Support\PluginManager;

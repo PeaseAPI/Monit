@@ -53,7 +53,7 @@ class HeatmapController extends Controller
             ->with('success', __('msg.heatmap_created'));
     }
 
-        public function show(Request $request, Website $website, int $heatmapId)
+    public function show(Request $request, Website $website, int $heatmapId)
     {
         $heatmap = $website->heatmaps()->findOrFail($heatmapId);
 
@@ -77,7 +77,7 @@ class HeatmapController extends Controller
             $device = 'desktop';
         }
 
-                                // 检查是否有可渲染的 DOM 快照（需要 snapshot_id 存在且 data 包含 rrweb 事件）
+        // Check if a renderable DOM snapshot exists (needs snapshot_id and rrweb events in data)
         // 注意：必须用原生 SQL 读取 LONGBLOB data 列，Eloquent 的 PDO 绑定会破坏二进制数据
         $hasSnapshot = false;
         $hasLegacySnapshot = false;
