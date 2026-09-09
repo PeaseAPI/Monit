@@ -570,4 +570,20 @@ class M26SeoTest extends TestCase
             $this->assertSame(array_keys($en), array_keys($data), $locale.' 键集与 en 不一致');
         }
     }
+
+    public function test_analyze_form_page_renders_for_get_request(): void
+    {
+        // 修复：此前仅存在 POST seo.analyze 提交端点，直接 GET /seo/analyze 会 404
+        $this->get('/seo/analyze')
+            ->assertOk()
+            ->assertSee(route('seo.analyze'), false)
+            ->assertSee('name="url"', false);
+    }
+
+    public function test_analyze_form_page_hidden_when_audits_feature_disabled(): void
+    {
+        Settings::set('seo.audits_is_enabled', false);
+
+        $this->get('/seo/analyze')->assertForbidden();
+    }
 }

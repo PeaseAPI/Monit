@@ -32,6 +32,17 @@ class SeoAuditController extends Controller
     }
 
     /**
+     * 免费 SEO 分析表单页 GET /seo/analyze
+     * （此前仅存在 POST seo.analyze 提交端点，直接访问 GET 会 404）
+     */
+    public function analyzeForm(): View
+    {
+        $testCount = count(AuditTestRegistry::all());
+
+        return view('seo.analyze', ['testCount' => $testCount]);
+    }
+
+    /**
      * 我的审计列表
      */
     public function index(Request $request): View

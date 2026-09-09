@@ -201,6 +201,8 @@ Route::post('/seo/audits/{seoAudit}/password', [SeoAuditController::class, 'unlo
     ->middleware('throttle:10,1,seo-pass')->whereNumber('seoAudit')->name('seo.audits.password');
 Route::get('/seo/directory', [SeoAuditController::class, 'directory'])->middleware('seo.feature:audits')->name('seo.directory');
 Route::get('/seo', [SeoAuditController::class, 'landing'])->name('seo.landing');
+// GET /seo/analyze 表单页（此前只有 POST 提交端点，直接访问 GET 会 404）
+Route::get('/seo/analyze', [SeoAuditController::class, 'analyzeForm'])->middleware('seo.feature:audits')->name('seo.analyze.form');
 Route::post('/seo/analyze', [SeoAuditController::class, 'analyze'])->middleware('seo.feature:audits', 'throttle:10,1,seo-analyze')->name('seo.analyze');
 
 // SEO 工具中心（访客受 seo.tools_guest_access 开关控制；整站受 seo.tools_is_enabled 控制）
