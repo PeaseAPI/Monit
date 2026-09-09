@@ -70,7 +70,7 @@
             {!! $navItem('plugins', 'plugins', __('admin.sidebar_plugins'), route('admin.plugins.index')) !!}
 
             {{-- 资源折叠组（对标 admin_sidebar_resources_container）--}}
-            @php($resourcesOpen = in_array($adminNav ?? '', ['pages-categories', 'pages']))
+            @php($resourcesOpen = in_array($adminNav ?? '', ['pages-categories', 'pages', 'help-categories', 'help-articles']))
             <div>
                 <button type="button" onclick="window.adminToggleGroup('admin-group-resources')" class="admin-nav-group w-full">
                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="{{ $icons['info'] }}"/></svg>
@@ -80,6 +80,8 @@
                 <div id="admin-group-resources" class="{{ $resourcesOpen ? '' : 'hidden' }} mt-0.5 space-y-0.5 pl-5">
                     {!! $navItem('pages-categories', 'pages', __('admin.sidebar_categories'), route('admin.pages-categories.index')) !!}
                     {!! $navItem('pages', 'pages', __('admin.sidebar_pages'), route('admin.pages.index')) !!}
+                    {!! $navItem('help-categories', 'info', __('admin.sidebar_help_categories'), route('admin.help-categories.index')) !!}
+                    {!! $navItem('help-articles', 'info', __('admin.sidebar_help_articles'), route('admin.help-articles.index')) !!}
                 </div>
             </div>
 
@@ -101,6 +103,7 @@
             {!! $navItem('api', 'api', __('admin.sidebar_api_docs'), route('api.docs')) !!}
             {!! $navItem('codes', 'codes', __('admin.sidebar_codes'), route('admin.codes.index')) !!}
             {!! $navItem('taxes', 'taxes', __('admin.sidebar_taxes'), route('admin.taxes.index')) !!}
+            {!! $navItem('tickets', 'info', __('admin.sidebar_tickets'), route('admin.tickets.index')) !!}
             {!! $navItem('payments', 'payments', __('admin.sidebar_payments'), route('admin.payments.index')) !!}
             {!! $navItem('affiliates-withdrawals', 'wallet', __('admin.sidebar_affiliates_withdrawals'), route('admin.affiliates-withdrawals.index')) !!}
 

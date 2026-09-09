@@ -86,6 +86,11 @@ class User extends Authenticatable
         return $this->hasMany(Payment::class, 'user_id', 'user_id');
     }
 
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class, 'user_id', 'user_id');
+    }
+
     public function domains()
     {
         return $this->hasMany(Domain::class, 'user_id', 'user_id');

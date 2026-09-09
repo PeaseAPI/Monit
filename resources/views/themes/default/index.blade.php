@@ -458,7 +458,68 @@
     @endif
 
 
-    {{-- ===== CTA ===== --}}
+    {{-- ===== 客户评价 ===== --}}
+    <section id="testimonials" class="border-t border-zinc-100 bg-zinc-50/50 py-20 md:py-24">
+        <div class="mx-auto max-w-7xl px-6">
+            <div class="mx-auto max-w-2xl text-center">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">{{ __('landing.testimonials_eyebrow') }}</span>
+                <h2 class="mt-4 text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl">{{ __('landing.testimonials_title') }}</h2>
+                <p class="mt-4 text-lg text-zinc-500">{{ __('landing.testimonials_subtitle') }}</p>
+            </div>
+
+            <div class="mt-12 grid gap-6 md:grid-cols-3">
+                @foreach ([1, 2, 3] as $i)
+                <figure class="flex flex-col rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
+                    <div class="flex gap-1 text-amber-400" aria-hidden="true">
+                        @for ($s = 0; $s < 5; $s++)
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.07 3.29a1 1 0 00.95.69h3.46c.97 0 1.37 1.24.59 1.81l-2.8 2.03a1 1 0 00-.36 1.12l1.07 3.29c.3.92-.75 1.69-1.54 1.12l-2.8-2.03a1 1 0 00-1.18 0l-2.8 2.03c-.79.57-1.84-.2-1.54-1.12l1.07-3.29a1 1 0 00-.36-1.12L2.98 8.72c-.78-.57-.38-1.81.6-1.81h3.45a1 1 0 00.95-.69l1.07-3.29z"/></svg>
+                        @endfor
+                    </div>
+                    <blockquote class="mt-4 flex-1 text-sm leading-relaxed text-zinc-700">“{{ __('landing.testimonial_'.$i.'_quote') }}”</blockquote>
+                    <figcaption class="mt-6 flex items-center gap-3">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 text-sm font-semibold text-white">{{ mb_substr(__('landing.testimonial_'.$i.'_author'), 0, 1) }}</span>
+                        <div>
+                            <p class="text-sm font-semibold text-zinc-900">{{ __('landing.testimonial_'.$i.'_author') }}</p>
+                            <p class="text-xs text-zinc-500">{{ __('landing.testimonial_'.$i.'_role') }}</p>
+                        </div>
+                    </figcaption>
+                </figure>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
+    {{-- ===== 常见问题 ===== --}}
+    <section id="faq" class="py-20 md:py-24">
+        <div class="mx-auto max-w-3xl px-6">
+            <h2 class="text-center text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl">{{ __('landing.faq_title') }}</h2>
+            <div class="mt-10 space-y-3">
+                @php($faqs = [
+                    ['landing.faq_q1', 'landing.faq_a1'],
+                    ['landing.faq_q2', 'landing.faq_a2'],
+                    ['landing.faq_q3', 'landing.faq_a3'],
+                    ['landing.faq_q4', 'landing.faq_a4'],
+                    ['landing.faq_q5', 'landing.faq_a5'],
+                ])
+                @foreach ($faqs as [$faqQ, $faqA])
+                <details class="group rounded-2xl border border-zinc-200 bg-white transition open:shadow-sm">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-4 text-left text-sm font-semibold text-zinc-900 [&::-webkit-details-marker]:hidden">
+                        {{ __($faqQ) }}
+                        <svg class="h-4 w-4 shrink-0 text-zinc-400 transition group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    </summary>
+                    <p class="px-6 pb-5 text-sm leading-relaxed text-zinc-600">{{ __($faqA) }}</p>
+                </details>
+                @endforeach
+            </div>
+            <p class="mt-8 text-center text-sm text-zinc-500">
+                {{ __('landing.faq_still_questions') }}
+                <a href="{{ route('help') }}" class="font-medium text-brand-600 hover:underline">{{ __('landing.nav_help') }}</a>
+                <a href="{{ route('contact') }}" class="ml-1 inline-flex items-center gap-1 font-medium text-brand-600 hover:underline">{{ __('landing.faq_contact_btn') }} →</a>
+            </p>
+        </div>
+    </section>
+
+{{-- ===== CTA ===== --}}
     <section class="py-20 md:py-24">
         <div class="mx-auto max-w-7xl px-6">
             <div class="relative overflow-hidden rounded-3xl bg-zinc-950 px-8 py-16 text-center md:py-20">

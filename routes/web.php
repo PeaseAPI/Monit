@@ -12,6 +12,9 @@ use App\Http\Controllers\AdminAnnotations;
 use App\Http\Controllers\AdminBlogPosts;
 use App\Http\Controllers\AdminBlogPostsCategories;
 use App\Http\Controllers\AdminBroadcasts;
+use App\Http\Controllers\AdminHelpArticles;
+use App\Http\Controllers\AdminHelpCategories;
+use App\Http\Controllers\AdminTickets;
 use App\Http\Controllers\AdminCodes;
 use App\Http\Controllers\CaptchaController;
 use App\Http\Controllers\AdminDomains;
@@ -75,6 +78,7 @@ use App\Http\Controllers\SpotlightController;
 use App\Http\Controllers\SsoController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TicketController;
 use App\Http\Controllers\VisitorController;
 use App\Http\Controllers\WebhookMollieController;
 use App\Http\Controllers\WebhookPaymentController;
@@ -101,6 +105,7 @@ use Illuminate\Support\Facades\Route;
 
 // 支付网关 Webhook（无需 CSRF，外部服务回调）
 Route::post('/webhooks/stripe', [PaymentController::class, 'stripeWebhook'])->name('webhooks.stripe');
+Route::post('/webhooks/email', \App\Http\Controllers\WebhookEmailController::class)->name('webhooks.email');
 Route::post('/webhooks/paypal', [PaymentController::class, 'paypalWebhook'])->name('webhooks.paypal');
 
 // 更多支付 Webhook 路由（规格书 §11：22 处理器）
@@ -144,6 +149,7 @@ Route::get('/blog/{url}', [IndexController::class, 'blogPost'])->name('blog.post
 Route::get('/page/{url}', [IndexController::class, 'page'])->name('page');
 Route::get('/pages', [IndexController::class, 'pages'])->name('pages'); // 规格 §6.1：自定义页面索引
 Route::get('/help', [IndexController::class, 'help'])->name('help');
+Route::get('/help/article/{url}', [IndexController::class, 'helpArticle'])->name('help.article');
 Route::get('/affiliate', [IndexController::class, 'affiliate'])->name('affiliate'); // 规格 §6.1：联盟介绍（插件启用时）
 Route::get('/contact', [IndexController::class, 'contact'])->name('contact');
 Route::post('/contact', [IndexController::class, 'contactSend'])->middleware('throttle:5,1,contact')->name('contact.send');
@@ -463,6 +469,14 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/payments/{payment}/proof', [PaymentController::class, 'uploadProof'])->name('payments.proof');
     Route::get('/payments/history', [PaymentController::class, 'history'])->name('payments.history');
 
+    // 工单系统（A4：用户在线提交/查看/回复/关闭）
+    Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
+    Route::get('/tickets/create', [TicketController::class, 'create'])->name('tickets.create');
+    Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
+    Route::get('/tickets/{ticketId}', [TicketController::class, 'show'])->name('tickets.show');
+    Route::post('/tickets/{ticketId}/reply', [TicketController::class, 'reply'])->name('tickets.reply');
+    Route::put('/tickets/{ticketId}/close', [TicketController::class, 'close'])->name('tickets.close');
+
     // 订阅管理（规格书 §6.2.6：/pay-billing）
     Route::get('/pay-billing', [PayBillingController::class, 'index'])->name('pay.billing');
     Route::post('/pay-billing/cancel', [PayBillingController::class, 'cancel'])->name('pay.billing.cancel');
@@ -686,6 +700,27 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     Route::get('/admin/teams/{teamId}/members', [AdminTeams::class, 'members'])->name('admin.teams.members');
     Route::delete('/admin/teams/{teamId}', [AdminTeams::class, 'destroy'])->name('admin.teams.destroy');
     Route::delete('/admin/teams/{teamId}/members/{memberId}', [AdminTeams::class, 'destroyMember'])->name('admin.teams.members.destroy');
+
+    // 工单系统后台处理（A4）
+    Route::get('/admin/tickets', [AdminTickets::class, 'index'])->name('admin.tickets.index');
+    Route::get('/admin/tickets/{ticketId}', [AdminTickets::class, 'show'])->name('admin.tickets.show');
+    Route::post('/admin/tickets/{ticketId}/reply', [AdminTickets::class, 'reply'])->name('admin.tickets.reply');
+    Route::put('/admin/tickets/{ticketId}/status', [AdminTickets::class, 'updateStatus'])->name('admin.tickets.status');
+    Route::delete('/admin/tickets/{ticketId}', [AdminTickets::class, 'destroy'])->name('admin.tickets.destroy');
+
+    // 帮助中心后台管理（A3：分类 + 文章 CRUD）
+    Route::get('/admin/help-categories', [\App\Http\Controllers\AdminHelpCategories::class, 'index'])->name('admin.help-categories.index');
+    Route::post('/admin/help-categories', [\App\Http\Controllers\AdminHelpCategories::class, 'store'])->name('admin.help-categories.store');
+    Route::put('/admin/help-categories/{categoryId}', [\App\Http\Controllers\AdminHelpCategories::class, 'update'])->name('admin.help-categories.update');
+    Route::delete('/admin/help-categories/{categoryId}', [\App\Http\Controllers\AdminHelpCategories::class, 'destroy'])->name('admin.help-categories.destroy');
+
+    Route::get('/admin/help-articles', [\App\Http\Controllers\AdminHelpArticles::class, 'index'])->name('admin.help-articles.index');
+    Route::get('/admin/help-articles/create', [\App\Http\Controllers\AdminHelpArticles::class, 'create'])->name('admin.help-articles.create');
+    Route::post('/admin/help-articles', [\App\Http\Controllers\AdminHelpArticles::class, 'store'])->name('admin.help-articles.store');
+    Route::get('/admin/help-articles/{articleId}/edit', [\App\Http\Controllers\AdminHelpArticles::class, 'edit'])->name('admin.help-articles.edit');
+    Route::put('/admin/help-articles/{articleId}', [\App\Http\Controllers\AdminHelpArticles::class, 'update'])->name('admin.help-articles.update');
+    Route::put('/admin/help-articles/{articleId}/toggle-publish', [\App\Http\Controllers\AdminHelpArticles::class, 'togglePublish'])->name('admin.help-articles.toggle-publish');
+    Route::delete('/admin/help-articles/{articleId}', [\App\Http\Controllers\AdminHelpArticles::class, 'destroy'])->name('admin.help-articles.destroy');
 
     // 平台级数据管理（规格书 §6.3.5：AdminAnnotations、AdminHeatmaps、AdminReplays）
     Route::get('/admin/annotations', [AdminAnnotations::class, 'index'])->name('admin.annotations.index');

@@ -36,16 +36,17 @@ class PaymentCheckoutTest extends TestCase
     {
         $this->makePlan();
         $user = $this->makeUser();
+        // A2：仅后台启用的处理器可见（此处启用 offline，凭据型均未配置）
+        \App\Support\Settings::set('payment.offline_is_enabled', 'true');
 
         $response = $this->actingAs($user)->get('/payments');
 
         $response->assertOk();
         // 默认货币 CNY 下按汇率换算自 USD 直配价（规格 §10.4：9.99 / 0.14 = 71.36）
         $response->assertSee('71.36');
-        // 22 个处理器全部出现在选项中（规格 §11）
-        foreach (config('monit.payment.supported_processors') as $processor) {
-            $response->assertSee('value="'.$processor.'"', false);
-        }
+        // 启用的处理器出现在选项中；未启用的不出现
+        $response->assertSee('value="offline"', false);
+        $response->assertDontSee('value="stripe"', false);
     }
 
     public function test_checkout_supports_all_22_processors_via_validation(): void
@@ -74,6 +75,8 @@ class PaymentCheckoutTest extends TestCase
     {
         $this->makePlan();
         $user = $this->makeUser();
+        // A2：paddle 为凭据型处理器，凭据配置后即视为启用
+        config(['services.paddle' => ['vendor_id' => 'v1', 'vendor_auth_code' => 'auth']]);
 
         $response = $this->actingAs($user)->post('/payments/checkout', [
             'plan_id' => 'pro',

@@ -1,0 +1,120 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Ticket;
+use App\Models\TicketReply;
+use App\Support\TicketNotifications;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\View\View;
+
+/**
+ * 用户中心 - 我的工单（A4：在线提交 / 查看 / 回复 / 关闭）
+ */
+class TicketController extends Controller
+{
+    public function index(Request $request): View
+    {
+        $tickets = $request->user()->tickets()->orderByDesc('ticket_id')->paginate(20);
+
+        return view('tickets.index', compact('tickets'));
+    }
+
+    public function create(): View
+    {
+        return view('tickets.create');
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $this->validated($request);
+
+        $ticket = Ticket::create([
+            'user_id' => $request->user()->user_id,
+            'email' => $request->user()->email,
+            'subject' => $validated['subject'],
+            'category' => $validated['category'],
+            'priority' => $validated['priority'],
+            'status' => Ticket::STATUS_OPEN,
+            'datetime' => now(),
+            'last_reply_at' => now(),
+        ]);
+
+        TicketReply::create([
+            'ticket_id' => $ticket->ticket_id,
+            'user_id' => $request->user()->user_id,
+            'is_staff' => false,
+            'message' => $validated['message'],
+            'via' => 'web',
+            'datetime' => now(),
+        ]);
+
+        try {
+            TicketNotifications::notifyAdminsTicketCreated($ticket, $validated['message']);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return redirect()->route('tickets.show', $ticket->ticket_id)
+            ->with('success', __('msg.ticket_created'));
+    }
+
+    public function show(Request $request, int $ticketId): View
+    {
+        $ticket = $request->user()->tickets()
+            ->with(['replies.user', 'user'])
+            ->findOrFail($ticketId);
+
+        return view('tickets.show', compact('ticket'));
+    }
+
+    public function reply(Request $request, int $ticketId): RedirectResponse
+    {
+        $validated = $request->validate(['message' => ['required', 'string', 'max:20000']]);
+
+        $ticket = $request->user()->tickets()->findOrFail($ticketId);
+
+        if ($ticket->status === Ticket::STATUS_CLOSED) {
+            return back()->withErrors(['message' => __('msg.ticket_closed_no_reply')]);
+        }
+
+        $reply = TicketReply::create([
+            'ticket_id' => $ticket->ticket_id,
+            'user_id' => $request->user()->user_id,
+            'is_staff' => false,
+            'message' => $validated['message'],
+            'via' => 'web',
+            'datetime' => now(),
+        ]);
+
+        $ticket->update(['status' => Ticket::STATUS_OPEN, 'last_reply_at' => now()]);
+
+        try {
+            TicketNotifications::notifyAdminsTicketReplied($ticket, $reply);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return back()->with('success', __('msg.ticket_reply_sent'));
+    }
+
+    public function close(Request $request, int $ticketId): RedirectResponse
+    {
+        $ticket = $request->user()->tickets()->findOrFail($ticketId);
+        $ticket->update(['status' => Ticket::STATUS_CLOSED]);
+
+        return back()->with('success', __('msg.ticket_closed'));
+    }
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
+            'subject' => ['required', 'string', 'max:256'],
+            'category' => ['required', 'in:'.implode(',', Ticket::CATEGORIES)],
+            'priority' => ['required', 'in:'.implode(',', Ticket::PRIORITIES)],
+            'message' => ['required', 'string', 'max:20000'],
+        ]);
+    }
+}

@@ -15,6 +15,7 @@
             'content' => __('admin.settings_content'),
             'analytics' => __('admin.settings_analytics'),
             'seo' => __('admin.settings_seo'),
+            'tickets' => __('admin.settings_tickets'),
             'maps' => __('admin.settings_maps'),
         ],
         __('admin.nav_section_manage') => [
@@ -85,7 +86,7 @@
             $readonlyTabs = ['cache', 'health', 'support'];
         @endphp
 
-        @foreach(['main','users','content','analytics','seo','maps','theme','branding','custom','custom_images','ads','cookie_consent','socials','announcements','payment','payment_gateways','business','plan_free','plan_guest','plan_custom','affiliate','smtp','sms','ai','captcha','email_notifications','email_shield','internal_notifications','webhooks','pwa','push_notifications','offload','image_optimizer','dynamic_og_images','cron','cache','health','support'] as $tab)
+        @foreach(['main','users','content','analytics','seo','maps','tickets','theme','branding','custom','custom_images','ads','cookie_consent','socials','announcements','payment','payment_gateways','business','plan_free','plan_guest','plan_custom','affiliate','smtp','sms','ai','captcha','email_notifications','email_shield','internal_notifications','webhooks','pwa','push_notifications','offload','image_optimizer','dynamic_og_images','cron','cache','health','support'] as $tab)
         <div class="settings-panel hidden" id="panel-{{ $tab }}">
             @if(in_array($tab, $readonlyTabs, true))
                 @include("admin.settings.partials.{$tab}", ['settings' => $settings[$tab] ?? []])

@@ -94,6 +94,11 @@ class AdminSettings extends Controller
             );
         }
 
+        // 工单入站 token：首次保存时自动生成（A4 邮件入站 webhook 鉴权）
+        if ($group === 'tickets' && trim((string) Settings::get('tickets.inbound_webhook_token', '')) === '') {
+            $validated['inbound_webhook_token'] = bin2hex(random_bytes(20));
+        }
+
         // 品牌文件上传（用户反馈 #21）：logo/favicon/logo_dark 文件上传后存入 storage，
         // 覆盖对应 URL 字段（上传优先于 URL 直填）；未上传则保留原 URL
         if ($group === 'branding') {
@@ -300,6 +305,7 @@ class AdminSettings extends Controller
             'payment_gateways' => [], // 当前值在 index() 中从 .env 读取（EnvWriter）
             'business' => $this->getGroup('business'), // 发票抬头企业信息（原库 settings.business 组）
             'analytics' => $this->getGroup('analytics'),
+            'tickets' => $this->getGroup('tickets'), // 工单系统（A4）
             'seo' => $this->getGroup('seo'), // SEO 功能设置（审计/工具中心/监控，后台 seo 组）
             'maps' => $this->getGroup('maps'),
             'smtp' => $this->getGroup('smtp'),
@@ -360,6 +366,11 @@ class AdminSettings extends Controller
     protected function getValidationRules(string $group): array
     {
         $rules = match ($group) {
+            'tickets' => [
+                'tickets_is_enabled' => 'boolean',
+                'notification_email' => 'nullable|email|max:256',
+                'inbound_email' => 'nullable|email|max:256',
+            ],
             'main' => [
                 'site_title' => 'required|string|max:256',
                 'site_description' => 'nullable|string|max:1024',

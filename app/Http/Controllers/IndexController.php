@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Mail\ContactMessage;
 use App\Models\BlogPost;
+use App\Models\HelpArticle;
+use App\Models\HelpCategory;
 use App\Models\Page;
 use App\Models\Plan;
 use App\Models\User;
@@ -114,7 +116,29 @@ class IndexController extends Controller
 
     public function help()
     {
-        return view('help');
+        // 帮助中心（A3）：后台维护的分类/文章优先；无数据时视图回退内置静态内容
+        $categories = HelpCategory::orderBy('order')->orderBy('category_id')->get();
+        $articles = HelpArticle::where('is_published', true)
+            ->orderBy('order')->orderByDesc('article_id')
+            ->get();
+
+        $hasContent = $categories->isNotEmpty() || $articles->isNotEmpty();
+
+        return view('help', compact('categories', 'articles', 'hasContent'));
+    }
+
+    public function helpArticle(string $url)
+    {
+        $article = HelpArticle::where('is_published', true)->where('url', $url)->firstOrFail();
+        $article->increment('views');
+
+        $related = HelpArticle::where('is_published', true)
+            ->where('category_id', $article->category_id)
+            ->where('article_id', '!=', $article->article_id)
+            ->orderBy('order')->limit(5)
+            ->get();
+
+        return view('help_article', compact('article', 'related'));
     }
 
     /**

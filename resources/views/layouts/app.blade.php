@@ -260,6 +260,7 @@
                                 <a href="{{ route('account.preferences') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_preferences') }}</a>
                                 <a href="{{ route('account.plan') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_plan') }}</a>
                                 <a href="{{ route('account.payments') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_payments') }}</a>
+                                <a href="{{ route('tickets.index') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_tickets') }}</a>
                                 @if ($affiliateEnabled)
                                     <a href="{{ route('referrals.index') }}" class="block rounded-xl px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50">{{ __('topbar.menu_referrals') }}</a>
                                 @endif
