@@ -19,7 +19,7 @@
         <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-6">
             <div class="flex min-w-0 items-center gap-6">
                                 <x-brand-logo class="h-8 w-8 shrink-0" text-class="text-base" href="{{ route('index') }}"/>
-                <nav class="hidden items-center gap-5 sm:flex">
+                <nav class="hidden items-center gap-8 md:flex">
                     <a href="{{ route('index') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_home') }}</a>
                     @if (\App\Support\Settings::get('seo.tools_is_enabled', true)
                         && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true)))
@@ -28,6 +28,8 @@
                     @if (\App\Support\Settings::get('seo.audits_is_enabled', true))
                         <a href="{{ route('seo.directory') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_seo_directory') }}</a>
                     @endif
+                    <a href="{{ route('blog') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_blog') }}</a>
+                    <a href="{{ route('help') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_help') }}</a>
                 </nav>
             </div>
                         <div class="flex shrink-0 items-center gap-3">
@@ -63,18 +65,61 @@
         </div>
     </header>
 
-    <main class="mx-auto w-full max-w-7xl px-6 py-10">
+    {{-- 内容栏默认限宽居中；视图可用 @section('main_class') 覆盖（如 tools 页 hero 全宽） --}}
+    <main class="@yield('main_class', 'mx-auto w-full max-w-7xl px-6 py-10')">
         @yield('content')
     </main>
 
-    <footer class="border-t border-zinc-200 bg-white">
-        <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-6 text-sm text-zinc-500 sm:flex-row">
-            <p>© {{ date('Y') }} {{ \App\Support\Brand::name() }} · {{ __('guest.self_hosted_oss') }}</p>
-            <div class="flex items-center gap-4">
-                @if (\App\Support\Settings::get('seo.audits_is_enabled', true))
-                    <a href="{{ route('seo.directory') }}" class="transition hover:text-zinc-800">{{ __('landing.nav_seo_directory') }}</a>
+    {{-- 页脚（与主题首页 footer 完全一致：深色多栏 + 版权 + ICP） --}}
+    <footer class="bg-zinc-950 text-zinc-400">
+        <div class="mx-auto max-w-7xl px-6 pt-16 pb-8">
+            <div class="mb-14 h-px rounded-full bg-gradient-to-r from-transparent via-zinc-700 to-transparent"></div>
+            <div class="grid gap-10 md:grid-cols-5">
+                <div class="md:col-span-2">
+                    <x-brand-logo dark />
+                    <p class="mt-4 max-w-xs text-sm leading-relaxed text-zinc-500">{{ __('landing.subtitle') }}</p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-zinc-200">{{ __('landing.footer_product') }}</h4>
+                    <ul class="mt-4 space-y-2.5 text-sm text-zinc-500">
+                        <li><a href="{{ route('index') }}#features" class="transition hover:text-white">{{ __('landing.nav_features') }}</a></li>
+                        <li><a href="{{ route('index') }}#pricing" class="transition hover:text-white">{{ __('landing.nav_pricing') }}</a></li>
+                        <li><a href="{{ route('api.docs') }}" class="transition hover:text-white">{{ __('landing.footer_api') }}</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-zinc-200">{{ __('landing.footer_resources') }}</h4>
+                    <ul class="mt-4 space-y-2.5 text-sm text-zinc-500">
+                        <li><a href="{{ route('blog') }}" class="transition hover:text-white">{{ __('landing.nav_blog') }}</a></li>
+                        <li><a href="{{ route('help') }}" class="transition hover:text-white">{{ __('landing.nav_help') }}</a></li>
+                        <li><a href="{{ route('contact') }}" class="transition hover:text-white">{{ __('landing.footer_contact') }}</a></li>
+                        @if (\App\Support\Settings::get('seo.tools_is_enabled', true)
+                            && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true)))
+                        <li><a href="{{ route('seo.tools') }}" class="transition hover:text-white">{{ __('landing.nav_seo_tools') }}</a></li>
+                        @endif
+                        @if (filter_var(\App\Support\Settings::get('seo.audits_is_enabled', true), FILTER_VALIDATE_BOOLEAN))
+                        <li><a href="{{ route('seo.directory') }}" class="transition hover:text-white">{{ __('landing.nav_seo_directory') }}</a></li>
+                        @endif
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-zinc-200">{{ __('landing.footer_legal') }}</h4>
+                    <ul class="mt-4 space-y-2.5 text-sm text-zinc-500">
+                        {{-- 法务链接（main.terms_and_conditions_url / privacy_policy_url）：外链优先，站内静态页兜底 --}}
+                        @php($termsUrl = trim((string) \App\Support\Settings::get('main.terms_and_conditions_url', '')))
+                        @php($privacyUrl = trim((string) \App\Support\Settings::get('main.privacy_policy_url', '')))
+                        <li><a href="{{ $termsUrl !== '' ? $termsUrl : route('terms') }}"@if ($termsUrl !== '') target="_blank" rel="noopener"@endif class="transition hover:text-white">{{ __('landing.footer_terms') }}</a></li>
+                        <li><a href="{{ $privacyUrl !== '' ? $privacyUrl : route('privacy') }}"@if ($privacyUrl !== '') target="_blank" rel="noopener"@endif class="transition hover:text-white">{{ __('landing.footer_privacy') }}</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-14 border-t border-zinc-800/80 pt-8 text-center">
+                <p class="text-sm text-zinc-500">© {{ date('Y') }} {{ \App\Support\Brand::name() }}. {{ __('landing.footer_rights') }}</p>
+                {{-- ICP 备案号（后台 设置 → 品牌 → 页脚备案号） --}}
+                @if ($icp = \App\Support\Brand::icp())
+                <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer nofollow" class="mt-2 inline-block text-sm text-zinc-600 transition hover:text-zinc-400">{{ $icp }}</a>
                 @endif
-                <a href="{{ route('index') }}" class="transition hover:text-zinc-800">{{ __('landing.nav_home') }}</a>
             </div>
         </div>
     </footer>
