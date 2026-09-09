@@ -2,6 +2,17 @@
 @section('content')
 <div class="max-w-7xl">
     <h1 class="text-2xl font-bold text-zinc-900">{{ __('teams.my_teams') }}</h1>
+
+    {{-- 创建团队（此前视图缺失创建入口，路由存在但无处触发） --}}
+    <form method="POST" action="{{ route('teams.store') }}" class="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-zinc-200 bg-white p-5">
+        @csrf
+        <div>
+            <label class="mb-1 block text-xs text-zinc-500">{{ __('teams.team_name') }}</label>
+            <input type="text" name="name" required maxlength="64" class="rounded-xl border border-zinc-300 px-3 py-2 text-sm">
+        </div>
+        <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">+ {{ __('teams.create_team') }}</button>
+    </form>
+
     <div class="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
     @forelse($teams ?? [] as $team)
         <a href="{{ route('teams.show', $team->team_id) }}" class="rounded-2xl border border-zinc-200 bg-white p-5 hover:border-zinc-300">

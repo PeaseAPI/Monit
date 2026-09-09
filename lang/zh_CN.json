@@ -3430,5 +3430,19 @@
     "settings.tickets.t_webhook_token_empty": "保存本设置页后自动生成令牌。",
     "settings.tickets.t_webhook_desc": "将邮件服务商指向该地址。载荷字段：from / subject / text。主题含 TK 编号则追加回复，否则创建新工单。",
     "admin.sidebar_help_categories": "帮助分类",
-    "admin.sidebar_help_articles": "帮助文章"
+    "admin.sidebar_help_articles": "帮助文章",
+    "teams.team_name": "团队名称",
+    "teams.create_team": "创建团队",
+    "teams.delete_team": "解散团队",
+    "teams.delete_confirm": "确定解散该团队？成员与授权将一并移除。",
+    "teams.member_active": "已加入",
+    "teams.member_pending": "待接受",
+    "teams.granted_websites": "授权网站",
+    "teams.remove_confirm": "确定移除该成员？",
+    "teams.remove_member": "移除",
+    "teams.invite_member": "邀请成员",
+    "teams.invite_hint": "被邀请人登录后接受邀请即可加入团队。",
+    "teams.invite_email": "成员邮箱",
+    "teams.grant_websites": "授权网站（可多选）",
+    "teams.send_invitation": "发送邀请"
 }

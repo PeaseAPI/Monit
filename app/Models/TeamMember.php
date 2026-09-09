@@ -40,6 +40,11 @@ class TeamMember extends Model
         return $this->belongsTo(Team::class, 'team_id', 'team_id');
     }
 
+    public function associations()
+    {
+        return $this->hasMany(TeamMemberAssociation::class, 'team_member_id', 'team_member_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');

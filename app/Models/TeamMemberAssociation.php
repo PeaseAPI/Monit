@@ -27,11 +27,6 @@ class TeamMemberAssociation extends Model
         ];
     }
 
-    public function team()
-    {
-        return $this->belongsTo(Team::class, 'team_id', 'team_id');
-    }
-
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');

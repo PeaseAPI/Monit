@@ -54,10 +54,11 @@ class TeamController extends Controller
             })
             ->firstOrFail();
 
-        $members = $team->members()->with('user')->get();
-        $userWebsites = $request->user()->websites()->get();
+        $members = $team->members()->with(['user', 'associations.website'])->get();
+        $isOwner = (int) $team->user_id === (int) $request->user()->user_id;
+        $userWebsites = $isOwner ? $request->user()->websites()->get() : collect();
 
-        return view('teams.show', compact('team', 'members', 'userWebsites'));
+        return view('teams.show', compact('team', 'members', 'userWebsites', 'isOwner'));
     }
 
     public function invite(Request $request): RedirectResponse
@@ -66,6 +67,7 @@ class TeamController extends Controller
             'team_id' => ['required', 'exists:teams,team_id'],
             'user_email' => ['required', 'email', 'max:320'],
             'websites_ids' => ['nullable', 'array'],
+            'websites_ids.*' => ['integer'],
             'access' => ['nullable', 'array'],
         ]);
 
@@ -81,11 +83,32 @@ class TeamController extends Controller
             return back()->withErrors(['user_email' => __('msg.email_already_invited')]);
         }
 
-        TeamMember::create([
-            ...$validated,
+        // 授权网站必须属于团队 owner（防越权授权他人网站）
+        $websiteIds = collect($validated['websites_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $request->user()->websites()->where('website_id', $id)->exists())
+            ->unique()
+            ->values()
+            ->all();
+
+        $member = TeamMember::create([
+            'team_id' => $team->team_id,
+            'user_email' => $validated['user_email'],
+            'websites_ids' => $websiteIds,
+            'access' => $validated['access'] ?? ['view'],
             'status' => 0, // pending
             'datetime' => now(),
         ]);
+
+        // 成员-网站授权关联（规格书 §6.2.4：teams-associations）
+        foreach ($websiteIds as $websiteId) {
+            TeamMemberAssociation::create([
+                'team_member_id' => $member->team_member_id,
+                'website_id' => $websiteId,
+                'access' => ['view'],
+                'datetime' => now(),
+            ]);
+        }
 
         return back()->with('success', __('msg.invitation_sent', ['email' => $validated['user_email']]));
     }

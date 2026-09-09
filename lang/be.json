@@ -3430,5 +3430,19 @@
     "settings.tickets.t_webhook_token_empty": "Token will be generated when you save this tab.",
     "settings.tickets.t_webhook_desc": "Point your mail service here. Payload: from / subject / text. Subject containing TK-code appends to that ticket, otherwise a new ticket is created.",
     "admin.sidebar_help_categories": "Help Categories",
-    "admin.sidebar_help_articles": "Help Articles"
+    "admin.sidebar_help_articles": "Help Articles",
+    "teams.team_name": "Team name",
+    "teams.create_team": "Create Team",
+    "teams.delete_team": "Delete Team",
+    "teams.delete_confirm": "Delete this team? Members and grants will be removed.",
+    "teams.member_active": "active",
+    "teams.member_pending": "pending",
+    "teams.granted_websites": "Granted websites",
+    "teams.remove_confirm": "Remove this member?",
+    "teams.remove_member": "Remove",
+    "teams.invite_member": "Invite Member",
+    "teams.invite_hint": "The invitee can accept the invitation after logging in.",
+    "teams.invite_email": "Member email",
+    "teams.grant_websites": "Grant website access",
+    "teams.send_invitation": "Send Invitation"
 }

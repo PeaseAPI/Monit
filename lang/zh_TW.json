@@ -3430,5 +3430,19 @@
     "settings.tickets.t_webhook_token_empty": "保存本設置頁後自動生成令牌。",
     "settings.tickets.t_webhook_desc": "將郵件服務商指向該地址。載荷欄位：from / subject / text。主題含 TK 編號則追加回覆，否則創建新工單。",
     "admin.sidebar_help_categories": "幫助分類",
-    "admin.sidebar_help_articles": "幫助文章"
+    "admin.sidebar_help_articles": "幫助文章",
+    "teams.team_name": "團隊名稱",
+    "teams.create_team": "創建團隊",
+    "teams.delete_team": "解散團隊",
+    "teams.delete_confirm": "確定解散該團隊？成員與授權將一併移除。",
+    "teams.member_active": "已加入",
+    "teams.member_pending": "待接受",
+    "teams.granted_websites": "授權網站",
+    "teams.remove_confirm": "確定移除該成員？",
+    "teams.remove_member": "移除",
+    "teams.invite_member": "邀請成員",
+    "teams.invite_hint": "被邀請人登入後接受邀請即可加入團隊。",
+    "teams.invite_email": "成員郵箱",
+    "teams.grant_websites": "授權網站（可多選）",
+    "teams.send_invitation": "發送邀請"
 }
