@@ -909,7 +909,7 @@
     "auth.oauth_no_email": "У гэтага сацыяльнага акаўнта няма адрасы e-mail",
     "auth.oauth_state_mismatch": "Памылка праверкі стану ўваходу, паспрабуйце зноў",
     "auth.oauth_token_failed": "Не ўдалося атрымаць токен доступу, паспрабуйце зноў",
-            "auth.password": "Пароль",
+    "auth.password": "Пароль",
     "auth.password_placeholder": "Увядзіце пароль",
     "auth.password_min": "Мінімум 8 сімволов",
     "auth.password_reset_success": "Пароль ізменён. Войдіте с новым паролем",
@@ -952,7 +952,7 @@
     "auth.sso_invalid_token": "Недействітельный токен SSO",
     "auth.sso_not_enabled": "Уваход праз SSO не включён",
     "auth.sso_user_not_found": "Карыстальнік SSO не найден ілі отключён",
-        "auth.tab_password_login": "Пароль",
+    "auth.tab_password_login": "Пароль",
     "auth.tab_sms_login": "SMS-код",
     "auth.terms_consent": "Я прачытаў і згодны з",
     "auth.terms_link": "Умовамі абслугоўвання",
@@ -3325,5 +3325,7 @@
     "websites.tracking_mode": "Режім отслежіванія",
     "websites.unlimited": "Без ограніченій",
     "websites.url_hint": "Must start with http:// or https://. www. prefix is automatically removed.",
-    "websites.url_label": "Адрес сайта"
+    "websites.url_label": "Адрес сайта",
+    "payments.no_processors_enabled": "No payment method is currently enabled. Please contact the administrator.",
+    "msg.payment_processor_disabled": "The selected payment method is not enabled."
 }

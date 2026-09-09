@@ -1,4 +1,5 @@
-@extends('layouts.guest')
+@extends('layouts.public')
+@section('main_class', 'w-full')
 @section('title', __('affiliate.title'))
 @section('content')
 <div class="mx-auto max-w-4xl px-6 py-12">

@@ -909,7 +909,7 @@
     "auth.oauth_no_email": "This social account has no email address",
     "auth.oauth_state_mismatch": "Login state validation failed, please try again",
     "auth.oauth_token_failed": "Failed to obtain access token, please try again",
-        "auth.password": "Password",
+    "auth.password": "Password",
     "auth.password_placeholder": "Enter your password",
     "auth.password_min": "At least 8 characters",
     "auth.password_reset_success": "Password reset successful. Please log in with your new password",
@@ -952,7 +952,7 @@
     "auth.sso_invalid_token": "Invalid SSO token",
     "auth.sso_not_enabled": "SSO login is not enabled",
     "auth.sso_user_not_found": "SSO user not found or disabled",
-        "auth.tab_password_login": "Password",
+    "auth.tab_password_login": "Password",
     "auth.tab_sms_login": "SMS Code",
     "auth.terms_consent": "I have read and agree to the",
     "auth.terms_link": "Terms of Service",
@@ -3325,5 +3325,7 @@
     "seo.tool_cat_dev": "Developer Utils",
     "seo.audit_report": "SEO Audit Report",
     "seo.download_pdf": "Download PDF",
-    "seo.print_or_save_pdf": "Print / Save as PDF"
+    "seo.print_or_save_pdf": "Print / Save as PDF",
+    "payments.no_processors_enabled": "No payment method is currently enabled. Please contact the administrator.",
+    "msg.payment_processor_disabled": "The selected payment method is not enabled."
 }

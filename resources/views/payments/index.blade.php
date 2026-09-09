@@ -95,18 +95,27 @@
                     <div class="mt-auto pt-6">
                         <form method="POST" action="{{ route('payments.checkout') }}">@csrf
                             <input type="hidden" name="plan_id" value="{{ $plan->plan_id }}">
-                            <input type="hidden" name="frequency" value="monthly">
-                            <label class="block text-xs font-medium text-zinc-500">{{ __('payments.payment_method') }}</label>
-                            <select name="processor" class="form-input mt-1.5">
-                                @foreach(config('monit.payment.supported_processors') as $processor)
-                                    <option value="{{ $processor }}">{{ __('payments.processor_' . $processor) }}</option>
-                                @endforeach
-                            </select>
-                            <label class="mt-4 block text-xs font-medium text-zinc-500">{{ __('payments.discount_code') }}</label>
-                            <input type="text" name="code" placeholder="{{ __('payments.discount_code_placeholder') }}" class="form-input mt-1.5">
-                            <button class="mt-5 w-full rounded-xl {{ $isPopular ? 'bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700' : 'bg-brand-600 hover:bg-brand-700' }} px-4 py-3 text-sm font-semibold text-white shadow transition">
-                                {{ __('payments.subscribe') }}
-                            </button>
+                            <input type="hidden" name="frequency" value="{{ $defaultFrequency }}">
+                            @if (empty($enabledProcessors))
+                                {{-- 后台未启用任何支付方式：给出明确提示（服务端 checkout 亦会拒绝） --}}
+                                <label class="block text-xs font-medium text-zinc-500">{{ __('payments.payment_method') }}</label>
+                                <p class="mt-1.5 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-700">{{ __('payments.no_processors_enabled') }}</p>
+                                <button class="mt-5 w-full cursor-not-allowed rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white opacity-50" disabled>
+                                    {{ __('payments.subscribe') }}
+                                </button>
+                            @else
+                                <label class="block text-xs font-medium text-zinc-500">{{ __('payments.payment_method') }}</label>
+                                <select name="processor" class="form-input mt-1.5">
+                                    @foreach($enabledProcessors as $processor)
+                                        <option value="{{ $processor }}">{{ __('payments.processor_' . $processor) }}</option>
+                                    @endforeach
+                                </select>
+                                <label class="mt-4 block text-xs font-medium text-zinc-500">{{ __('payments.discount_code') }}</label>
+                                <input type="text" name="code" placeholder="{{ __('payments.discount_code_placeholder') }}" class="form-input mt-1.5">
+                                <button class="mt-5 w-full rounded-xl {{ $isPopular ? 'bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700' : 'bg-brand-600 hover:bg-brand-700' }} px-4 py-3 text-sm font-semibold text-white shadow transition">
+                                    {{ __('payments.subscribe') }}
+                                </button>
+                            @endif
                         </form>
                     </div>
                 </div>
@@ -185,7 +194,7 @@
             });
         });
 
-        render('monthly');
+        render({!! json_encode($defaultFrequency, JSON_UNESCAPED_UNICODE) !!});
     })();
 </script>
 @endsection

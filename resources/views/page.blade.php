@@ -1,4 +1,5 @@
-@extends('layouts.guest')
+@extends('layouts.public')
+@section('main_class', 'w-full')
 @section('title', $page->title)
 @section('meta_description', $page->description ?: \Illuminate\Support\Str::limit(trim(strip_tags($page->content)), 157))
 @section('canonical', route('page', $page->url))

@@ -1,4 +1,5 @@
-@extends('layouts.guest')
+@extends('layouts.public')
+@section('main_class', 'w-full')
 @section('content')
 <div class="mx-auto max-w-4xl px-6 py-12">
     <h1 class="text-3xl font-bold text-zinc-900">{{ __('api_docs.title') }}</h1>

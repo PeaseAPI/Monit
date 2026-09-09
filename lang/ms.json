@@ -909,7 +909,7 @@
     "auth.oauth_no_email": "Akaun sosial ini tiada alamat e-mel",
     "auth.oauth_state_mismatch": "Pengesahan status log masuk gagal, sila cuba lagi",
     "auth.oauth_token_failed": "Gagal mendapatkan token akses, sila cuba lagi",
-            "auth.password": "Kata Laluan",
+    "auth.password": "Kata Laluan",
     "auth.password_placeholder": "Masukkan kata laluan",
     "auth.password_min": "Sekurang-kurangnya 8 aksara",
     "auth.password_reset_success": "Password reset successful. Please log in with your new password",
@@ -952,7 +952,7 @@
     "auth.sso_invalid_token": "Invalid SSO token",
     "auth.sso_not_enabled": "SSO login is not enabled",
     "auth.sso_user_not_found": "SSO user not found or disabled",
-        "auth.tab_password_login": "Kata Laluan",
+    "auth.tab_password_login": "Kata Laluan",
     "auth.tab_sms_login": "Kod SMS",
     "auth.terms_consent": "Saya telah membaca dan bersetuju dengan",
     "auth.terms_link": "Terma Perkhidmatan",
@@ -3325,5 +3325,7 @@
     "websites.tracking_mode": "Mod penjejakan",
     "websites.unlimited": "Tanpa had",
     "websites.url_hint": "Must start with http:// or https://. www. prefix is automatically removed.",
-    "websites.url_label": "Alamat laman web"
+    "websites.url_label": "Alamat laman web",
+    "payments.no_processors_enabled": "No payment method is currently enabled. Please contact the administrator.",
+    "msg.payment_processor_disabled": "The selected payment method is not enabled."
 }

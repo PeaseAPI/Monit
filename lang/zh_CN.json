@@ -909,7 +909,7 @@
     "auth.oauth_no_email": "该第三方账号未提供邮箱地址，无法完成登录",
     "auth.oauth_state_mismatch": "登录状态校验失败，请重试",
     "auth.oauth_token_failed": "获取授权令牌失败，请重试",
-        "auth.password": "密码",
+    "auth.password": "密码",
     "auth.password_placeholder": "请输入密码",
     "auth.password_min": "至少 8 位",
     "auth.password_reset_success": "密码重置成功，请使用新密码登录",
@@ -952,7 +952,7 @@
     "auth.sso_invalid_token": "SSO 令牌无效",
     "auth.sso_not_enabled": "SSO 登录未启用",
     "auth.sso_user_not_found": "SSO 用户不存在或已禁用",
-        "auth.tab_password_login": "密码登录",
+    "auth.tab_password_login": "密码登录",
     "auth.tab_sms_login": "验证码登录",
     "auth.terms_consent": "我已阅读并同意",
     "auth.terms_link": "服务条款",
@@ -3325,5 +3325,7 @@
     "seo.tool_cat_dev": "开发者实用",
     "seo.audit_report": "SEO 审计报告",
     "seo.download_pdf": "下载 PDF",
-    "seo.print_or_save_pdf": "打印 / 保存为 PDF"
+    "seo.print_or_save_pdf": "打印 / 保存为 PDF",
+    "payments.no_processors_enabled": "当前没有可用的支付方式，请联系管理员开启。",
+    "msg.payment_processor_disabled": "所选支付方式未启用。"
 }

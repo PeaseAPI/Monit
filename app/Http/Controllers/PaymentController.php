@@ -91,6 +91,9 @@ class PaymentController extends Controller
         $currentPlan = Plan::find($user->plan_id);
         $recentPayments = $user->payments()->orderByDesc('datetime')->limit(5)->get();
 
+        // 已启用的支付处理器（后台开关/凭据决定；前台仅展示这些，默认选中第一个）
+        $enabledProcessors = self::enabledProcessors();
+
         // 结账页默认周期（payment.default_payment_frequency：monthly/annual/lifetime）
         $defaultFrequency = in_array(
             trim((string) Settings::get('payment.default_payment_frequency', '')),
@@ -98,7 +101,7 @@ class PaymentController extends Controller
             true
         ) ? trim((string) Settings::get('payment.default_payment_frequency')) : 'monthly';
 
-        return view('payments.index', compact('plans', 'user', 'currentPlan', 'recentPayments', 'defaultFrequency'));
+        return view('payments.index', compact('plans', 'user', 'currentPlan', 'recentPayments', 'defaultFrequency', 'enabledProcessors'));
     }
 
     /**
@@ -121,6 +124,11 @@ class PaymentController extends Controller
         $plan = Plan::findOrFail($validated['plan_id']);
         $processor = $validated['processor'];
         $frequency = $validated['frequency'];
+
+        // 服务端强校验：仅允许后台已启用的支付方式（防绕过前端直接 POST）
+        if (! in_array($processor, self::enabledProcessors(), true)) {
+            return back()->withErrors(['processor' => __('msg.payment_processor_disabled')]);
+        }
 
         try {
             $order = $this->paymentService->createOrder($user, $plan, $processor, $frequency, $validated['code'] ?? null);
@@ -522,6 +530,45 @@ class PaymentController extends Controller
         $value = Settings::get('payment.payment_is_enabled');
 
         return $value === null || in_array($value, [true, 1, '1', 'true', 'on'], true);
+    }
+
+    /**
+     * 后台已启用的支付处理器（前台仅可选择已启用的方式，默认选中第一个）
+     * - 开关型（stripe/paypal/razorpay/offline/wechat/alipay）：settings payment.{key}_is_enabled
+     * - 凭据型（其余 16 网关）：config/services.{gateway} 任一凭据非空即视为可用
+     * 结果按 PROCESSORS 声明顺序返回，保证“第一个启用项”成为结账页默认选择。
+     */
+    public static function enabledProcessors(): array
+    {
+        $switches = [
+            'stripe' => 'stripe_is_enabled',
+            'paypal' => 'paypal_is_enabled',
+            'razorpay' => 'razorpay_is_enabled',
+            'offline' => 'offline_is_enabled',
+            'wechat' => 'wechat_pay_is_enabled',
+            'alipay' => 'alipay_is_enabled',
+        ];
+
+        $enabled = [];
+        foreach (self::PROCESSORS as $processor) {
+            if (isset($switches[$processor])) {
+                if (filter_var(Settings::get('payment.'.$switches[$processor]), FILTER_VALIDATE_BOOLEAN)) {
+                    $enabled[] = $processor;
+                }
+
+                continue;
+            }
+
+            foreach ((array) config('services.'.$processor) as $value) {
+                if (is_string($value) && trim($value) !== '') {
+                    $enabled[] = $processor;
+
+                    break;
+                }
+            }
+        }
+
+        return $enabled;
     }
 
     /**
