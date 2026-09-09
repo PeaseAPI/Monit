@@ -3099,6 +3099,7 @@
     "stats.no_data": "No data",
     "stats.no_goals": "No goals",
     "stats.no_heatmaps": "No heatmaps",
+    "stats.heatmap_legacy_snapshot": "This heatmap was recorded with an older format. Page screenshots are not available, but click and scroll data are still displayed correctly.",
     "stats.no_replay_events": "Нет данных о событиях",
     "stats.no_replays": "No replays",
     "stats.no_scroll_data": "Нет данных о скролле",

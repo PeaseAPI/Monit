@@ -2824,6 +2824,7 @@
     "stats.no_data": "暂无数据",
     "stats.no_goals": "暂无目标",
     "stats.no_heatmaps": "暂无热图",
+    "stats.heatmap_legacy_snapshot": "此热图使用旧格式记录，网页截图不可用，但点击和滚动数据仍可正常显示。新访问将自动使用新格式录制。",
     "stats.no_replay_events": "暂无事件数据",
     "stats.no_replays": "暂无回放",
     "stats.online_visitors": "当前在线",

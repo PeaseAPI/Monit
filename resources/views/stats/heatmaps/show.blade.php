@@ -28,12 +28,20 @@
         <div class="relative" style="min-height:400px">
             <div id="click-replayer-root" class="pointer-events-none" style="min-height:400px"></div>
             <canvas id="click-canvas" class="absolute inset-0 h-full w-full" style="pointer-events:none;z-index:10"></canvas>
-            <div id="click-no-snapshot" class="absolute inset-0 flex items-center justify-center bg-zinc-50 {{ $hasSnapshot ? 'hidden' : '' }}">
+                                    <div id="click-no-snapshot" class="absolute inset-0 flex items-center justify-center bg-zinc-50 {{ ($hasSnapshot || $hasLegacySnapshot) ? 'hidden' : '' }}">
                 <div class="text-center">
                     <svg class="mx-auto h-12 w-12 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
                     <p class="mt-3 text-sm text-zinc-400">{{ __('stats.no_heatmaps') }}</p>
                 </div>
             </div>
+            @if($hasLegacySnapshot)
+            <div id="click-legacy-snapshot" class="absolute inset-0 flex items-center justify-center bg-zinc-50/80">
+                <div class="text-center max-w-sm">
+                    <svg class="mx-auto h-10 w-10 text-amber-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <p class="mt-2 text-sm text-amber-600">{{ __('stats.heatmap_legacy_snapshot') }}</p>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
     {{-- Scroll heatmap --}}
@@ -44,12 +52,20 @@
         <div class="relative" style="min-height:560px">
             <div id="scroll-replayer-root" class="pointer-events-none" style="min-height:560px"></div>
             <canvas id="scroll-canvas" class="absolute inset-0 h-full w-full" style="pointer-events:none;z-index:10"></canvas>
-            <div id="scroll-no-snapshot" class="absolute inset-0 flex items-center justify-center bg-zinc-50 {{ $hasSnapshot ? 'hidden' : '' }}">
+                                    <div id="scroll-no-snapshot" class="absolute inset-0 flex items-center justify-center bg-zinc-50 {{ ($hasSnapshot || $hasLegacySnapshot) ? 'hidden' : '' }}">
                 <div class="text-center">
                     <svg class="mx-auto h-12 w-12 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
                     <p class="mt-3 text-sm text-zinc-400">{{ __('stats.no_scroll_data') }}</p>
                 </div>
             </div>
+            @if($hasLegacySnapshot)
+            <div id="scroll-legacy-snapshot" class="absolute inset-0 flex items-center justify-center bg-zinc-50/80">
+                <div class="text-center max-w-sm">
+                    <svg class="mx-auto h-10 w-10 text-amber-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <p class="mt-2 text-sm text-amber-600">{{ __('stats.heatmap_legacy_snapshot') }}</p>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>

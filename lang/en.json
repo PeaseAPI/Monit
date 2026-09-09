@@ -2824,6 +2824,7 @@
     "stats.no_data": "No data",
     "stats.no_goals": "No goals",
     "stats.no_heatmaps": "No heatmaps",
+    "stats.heatmap_legacy_snapshot": "This heatmap was recorded with an older format. Page screenshots are not available, but click and scroll data are still displayed correctly.",
     "stats.no_replay_events": "No event data",
     "stats.no_replays": "No replays",
     "stats.online_visitors": "Online now",

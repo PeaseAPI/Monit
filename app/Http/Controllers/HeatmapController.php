@@ -77,17 +77,33 @@ class HeatmapController extends Controller
             $device = 'desktop';
         }
 
-        // 检查是否有可渲染的 DOM 快照（需要 snapshot_id 存在且 data 不为空压缩）
+                                // 检查是否有可渲染的 DOM 快照（需要 snapshot_id 存在且 data 包含 rrweb 事件）
+        // 注意：必须用原生 SQL 读取 LONGBLOB data 列，Eloquent 的 PDO 绑定会破坏二进制数据
         $hasSnapshot = false;
+        $hasLegacySnapshot = false;
         $snapshotId = $heatmap->{"snapshot_id_{$device}"};
         if ($snapshotId) {
-            $snapshotRow = HeatmapSnapshot::where('snapshot_id', $snapshotId)->first();
-            if ($snapshotRow && strlen($snapshotRow->data ?? '') > 10) {
-                $hasSnapshot = true;
+            $row = DB::selectOne(
+                'SELECT data FROM heatmaps_snapshots WHERE snapshot_id = ?',
+                [$snapshotId],
+            );
+            if ($row && $row->data && strlen($row->data) > 10) {
+                // 解压检查数据格式：rrweb 事件格式含 events 键；旧格式只有 dom/viewport
+                $decompressed = @gzdecode($row->data);
+                if ($decompressed !== false) {
+                    $parsed = json_decode($decompressed, true);
+                    if (is_array($parsed) && isset($parsed['events']) && is_array($parsed['events']) && count($parsed['events']) > 0) {
+                        // 包含 rrweb 事件 → 可用 rrweb-player 渲染网页截图
+                        $hasSnapshot = true;
+                    } elseif (is_array($parsed) && (isset($parsed['dom']) || isset($parsed['viewport']))) {
+                        // 旧格式数据（仅有 dom 文本摘要），无法用 rrweb-player 渲染
+                        $hasLegacySnapshot = true;
+                    }
+                }
             }
         }
 
-        return view('stats.heatmaps.show', compact('website', 'heatmap', 'clicks', 'scrolls', 'device', 'hasSnapshot'));
+                return view('stats.heatmaps.show', compact('website', 'heatmap', 'clicks', 'scrolls', 'device', 'hasSnapshot', 'hasLegacySnapshot'));
     }
 
     public function update(Request $request): RedirectResponse
