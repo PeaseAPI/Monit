@@ -21,7 +21,7 @@
                     <td class="px-6 py-3 text-zinc-500">{{ $h->path }}</td>
                     <td class="px-6 py-3"><span class="rounded-full px-2 py-1 text-xs {{ $h->is_enabled ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700' }}">{{ $h->is_enabled ? __('stats.goal_enabled') : __('stats.goal_disabled') }}</span></td>
                     <td class="px-6 py-3 text-right">
-                        <form method="POST" action="{{ route('stats.heatmaps.destroy', $h->heatmap_id) }}" onsubmit="return confirm('{{ __('stats.heatmap_delete_confirm') }}')">
+                        <form method="POST" action="{{ route('stats.heatmaps.destroy', $h->heatmap_id) }}" data-confirm="{{ __('stats.heatmap_delete_confirm') }}" onsubmit="return confirm(this.dataset.confirm)">
                             @csrf @method('DELETE')
                             <button type="submit" class="rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition">{{ __('stats.delete') }}</button>
                         </form>
