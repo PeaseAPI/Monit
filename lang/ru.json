@@ -3066,6 +3066,8 @@
     "stats.heatmap_status": "Status",
     "stats.heatmaps": "Тепловые карты",
     "stats.heatmaps_title": "Тепловые карты",
+    "stats.delete": "Удалить",
+    "stats.heatmap_delete_confirm": "Вы уверены, что хотите удалить эту тепловую карту? Данные снимков, кликов и прокрутки будут удалены безвозвратно.",
     "stats.hourly_distribution": "Hourly Distribution (24h)",
     "stats.landing_pages": "Входные страницы",
     "stats.language": "Language",

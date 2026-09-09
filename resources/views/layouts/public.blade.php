@@ -14,9 +14,9 @@
 <body class="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
     @include('parts.announcement_bar')
 
-    {{-- 顶部导航条 --}}
+    {{-- 顶部导航条（与主题首页对齐：h-16 / px-6 / max-w-7xl） --}}
         <header class="sticky top-0 z-40 border-b border-zinc-100 bg-white/80 backdrop-blur-lg">
-        <div class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-6">
             <div class="flex min-w-0 items-center gap-6">
                                 <x-brand-logo class="h-8 w-8 shrink-0" text-class="text-base" href="{{ route('index') }}"/>
                 <nav class="hidden items-center gap-5 sm:flex">
@@ -63,12 +63,12 @@
         </div>
     </header>
 
-    <main class="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
+    <main class="mx-auto w-full max-w-7xl px-6 py-10">
         @yield('content')
     </main>
 
     <footer class="border-t border-zinc-200 bg-white">
-        <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-zinc-500 sm:flex-row sm:px-6">
+        <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-6 text-sm text-zinc-500 sm:flex-row">
             <p>© {{ date('Y') }} {{ \App\Support\Brand::name() }} · {{ __('guest.self_hosted_oss') }}</p>
             <div class="flex items-center gap-4">
                 @if (\App\Support\Settings::get('seo.audits_is_enabled', true))

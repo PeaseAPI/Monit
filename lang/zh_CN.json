@@ -2792,6 +2792,8 @@
     "stats.heatmap_status": "状态",
     "stats.heatmaps": "热图",
     "stats.heatmaps_title": "热图",
+    "stats.delete": "删除",
+    "stats.heatmap_delete_confirm": "确定要删除此热图吗？其快照、点击与滚动数据将被永久删除。",
     "stats.hourly_distribution": "24 小时时段分布",
     "stats.landing_pages": "入口页",
     "stats.language": "语言",

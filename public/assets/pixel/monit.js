@@ -186,8 +186,10 @@
                             if (data && data.heatmap_id) {
                     settings.heatmapId = data.heatmap_id;
                 }
-                // 后端告知回放功能状态 → 同步 settings.replay（防止配额满时仍录制浪费资源）
-                if (data && typeof data.replay_enabled !== 'undefined') {
+                // 后端告知回放功能状态 → 仅在 data-replay 未显式启用时同步。
+                // 站长显式加 data-replay="1" 即主动要求录制，服务端响应不得关闭
+                //（套餐配额由服务端落库时校验，客户端无需停录；修复回放无数据根因）
+                if (! settings.replay && data && typeof data.replay_enabled !== 'undefined') {
                     settings.replay = !!data.replay_enabled;
                 }
                 if (cb) cb();

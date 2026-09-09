@@ -81,25 +81,35 @@ class HeatmapController extends Controller
         // 注意：必须用原生 SQL 读取 LONGBLOB data 列，Eloquent 的 PDO 绑定会破坏二进制数据
         $hasSnapshot = false;
         $hasLegacySnapshot = false;
-        $snapshotId = $heatmap->{"snapshot_id_{$device}"};
-        if ($snapshotId) {
+        $snapshotIds = array_filter([
+            $heatmap->snapshot_id_desktop,
+            $heatmap->snapshot_id_tablet,
+            $heatmap->snapshot_id_mobile,
+        ]);
+        foreach ($snapshotIds as $snapshotId) {
             $row = DB::selectOne(
                 'SELECT data FROM heatmaps_snapshots WHERE snapshot_id = ?',
                 [$snapshotId],
             );
-            if ($row && $row->data && strlen($row->data) > 10) {
-                // 解压检查数据格式：rrweb 事件格式含 events 键；旧格式只有 dom/viewport
-                $decompressed = @gzdecode($row->data);
-                if ($decompressed !== false) {
-                    $parsed = json_decode($decompressed, true);
-                    if (is_array($parsed) && isset($parsed['events']) && is_array($parsed['events']) && count($parsed['events']) > 0) {
-                        // 包含 rrweb 事件 → 可用 rrweb-player 渲染网页截图
-                        $hasSnapshot = true;
-                    } elseif (is_array($parsed) && (isset($parsed['dom']) || isset($parsed['viewport']))) {
-                        // 旧格式数据（仅有 dom 文本摘要），无法用 rrweb-player 渲染
-                        $hasLegacySnapshot = true;
-                    }
+            if (! $row || ! $row->data || strlen($row->data) <= 10) {
+                continue;
+            }
+            // 解压检查数据格式：rrweb 事件格式含 events 键；旧格式只有 dom/viewport
+            $decompressed = @gzdecode($row->data);
+            if ($decompressed === false) {
+                continue;
+            }
+            $parsed = json_decode($decompressed, true);
+            if (is_array($parsed) && isset($parsed['events']) && is_array($parsed['events']) && count($parsed['events']) > 0) {
+                // 包含 rrweb 事件 → 可用 rrweb-player 渲染网页截图
+                // （仅当前设备计为可渲染；其他设备的截图切换设备 tab 后由 AJAX 加载）
+                if ($snapshotId === $heatmap->{"snapshot_id_{$device}"}) {
+                    $hasSnapshot = true;
                 }
+            } elseif (is_array($parsed) && (isset($parsed['dom']) || isset($parsed['viewport']))) {
+                // 旧格式数据（仅有 dom 文本摘要），无法用 rrweb-player 渲染
+                // 任一设备存在旧格式即提示（老数据通常只录了单一设备，切 tab 也应可见提示）
+                $hasLegacySnapshot = true;
             }
         }
 

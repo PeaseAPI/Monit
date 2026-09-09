@@ -2792,6 +2792,8 @@
     "stats.heatmap_status": "Status",
     "stats.heatmaps": "Heatmaps",
     "stats.heatmaps_title": "Heatmaps",
+    "stats.delete": "Delete",
+    "stats.heatmap_delete_confirm": "Are you sure you want to delete this heatmap? Its snapshot, click and scroll data will be permanently removed.",
     "stats.hourly_distribution": "Hourly Distribution (24h)",
     "stats.landing_pages": "Landing Pages",
     "stats.language": "Language",

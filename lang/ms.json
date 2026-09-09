@@ -3066,6 +3066,8 @@
     "stats.heatmap_status": "Status",
     "stats.heatmaps": "Heatmaps",
     "stats.heatmaps_title": "Peta Haba",
+    "stats.delete": "Padam",
+    "stats.heatmap_delete_confirm": "Adakah anda pasti mahu memadamkan peta haba ini? Semua data tangkapan, klik dan tatalan akan dipadamkan secara kekal.",
     "stats.hourly_distribution": "Hourly Distribution (24h)",
     "stats.landing_pages": "Halaman Masuk",
     "stats.language": "Language",
