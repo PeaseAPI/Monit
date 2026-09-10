@@ -11,7 +11,7 @@
         0 => ['bg-amber-50 text-amber-700', __('admin.status_unconfirmed')],
         default => ['bg-red-50 text-red-700', __('admin.status_disabled')],
     };
-    $row = fn (string $label, $value) => '<div class="flex items-start justify-between gap-4 py-2.5"><dt class="text-sm text-zinc-500 shrink-0">'.$label.'</dt><dd class="text-sm text-zinc-900 text-right break-all">'.($value === null || $value === '' ? '-' : $value).'</dd></div>';
+    $row = fn (string $label, $value) => '<div class="flex items-start justify-between gap-4 py-2.5"><dt class="text-sm text-zinc-500 shrink-0">'.e($label).'</dt><dd class="text-sm text-zinc-900 text-right break-all">'.($value === null || $value === '' ? '-' : e((string) $value)).'</dd></div>';
 @endphp
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
     <div>

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AffiliateWithdrawal;
 use App\Models\Payment;
 use App\Models\PaymentAudit;
 use App\Models\User;
@@ -68,57 +67,5 @@ class AdminPayments extends Controller
         $auditLogs = PaymentAudit::where('payment_id', $paymentId)->orderByDesc('datetime')->get();
 
         return view('admin.payments.view', compact('payment', 'auditLogs'))->with('adminNav', 'payments');
-    }
-
-    /**
-     * 联盟提现管理列表（规格书 §14.7）
-     */
-    public function affiliateWithdrawals(Request $request)
-    {
-        $query = AffiliateWithdrawal::with('user');
-
-        if ($status = $request->query('status')) {
-            $query->where('status', $status);
-        }
-
-        $withdrawals = $query->orderByDesc('datetime')->paginate(50);
-
-        return view('admin.affiliates.withdrawals', compact('withdrawals'))->with('adminNav', 'affiliates');
-    }
-
-    /**
-     * 审批通过联盟提现
-     */
-    public function approveWithdrawal(int $withdrawalId): RedirectResponse
-    {
-        $withdrawal = AffiliateWithdrawal::findOrFail($withdrawalId);
-
-        if ($withdrawal->status !== 'pending') {
-            return back()->withErrors(['status' => __('referrals.withdrawal_not_pending')]);
-        }
-
-        $withdrawal->update([
-            'status' => 'approved',
-        ]);
-
-        return back()->with('success', __('referrals.withdrawal_approved'));
-    }
-
-    /**
-     * 拒绝联盟提现
-     */
-    public function rejectWithdrawal(int $withdrawalId): RedirectResponse
-    {
-        $withdrawal = AffiliateWithdrawal::findOrFail($withdrawalId);
-
-        if ($withdrawal->status !== 'pending') {
-            return back()->withErrors(['status' => __('referrals.withdrawal_not_pending')]);
-        }
-
-        $withdrawal->update([
-            'status' => 'rejected',
-        ]);
-
-        return back()->with('success', __('referrals.withdrawal_rejected'));
     }
 }

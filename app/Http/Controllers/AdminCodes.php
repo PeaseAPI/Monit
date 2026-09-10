@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Code;
 use App\Models\Plan;
-use App\Models\RedeemedCode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -63,16 +62,6 @@ class AdminCodes extends Controller
 
         return redirect()->route('admin.codes.index')
             ->with('success', __('msg.code_deleted'));
-    }
-
-    /**
-     * 已兑换记录（AdminRedeemedCodes）
-     */
-    public function redeemed()
-    {
-        $redeemed = RedeemedCode::with(['user', 'code'])->orderByDesc('redeemed_id')->paginate(25);
-
-        return view('admin.codes.redeemed', compact('redeemed'))->with('adminNav', 'codes');
     }
 
     protected function validated(Request $request): array

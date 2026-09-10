@@ -16,10 +16,13 @@ class GoalController extends Controller
 {
     public function index(Request $request, Website $website)
     {
-        $goals = $website->goals()->orderBy('goal_id')->get();
+        $goals = $website->goals()
+            ->withCount('conversions')
+            ->orderBy('goal_id')
+            ->get();
 
         foreach ($goals as $goal) {
-            $goal->conversions = GoalConversion::where('goal_id', $goal->goal_id)->count();
+            $goal->conversions = $goal->conversions_count;
         }
 
         return view('stats.goals', compact('website', 'goals'));

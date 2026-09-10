@@ -119,6 +119,7 @@ Route::middleware('can:own,website')->group(function (): void {
     Route::post('/websites/{website}/annotations', [ApiAnnotationsController::class, 'store']);
     Route::put('/websites/{website}/annotations/{annotation}', [ApiAnnotationsController::class, 'update']);
     Route::delete('/websites/{website}/annotations/{annotation}', [ApiAnnotationsController::class, 'destroy']);
+    Route::get('/websites/{website}/annotations/{annotationId}', [ApiAnnotationsController::class, 'show']);
 
     // 事件子项（独立控制器版本，规格书 §8）
     Route::get('/websites/{website}/events-children/list', [ApiEventsChildrenController::class, 'index']);

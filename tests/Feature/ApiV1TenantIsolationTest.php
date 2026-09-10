@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Annotation;
 use App\Models\User;
 use App\Models\Website;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -109,5 +110,46 @@ class ApiV1TenantIsolationTest extends TestCase
         $this->withToken('key_admin_15')
             ->getJson("/api/v1/websites/{$this->target->website_id}")
             ->assertStatus(200);
+    }
+
+    /**
+     * 安全省第 4 轮：annotations show 补接线（GET /websites/{website}/annotations/{id}）
+     * 该端点此前只有实现、未注册路由，现与兄弟端点一致地做租户隔离。
+     */
+    private function makeAnnotation(): Annotation
+    {
+        return Annotation::create([
+            'website_id' => $this->target->website_id,
+            'user_id' => $this->owner->user_id,
+            'name' => 'Launch',
+            'date' => '2026-09-10',
+        ]);
+    }
+
+    public function test_annotation_show_owner_can_read(): void
+    {
+        $annotation = $this->makeAnnotation();
+
+        $this->withToken('key_owner_15')
+            ->getJson("/api/v1/websites/{$this->target->website_id}/annotations/{$annotation->annotation_id}")
+            ->assertStatus(200)
+            ->assertJsonPath('name', 'Launch');
+    }
+
+    public function test_annotation_show_is_tenant_isolated(): void
+    {
+        $annotation = $this->makeAnnotation();
+
+        $this->withToken('key_attacker_15')
+            ->getJson("/api/v1/websites/{$this->target->website_id}/annotations/{$annotation->annotation_id}")
+            ->assertStatus(403);
+    }
+
+    public function test_annotation_show_requires_api_key(): void
+    {
+        $annotation = $this->makeAnnotation();
+
+        $this->getJson("/api/v1/websites/{$this->target->website_id}/annotations/{$annotation->annotation_id}")
+            ->assertStatus(401);
     }
 }

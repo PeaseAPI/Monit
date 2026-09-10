@@ -334,20 +334,10 @@ class IndexController extends Controller
         ]);
     }
 
-    public function notFound()
-    {
-        // 404 外链（main.not_found_url）：配置时跳转指定页面（原版行为：站长可自定义 404 落点）
-        if ($url = trim((string) Settings::get('main.not_found_url', ''))) {
-            return redirect()->away($url, 302);
-        }
-
-        return view('errors.404', [], 404);
-    }
-
     /**
      * content 组布尔开关（默认开启；显式 false 才关闭）
      */
-        protected static function contentOn(string $key): bool
+    protected static function contentOn(string $key): bool
     {
         $value = Settings::get('content.'.$key);
 

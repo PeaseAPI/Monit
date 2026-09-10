@@ -82,13 +82,4 @@ class AnnotationController extends Controller
         return redirect()->route('stats.annotations', ['website' => $websiteId])
             ->with('success', __('msg.annotation_deleted'));
     }
-
-    public function destroy(Request $request, Website $website, Annotation $annotation): RedirectResponse
-    {
-        $this->authorize('own', $website);
-        $annotation->delete();
-
-        return redirect()->route('stats.annotations', $website)
-            ->with('success', __('msg.annotation_deleted'));
-    }
 }

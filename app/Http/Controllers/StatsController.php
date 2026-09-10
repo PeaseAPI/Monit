@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\LightweightEvent;
-use App\Models\OutboundClick;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
@@ -235,44 +234,6 @@ class StatsController extends Controller
             'website' => $website,
             'range' => $range,
             'topReferrers' => $stats->breakdownWithUtm('referrer_host', 50),
-        ]);
-    }
-
-    /**
-     * 目标转化管理
-     */
-    public function goals(Request $request, Website $website)
-    {
-        return view('stats.goals', [
-            'website' => $website,
-            'goals' => $website->goals()->orderBy('goal_id')->get(),
-        ]);
-    }
-
-    /**
-     * 出站点击统计
-     */
-    public function outboundClicks(Request $request, Website $website)
-    {
-        $range = (int) ($request->query('range') ?: 7);
-        if (! in_array($range, [1, 7, 30, 90], true)) {
-            $range = 7;
-        }
-
-        $rangeDate = now()->subDays($range);
-
-        // 按出站主机聚合（点击次数 + 最近点击时间），避免逐条展示
-        $clicks = OutboundClick::where('website_id', $website->website_id)
-            ->where('datetime', '>=', $rangeDate)
-            ->selectRaw('host, COUNT(*) as count, MAX(datetime) as last_click')
-            ->groupBy('host')
-            ->orderByDesc('count')
-            ->paginate(50);
-
-        return view('stats.outbound_clicks', [
-            'website' => $website,
-            'range' => $range,
-            'clicks' => $clicks,
         ]);
     }
 
