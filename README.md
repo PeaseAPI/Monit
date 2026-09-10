@@ -128,7 +128,7 @@ docker compose exec app php artisan migrate --seed
 php artisan test   # 191 tests / 637 assertions 全绿
 ```
 
-覆盖：像素采集、统计聚合、认证全场景、支付 Webhook 安全、计划限额、对象存储多驱动、Cron 任务、插件生命周期、License、封禁守卫、路由与语言键完整性等。另配 PHPStan (Larastan) level 5 静态分析。
+覆盖：像素采集、统计聚合、认证全场景、支付 Webhook 安全、计划限额、对象存储多驱动、Cron 任务、插件生命周期、License、封禁守卫、路由与语言键完整性等。另配 PHPStan (Larastan) level 5 静态分析（`phpstan-baseline.neon` 锁定历史存量类型推断噪声——新增代码零容忍）。
 
 ## 📁 项目结构
 
