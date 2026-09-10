@@ -23,7 +23,7 @@ class AdminHelpCategories extends Controller
     public function store(Request $request): RedirectResponse
     {
         HelpCategory::create($this->validated($request) + [
-            'user_id' => auth()->user()->user_id,
+            'user_id' => $request->user()->user_id,
             'datetime' => now(),
         ]);
 

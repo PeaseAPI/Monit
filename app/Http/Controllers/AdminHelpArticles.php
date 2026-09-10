@@ -31,7 +31,7 @@ class AdminHelpArticles extends Controller
     public function store(Request $request): RedirectResponse
     {
         HelpArticle::create($this->validated($request) + [
-            'user_id' => auth()->user()->user_id,
+            'user_id' => $request->user()->user_id,
             'views' => 0,
             'datetime' => now(),
         ]);

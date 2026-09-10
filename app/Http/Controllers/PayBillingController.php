@@ -16,9 +16,9 @@ class PayBillingController extends Controller
     /**
      * 订阅管理页面
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $user = auth()->user();
+        $user = $request->user();
 
         return view('pay.billing', compact('user'));
     }
@@ -28,7 +28,7 @@ class PayBillingController extends Controller
      */
     public function cancel(Request $request): RedirectResponse
     {
-        $user = auth()->user();
+        $user = $request->user();
 
         if (! $user->payment_subscription_id) {
             return back()->withErrors(['error' => __('msg.no_active_subscription')]);
