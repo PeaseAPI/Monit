@@ -105,12 +105,19 @@ class LicenseManager
             return false;
         }
 
+        // 公钥未配置或格式非法时优雅降级为验签失败，而非抛 SodiumException 导致页面 500
+        $publicKey = self::publicKey();
+        if (strlen($publicKey) !== SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES * 2
+            || ! ctype_xdigit($publicKey)) {
+            return false;
+        }
+
         $payload = self::canonicalJson($license);
 
         return sodium_crypto_sign_verify_detached(
             hex2bin($signature),
             $payload,
-            hex2bin(self::publicKey()),
+            hex2bin($publicKey),
         );
     }
 
