@@ -19,7 +19,7 @@ class AdminMiddleware
             return redirect()->route('login');
         }
 
-        if (auth()->user()->type !== 1) {
+        if (Auth::user()->type !== 1) {
             abort(403, __('msg.forbidden_admin'));
         }
 

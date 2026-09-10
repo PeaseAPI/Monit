@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Support\Settings;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -58,7 +59,7 @@ class AuthenticateApiKey
         }
 
         // 以该用户身份登录，使 auth() 可用
-        auth('web')->login($user);
+        Auth::login($user);
         $request->setUserResolver(fn () => $user);
 
         return $next($request);

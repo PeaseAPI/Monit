@@ -200,7 +200,7 @@ class AuthController extends Controller
         }
 
         // remember-me Cookie 有效期（users.login_rememberme_cookie_days）
-        Auth::guard('web')->setRememberDuration(self::rememberLifetimeMinutes());
+        Auth::setRememberDuration(self::rememberLifetimeMinutes());
 
         Auth::login($user, $remember);
 
@@ -265,7 +265,7 @@ class AuthController extends Controller
         // 旧 id 在拿到认证态前失效）
         $request->session()->regenerate();
 
-        Auth::guard('web')->setRememberDuration(self::rememberLifetimeMinutes());
+        Auth::setRememberDuration(self::rememberLifetimeMinutes());
         Auth::login($user, $request->session()->get('twofa_remember', false));
 
         $user->forceFill([

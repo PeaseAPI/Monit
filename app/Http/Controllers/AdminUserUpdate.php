@@ -10,6 +10,7 @@ use App\Models\Website;
 use App\Services\UserAgentParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -175,7 +176,7 @@ class AdminUserUpdate extends Controller
         // 审计先行：login() 后 auth()->id() 变为目标用户，admin 身份须在切换前留痕
         $this->logAdminAction($user, 'admin_login_as');
 
-        auth()->login($user, true);
+        Auth::login($user, true);
 
         return redirect()->route('dashboard');
     }

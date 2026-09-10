@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AccountLog;
 use App\Support\Csv;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -46,7 +47,7 @@ class AdminLogs extends Controller
             ->orderByDesc('log_id');
     }
 
-    private function downloadCsv($logs): StreamedResponse
+    private function downloadCsv(Collection $logs): StreamedResponse
     {
         $filename = 'monit-logs-'.now()->format('Ymd-His').'.csv';
 

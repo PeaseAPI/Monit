@@ -84,7 +84,7 @@ class IndexController extends Controller
         return view('blog', compact('posts'));
     }
 
-    public function blogPost($url)
+    public function blogPost(string $url)
     {
         abort_unless(self::contentOn('blog_is_enabled'), 404);
 
@@ -93,7 +93,7 @@ class IndexController extends Controller
         return view('blog_post', compact('post'));
     }
 
-    public function page($url)
+    public function page(string $url)
     {
         // 自定义页面总开关（content.pages_is_enabled，默认开启）
         abort_unless(self::contentOn('pages_is_enabled'), 404);
