@@ -54,6 +54,7 @@
             <button type="submit" class="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white">{{ __('seo.add_backlink') }}</button>
         </div>
         @error('source_url')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+    </form>
 
     {{-- 反链表 --}}
     <div class="mt-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
@@ -86,7 +87,7 @@
                             @csrf
                             <button class="text-sm text-indigo-600 hover:underline">{{ __('seo.verify_now') }}</button>
                         </form>
-                        <form method="POST" action="{{ route('seo.backlinks.destroy', $link->seo_backlink_id) }}" class="ml-3 inline" onsubmit="return confirm('{{ __('seo.confirm_delete') }}')">
+                        <form method="POST" action="{{ route('seo.backlinks.destroy', $link->seo_backlink_id) }}" class="ml-3 inline" data-confirm="{{ __('seo.confirm_delete') }}">
                             @csrf @method('DELETE')
                             <button class="text-sm text-red-600 hover:underline">{{ __('common.delete') }}</button>
                         </form>
@@ -100,4 +101,12 @@
     </div>
     {{ $links->links() }}
 </div>
+
+<script>
+document.querySelectorAll('form[data-confirm]').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+        if (!confirm(this.dataset.confirm)) e.preventDefault();
+    });
+});
+</script>
 @endsection
