@@ -190,6 +190,14 @@ sudo certbot --nginx -d your-domain.com -d www.your-domain.com</code></pre>
 composer install --no-dev
 php artisan migrate --force
 php artisan config:cache &amp;&amp; php artisan route:cache &amp;&amp; php artisan view:cache</code></pre>
+  <h3>Q：为什么必须备份 APP_KEY？丢失会怎样？</h3>
+  <p><code class="inline">APP_KEY</code>（.env）是全站加密基座：<strong>用户 API Key 的加密数据由它解密</strong>（API Key 明文不落库）。若丢失且无备份，所有用户 API Key 将无法验证（API 调用一律 401），需各用户在账号页重新生成。因此：</p>
+  <ul>
+    <li>把 <code class="inline">APP_KEY</code> 记入密码管理器或离线备份（<strong>不要提交进 git</strong>）；</li>
+    <li><code class="inline">.env</code>（含 APP_KEY）与数据库的访问权限同级对待——两者都拿到即可冒用任意用户 API；只拿到数据库则无法还原任何 API Key；</li>
+    <li>升级版本（git pull + migrate）时 API Key 存储形态自动平滑转换，既有集成不失效；</li>
+    <li><strong>已部署站点严禁随手重跑</strong> <code class="inline">php artisan key:generate</code>（会生成新 key，旧加密数据全部不可解）。</li>
+  </ul>
 </section>
 
 <footer class="wrap">© 2026 Monit · MIT Open Source · <a href="index.html">产品介绍</a> · <a href="usage.html">使用手册</a></footer>

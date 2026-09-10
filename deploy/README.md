@@ -68,6 +68,15 @@ chmod -R ug+rwX storage bootstrap/cache
 8. **GeoIP 库文件（重要！缺失时统计的国家/大洲维度全部显示"未知"）**：`sudo -u www php artisan geoip:update`——自动下载 db-ip 免费国家库（~5MB，免注册）到 `storage/app/geoip/country.mmdb`；调度器每月 1 日 02:00 自动更新。状态可在 后台 → 设置 → 健康检查 查看。（网页向导已自动执行此步）
 9. 队列Worker（启用队列时）：`php artisan queue:work --tries=3`（修改 `.env` / 重建缓存后需重启 Worker）
 
+## 安全运维：APP_KEY 备份与 .env 权限（重要）
+
+`APP_KEY` 是全站加密基座，并承担**用户 API Key 的加密解密**（API Key 明文不落库，改为「SHA-256 查找哈希 + Crypt 加密」双列存储）：
+
+1. **务必备份 `.env` 中的 `APP_KEY`**（密码管理器/离线介质，不要提交进 git）——丢失后所有用户 API Key 不可解密（fail-closed：API 一律 401），需各用户在账号页重新生成；
+2. **`.env` 与数据库的访问权限同级对待**：两者都拿到 = 可冒用任意用户 API；只拿到数据库 = 无法还原任何 API Key（这是 API Key 加密化的防御目标——SQL 注入/拖库不再泄露 API Key）；
+3. **升级自动平滑**：`git pull && php artisan migrate --force` 时迁移自动把存量明文 Key 转为加密形态，既有集成不失效、无需停机；
+4. **已部署站点严禁随手重跑** `php artisan key:generate`——会生成新 `APP_KEY`，旧加密数据全部不可解。
+
 ## 常见 500 排查（生产实录）
 
 | 报错 | 根因 | 修复 |

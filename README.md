@@ -93,6 +93,8 @@ docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate --seed
 ```
 
+> 🔐 **安全提醒**：`.env` 中的 `APP_KEY` 是全站加密基座（含用户 API Key 的加密解密），部署完成后请离线备份；丢失后用户 API Key 需重新生成。详见 [`deploy/README.md`](deploy/README.md) 的「安全运维」一节。
+
 ## 📚 完整文档与部署配置
 
 **线上文档中心**（部署后即可访问，无需额外配置）：
