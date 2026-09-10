@@ -142,7 +142,7 @@ class AuthSessionSecurityTest extends TestCase
 
         // 同一 token 立即重放（仍在 300s 时间窗内）→ 必须拒绝
         $this->get('/sso?'.$query);
-        $this->assertGuest('web', 'SSO token 已消费，重放不得再次登录');
+        $this->assertFalse(auth('web')->check(), 'SSO token 已消费，重放不得再次登录');
     }
 
     /* ---------------- OAuth email 信任链 ---------------- */
@@ -163,7 +163,7 @@ class AuthSessionSecurityTest extends TestCase
         $this->withSession(['oauth_state_github' => 'state123'])
             ->get('/social-login/callback/github?code=abc&state=state123');
 
-        $this->assertGuest('web', '未验证的 GitHub email 不得用于匹配本地账号（账号接管）');
+        $this->assertFalse(auth('web')->check(), '未验证的 GitHub email 不得用于匹配本地账号（账号接管）');
         $this->assertTrue(Hash::check('password123', $victim->fresh()->password));
     }
 
@@ -203,7 +203,7 @@ class AuthSessionSecurityTest extends TestCase
         $this->withSession(['oauth_state_discord' => 'state123'])
             ->get('/social-login/callback/discord?code=abc&state=state123');
 
-        $this->assertGuest('web', 'Discord 未验证 email 不得用于登录匹配');
+        $this->assertFalse(auth('web')->check(), 'Discord 未验证 email 不得用于登录匹配');
         $this->assertTrue(Hash::check('password123', $victim->fresh()->password));
     }
 
@@ -251,7 +251,7 @@ class AuthSessionSecurityTest extends TestCase
         // 真实 QQ 用户（openid 8888）登录——不得落入攻击者预注册的账号
         $this->qqCallback('8888');
 
-        $this->assertGuest('web', '@social.login 虚拟邮箱不得匹配本地预注册账号（pre-hijacking）');
+        $this->assertFalse(auth('web')->check(), '@social.login 虚拟邮箱不得匹配本地预注册账号（pre-hijacking）');
         $this->assertTrue(Hash::check('password123', $attacker->fresh()->password));
     }
 
