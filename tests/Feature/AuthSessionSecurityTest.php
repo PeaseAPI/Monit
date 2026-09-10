@@ -163,7 +163,7 @@ class AuthSessionSecurityTest extends TestCase
         $this->withSession(['oauth_state_github' => 'state123'])
             ->get('/social-login/callback/github?code=abc&state=state123');
 
-        $this->assertFalse(auth()->check(), '未验证的 GitHub email 不得用于匹配本地账号（账号接管）');
+        $this->assertGuest('web', '未验证的 GitHub email 不得用于匹配本地账号（账号接管）');
         $this->assertTrue(Hash::check('password123', $victim->fresh()->password));
     }
 
@@ -182,7 +182,7 @@ class AuthSessionSecurityTest extends TestCase
             ->get('/social-login/callback/github?code=abc&state=state123');
 
         $this->assertAuthenticated();
-        $this->assertSame('attacker-own@test.dev', auth()->user()->email, '必须选取 verified email，跳过未验证的 primary');
+        $this->assertSame('attacker-own@test.dev', request()->user()->email, '必须选取 verified email，跳过未验证的 primary');
     }
 
     public function test_discord_unverified_email_rejected(): void
@@ -203,7 +203,7 @@ class AuthSessionSecurityTest extends TestCase
         $this->withSession(['oauth_state_discord' => 'state123'])
             ->get('/social-login/callback/discord?code=abc&state=state123');
 
-        $this->assertFalse(auth()->check(), 'Discord 未验证 email 不得用于登录匹配');
+        $this->assertGuest('web', 'Discord 未验证 email 不得用于登录匹配');
         $this->assertTrue(Hash::check('password123', $victim->fresh()->password));
     }
 
@@ -251,7 +251,7 @@ class AuthSessionSecurityTest extends TestCase
         // 真实 QQ 用户（openid 8888）登录——不得落入攻击者预注册的账号
         $this->qqCallback('8888');
 
-        $this->assertFalse(auth()->check(), '@social.login 虚拟邮箱不得匹配本地预注册账号（pre-hijacking）');
+        $this->assertGuest('web', '@social.login 虚拟邮箱不得匹配本地预注册账号（pre-hijacking）');
         $this->assertTrue(Hash::check('password123', $attacker->fresh()->password));
     }
 
