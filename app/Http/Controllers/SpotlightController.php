@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SessionReplay;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use Illuminate\Http\Request;
@@ -23,8 +24,8 @@ class SpotlightController extends Controller
 
         $results = [];
 
-        // 搜索网站
-        $websites = Website::where('user_id', $user->id)
+        // 搜索网站（注意：User 主键是 user_id，->id 恒 null 会让搜索恒空）
+        $websites = Website::where('user_id', $user->user_id)
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
                     ->orWhere('host', 'like', "%{$query}%");
@@ -44,19 +45,26 @@ class SpotlightController extends Controller
         }
 
         // 搜索会话
-        $sessions = VisitorSession::whereHas('website', fn ($q) => $q->where('user_id', $user->id))
+        $sessions = VisitorSession::whereHas('website', fn ($q) => $q->where('user_id', $user->user_id))
             ->whereHas('events', fn ($q) => $q->where('path', 'like', "%{$query}%"))
             ->with('website')
             ->limit(5)
             ->get();
 
         foreach ($sessions as $session) {
+            // 回放详情路由参数是 SessionReplay 主键（replay_id），不是 session_id；
+            // 无回放记录的会话跳回放列表页
+            $replayId = SessionReplay::where('session_id', $session->session_id)->value('replay_id');
+            $url = $replayId
+                ? route('stats.replays.show', [$session->website, $replayId])
+                : route('stats.replays', $session->website);
+
             $results[] = [
                 'type' => 'session',
                 'id' => $session->session_id,
                 'title' => $session->events->first()?->path ?? 'Session',
                 'subtitle' => $session->website?->host ?? '',
-                'url' => route('stats.replays.show', [$session->website, $session->session_id]),
+                'url' => $url,
                 'icon' => 'play',
             ];
         }
