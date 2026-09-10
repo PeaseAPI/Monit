@@ -81,7 +81,7 @@ php artisan serve
 接入网站：后台创建网站后，一行脚本即刻采集（`sendBeacon` + `keepalive`，无第三方依赖、不拖慢页面）：
 
 ```html
-<script async src="https://your-domain.com/pixel/monit.js"
+<script async src="https://your-domain.com/assets/pixel/monit.js"
         data-key="你的网站Key"></script>
 ```
 
