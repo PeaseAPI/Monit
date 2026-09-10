@@ -197,14 +197,17 @@ class AuditEngine
 
     /**
      * 带二次校验的请求（反爬偶发失败自动重试一次）
-     * 捕获 cURL/OpenSSL 连接异常，避免队列 worker 崩溃
+     * 连接异常包装为带上下文的 RuntimeException，由 run() 的失败分支统一落库
+     *
+     * @throws RuntimeException 不安全目标（SSRF 防护）或连接失败
      */
     protected function request(string $url, int $timeout, string $ua, int $attempt = 0): Response
     {
         // SSRF 防护：audit 目标 host 由用户配置（免费注册即可添加网站），
-        // 不校验可探测内网/云元数据；不安全时模拟"无法访问"响应走既有分支
-        if (self::rejectUnsafeUrl($url) !== null) {
-            return new Response(new \GuzzleHttp\Psr7\Response(0, [], 'blocked by ssrf guard'), 'blocked by ssrf guard');
+        // 不安全目标直接拒绝——原因经 run() 写入 audit.error（回显给前端，
+        // 与 SeoCheckTools/NetworkTools 等工具层回显"不允许抓取"的语义一致）
+        if (($reason = self::rejectUnsafeUrl($url)) !== null) {
+            throw new RuntimeException($reason);
         }
 
         try {
@@ -213,9 +216,9 @@ class AuditEngine
                 ->withOptions(['verify' => false])
                 ->get($url);
         } catch (Throwable $e) {
-            // cURL 连接错误（DNS 解析失败 / OpenSSL 握手超时 / 连接拒绝等）
-            // 返回一个模拟 0 状态码的 Response，让上层逻辑走 "无法访问" 分支
-            return new Response(new \GuzzleHttp\Psr7\Response(0, [], $e->getMessage()), $e->getMessage());
+            // cURL 连接错误（DNS 解析失败 / OpenSSL 握手超时 / 连接拒绝等）：
+            // 包装为带上下文的异常，由 run() 的失败分支落库（避免裸异常打断队列 worker）
+            throw new RuntimeException('目标站点无法访问：'.$e->getMessage(), 0, $e);
         }
 
         $doubleCheck = in_array(Settings::get('seo.seo_double_check'), [true, 'true', null], true);
