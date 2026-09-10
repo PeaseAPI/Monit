@@ -37,6 +37,9 @@ class ApplyPlatformHeaders
         // 按声明 Content-Type 处理，杜绝多态文件被嗅探为 HTML/JS 执行
         $response->headers->set('X-Content-Type-Options', 'nosniff');
 
+        // （X-Powered-By 的移除在 public/index.php 的 SAPI 层完成——
+        //  PHP expose_php 附加的头不经过 Symfony Response 头集合，这里移不到）
+
         if (! $iframeAllowed) {
             $response->headers->set('X-Frame-Options', 'DENY');
         }
@@ -45,9 +48,12 @@ class ApplyPlatformHeaders
             $response->headers->set('X-Robots-Tag', 'noai, noimageai');
         }
 
-        if ($referrerPolicy) {
-            $response->headers->set('Referrer-Policy', $referrerPolicy);
-        }
+        // 第十八轮：未配置时输出安全默认值（与现役浏览器默认一致，显式化防降级）；
+        // 管理员显式配置仍优先（白名单校验见 referrerPolicy()）
+        $response->headers->set(
+            'Referrer-Policy',
+            $referrerPolicy ?? 'strict-origin-when-cross-origin',
+        );
 
         return $response;
     }

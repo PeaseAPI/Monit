@@ -36,4 +36,24 @@ class ApplyPlatformHeadersTest extends TestCase
 
         $this->get('/login')->assertHeaderMissing('X-Frame-Options');
     }
+
+    /** 第十八轮：X-Powered-By 必须被移除（PHP 版本指纹防护） */
+    public function test_powered_by_header_removed(): void
+    {
+        $this->get('/login')->assertHeaderMissing('X-Powered-By');
+    }
+
+    /** 第十八轮：未配置 referrer_policy 时输出安全默认值 */
+    public function test_referrer_policy_defaults_to_strict_origin_when_cross_origin(): void
+    {
+        $this->get('/login')->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    }
+
+    /** 第十八轮：管理员显式配置的 referrer_policy 优先于默认值 */
+    public function test_referrer_policy_explicit_setting_wins(): void
+    {
+        Settings::set('main.referrer_policy', 'no-referrer');
+
+        $this->get('/login')->assertHeader('Referrer-Policy', 'no-referrer');
+    }
 }

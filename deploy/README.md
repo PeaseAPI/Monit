@@ -75,7 +75,8 @@ chmod -R ug+rwX storage bootstrap/cache
 1. **务必备份 `.env` 中的 `APP_KEY`**（密码管理器/离线介质，不要提交进 git）——丢失后所有用户 API Key 不可解密（fail-closed：API 一律 401），需各用户在账号页重新生成；
 2. **`.env` 与数据库的访问权限同级对待**：两者都拿到 = 可冒用任意用户 API；只拿到数据库 = 无法还原任何 API Key（这是 API Key 加密化的防御目标——SQL 注入/拖库不再泄露 API Key）；
 3. **升级自动平滑**：`git pull && php artisan migrate --force` 时迁移自动把存量明文 Key 转为加密形态，既有集成不失效、无需停机；
-4. **已部署站点严禁随手重跑** `php artisan key:generate`——会生成新 `APP_KEY`，旧加密数据全部不可解。
+4. **已部署站点严禁随手重跑** `php artisan key:generate`——会生成新 `APP_KEY`，旧加密数据全部不可解；
+5. **PHP 版本指纹**：`public/index.php` 已在 SAPI 层 `header_remove('X-Powered-By')`（应用已内置）；生产建议进一步在 `php.ini` 设 `expose_php=Off`、Nginx 加 `fastcgi_hide_header X-Powered-By;` 双保险。
 
 ## 备份与恢复（已演练验证）
 
