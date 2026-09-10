@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Throwable;
 
 class User extends Authenticatable
 {
@@ -45,6 +47,46 @@ class User extends Authenticatable
         'password', 'remember_token', 'api_key', 'email_activation_code',
         'lost_password_code', 'twofa_token',
     ];
+
+    /**
+     * 第十三轮：api_key 存储加密化（拖库防御）
+     *
+     * 明文不再落库——api_key 列恒为 NULL，真实值拆存两处：
+     *  - api_key_lookup：sha256(明文)，等值索引查询用（高熵 key 不可反推）
+     *  - api_key_encrypted：Crypt 加密，供账号页/账号 API 正常回显（UX 不变）
+     * accessor/mutator 以同名属性接管，全部既有读写调用点零改动。
+     */
+    public function getApiKeyAttribute(?string $value): ?string
+    {
+        if ($value !== null) {
+            return $value; // 迁移前的遗留行 / 回滚后的行：明文直读
+        }
+
+        if ($this->attributes['api_key_encrypted'] ?? null) {
+            try {
+                return Crypt::decryptString((string) $this->attributes['api_key_encrypted']);
+            } catch (Throwable) {
+                return null; // APP_KEY 变更等解密失败：视为无 key（fail-closed）
+            }
+        }
+
+        return null;
+    }
+
+    public function setApiKeyAttribute(?string $value): void
+    {
+        $this->attributes['api_key'] = null; // 明文列废弃，防遗留写入路径回退
+
+        if ($value === null) {
+            $this->attributes['api_key_lookup'] = null;
+            $this->attributes['api_key_encrypted'] = null;
+
+            return;
+        }
+
+        $this->attributes['api_key_lookup'] = hash('sha256', $value);
+        $this->attributes['api_key_encrypted'] = Crypt::encryptString($value);
+    }
 
     protected function casts(): array
     {
@@ -207,6 +249,6 @@ class User extends Authenticatable
      */
     public function validateApiToken(string $token): bool
     {
-        return $this->api_key === $token;
+        return $this->api_key !== null && hash_equals((string) $this->api_key, $token);
     }
 }

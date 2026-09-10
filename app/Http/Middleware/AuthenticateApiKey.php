@@ -37,7 +37,13 @@ class AuthenticateApiKey
             return response()->json(['error' => 'Too many invalid API key attempts'], 429);
         }
 
-        $user = User::where('api_key', $bearer)->first();
+        $user = User::where('api_key_lookup', hash('sha256', $bearer))->first();
+
+        // 解密值恒时比较确认（第十三轮）：lookup 命中后再验明文，防哈希碰撞/
+        // 遗留明文行双轨歧义；恒时比较防解密值比对侧信道
+        if (! $user || ! hash_equals((string) $user->api_key, $bearer)) {
+            $user = null;
+        }
 
         if (! $user) {
             RateLimiter::hit($failures, 900);
