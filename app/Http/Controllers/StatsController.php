@@ -6,6 +6,7 @@ use App\Models\LightweightEvent;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
+use App\Support\Csv;
 use App\Services\Ai\AiService;
 use App\Services\StatisticsService;
 use App\Support\ContinentNames;
@@ -194,8 +195,10 @@ class StatsController extends Controller
                 fputcsv($out, array_keys($visitors->first()?->getAttributes() ?? ['visitor_id' => '']));
 
                 foreach ($visitors as $v) {
+                    // 公式注入防护：visitor 字段（referrer、UA、国家等）来自
+                    // 公开 pixel 上报，第三方网站可注入任意字符串
                     fputcsv($out, array_map(
-                        fn ($val) => is_string($val) ? mb_substr($val, 0, 2000) : $val,
+                        fn ($val) => is_string($val) ? Csv::sanitizeCell(mb_substr($val, 0, 2000)) : $val,
                         $v->getAttributes()
                     ));
                 }

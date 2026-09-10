@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AccountLog;
+use App\Support\Csv;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -78,17 +79,7 @@ class AdminLogs extends Controller
      */
     private function sanitizeCsvCell(mixed $value): mixed
     {
-        if (! is_string($value) || $value === '') {
-            return $value;
-        }
-
-        if (str_starts_with($value, '=') || str_starts_with($value, '+')
-            || str_starts_with($value, '-') || str_starts_with($value, '@')
-            || str_starts_with($value, "\t") || str_starts_with($value, "\r")) {
-            return "'".$value;
-        }
-
-        return $value;
+        return Csv::sanitizeCell($value);
     }
 
     /**

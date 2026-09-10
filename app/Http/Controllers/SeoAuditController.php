@@ -6,6 +6,7 @@ use App\Jobs\Seo\RunSeoAuditJob;
 use App\Jobs\Seo\SeoAiSummaryJob;
 use App\Models\SeoAudit;
 use App\Services\Ai\AiService;
+use App\Support\Csv;
 use App\Services\Seo\AuditEngine;
 use App\Services\Seo\AuditTestRegistry;
 use App\Services\Seo\SitemapMonitor;
@@ -246,7 +247,8 @@ class SeoAuditController extends Controller
             $query->chunk(200, function ($rows) use ($out) {
                 foreach ($rows as $row) {
                     fputcsv($out, [
-                        $row->url, $row->score, $row->status, $row->major_issues,
+                        // url 含用户提交的路径/查询串，过公式注入防护
+                        Csv::sanitizeCell($row->url), $row->score, $row->status, $row->major_issues,
                         $row->moderate_issues, $row->minor_issues, $row->created_at?->format('Y-m-d H:i'),
                     ]);
                 }
