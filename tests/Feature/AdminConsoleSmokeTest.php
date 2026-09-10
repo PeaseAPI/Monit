@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Plugin;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Router;
@@ -74,5 +75,26 @@ class AdminConsoleSmokeTest extends TestCase
         foreach (['/admin', '/admin/settings', '/admin/users', '/admin/plans', '/admin/payments', '/admin/tickets'] as $uri) {
             $this->actingAs($user)->get($uri)->assertStatus(403);
         }
+    }
+
+    public function test_plugins_page_renders_with_active_plugin_card_links(): void
+    {
+        // 全量巡检修复：插件卡片「专属管理入口」曾引用未注册路由
+        // （admin.plugins.push-notifications.campaigns / admin.plugins.image-optimizer.stats），
+        // 插件启用后打开 /admin/plugins 渲染 route() 抛 RouteNotFoundException → 500
+        Plugin::create([
+            'plugin_id' => 'push-notifications', 'name' => 'Push Notifications',
+            'is_installed' => true, 'is_active' => true, 'settings' => '{}', 'datetime' => now(),
+        ]);
+
+        $admin = User::create([
+            'name' => '插件管理员', 'email' => uniqid('smoke-p-').'@admin.test',
+            'password' => bcrypt('secret123'), 'status' => 1, 'plan_id' => 'free', 'type' => 1,
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/plugins')
+            ->assertOk()
+            ->assertSee(route('admin.push-notifications.index'), false);
     }
 }

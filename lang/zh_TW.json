@@ -3444,5 +3444,8 @@
     "teams.invite_hint": "被邀請人登入後接受邀請即可加入團隊。",
     "teams.invite_email": "成員郵箱",
     "teams.grant_websites": "授權網站（可多選）",
-    "teams.send_invitation": "發送邀請"
+    "teams.send_invitation": "發送邀請",
+    "stats.session_detail": "會話詳情",
+    "auth.sms_code_required_for_login": "登入需要簡訊驗證碼。",
+    "validation.push_endpoint_not_allowed": "該推送端點不在允許清單中。"
 }

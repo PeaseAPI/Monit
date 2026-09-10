@@ -3444,5 +3444,8 @@
     "teams.invite_hint": "The invitee can accept the invitation after logging in.",
     "teams.invite_email": "Member email",
     "teams.grant_websites": "Grant website access",
-    "teams.send_invitation": "Send Invitation"
+    "teams.send_invitation": "Send Invitation",
+    "stats.session_detail": "Детали сессии",
+    "auth.sms_code_required_for_login": "Для входа требуется SMS-код подтверждения.",
+    "validation.push_endpoint_not_allowed": "Эта конечная точка push отсутствует в списке разрешённых."
 }

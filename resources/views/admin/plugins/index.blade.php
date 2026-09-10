@@ -65,11 +65,9 @@
                         <form method="POST" action="{{ route('admin.plugins.uninstall', $plugin['id']) }}" data-confirm="{{ __('admin.plugins_confirm_uninstall') }}">@csrf @method('DELETE')
                             <button class="rounded-xl bg-red-50 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-100">{{ __('admin.plugin_uninstall') }}</button>
                         </form>
-                        {{-- 插件专属管理入口 --}}
+                        {{-- 插件专属管理入口（必须指向真实注册的路由，渲染死链接会导致插件页 500） --}}
                         @if($plugin['id'] === 'push-notifications')
-                            <a href="{{ route('admin.plugins.push-notifications.campaigns') }}" class="rounded-xl border border-zinc-200 px-4 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50">{{ __('plugins.push.campaign_mgmt_link') }}</a>
-                        @elseif($plugin['id'] === 'image-optimizer')
-                            <a href="{{ route('admin.plugins.image-optimizer.stats') }}" class="rounded-xl border border-zinc-200 px-4 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50">{{ __('plugins.imgopt.stats_link') }}</a>
+                            <a href="{{ route('admin.push-notifications.index') }}" class="rounded-xl border border-zinc-200 px-4 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50">{{ __('plugins.push.campaign_mgmt_link') }}</a>
                         @endif
                     @else
                         <form method="POST" action="{{ route('admin.plugins.activate', $plugin['id']) }}">@csrf

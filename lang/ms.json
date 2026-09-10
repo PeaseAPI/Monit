@@ -3444,5 +3444,8 @@
     "teams.invite_hint": "The invitee can accept the invitation after logging in.",
     "teams.invite_email": "Member email",
     "teams.grant_websites": "Grant website access",
-    "teams.send_invitation": "Send Invitation"
+    "teams.send_invitation": "Send Invitation",
+    "stats.session_detail": "Butiran sesi",
+    "auth.sms_code_required_for_login": "Kod pengesahan SMS diperlukan untuk log masuk.",
+    "validation.push_endpoint_not_allowed": "Titik hujung tolakan ini tidak berada dalam senarai dibenarkan."
 }

@@ -3444,5 +3444,8 @@
     "teams.invite_hint": "被邀请人登录后接受邀请即可加入团队。",
     "teams.invite_email": "成员邮箱",
     "teams.grant_websites": "授权网站（可多选）",
-    "teams.send_invitation": "发送邀请"
+    "teams.send_invitation": "发送邀请",
+    "stats.session_detail": "会话详情",
+    "auth.sms_code_required_for_login": "登录需要短信验证码。",
+    "validation.push_endpoint_not_allowed": "该推送端点不在允许列表中。"
 }
