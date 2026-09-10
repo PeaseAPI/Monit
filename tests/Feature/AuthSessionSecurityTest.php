@@ -135,7 +135,7 @@ class AuthSessionSecurityTest extends TestCase
         ]);
 
         $this->get('/sso?'.$query);
-        $this->assertAuthenticatedAs($user, '首次合法 SSO 应成功登录');
+        $this->assertAuthenticatedAs($user);
 
         $this->post('/logout');
         $this->assertGuest();
