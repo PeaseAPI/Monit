@@ -68,6 +68,15 @@ chmod -R ug+rwX storage bootstrap/cache
 8. **GeoIP 库文件（重要！缺失时统计的国家/大洲维度全部显示"未知"）**：`sudo -u www php artisan geoip:update`——自动下载 db-ip 免费国家库（~5MB，免注册）到 `storage/app/geoip/country.mmdb`；调度器每月 1 日 02:00 自动更新。状态可在 后台 → 设置 → 健康检查 查看。（网页向导已自动执行此步）
 9. 队列Worker（启用队列时）：`php artisan queue:work --tries=3`（修改 `.env` / 重建缓存后需重启 Worker）
 
+## HTTPS 与会话/响应头安全（第十九轮实测结论）
+
+1. **HTTPS 站点必须在 `.env` 设 `SESSION_SECURE_COOKIE=true`**（本地 HTTP 调试勿设，否则登录不了）——实测 Cookie 已带 `httponly; samesite=lax`，HTTPS 下补 Secure 标志防明文信道窃取；
+2. **会话固定（fixation）防护已实测**：登录成功后 session id 强制轮换（Laravel `session()->regenerate()`），预置的未认证 session id 无法延续为登录态；无 CSRF token 的 POST 一律 419；
+3. **响应头现状**：`X-Content-Type-Options: nosniff` 无条件输出；`Referrer-Policy` 未配置时输出安全默认 `strict-origin-when-cross-origin`（后台 设置→main.referrer_policy 可覆盖）；`X-Frame-Options: DENY` 在后台关闭 iframe 嵌入后输出（默认允许嵌入为产品语义）；`X-Powered-By` 由 `public/index.php` 在 SAPI 层移除；
+4. **CSP 决策（未启用强 Content-Security-Policy）**：产品含大量内联脚本/样式、第三方站点嵌入语义与 rrweb 录制组件，强 CSP 极易破坏页面且误报成本高；现有 XFO/nosniff/Referrer-Policy 基线已覆盖主要注入面。如需启用，先以 `Content-Security-Policy-Report-Only` 观测收集违规，逐步收紧。
+
+
+
 ## 安全运维：APP_KEY 备份与 .env 权限（重要）
 
 `APP_KEY` 是全站加密基座，并承担**用户 API Key 的加密解密**（API Key 明文不落库，改为「SHA-256 查找哈希 + Crypt 加密」双列存储）：
