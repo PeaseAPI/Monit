@@ -13,6 +13,7 @@ use App\Support\Brand;
 use App\Support\Currency;
 use App\Support\Settings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -24,7 +25,7 @@ class IndexController extends Controller
 {
     public function index(Request $request)
     {
-        if (auth()->check()) {
+        if (Auth::check()) {
             return redirect()->route('dashboard');
         }
 

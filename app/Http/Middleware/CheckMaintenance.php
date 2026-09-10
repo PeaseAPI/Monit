@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Support\Settings;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -27,7 +28,7 @@ class CheckMaintenance
             return $next($request);
         }
 
-        if (auth()->check() && auth()->user()->isAdmin()) {
+        if (Auth::check() && Auth::user()->isAdmin()) {
             return $next($request);
         }
 
