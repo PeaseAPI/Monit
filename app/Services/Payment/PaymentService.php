@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Services\WebhookService;
 use App\Support\Currency;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -189,28 +190,33 @@ class PaymentService
      */
     private function settlePayment(Payment $payment, string $externalId, ?string $subscriptionId = null): Payment
     {
-        $payment->update([
-            'external_id' => $externalId,
-            'status' => 1, // paid
-            'last_datetime' => now(),
-        ]);
-
-        $user = $payment->user;
-
-        if ($user) {
-            // 更新用户支付信息（记账口径与直接入账路径一致）
-            $user->update([
-                'payment_subscription_id' => $subscriptionId,
-                'payment_processor' => $payment->payment_processor,
-                'payment_total_amount' => ($user->payment_total_amount ?? 0) + $payment->total_amount,
-                'payment_currency' => $payment->currency,
+        // 事务保证「置 paid + 累计支付总额 + 激活套餐」原子性：
+        // 部分失败会产生已付款未升级/金额漏计，外部对账难以复原
+        DB::transaction(function () use ($payment, $externalId, $subscriptionId): void {
+            $payment->update([
+                'external_id' => $externalId,
+                'status' => 1, // paid
+                'last_datetime' => now(),
             ]);
 
-            // 激活套餐
-            $this->activatePlan($user, $payment);
-        }
+            $user = $payment->user;
+
+            if ($user) {
+                // 更新用户支付信息（记账口径与直接入账路径一致）
+                $user->update([
+                    'payment_subscription_id' => $subscriptionId,
+                    'payment_processor' => $payment->payment_processor,
+                    'payment_total_amount' => ($user->payment_total_amount ?? 0) + $payment->total_amount,
+                    'payment_currency' => $payment->currency,
+                ]);
+
+                // 激活套餐
+                $this->activatePlan($user, $payment);
+            }
+        });
 
         // 平台 Webhook 派发（规格 §6.3.1：webhooks.webhook_payment_success_url）
+        // HTTP 外呼置于事务提交之后：通知失败不应回滚支付入账
         app(WebhookService::class)->paymentSuccess([
             'payment_id' => $payment->payment_id,
             'user_id' => $payment->user_id,

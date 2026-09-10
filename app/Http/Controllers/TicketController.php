@@ -7,6 +7,7 @@ use App\Models\TicketReply;
 use App\Support\TicketNotifications;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
@@ -31,25 +32,30 @@ class TicketController extends Controller
     {
         $validated = $this->validated($request);
 
-        $ticket = Ticket::create([
-            'user_id' => $request->user()->user_id,
-            'email' => $request->user()->email,
-            'subject' => $validated['subject'],
-            'category' => $validated['category'],
-            'priority' => $validated['priority'],
-            'status' => Ticket::STATUS_OPEN,
-            'datetime' => now(),
-            'last_reply_at' => now(),
-        ]);
+        // 工单与首条回复同事务落库：部分失败会产生无回复的空工单或孤儿回复
+        $ticket = DB::transaction(function () use ($request, $validated): Ticket {
+            $ticket = Ticket::create([
+                'user_id' => $request->user()->user_id,
+                'email' => $request->user()->email,
+                'subject' => $validated['subject'],
+                'category' => $validated['category'],
+                'priority' => $validated['priority'],
+                'status' => Ticket::STATUS_OPEN,
+                'datetime' => now(),
+                'last_reply_at' => now(),
+            ]);
 
-        TicketReply::create([
-            'ticket_id' => $ticket->ticket_id,
-            'user_id' => $request->user()->user_id,
-            'is_staff' => false,
-            'message' => $validated['message'],
-            'via' => 'web',
-            'datetime' => now(),
-        ]);
+            TicketReply::create([
+                'ticket_id' => $ticket->ticket_id,
+                'user_id' => $request->user()->user_id,
+                'is_staff' => false,
+                'message' => $validated['message'],
+                'via' => 'web',
+                'datetime' => now(),
+            ]);
+
+            return $ticket;
+        });
 
         try {
             TicketNotifications::notifyAdminsTicketCreated($ticket, $validated['message']);
@@ -80,16 +86,21 @@ class TicketController extends Controller
             return back()->withErrors(['message' => __('msg.ticket_closed_no_reply')]);
         }
 
-        $reply = TicketReply::create([
-            'ticket_id' => $ticket->ticket_id,
-            'user_id' => $request->user()->user_id,
-            'is_staff' => false,
-            'message' => $validated['message'],
-            'via' => 'web',
-            'datetime' => now(),
-        ]);
+        // 回复落库与工单状态回转同事务
+        $reply = DB::transaction(function () use ($ticket, $request, $validated): TicketReply {
+            $reply = TicketReply::create([
+                'ticket_id' => $ticket->ticket_id,
+                'user_id' => $request->user()->user_id,
+                'is_staff' => false,
+                'message' => $validated['message'],
+                'via' => 'web',
+                'datetime' => now(),
+            ]);
 
-        $ticket->update(['status' => Ticket::STATUS_OPEN, 'last_reply_at' => now()]);
+            $ticket->update(['status' => Ticket::STATUS_OPEN, 'last_reply_at' => now()]);
+
+            return $reply;
+        });
 
         try {
             TicketNotifications::notifyAdminsTicketReplied($ticket, $reply);

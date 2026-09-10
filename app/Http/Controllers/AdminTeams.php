@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Team;
 use App\Models\TeamMember;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 管理后台 - 团队与成员管理
@@ -34,9 +35,12 @@ class AdminTeams extends Controller
     {
         $team = Team::findOrFail($teamId);
         // 逐条删除以触发 TeamMember::deleting 钩子（级联清理关联；
-        // 批量 delete() 不触发模型事件）
-        $team->members()->get()->each->delete();
-        $team->delete();
+        // 批量 delete() 不触发模型事件）。整体包事务，成员清理与
+        // 团队删除要么都成功要么都不动
+        DB::transaction(function () use ($team): void {
+            $team->members()->get()->each->delete();
+            $team->delete();
+        });
 
         return redirect()->route('admin.teams.index')
             ->with('success', __('msg.team_deleted'));

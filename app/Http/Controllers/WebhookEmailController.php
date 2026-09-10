@@ -9,6 +9,7 @@ use App\Support\Settings;
 use App\Support\TicketNotifications;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 邮件入站 Webhook（A4 工单邮件整合）
@@ -53,16 +54,21 @@ class WebhookEmailController extends Controller
             $ticket = Ticket::find((int) $m[1]);
 
             if ($ticket && $ticket->status !== Ticket::STATUS_CLOSED) {
-                $reply = TicketReply::create([
-                    'ticket_id' => $ticket->ticket_id,
-                    'user_id' => $this->resolveUserId($from) ?? $ticket->user_id,
-                    'is_staff' => false,
-                    'message' => $text,
-                    'via' => 'email',
-                    'datetime' => now(),
-                ]);
+                // 回复落库与工单状态回转同事务
+                [$reply] = DB::transaction(function () use ($ticket, $from, $text): array {
+                    $reply = TicketReply::create([
+                        'ticket_id' => $ticket->ticket_id,
+                        'user_id' => $this->resolveUserId($from) ?? $ticket->user_id,
+                        'is_staff' => false,
+                        'message' => $text,
+                        'via' => 'email',
+                        'datetime' => now(),
+                    ]);
 
-                $ticket->update(['status' => Ticket::STATUS_OPEN, 'last_reply_at' => now()]);
+                    $ticket->update(['status' => Ticket::STATUS_OPEN, 'last_reply_at' => now()]);
+
+                    return [$reply, $ticket];
+                });
 
                 try {
                     TicketNotifications::notifyAdminsTicketReplied($ticket, $reply);
@@ -74,26 +80,30 @@ class WebhookEmailController extends Controller
             }
         }
 
-        // 新工单（游客邮件直达支持邮箱）
-        $ticket = Ticket::create([
-            'user_id' => $this->resolveUserId($from),
-            'email' => $from,
-            'subject' => mb_substr($subject !== '' ? $subject : __('tickets.email_default_subject'), 0, 256),
-            'category' => 'general',
-            'priority' => 'normal',
-            'status' => Ticket::STATUS_OPEN,
-            'datetime' => now(),
-            'last_reply_at' => now(),
-        ]);
+        // 新工单（游客邮件直达支持邮箱）——建单与首条回复同事务
+        $ticket = DB::transaction(function () use ($from, $subject, $text): Ticket {
+            $ticket = Ticket::create([
+                'user_id' => $this->resolveUserId($from),
+                'email' => $from,
+                'subject' => mb_substr($subject !== '' ? $subject : __('tickets.email_default_subject'), 0, 256),
+                'category' => 'general',
+                'priority' => 'normal',
+                'status' => Ticket::STATUS_OPEN,
+                'datetime' => now(),
+                'last_reply_at' => now(),
+            ]);
 
-        TicketReply::create([
-            'ticket_id' => $ticket->ticket_id,
-            'user_id' => $ticket->user_id,
-            'is_staff' => false,
-            'message' => $text,
-            'via' => 'email',
-            'datetime' => now(),
-        ]);
+            TicketReply::create([
+                'ticket_id' => $ticket->ticket_id,
+                'user_id' => $ticket->user_id,
+                'is_staff' => false,
+                'message' => $text,
+                'via' => 'email',
+                'datetime' => now(),
+            ]);
+
+            return $ticket;
+        });
 
         try {
             TicketNotifications::notifyAdminsTicketCreated($ticket, $text);

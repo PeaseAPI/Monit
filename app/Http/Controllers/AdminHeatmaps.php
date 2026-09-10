@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Heatmap;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 管理后台 - 平台级热图管理
@@ -27,11 +28,14 @@ class AdminHeatmaps extends Controller
     {
         $heatmap = Heatmap::with('snapshots')->findOrFail($heatmapId);
 
-        // 级联删除快照与点击/滚动数据
-        foreach ($heatmap->snapshots as $snapshot) {
-            $snapshot->delete();
-        }
-        $heatmap->delete();
+        // 快照与主记录同事务删除，避免留下孤儿快照
+        DB::transaction(function () use ($heatmap): void {
+            // 级联删除快照与点击/滚动数据
+            foreach ($heatmap->snapshots as $snapshot) {
+                $snapshot->delete();
+            }
+            $heatmap->delete();
+        });
 
         return redirect()->route('admin.heatmaps.index')
             ->with('success', __('msg.heatmap_deleted'));

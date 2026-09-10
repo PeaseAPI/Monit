@@ -73,8 +73,8 @@ class SsoController extends Controller
         $request->session()->regenerate();
 
         Auth::login($user);
-        $user->increment('total_logins');
-        $user->update(['last_activity' => now()]);
+        // 单条原子 SQL：登录计数自增 + 活跃时间，替代两次写
+        $user->increment('total_logins', 1, ['last_activity' => now()]);
 
         return redirect()->intended(route('dashboard'));
     }

@@ -7,6 +7,7 @@ use App\Models\TeamMember;
 use App\Models\TeamMemberAssociation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 用户中心 - 团队协作
@@ -91,24 +92,27 @@ class TeamController extends Controller
             ->values()
             ->all();
 
-        $member = TeamMember::create([
-            'team_id' => $team->team_id,
-            'user_email' => $validated['user_email'],
-            'websites_ids' => $websiteIds,
-            'access' => $validated['access'] ?? ['view'],
-            'status' => 0, // pending
-            'datetime' => now(),
-        ]);
-
-        // 成员-网站授权关联（规格书 §6.2.4：teams-associations）
-        foreach ($websiteIds as $websiteId) {
-            TeamMemberAssociation::create([
-                'team_member_id' => $member->team_member_id,
-                'website_id' => $websiteId,
-                'access' => ['view'],
+        // 成员与网站授权关联同事务落库，避免出现无关联的悬空成员
+        DB::transaction(function () use ($team, $validated, $websiteIds): void {
+            $member = TeamMember::create([
+                'team_id' => $team->team_id,
+                'user_email' => $validated['user_email'],
+                'websites_ids' => $websiteIds,
+                'access' => $validated['access'] ?? ['view'],
+                'status' => 0, // pending
                 'datetime' => now(),
             ]);
-        }
+
+            // 成员-网站授权关联（规格书 §6.2.4：teams-associations）
+            foreach ($websiteIds as $websiteId) {
+                TeamMemberAssociation::create([
+                    'team_member_id' => $member->team_member_id,
+                    'website_id' => $websiteId,
+                    'access' => ['view'],
+                    'datetime' => now(),
+                ]);
+            }
+        });
 
         return back()->with('success', __('msg.invitation_sent', ['email' => $validated['user_email']]));
     }
@@ -154,9 +158,12 @@ class TeamController extends Controller
             ->firstOrFail();
 
         // 逐条删除以触发 TeamMember::deleting 钩子（级联清理关联；
-        // 批量 delete() 不触发模型事件）
-        $team->members()->get()->each->delete();
-        $team->delete();
+        // 批量 delete() 不触发模型事件）。整体包事务，成员清理与
+        // 团队删除要么都成功要么都不动
+        DB::transaction(function () use ($team): void {
+            $team->members()->get()->each->delete();
+            $team->delete();
+        });
 
         return redirect()->route('teams.index')
             ->with('success', __('msg.team_deleted'));

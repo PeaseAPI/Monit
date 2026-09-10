@@ -27,31 +27,30 @@ class AdminAffiliatesWithdrawals extends Controller
 
     public function approve(int $withdrawalId): RedirectResponse
     {
-        $withdrawal = AffiliateWithdrawal::findOrFail($withdrawalId);
+        // 状态机：仅 pending 可审批（安全审计周期 #16）。条件原子更新将
+        // 状态检查与写入合一，消除读检查→写之间的并发窗口（double-submit
+        // / approve 与 reject 并发互覆）。注：表无 processed_datetime 列，
+        // 不要在此写入（并发审计周期 #5 复核）
+        $affected = AffiliateWithdrawal::where('affiliate_withdrawal_id', $withdrawalId)
+            ->where('status', 'pending')
+            ->update(['status' => 'approved']);
 
-        // 状态机：仅 pending 可审批（安全审计周期 #16）。对齐同模型的
-        // AdminPayments::approveWithdrawal 入口与 bulkUpdate 的
-        // where('status','pending')，防止已终态提现被翻转/重复审批
-        // （重复支付风险）。注：processed_datetime 此前指向不存在的列
-        // 且不在 fillable，属静默丢弃的死代码，一并移除
-        if ($withdrawal->status !== 'pending') {
+        if (! $affected) {
             return back()->withErrors(['status' => __('referrals.withdrawal_not_pending')]);
         }
-
-        $withdrawal->update(['status' => 'approved']);
 
         return back()->with('success', __('msg.withdrawal_approved'));
     }
 
     public function reject(int $withdrawalId): RedirectResponse
     {
-        $withdrawal = AffiliateWithdrawal::findOrFail($withdrawalId);
+        $affected = AffiliateWithdrawal::where('affiliate_withdrawal_id', $withdrawalId)
+            ->where('status', 'pending')
+            ->update(['status' => 'rejected']);
 
-        if ($withdrawal->status !== 'pending') {
+        if (! $affected) {
             return back()->withErrors(['status' => __('referrals.withdrawal_not_pending')]);
         }
-
-        $withdrawal->update(['status' => 'rejected']);
 
         return back()->with('success', __('msg.withdrawal_rejected'));
     }
@@ -65,9 +64,12 @@ class AdminAffiliatesWithdrawals extends Controller
         ]);
 
         $method = $validated['action'] === 'approve' ? 'approved' : 'rejected';
-        AffiliateWithdrawal::whereIn('id', $validated['ids'])
+        // 修复：主键列名为 affiliate_withdrawal_id（原 whereIn('id') 对不存在的
+        // 列查询必抛 500），且此前写入不存在的 processed_datetime 列——
+        // 批量审批从未可用
+        AffiliateWithdrawal::whereIn('affiliate_withdrawal_id', $validated['ids'])
             ->where('status', 'pending')
-            ->update(['status' => $method, 'processed_datetime' => now()]);
+            ->update(['status' => $method]);
 
         return back()->with('success', __('msg.bulk_update_success'));
     }

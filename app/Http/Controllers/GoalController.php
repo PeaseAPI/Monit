@@ -7,6 +7,7 @@ use App\Models\Website;
 use App\Models\WebsiteGoal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 用户中心 - 目标转化管理
@@ -88,9 +89,13 @@ class GoalController extends Controller
             ->where('user_id', $request->user()->user_id)
             ->firstOrFail();
         $websiteId = $website->website_id;
-        $goal->delete();
 
-        GoalConversion::where('goal_id', $goalId)->delete();
+        // 目标与转化记录同事务删除，避免留下指向已删目标的孤儿转化
+        DB::transaction(function () use ($goal, $goalId): void {
+            $goal->delete();
+
+            GoalConversion::where('goal_id', $goalId)->delete();
+        });
 
         return redirect()->route('stats.goals', ['website' => $websiteId])
             ->with('success', __('msg.goal_deleted'));

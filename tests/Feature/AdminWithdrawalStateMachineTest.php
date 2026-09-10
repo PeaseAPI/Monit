@@ -66,6 +66,38 @@ class AdminWithdrawalStateMachineTest extends TestCase
         $this->assertSame('rejected', $w->fresh()->status);
     }
 
+    public function test_rejected_write_is_blocked_atomically(): void
+    {
+        // 条件原子更新：非 pending 状态下 approve/reject 的 update 影响 0 行，
+        // 状态不得被翻转（double-submit / approve 与 reject 并发竞态防护）
+        $approved = $this->withdrawal('approved');
+
+        $this->actingAs($this->admin)
+            ->put("/admin/affiliates-withdrawals/{$approved->affiliate_withdrawal_id}/reject")
+            ->assertSessionHasErrors('status');
+
+        $this->assertSame('approved', $approved->fresh()->status);
+    }
+
+    public function test_bulk_update_only_touches_pending_rows(): void
+    {
+        // 批量审批此前写入不存在的 id/processed_datetime 列必抛 500，从未可用
+        $pending = $this->withdrawal('pending');
+        $approved = $this->withdrawal('approved');
+
+        $this->actingAs($this->admin)
+            ->post('/admin/affiliates-withdrawals/bulk', [
+                'action' => 'reject',
+                'ids' => [$pending->affiliate_withdrawal_id, $approved->affiliate_withdrawal_id],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame('rejected', $pending->fresh()->status);
+        // 已终态行不受批量操作影响
+        $this->assertSame('approved', $approved->fresh()->status);
+    }
+
     public function test_approved_withdrawal_cannot_be_reapproved(): void
     {
         $w = $this->withdrawal('approved');

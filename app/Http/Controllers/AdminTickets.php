@@ -6,6 +6,7 @@ use App\Models\Ticket;
 use App\Models\TicketReply;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
@@ -48,16 +49,21 @@ class AdminTickets extends Controller
 
         $ticket = Ticket::findOrFail($ticketId);
 
-        $reply = TicketReply::create([
-            'ticket_id' => $ticket->ticket_id,
-            'user_id' => $request->user()->user_id,
-            'is_staff' => true,
-            'message' => $validated['message'],
-            'via' => 'web',
-            'datetime' => now(),
-        ]);
+        // 回复落库与工单状态置 ANSWERED 同事务
+        $reply = DB::transaction(function () use ($ticket, $request, $validated): TicketReply {
+            $reply = TicketReply::create([
+                'ticket_id' => $ticket->ticket_id,
+                'user_id' => $request->user()->user_id,
+                'is_staff' => true,
+                'message' => $validated['message'],
+                'via' => 'web',
+                'datetime' => now(),
+            ]);
 
-        $ticket->update(['status' => Ticket::STATUS_ANSWERED, 'last_reply_at' => now()]);
+            $ticket->update(['status' => Ticket::STATUS_ANSWERED, 'last_reply_at' => now()]);
+
+            return $reply;
+        });
 
         // 通知提交人（登录用户或游客邮箱）：登录查看详情 / 游客邮件往来
         try {
@@ -81,8 +87,12 @@ class AdminTickets extends Controller
     public function destroy(int $ticketId): RedirectResponse
     {
         $ticket = Ticket::findOrFail($ticketId);
-        $ticket->replies()->delete();
-        $ticket->delete();
+
+        // 回复与工单同事务删除，避免留下孤儿回复
+        DB::transaction(function () use ($ticket): void {
+            $ticket->replies()->delete();
+            $ticket->delete();
+        });
 
         return redirect()->route('admin.tickets.index')->with('success', __('msg.ticket_deleted'));
     }

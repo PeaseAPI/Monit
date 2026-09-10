@@ -16,6 +16,7 @@ use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -400,26 +401,31 @@ class AuthController extends Controller
         $requireActivation = filter_var(Settings::get('users.email_activation_is_enabled'), FILTER_VALIDATE_BOOLEAN);
         $activationCode = $requireActivation ? Str::random(64) : null;
 
-        $user = User::create([
-            'type' => 0,
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-            'phone' => $phone,
-            'phone_verified_at' => $phone ? now() : null,
-            'plan_id' => 'free',
-            'referral_key' => Str::random(32),
-            'api_key' => Str::random(60),
-            'language' => self::defaultLanguage(),
-            'timezone' => self::defaultTimezone(),
-            'status' => $requireActivation ? 0 : 1,
-            'email_activation_code' => $activationCode,
-            'ip' => $request->ip(),
-            'source' => 'direct',
-            'referred_by' => $referredBy,
-        ]);
+        // 注册落库与账号日志同事务，避免日志缺失导致注册审计断链
+        $user = DB::transaction(function () use ($validated, $phone, $requireActivation, $activationCode, $referredBy, $request): User {
+            $user = User::create([
+                'type' => 0,
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => $validated['password'],
+                'phone' => $phone,
+                'phone_verified_at' => $phone ? now() : null,
+                'plan_id' => 'free',
+                'referral_key' => Str::random(32),
+                'api_key' => Str::random(60),
+                'language' => self::defaultLanguage(),
+                'timezone' => self::defaultTimezone(),
+                'status' => $requireActivation ? 0 : 1,
+                'email_activation_code' => $activationCode,
+                'ip' => $request->ip(),
+                'source' => 'direct',
+                'referred_by' => $referredBy,
+            ]);
 
-        $this->logAccount($user, 'register');
+            $this->logAccount($user, 'register');
+
+            return $user;
+        });
 
         // 平台 Webhook：用户注册（规格 §6.3.1：webhooks.webhook_user_register_url）
         app(WebhookService::class)->userRegister([

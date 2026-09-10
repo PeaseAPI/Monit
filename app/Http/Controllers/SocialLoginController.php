@@ -531,13 +531,16 @@ class SocialLoginController extends Controller
             'source' => $provider,
             'avatar' => $userInfo['avatar'],
             'referred_by' => $referredBy,
+            // 登录计数合并进创建（fillable 已含这两列），消除「注册后再
+            // 单独 save」的第二写窗口
+            'last_activity' => now(),
+            'total_logins' => 1,
         ]);
 
         // 会话固定防护：新注册即登录同样更换 session id
         session()->regenerate();
 
         Auth::login($user, true);
-        $user->forceFill(['last_activity' => now(), 'total_logins' => 1])->save();
 
         return redirect()->route('dashboard')
             ->with('success', __('msg.welcome_monit'));
