@@ -14,6 +14,12 @@ class NetworkTools
 {
     protected function fetch(string $url): array
     {
+        // SSRF 防护：拦截内网/环回/云元数据目标
+        $blocked = AuditEngine::rejectUnsafeUrl($url);
+        if ($blocked !== null) {
+            return ['ok' => false, 'error' => $blocked];
+        }
+
         try {
             $started = microtime(true);
             $response = Http::timeout(20)->withOptions(['verify' => false])->get(AuditEngine::normalizeUrl($url));
@@ -213,6 +219,13 @@ class NetworkTools
         $visited = 0;
 
         while ($visited < 10) {
+            // SSRF 防护：重定向的每一跳都可能是内网地址（Location 由目标站
+            // 可控），逐跳校验，命中即中断并回显原因
+            $blocked = AuditEngine::rejectUnsafeUrl($current);
+            if ($blocked !== null) {
+                return ['ok' => false, 'error' => $blocked, 'data' => []];
+            }
+
             try {
                 $response = Http::timeout(15)->withOptions(['verify' => false, 'allow_redirects' => false])->get($current);
             } catch (Throwable $e) {
@@ -296,6 +309,12 @@ class NetworkTools
 
     public function brotliChecker(array $in): array
     {
+        // SSRF 防护：拦截内网/环回/云元数据目标
+        $blocked = AuditEngine::rejectUnsafeUrl(AuditEngine::normalizeUrl((string) ($in['url'] ?? '')));
+        if ($blocked !== null) {
+            return ['ok' => false, 'error' => $blocked, 'data' => []];
+        }
+
         try {
             $response = Http::timeout(20)
                 ->withHeaders(['Accept-Encoding' => 'gzip, br'])

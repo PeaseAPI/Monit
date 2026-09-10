@@ -2,6 +2,7 @@
 
 namespace App\Services\Seo\Tools;
 
+use App\Services\Seo\AuditEngine;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Throwable;
@@ -276,7 +277,13 @@ class DevTools
      */
     public function plaintextEmail(array $in): array
     {
-        $url = trim((string) ($in['url'] ?? ''));
+        $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
+
+        // SSRF 防护：拦截内网/环回/云元数据目标
+        $blocked = AuditEngine::rejectUnsafeUrl($url);
+        if ($blocked !== null) {
+            return ['ok' => false, 'error' => $blocked, 'data' => []];
+        }
 
         try {
             $html = (string) Http::timeout(20)->get($url)->body();

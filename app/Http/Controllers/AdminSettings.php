@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * 管理后台 - 系统设置（AdminSettings，94K 最大控制器）
@@ -728,7 +729,7 @@ class AdminSettings extends Controller
                 // 用户反馈 #21：文件上传（上传优先于 URL 直填）
                 'logo_upload' => 'nullable|image|max:2048',
                 'logo_dark_upload' => 'nullable|image|max:2048',
-                'favicon_upload' => 'nullable|file|mimes:ico,png,svg,webp|max:2048',
+                'favicon_upload' => 'nullable|file|mimes:ico,png,webp|max:2048',
             ],
             'custom' => [
                 'custom_head_js' => 'nullable|string',
@@ -888,12 +889,32 @@ class AdminSettings extends Controller
             }
 
             $file = $request->file($uploadField);
-            $filename = Str::random(16) . '.' . $file->getClientOriginalExtension();
+
+            // 扩展名白名单：getClientOriginalExtension() 是客户端可控的原始
+            // 值，不校验可落 .html/.shtml（浏览器按 text/html 渲染 → 存储
+            // 型 XSS）等；与头像上传白名单对齐。favicon 额外允许 ico（浏览器
+            // 按 image 渲染，不可执行脚本）；svg 是 XSS 载体，验证层与白名单
+            // 一致地拒绝。.php 系另有 Laravel shouldBlockPhpUpload 兜底
+            $allowedExt = $uploadField === 'favicon_upload'
+                ? ['ico', 'png', 'gif', 'webp']
+                : ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $ext = strtolower(trim($file->getClientOriginalExtension()));
+            if (! in_array($ext, $allowedExt, true)) {
+                throw ValidationException::withMessages([
+                    $uploadField => __('validation.image', ['attribute' => $uploadField]),
+                ]);
+            }
+
+            $filename = Str::random(16) . '.' . $ext;
 
             // 删除旧文件（如有）
             $oldUrl = $validated[$urlField] ?? Settings::get("branding.{$urlField}", '');
             if ($oldUrl && str_starts_with($oldUrl, '/storage/branding/')) {
                 $oldPath = str_replace('/storage/', '', $oldUrl);
+                // 路径穿越防护：settings 里的 URL 理论上可含 ../（磁盘相对根解析）
+                if (str_contains($oldPath, '..')) {
+                    continue;
+                }
                 $disk->delete($oldPath);
             }
 

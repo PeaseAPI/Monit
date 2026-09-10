@@ -15,6 +15,7 @@ use App\Services\Seo\Tests\MiscTests;
 use App\Services\Seo\Tests\PerformanceTests;
 use App\Services\Seo\Tests\SecurityTests;
 use App\Support\Settings;
+use App\Support\WebhookSignature;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -200,6 +201,12 @@ class AuditEngine
      */
     protected function request(string $url, int $timeout, string $ua, int $attempt = 0): Response
     {
+        // SSRF 防护：audit 目标 host 由用户配置（免费注册即可添加网站），
+        // 不校验可探测内网/云元数据；不安全时模拟"无法访问"响应走既有分支
+        if (self::rejectUnsafeUrl($url) !== null) {
+            return new Response(new \GuzzleHttp\Psr7\Response(0, [], 'blocked by ssrf guard'), 'blocked by ssrf guard');
+        }
+
         try {
             $response = Http::withHeaders(['User-Agent' => $ua])
                 ->timeout($timeout)
@@ -365,5 +372,22 @@ class AuditEngine
         }
 
         return $url;
+    }
+
+    /**
+     * SSRF 防护（并发审计周期 #6）：SEO 抓取/工具的出站 URL 统一校验，
+     * 复用 webhook 的私网/环回/链路本地/云元数据判定（字面 IP 直接判、
+     * 域名经 DNS 解析后判）。返回 null 表示允许抓取；否则返回拒绝原因
+     * （回显给工具前端）。逃生阀与 webhook 共用 services.webhooks.allow_private_targets
+     */
+    public static function rejectUnsafeUrl(?string $url): ?string
+    {
+        $url = trim((string) $url);
+
+        if ($url === '' || ! WebhookSignature::isSafeHttpUrl($url)) {
+            return '该地址不允许抓取：内网/环回/链路本地目标已被拦截';
+        }
+
+        return null;
     }
 }

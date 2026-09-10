@@ -23,6 +23,12 @@ class SeoCheckTools
     {
         $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
 
+        // SSRF 防护：拦截内网/环回/云元数据目标
+        $blocked = AuditEngine::rejectUnsafeUrl($url);
+        if ($blocked !== null) {
+            return ['ok' => false, 'html' => '', 'headers' => [], 'dom' => null, 'status' => 0, 'error' => $blocked];
+        }
+
         try {
             $response = Http::timeout(20)->withOptions(['verify' => false])->get($url);
         } catch (Throwable $e) {
@@ -159,6 +165,12 @@ class SeoCheckTools
         $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
         $host = (string) parse_url($url, PHP_URL_HOST);
         $scheme = (string) (parse_url($url, PHP_URL_SCHEME) ?: 'https');
+
+        // SSRF 防护：拦截内网/环回/云元数据目标
+        $blocked = AuditEngine::rejectUnsafeUrl($url);
+        if ($blocked !== null) {
+            return ['ok' => false, 'error' => $blocked, 'data' => []];
+        }
 
         try {
             $response = Http::timeout(15)->get("{$scheme}://{$host}/robots.txt");
@@ -334,7 +346,11 @@ class SeoCheckTools
         $broken = [];
         foreach (array_keys($links) as $link) {
             try {
-                $status = Http::timeout(10)->withOptions(['verify' => false])->head($link)->status();
+                // SSRF 防护：页面内链接可能指向内网（内容可控），不安全链接
+                // 按"探测失败"归入坏链，不发起请求
+                $status = AuditEngine::rejectUnsafeUrl($link) !== null
+                    ? 0
+                    : Http::timeout(10)->withOptions(['verify' => false])->head($link)->status();
             } catch (Throwable) {
                 $status = 0;
             }
@@ -683,6 +699,14 @@ class SeoCheckTools
      */
     public function duplicateContent(array $in): array
     {
+        // SSRF 防护：两个对比 URL 均为用户输入
+        foreach (['url_a', 'url_b'] as $field) {
+            $blocked = AuditEngine::rejectUnsafeUrl(AuditEngine::normalizeUrl((string) ($in[$field] ?? '')));
+            if ($blocked !== null) {
+                return ['ok' => false, 'error' => $blocked, 'data' => []];
+            }
+        }
+
         try {
             $a = (string) Http::timeout(20)->get(AuditEngine::normalizeUrl((string) ($in['url_a'] ?? '')))->body();
             $b = (string) Http::timeout(20)->get(AuditEngine::normalizeUrl((string) ($in['url_b'] ?? '')))->body();
