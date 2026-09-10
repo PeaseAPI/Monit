@@ -33,6 +33,10 @@ class ApplyPlatformHeaders
 
         $response = $next($request);
 
+        // 第十三轮：nosniff 无条件输出——禁 MIME 嗅探，确保 uploads/CSV 等响应
+        // 按声明 Content-Type 处理，杜绝多态文件被嗅探为 HTML/JS 执行
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+
         if (! $iframeAllowed) {
             $response->headers->set('X-Frame-Options', 'DENY');
         }
