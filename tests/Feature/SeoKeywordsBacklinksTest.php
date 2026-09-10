@@ -213,4 +213,50 @@ class SeoKeywordsBacklinksTest extends TestCase
         $this->assertStringContainsString('blog-one.test/post', $html);
         $this->assertStringContainsString('Dofollow', $html);
     }
+
+    /** 第十二轮：source_url 协议白名单——javascript:（FILTER_VALIDATE_URL 合法但可执行）不得入库 */
+    public function test_backlink_source_url_rejects_javascript_scheme(): void
+    {
+        $this->actingAs($this->user)
+            ->post(route('seo.backlinks.store'), [
+                'source_url' => 'javascript:alert(document.cookie)',
+                'target_url' => 'https://seo-target.test/',
+            ])
+            ->assertSessionHasErrors('source_url');
+
+        $this->assertDatabaseCount('seo_backlinks', 0);
+
+        // 合法 https 正常入库
+        $this->actingAs($this->user)
+            ->post(route('seo.backlinks.store'), [
+                'source_url' => 'https://blog-external.test/post/1',
+                'target_url' => 'https://seo-target.test/',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('seo_backlinks', ['source_host' => 'blog-external.test']);
+    }
+
+    /** 第十二轮：纵深防御——存量 javascript: 数据（历史落库/直插 DB）渲染时不得进入 href */
+    public function test_backlink_view_never_renders_javascript_href(): void
+    {
+        SeoBacklink::create([
+            'user_id' => $this->user->user_id,
+            'website_id' => $this->website->website_id,
+            'source_url' => 'javascript:alert(document.cookie)',
+            'source_host' => 'evil.test',
+            'target_url' => 'https://seo-target.test/',
+            'rel' => 'dofollow',
+            'status' => 'pending',
+            'first_seen_at' => now(),
+        ]);
+
+        $html = $this->actingAs($this->user)
+            ->get(route('seo.backlinks'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringNotContainsString('href="javascript:', $html, '存量恶意协议数据不得渲染为可点击 href');
+        $this->assertStringContainsString('href="#"', $html);
+    }
 }

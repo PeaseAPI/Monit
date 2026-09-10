@@ -72,7 +72,7 @@
             @forelse ($links as $link)
                 <tr>
                     <td class="max-w-xs px-6 py-3">
-                        <a href="{{ $link->source_url }}" target="_blank" rel="noopener nofollow" class="block truncate font-medium text-indigo-600 hover:underline">{{ $link->source_url }}</a>
+                        <a href="{{ str_starts_with($link->source_url, 'http') ? $link->source_url : '#' }}" target="_blank" rel="noopener nofollow" class="block truncate font-medium text-indigo-600 hover:underline">{{ $link->source_url }}</a>
                         <p class="mt-0.5 text-xs text-zinc-500">{{ $link->source_host }}@if($link->dr !== null) · DR {{ $link->dr }}@endif</p>
                     </td>
                     <td class="max-w-[12rem] truncate px-6 py-3 text-zinc-600">{{ $link->anchor_text ?? '—' }}</td>

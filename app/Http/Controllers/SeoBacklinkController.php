@@ -47,9 +47,11 @@ class SeoBacklinkController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'source_url' => 'required|url|max:2048',
+            // 第十二轮：url 规则（FILTER_VALIDATE_URL）接受 javascript: 等任意
+            // 协议，而 source_url 会被输出进 href —— 收紧为 http/https 白名单
+            'source_url' => 'required|url:http,https|max:2048',
             'website_id' => 'nullable|integer|exists:websites,website_id',
-            'target_url' => 'nullable|url|max:2048',
+            'target_url' => 'nullable|url:http,https|max:2048',
             'anchor_text' => 'nullable|string|max:512',
             'rel' => 'nullable|in:dofollow,nofollow,unknown',
             'dr' => 'nullable|integer|min:0|max:100',
