@@ -77,6 +77,42 @@ chmod -R ug+rwX storage bootstrap/cache
 3. **升级自动平滑**：`git pull && php artisan migrate --force` 时迁移自动把存量明文 Key 转为加密形态，既有集成不失效、无需停机；
 4. **已部署站点严禁随手重跑** `php artisan key:generate`——会生成新 `APP_KEY`，旧加密数据全部不可解。
 
+## 备份与恢复（已演练验证）
+
+**备份**（`--single-transaction` 保证 InnoDB 一致性快照，不停机）：
+
+```bash
+mysqldump -u monit -p --single-transaction --routines --triggers monit | gzip > monit_$(date +%F).sql.gz
+# 同时确认 .env（APP_KEY）在备份介质中——见上一节：数据库 + APP_KEY 才是完整备份
+```
+
+**恢复**：
+
+```bash
+mysql -u monit -p -e "CREATE DATABASE monit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+gunzip < monit_2026-09-10.sql.gz | mysql -u monit -p monit
+```
+
+**恢复后校验**（表清单与行数比对，任何不一致立即排查）：
+
+```bash
+# 表数量应与备份一致（如 59）
+mysql -u monit -p -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='monit';"
+# 逐表行数核对（备份侧同法导出后 diff）
+mysql -u monit -p -N -e "SELECT table_name, table_rows FROM information_schema.tables WHERE table_schema='monit' ORDER BY table_name;" > restored.txt
+```
+
+**定期化**：crontab 每日 03:30 全量备份并保留 7 天：
+
+```cron
+30 3 * * * mysqldump -u monit -p'密码' --single-transaction --routines --triggers monit | gzip > /var/backups/monit_$(date +\%F).sql.gz && find /var/backups -name 'monit_*.sql.gz' -mtime +7 -delete
+```
+
+**注意**：
+1. `monit:license-generate` 会向 `storage/app/` 写入 license 文件与密钥对（**非只读命令**），生产环境勿随意执行；
+2. 恢复演练建议每季度一次：恢复到临时库（`monit_restore_drill`）→ 逐表行数比对 → 删除临时库，确保备份真实可用；
+3. 备份文件属敏感数据（含用户数据），权限 600、异地存放。
+
 ## 常见 500 排查（生产实录）
 
 | 报错 | 根因 | 修复 |
