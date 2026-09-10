@@ -124,7 +124,7 @@ class AuthSessionSecurityTest extends TestCase
         Settings::set('main.sso_is_enabled', 'true');
         Settings::set('main.sso_secret_key', 'test-sso-secret');
 
-        $this->makeUser(['email' => 'sso-replay@test.dev']);
+        $user = $this->makeUser(['email' => 'sso-replay@test.dev']);
 
         $ts = time();
         $token = hash_hmac('sha256', ":sso-replay@test.dev:{$ts}", 'test-sso-secret');
@@ -135,7 +135,7 @@ class AuthSessionSecurityTest extends TestCase
         ]);
 
         $this->get('/sso?'.$query);
-        $this->assertAuthenticated('web', '首次合法 SSO 应成功登录');
+        $this->assertAuthenticatedAs($user, '首次合法 SSO 应成功登录');
 
         $this->post('/logout');
         $this->assertGuest();
