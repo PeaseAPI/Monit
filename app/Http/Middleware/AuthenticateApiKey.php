@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Support\Settings;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -29,11 +30,22 @@ class AuthenticateApiKey
             return response()->json(['error' => 'Unauthorized — Bearer token required'], 401);
         }
 
+        // 失败尝试限流（安全审计周期 #7）：防 Bearer 爆破。仅失败计数、
+        // 成功即清零——不影响正常 API 流量（路由级 throttle 会误伤高频轮询）
+        $failures = 'api-key-failures.'.$request->ip();
+        if (RateLimiter::tooManyAttempts($failures, 10)) {
+            return response()->json(['error' => 'Too many invalid API key attempts'], 429);
+        }
+
         $user = User::where('api_key', $bearer)->first();
 
         if (! $user) {
+            RateLimiter::hit($failures, 900);
+
             return response()->json(['error' => 'Invalid API key'], 401);
         }
+
+        RateLimiter::clear($failures);
 
         if (isset($user->status) && $user->status !== 1) {
             return response()->json(['error' => 'Account disabled'], 403);

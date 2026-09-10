@@ -7,6 +7,7 @@ use App\Services\Sms\SmsService;
 use App\Services\TotpService;
 use App\Services\WebhookService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
@@ -175,9 +176,20 @@ class AccountController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        $request->user()->update([
+        $user = $request->user();
+
+        // 撤销其他会话（安全审计周期 #7）：保留当前浏览器会话（改密者
+        // 本人），踢出其余 session 记录并轮换 remember cookie——被盗会话
+        // 与记住登录的 cookie 无法在改密后继续存活
+        DB::table('sessions')
+            ->where('user_id', $user->user_id)
+            ->where('id', '!=', $request->session()->getId())
+            ->delete();
+
+        $user->forceFill([
             'password' => Hash::make($validated['password']),
-        ]);
+            'remember_token' => Str::random(60),
+        ])->save();
 
         return back()->with('success', __('msg.password_changed'));
     }

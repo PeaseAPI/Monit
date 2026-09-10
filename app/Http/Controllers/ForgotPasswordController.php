@@ -8,6 +8,7 @@ use App\Services\Sms\SmsService;
 use App\Mail\ResetPassword;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -154,9 +155,14 @@ class ForgotPasswordController extends Controller
             return back()->withErrors(['phone' => __('auth.phone_not_found')]);
         }
 
+        // 撤销全部会话（同邮箱重置路径）：短信改密后旧 session 与
+        // remember cookie 一并失效
+        DB::table('sessions')->where('user_id', $user->user_id)->delete();
+
         $user->forceFill([
             'password' => Hash::make($validated['password']),
             'lost_password_code' => null,
+            'remember_token' => Str::random(60),
         ])->save();
 
         return redirect()->route('login')
@@ -213,9 +219,14 @@ class ForgotPasswordController extends Controller
             return back()->withErrors(['email' => __('auth.reset_token_invalid')]);
         }
 
+        // 撤销全部会话（安全审计周期 #7）：密码已换，旧 session 记录与
+        // remember cookie 一并失效——改密前被劫持的会话无法继续存活
+        DB::table('sessions')->where('user_id', $user->user_id)->delete();
+
         $user->forceFill([
             'password' => Hash::make($validated['password']),
             'lost_password_code' => null,
+            'remember_token' => Str::random(60),
         ])->save();
 
         return redirect()->route('login')
