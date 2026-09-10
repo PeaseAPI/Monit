@@ -14,7 +14,11 @@ use App\Http\Controllers\PixelTrackController;
 use Illuminate\Support\Facades\Route;
 
 Route::match(['get', 'post'], '/pixel-track/{pixel_key}', PixelTrackController::class)
-    ->name('pixel.track');
+    ->name('pixel.track')
+    // 采集入口匿名可达：每 IP 600 次/分钟限流（第十轮 #2）——
+    // 正常浏览（含 NAT 出口）远低于此阈值，脚本灌库（每秒数百事件
+    // 污染 events 表 / 打满写入）被有效拦截；cache 读写开销可忽略
+    ->middleware('throttle:600,1');
 
 Route::options('/pixel-track/{pixel_key}', [PixelTrackController::class, 'preflight'])
     ->name('pixel.track.preflight');

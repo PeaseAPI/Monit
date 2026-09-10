@@ -118,6 +118,33 @@ class AuthSessionSecurityTest extends TestCase
         $this->assertNotSame($before, session()->getId(), 'SSO 登录后必须 regenerate session id');
     }
 
+    /** 第十一轮：SSO token 一次性——URL 泄露后 5 分钟窗口内重放不得再次登录 */
+    public function test_sso_token_cannot_be_replayed(): void
+    {
+        Settings::set('main.sso_is_enabled', 'true');
+        Settings::set('main.sso_secret_key', 'test-sso-secret');
+
+        $this->makeUser(['email' => 'sso-replay@test.dev']);
+
+        $ts = time();
+        $token = hash_hmac('sha256', ":sso-replay@test.dev:{$ts}", 'test-sso-secret');
+        $query = http_build_query([
+            'token' => $token,
+            'email' => 'sso-replay@test.dev',
+            'timestamp' => $ts,
+        ]);
+
+        $this->get('/sso?'.$query);
+        $this->assertAuthenticated('web', '首次合法 SSO 应成功登录');
+
+        $this->post('/logout');
+        $this->assertGuest();
+
+        // 同一 token 立即重放（仍在 300s 时间窗内）→ 必须拒绝
+        $this->get('/sso?'.$query);
+        $this->assertGuest('web', 'SSO token 已消费，重放不得再次登录');
+    }
+
     /* ---------------- OAuth email 信任链 ---------------- */
 
     public function test_github_unverified_primary_email_cannot_take_over_account(): void

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * SSO 单点登录控制器
@@ -54,6 +55,15 @@ class SsoController extends Controller
         $expectedToken = hash_hmac('sha256', $payload, trim($ssoSecret, '"'));
 
         if (! hash_equals($expectedToken, $request->input('token'))) {
+            return redirect()->route('login')->withErrors(['sso' => __('auth.sso_invalid_token')]);
+        }
+
+        // 防重放（第十一轮）：token 明文出现在 URL query（referrer/访问日志/
+        // 浏览器历史可泄露），5 分钟时间窗内重复提交即可冒用登录——
+        // 同一 token 仅消费一次，Cache::add 原子占位（含并发双击），
+        // TTL 310s > 时间戳容差 300s，覆盖全部有效窗口
+        $tokenCacheKey = 'sso_token_used_'.hash('sha256', (string) $request->input('token'));
+        if (! Cache::add($tokenCacheKey, 1, 310)) {
             return redirect()->route('login')->withErrors(['sso' => __('auth.sso_invalid_token')]);
         }
 
