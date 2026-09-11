@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Code;
 use App\Models\Plan;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -79,7 +80,7 @@ class AdminCodes extends Controller
      */
     protected function validated(Request $request): array
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'name' => ['required', 'string', 'max:256'],
             'code' => ['nullable', 'string', 'max:64'],
             'type' => ['required', 'in:plan,discount'],
@@ -90,7 +91,7 @@ class AdminCodes extends Controller
             'date_start' => ['nullable', 'date'],
             'date_end' => ['nullable', 'date', 'after_or_equal:date_start'],
             'is_enabled' => ['boolean'],
-        ]);
+        ]));
 
         $validated['is_enabled'] = $request->boolean('is_enabled', true);
 

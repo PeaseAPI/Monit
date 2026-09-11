@@ -33,7 +33,7 @@ class WebhookPaymentController extends Controller
      */
     public function paddle(Request $request): JsonResponse
     {
-        if (! WebhookSignature::verifyPaddleClassic($request->all(), Typed::string(config('services.paddle.public_key')))) {
+        if (! WebhookSignature::verifyPaddleClassic(Typed::arr($request->all()), Typed::string(config('services.paddle.public_key')))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
@@ -386,20 +386,21 @@ class WebhookPaymentController extends Controller
 
         $xml = simplexml_load_string((string) $request->getContent(), null, LIBXML_NONET);
         $data = $xml ? (array) $xml : [];
+        $dataArr = Typed::arr($data);
 
-        if (($data['return_code'] ?? '') === 'SUCCESS'
-            && ($data['result_code'] ?? '') === 'SUCCESS'
-            && $processor->verifyCallback($data)) {
+        if (($dataArr['return_code'] ?? '') === 'SUCCESS'
+            && ($dataArr['result_code'] ?? '') === 'SUCCESS'
+            && $processor->verifyCallback($dataArr)) {
 
-            $attach = Typed::arr(json_decode(Typed::string($data['attach'] ?? '{}'), true));
+            $attach = Typed::arr(json_decode(Typed::string($dataArr['attach'] ?? '{}'), true));
             $paymentId = Typed::int($attach['payment_id'] ?? 0);
             $payment = $paymentId ? Payment::find($paymentId) : null;
 
             // 金额防篡改：total_fee 虽被签名覆盖（网关可信），但仍须与订单金额
             // 完全一致方可入账（分），防止同商户低额订单嫁接 / 记账错误
             if ($payment
-                && (int) ($data['total_fee'] ?? 0) === (int) round(((float) $payment->total_amount) * 100)) {
-                $this->paymentService->handlePaymentSuccess($paymentId, (string) ($data['transaction_id'] ?? ''));
+                && Typed::int($dataArr['total_fee'] ?? 0) === (int) round(((float) $payment->total_amount) * 100)) {
+                $this->paymentService->handlePaymentSuccess($paymentId, Typed::string($dataArr['transaction_id'] ?? ''));
 
                 // 微信要求应答 XML success
                 return response('<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>', 200)
@@ -426,12 +427,12 @@ class WebhookPaymentController extends Controller
             return response()->json(['error' => 'Not configured'], 400);
         }
 
-        $data = $request->all();
+        $data = Typed::arr($request->all());
 
         if (($data['trade_status'] ?? '') === 'TRADE_SUCCESS'
             && $processor->verifyNotify($data)) {
 
-            $outTradeNo = (string) ($data['out_trade_no'] ?? '');
+            $outTradeNo = Typed::string($data['out_trade_no'] ?? '');
             $passback = Typed::arr(json_decode(urldecode(Typed::string($data['passback_params'] ?? '{}')), true));
             $paymentId = Typed::int($passback['payment_id'] ?? 0);
             $payment = $paymentId ? Payment::find($paymentId) : null;
@@ -439,8 +440,8 @@ class WebhookPaymentController extends Controller
             // 金额防篡改：total_amount 虽被 RSA 签名覆盖（网关可信），但仍须与
             // 订单金额一致方可入账（容差 0.001 元），防止低额订单嫁接 / 记账错误
             if ($payment
-                && abs((float) ($data['total_amount'] ?? 0) - (float) $payment->total_amount) < 0.001) {
-                $this->paymentService->handlePaymentSuccess($paymentId, (string) ($data['trade_no'] ?? $outTradeNo));
+                && abs(Typed::float($data['total_amount'] ?? 0) - (float) $payment->total_amount) < 0.001) {
+                $this->paymentService->handlePaymentSuccess($paymentId, Typed::string($data['trade_no'] ?? $outTradeNo));
 
                 return $processor->successResponse();
             }

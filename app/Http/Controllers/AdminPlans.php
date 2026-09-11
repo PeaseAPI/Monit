@@ -34,7 +34,7 @@ class AdminPlans extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'plan_id' => ['required', 'string', 'max:64', 'unique:plans,plan_id'],
             'name' => ['required', 'string', 'max:256'],
             'description' => ['nullable', 'string'],
@@ -42,7 +42,7 @@ class AdminPlans extends Controller
             'trial_days' => ['nullable', 'integer'],
             'order' => ['nullable', 'integer'],
             'is_enabled' => ['boolean'],
-        ]);
+        ]));
 
         Plan::create([
             'plan_id' => $validated['plan_id'],
@@ -50,18 +50,18 @@ class AdminPlans extends Controller
             'description' => $validated['description'] ?? null,
             // 价格结构（规格书 §10.1：月/年/终身）
             'prices' => [
-                'monthly' => (float) ($validated['price'] ?? 0),
-                'yearly' => (float) ($validated['price'] ?? 0) * 12,
-                'lifetime' => (float) ($validated['price'] ?? 0) * 10,
+                'monthly' => Typed::float($validated['price'] ?? 0),
+                'yearly' => Typed::float($validated['price'] ?? 0) * 12,
+                'lifetime' => Typed::float($validated['price'] ?? 0) * 10,
             ],
             'settings' => $this->resolveFeatureSettings($request),
-            'trial_days' => (int) ($validated['trial_days'] ?? 0),
-            'order' => (int) ($validated['order'] ?? 0),
+            'trial_days' => Typed::int($validated['trial_days'] ?? 0),
+            'order' => Typed::int($validated['order'] ?? 0),
             'is_enabled' => $request->boolean('is_enabled', true),
         ]);
 
         return redirect()->route('admin.plans.index')
-            ->with('success', __('msg.plan_created', ['name' => $validated['name']]));
+            ->with('success', __('msg.plan_created', ['name' => Typed::string($validated['name'])]));
     }
 
     /**
@@ -78,27 +78,27 @@ class AdminPlans extends Controller
     {
         $plan = Plan::findOrFail($planId);
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'name' => ['required', 'string', 'max:256'],
             'description' => ['nullable', 'string'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'trial_days' => ['nullable', 'integer'],
             'order' => ['nullable', 'integer'],
             'is_enabled' => ['boolean'],
-        ]);
+        ]));
 
         $plan->update([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'prices' => [
-                'monthly' => (float) ($validated['price'] ?? 0),
-                'yearly' => (float) ($validated['price'] ?? 0) * 12,
-                'lifetime' => (float) ($validated['price'] ?? 0) * 10,
+                'monthly' => Typed::float($validated['price'] ?? 0),
+                'yearly' => Typed::float($validated['price'] ?? 0) * 12,
+                'lifetime' => Typed::float($validated['price'] ?? 0) * 10,
             ],
             // 合并保留未知键（防止历史自定义配置丢失，规格书 §10.2）
             'settings' => array_merge($plan->settings ?? [], $this->resolveFeatureSettings($request)),
-            'trial_days' => (int) ($validated['trial_days'] ?? 0),
-            'order' => (int) ($validated['order'] ?? 0),
+            'trial_days' => Typed::int($validated['trial_days'] ?? 0),
+            'order' => Typed::int($validated['order'] ?? 0),
             // 编辑页有显式勾选框：未勾选即停用
             'is_enabled' => $request->has('is_enabled'),
         ]);
@@ -115,8 +115,8 @@ class AdminPlans extends Controller
      */
     protected function resolveFeatureSettings(Request $request): array
     {
-        $features = (array) config('monit.plan_features', []);
-        $input = (array) $request->input('features', []);
+        $features = Typed::arr(config('monit.plan_features', []));
+        $input = Typed::arr($request->input('features', []));
         $settings = [];
 
         foreach ($features as $key => $meta) {

@@ -306,10 +306,10 @@ class InstallController extends Controller
             return response()->json(['ok' => false, 'message' => implode(' ', $validated->errors()->all())]);
         }
 
-        $data = $validated->validated();
+        $data = Typed::arr($validated->validated());
 
         try {
-            $pdo = $this->connectMysql($data['host'], (int) $data['port'], $data['username'], (string) ($data['password'] ?? ''));
+            $pdo = $this->connectMysql(Typed::string($data['host']), Typed::int($data['port']), Typed::string($data['username']), Typed::string($data['password'] ?? ''));
         } catch (\Throwable $e) {
             return response()->json(['ok' => false, 'message' => $e->getMessage()]);
         }
@@ -326,10 +326,11 @@ class InstallController extends Controller
         $statement->execute([$data['database']]);
         $exists = (bool) $statement->fetchColumn();
 
+        $db = Typed::string($data['database']);
         $message = 'MySQL '.$version.' 连接成功。';
         $message .= $exists
-            ? '数据库「'.$data['database'].'」已存在，将直接在其中创建数据表。'
-            : '数据库「'.$data['database'].'」不存在，安装时将自动创建（utf8mb4）。';
+            ? '数据库「'.$db.'」已存在，将直接在其中创建数据表。'
+            : '数据库「'.$db.'」不存在，安装时将自动创建（utf8mb4）。';
 
         return response()->json(['ok' => true, 'message' => $message, 'version' => $version]);
     }
@@ -349,7 +350,7 @@ class InstallController extends Controller
             return $this->backToDatabase($request, array_values($validated->errors()->all()));
         }
 
-        $data = $validated->validated();
+        $data = Typed::arr($validated->validated());
 
         try {
             $this->applyDatabaseConfig($data);
@@ -604,7 +605,7 @@ class InstallController extends Controller
         // site_name / site_url 供完成页与旧代码读取；APP_NAME 同步 .env
         try {
             Settings::set('site_name', $data['site_name']);
-            Settings::set('site_url', rtrim($data['site_url'], '/'));
+            Settings::set('site_url', rtrim(Typed::string($data['site_url']), '/'));
             Settings::set('branding.site_name', $data['site_name']);
             Settings::set('main.site_title', $data['site_name']);
         } catch (\Throwable $e) {
@@ -612,9 +613,9 @@ class InstallController extends Controller
         }
 
         // APP_URL 以用户填写为准（密码重置/邮件/静态资源链接依赖）；APP_NAME 同步站点名
-        $this->env->write('APP_URL', rtrim($data['site_url'], '/'));
-        $this->env->write('APP_NAME', $data['site_name']);
-        config(['app.url' => rtrim($data['site_url'], '/'), 'app.name' => $data['site_name']]);
+        $this->env->write('APP_URL', rtrim(Typed::string($data['site_url']), '/'));
+        $this->env->write('APP_NAME', Typed::stringOrNull($data['site_name']));
+        config(['app.url' => rtrim(Typed::string($data['site_url']), '/'), 'app.name' => $data['site_name']]);
 
         // 自动下载 GeoIP 库（缺失时国家/城市维度全部显示"未知"，安装后即开箱可用）
         // 静默执行：网络不通或磁盘不足不影响安装完成，用户可稍后手动 geoip:update

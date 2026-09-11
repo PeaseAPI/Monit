@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Domain;
 use App\Services\Seo\DomainMonitor;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -46,11 +47,11 @@ class DomainController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'host' => array_merge(['required'], self::HOST_RULES),
-        ]);
+        ]));
 
-        $host = strtolower((string) preg_replace('/^www\./', '', trim($validated['host'])));
+        $host = strtolower((string) preg_replace('/^www\./', '', trim(Typed::string($validated['host']))));
 
         // 同一域名重复添加：友好提示而非 500（unique(user_id, host) 冲突）
         if (Domain::where('user_id', $this->user()->user_id)->where('host', $host)->exists()) {
@@ -92,19 +93,19 @@ class DomainController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'domain_id' => ['required', 'exists:domains,domain_id'],
             'host' => array_merge(['sometimes'], self::HOST_RULES),
             'is_enabled' => ['sometimes', 'boolean'],
             'monitor_is_enabled' => ['sometimes', 'boolean'],
-        ]);
+        ]));
 
         // 归属校验：仅允许操作自己的域名（防 IDOR 越权改他人域名/监控开关）
-        $domain = $this->user()->domains()->where('domain_id', (int) $validated['domain_id'])->firstOrFail();
+        $domain = $this->user()->domains()->where('domain_id', Typed::int($validated['domain_id']))->firstOrFail();
 
         $attributes = [];
         if (array_key_exists('host', $validated)) {
-            $attributes['host'] = strtolower((string) preg_replace('/^www\./', '', trim($validated['host'])));
+            $attributes['host'] = strtolower((string) preg_replace('/^www\./', '', trim(Typed::string($validated['host']))));
         }
         if (array_key_exists('is_enabled', $validated)) {
             $attributes['is_enabled'] = (bool) $validated['is_enabled'];

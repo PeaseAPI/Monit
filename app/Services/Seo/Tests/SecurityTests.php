@@ -3,6 +3,7 @@
 namespace App\Services\Seo\Tests;
 
 use App\Services\Seo\AuditContext;
+use App\Support\Typed;
 
 /**
  * 安全测试组（security 类别）
@@ -166,7 +167,7 @@ class SecurityTests
 
         $has = false;
         foreach ((array) $records as $record) {
-            if (str_contains(strtolower((string) ($record['txt'] ?? '')), 'v=spf1')) {
+            if (str_contains(strtolower(Typed::string($record['txt'] ?? '')), 'v=spf1')) {
                 $has = true;
 
                 break;

@@ -4,7 +4,7 @@ includes:
     - phpstan-include.php
 
 parameters:
-    level: 9
+    level: 10
     paths:
         - app
         - routes

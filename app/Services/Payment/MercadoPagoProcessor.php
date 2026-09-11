@@ -60,10 +60,10 @@ class MercadoPagoProcessor
             'base_amount' => Typed::float(data_get($data, 'data.transaction_amount') ?? 0),
             'discount_amount' => 0,
             'taxes_amount' => 0,
-            'total_amount' => $data['data']['transaction_amount'] ?? 0,
+            'total_amount' => Typed::float(data_get($data, 'data.transaction_amount') ?? 0),
             'currency' => 'BRL',
-            'email' => $data['data']['payer']['email'] ?? $user->email,
-            'name' => $data['data']['payer']['first_name'] ?? $user->name,
+            'email' => Typed::string(data_get($data, 'data.payer.email') ?? $user->email),
+            'name' => Typed::string(data_get($data, 'data.payer.first_name') ?? $user->name),
             'datetime' => now(),
         ]);
     }

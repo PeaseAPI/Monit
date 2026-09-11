@@ -15,6 +15,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SeoFeatureEnabled
 {
+    /**
+     * @param  Closure(Request): Response  $next
+     */
     public function handle(Request $request, Closure $next, string $feature): Response
     {
         // 设置存储为 'true'/'false' 字符串（saveSettings 约定）：

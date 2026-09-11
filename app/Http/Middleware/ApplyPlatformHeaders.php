@@ -19,6 +19,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ApplyPlatformHeaders
 {
+    /**
+     * @param  Closure(Request): Response  $next
+     */
     public function handle(Request $request, Closure $next): Response
     {
         // 入站一次性读取全部设置（若出站再读，admin 清缓存后响应链路会立即重建缓存）

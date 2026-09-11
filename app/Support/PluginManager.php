@@ -109,9 +109,6 @@ class PluginManager
 
         $defaults = [];
         foreach (Typed::arr($meta['settings'] ?? []) as $key => $definition) {
-            if (! is_string($key)) {
-                continue;
-            }
             $defaults[$key] = data_get($definition, 'default');
         }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SeoToolUse;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -36,13 +37,13 @@ class WebsiteSeoController extends Controller
      */
     public function update(Request $request, Website $website)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'seo_audit_check_interval' => 'required|in:'.implode(',', self::INTERVALS),
             'seo_notifications_enabled' => 'nullable|boolean',
             'seo_notifications_mode' => 'nullable|in:always,changes',
             'seo_sitemap_url' => 'nullable|url|max:512',
             'seo_sitemap_check_interval' => 'nullable|in:never,daily,weekly,monthly',
-        ]);
+        ]));
 
         $website->update([
             'seo_audit_check_interval' => $validated['seo_audit_check_interval'],
@@ -50,7 +51,7 @@ class WebsiteSeoController extends Controller
             'seo_notifications_mode' => $validated['seo_notifications_mode'] ?? 'always',
             'seo_sitemap_url' => $validated['seo_sitemap_url'] ?? null,
             'seo_sitemap_check_interval' => $validated['seo_sitemap_check_interval'] ?? 'never',
-            'seo_next_audit_at' => $this->nextRunAt($validated['seo_audit_check_interval']),
+            'seo_next_audit_at' => $this->nextRunAt(Typed::string($validated['seo_audit_check_interval'])),
         ]);
 
         return back()->with('success', __('seo.saved'));

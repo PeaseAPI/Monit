@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,12 +25,12 @@ class WebsiteController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'name' => ['required', 'string', 'max:256'],
             'host' => ['required', 'string', 'max:256'],
             'timezone' => ['required', 'timezone'],
             'tracking_type' => ['sometimes', 'in:advanced,lightweight'],
-        ]);
+        ]));
 
         $pixelKey = '';
         do {
@@ -62,13 +63,12 @@ class WebsiteController extends Controller
     {
         $this->authorizeWebsite($website);
 
-        $validated = $request->validate([
-            'name' => ['sometimes', 'string', 'max:256'],
+        $validated = Typed::arr($request->validate(['name' => ['sometimes', 'string', 'max:256'],
             'host' => ['sometimes', 'string', 'max:256'],
             'timezone' => ['sometimes', 'timezone'],
             'tracking_type' => ['sometimes', 'in:advanced,lightweight'],
             'is_enabled' => ['sometimes', 'boolean'],
-        ]);
+        ]));
 
         $website->update($validated);
 

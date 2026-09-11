@@ -7,6 +7,8 @@ use App\Models\EventChild;
 use App\Models\Heatmap;
 use App\Models\OutboundClick;
 use App\Models\Website;
+use App\Support\Typed;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,11 +29,11 @@ class WebsiteDataController extends Controller
     {
         $website = $this->ownWebsite($request, $website);
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'path' => ['required', 'string', 'max:512'],
             'name' => ['required', 'string', 'max:256'],
             'is_enabled' => ['nullable', 'boolean'],
-        ]);
+        ]));
 
         $heatmap = $website->heatmaps()->create([
             ...$validated,
@@ -47,11 +49,10 @@ class WebsiteDataController extends Controller
         $heatmap = Heatmap::where('website_id', $this->ownWebsite($request, $website)->website_id)
             ->where('heatmap_id', $heatmap)->firstOrFail();
 
-        $validated = $request->validate([
-            'path' => ['sometimes', 'string', 'max:512'],
+        $validated = Typed::arr($request->validate(['path' => ['sometimes', 'string', 'max:512'],
             'name' => ['sometimes', 'string', 'max:256'],
             'is_enabled' => ['sometimes', 'boolean'],
-        ]);
+        ]));
 
         $heatmap->update($validated);
 
@@ -70,7 +71,7 @@ class WebsiteDataController extends Controller
 
     public function eventChildrenIndex(Request $request, int $website): JsonResponse
     {
-        $query = EventChild::whereIn('event_id', function ($q) use ($website) {
+        $query = EventChild::whereIn('event_id', function (Builder $q) use ($website) {
             $q->select('event_id')->from('sessions_events')->where('website_id', $website);
         });
 

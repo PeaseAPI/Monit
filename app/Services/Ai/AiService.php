@@ -72,7 +72,7 @@ class AiService
         $presets = Typed::arr(self::providers());
         $preset = $presets[static::provider()] ?? null;
 
-        return is_array($preset) ? $preset : [];
+        return Typed::arr($preset);
     }
 
     /** 端点：预设 base_url 之上允许 settings 覆盖（openai_compatible 必填） */

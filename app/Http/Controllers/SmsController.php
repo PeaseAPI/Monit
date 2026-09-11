@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\Sms\SmsService;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 class SmsController extends Controller
 {
     /** purpose → SmsService 场景名（scenarioEnabled 拼接 sms.sms_{name}_is_enabled） */
+    /** @var array<string, string> */
     protected const SCENARIO_KEYS = [
         'register' => 'register',
         'login' => 'phone_login',
@@ -25,19 +27,19 @@ class SmsController extends Controller
 
     public function send(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'phone' => ['required', 'string', 'max:32'],
             'purpose' => ['required', 'string', 'in:'.implode(',', SmsService::PURPOSES)],
         ], [
             'phone.required' => __('validation.phone_required'),
             'purpose.in' => __('auth.sms_not_enabled'),
-        ]);
+        ]));
 
-        $purpose = $validated['purpose'];
-        $phone = SmsService::normalizePhone($validated['phone']);
+        $purpose = Typed::string($validated['purpose']);
+        $phone = SmsService::normalizePhone(Typed::string($validated['phone']));
 
         // 场景开关
-        if (! SmsService::scenarioEnabled(static::SCENARIO_KEYS[$purpose])) {
+        if (! SmsService::scenarioEnabled(Typed::string(static::SCENARIO_KEYS[$purpose] ?? ''))) {
             return back()->withInput()->withErrors(['phone' => __('auth.sms_not_enabled')]);
         }
 

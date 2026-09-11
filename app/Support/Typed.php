@@ -107,12 +107,17 @@ final class Typed
     }
 
     /**
-     * @param  array<array-key, mixed>  $default
-     * @return array<array-key, mixed>
+     * @param  array<string, mixed>  $default
+     * @return array<string, mixed>
      */
     public static function arr(mixed $value, array $default = []): array
     {
-        return is_array($value) ? $value : $default;
+        if (is_array($value)) {
+            /** @var array<string, mixed> $value */
+            return $value;
+        }
+
+        return $default;
     }
 
     /** 点路径取值并窄化为 string（data_get 语义，取不到/类型不符返回默认值） */
@@ -130,8 +135,8 @@ final class Typed
     /**
      * 点路径取值并窄化为 array
      *
-     * @param  array<array-key, mixed>  $default
-     * @return array<array-key, mixed>
+     * @param  array<string, mixed>  $default
+     * @return array<string, mixed>
      */
     public static function arrPath(mixed $value, string $path, array $default = []): array
     {

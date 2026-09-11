@@ -53,7 +53,7 @@ class SeoKeywordController extends Controller
      */
     public function store(Request $request, PlanLimitService $limits)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'keyword' => 'required|string|max:256',
             'website_id' => 'nullable|integer|exists:websites,website_id',
             'search_engine' => 'nullable|in:google,bing,baidu',
@@ -61,9 +61,9 @@ class SeoKeywordController extends Controller
             'locale' => 'nullable|string|max:16',
             'target_url' => 'nullable|url|max:2048',
             'check_interval' => 'nullable|in:never,daily,weekly,monthly',
-        ]);
+        ]));
 
-        $validated['website_id'] = $this->ownWebsiteId($request, (int) ($validated['website_id'] ?? 0));
+        $validated['website_id'] = $this->ownWebsiteId($request, Typed::int($validated['website_id'] ?? 0));
 
         if (! $limits->checkLimit($this->user(), 'seo_keywords_limit')) {
             return back()->withErrors(['keyword' => __('seo.keywords_quota_exceeded')]);
@@ -83,7 +83,7 @@ class SeoKeywordController extends Controller
         SeoKeyword::create([
             'user_id' => $this->user()->user_id,
             'website_id' => $validated['website_id'],
-            'keyword' => trim($validated['keyword']),
+            'keyword' => trim(Typed::string($validated['keyword'])),
             'search_engine' => $validated['search_engine'] ?? 'google',
             'device' => $validated['device'] ?? 'desktop',
             'locale' => $validated['locale'] ?? 'zh-CN',
@@ -104,11 +104,11 @@ class SeoKeywordController extends Controller
     {
         $this->authorizeOwn($request, $keyword);
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'position' => 'nullable|integer|min:1|max:1000',
-        ]);
+        ]));
 
-        $tracker->record($keyword, $validated['position'] ?? null, null, 'manual');
+        $tracker->record($keyword, Typed::intOrNull($validated['position'] ?? null), null, 'manual');
 
         return back()->with('success', __('seo.snapshot_saved'));
     }
@@ -148,10 +148,10 @@ class SeoKeywordController extends Controller
     {
         $this->authorizeOwn($request, $keyword);
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'is_enabled' => 'nullable|boolean',
             'check_interval' => 'nullable|in:never,daily,weekly,monthly',
-        ]);
+        ]));
 
         $keyword->update([
             'is_enabled' => (bool) ($validated['is_enabled'] ?? $keyword->is_enabled),

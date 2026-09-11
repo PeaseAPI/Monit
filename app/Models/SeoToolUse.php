@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Typed;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -43,12 +44,12 @@ class SeoToolUse extends Model
      */
     public static function topTools(int $limit = 10): array
     {
-        return static::query()
+        return Typed::arr(static::query()
             ->selectRaw('tool, count(*) as total')
             ->groupBy('tool')
             ->orderByDesc('total')
             ->limit($limit)
             ->pluck('total', 'tool')
-            ->toArray();
+            ->toArray());
     }
 }

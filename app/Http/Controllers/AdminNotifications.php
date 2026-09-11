@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\InternalNotification;
 use App\Models\PushNotificationCampaign;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -38,11 +39,11 @@ class AdminNotifications extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'title' => ['required', 'string', 'max:256'],
             'message' => ['required', 'string', 'max:2048'],
             'target_email' => ['nullable', 'email'],
-        ]);
+        ]));
 
         $data = ['title' => $validated['title'], 'message' => $validated['message']];
         $adminUserId = $this->user()->user_id;
@@ -109,12 +110,11 @@ class AdminNotifications extends Controller
 
     public function pushStore(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:256'],
+        $validated = Typed::arr($request->validate(['name' => ['required', 'string', 'max:256'],
             'title' => ['required', 'string', 'max:256'],
             'body' => ['required', 'string', 'max:2048'],
             'url' => ['nullable', 'url', 'max:2048'],
-        ]);
+        ]));
 
         PushNotificationCampaign::create([
             ...$validated,
@@ -140,12 +140,11 @@ class AdminNotifications extends Controller
     {
         $campaign = PushNotificationCampaign::findOrFail($campaign);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:256'],
+        $validated = Typed::arr($request->validate(['name' => ['required', 'string', 'max:256'],
             'title' => ['required', 'string', 'max:256'],
             'body' => ['required', 'string', 'max:2048'],
             'url' => ['nullable', 'url', 'max:2048'],
-        ]);
+        ]));
 
         $campaign->update($validated);
 

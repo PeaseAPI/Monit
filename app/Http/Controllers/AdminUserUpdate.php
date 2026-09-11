@@ -61,7 +61,7 @@ class AdminUserUpdate extends Controller
     {
         $user = User::findOrFail($userId);
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'name' => ['required', 'string', 'max:256'],
             'email' => ['required', 'email', 'max:256', 'unique:users,email,'.$userId.',user_id'],
             // status 三态（对标原版）：0=未确认 1=激活 2=禁用
@@ -95,7 +95,7 @@ class AdminUserUpdate extends Controller
             'plan_settings.seo_tools_limit' => ['nullable', 'integer', 'min:-1'],
             'plan_settings.seo_history_retention_days' => ['nullable', 'integer', 'min:0'],
             'plan_settings.affiliate_commission_percentage' => ['nullable', 'integer', 'min:0', 'max:100'],
-        ]);
+        ]));
 
         // 权限开关（未勾选不提交 → 显式 false）
         foreach (['email_reports_is_enabled', 'teams_is_enabled', 'no_ads', 'api_is_enabled', 'white_labeling_is_enabled', 'seo_ai_is_enabled'] as $flag) {
@@ -137,7 +137,7 @@ class AdminUserUpdate extends Controller
 
         // 密码（独立处理，空则不改）
         if (! empty($validated['password'])) {
-            $validated['password'] = bcrypt($validated['password']);
+            $validated['password'] = bcrypt(Typed::string($validated['password']));
         } else {
             unset($validated['password']);
         }
@@ -147,8 +147,8 @@ class AdminUserUpdate extends Controller
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'status' => (int) $validated['status'],
-            'type' => (int) $validated['type'],
+            'status' => Typed::int($validated['status']),
+            'type' => Typed::int($validated['type']),
             'referred_by' => $validated['referred_by'] ?? null,
             'plan_id' => $validated['plan_id'] ?? $user->plan_id,
             'plan_trial_done' => $request->boolean('plan_trial_done'),
@@ -159,7 +159,7 @@ class AdminUserUpdate extends Controller
 
         // 审计：编辑（含封禁/改密）+ 提权单独标记
         $this->logAdminAction($user, 'admin_user_updated');
-        if ($wasType === 0 && (int) $validated['type'] === 1) {
+        if ($wasType === 0 && Typed::int($validated['type']) === 1) {
             $this->logAdminAction($user, 'admin_user_promoted');
         }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -54,11 +55,11 @@ class AccountController extends Controller
 
     public function dashboardViewsStore(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'website_id' => ['required', 'integer'],
             'name' => ['required', 'string', 'max:256'],
             'settings' => ['nullable', 'array'],
-        ]);
+        ]));
 
         $website = $this->user()->websites()->where('websites.website_id', $validated['website_id'])->firstOrFail();
 
@@ -76,10 +77,9 @@ class AccountController extends Controller
     {
         $viewModel = $this->user()->dashboardViews()->where('dashboard_view_id', $view)->firstOrFail();
 
-        $validated = $request->validate([
-            'name' => ['sometimes', 'string', 'max:256'],
+        $validated = Typed::arr($request->validate(['name' => ['sometimes', 'string', 'max:256'],
             'settings' => ['sometimes', 'array'],
-        ]);
+        ]));
 
         $viewModel->update($validated);
 
@@ -104,9 +104,8 @@ class AccountController extends Controller
 
     public function teamsStore(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:256'],
-        ]);
+        $validated = Typed::arr($request->validate(['name' => ['required', 'string', 'max:256'],
+        ]));
 
         $team = $this->user()->teams()->create([...$validated, 'datetime' => now()]);
 

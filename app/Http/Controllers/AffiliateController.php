@@ -6,6 +6,7 @@ use App\Models\AffiliateWithdrawal;
 use App\Models\User;
 use App\Support\Currency;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -93,10 +94,10 @@ class AffiliateController extends Controller
     {
         $this->ensureAffiliateEnabled();
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'amount' => ['required', 'numeric', 'min:10', 'decimal:0,2'],
             'note' => ['nullable', 'string', 'max:1024'],
-        ]);
+        ]));
 
         $user = $this->user();
 

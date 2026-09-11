@@ -26,12 +26,12 @@ class DashboardViewController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'name' => ['required', 'string', 'max:128'],
             'settings' => ['required'],
             'order' => ['nullable', 'integer'],
             'website_id' => ['nullable', 'integer', 'exists:websites,website_id'],
-        ]);
+        ]));
 
         DashboardView::create([
             'website_id' => $validated['website_id'] ?? null,
@@ -50,11 +50,10 @@ class DashboardViewController extends Controller
         $view = DashboardView::where('user_id', Auth::id())->findOrFail($viewId);
 
         /** @var array<string, mixed> $validated */
-        $validated = $request->validate([
-            'name' => ['sometimes', 'string', 'max:128'],
+        $validated = Typed::arr($request->validate(['name' => ['sometimes', 'string', 'max:128'],
             'settings' => ['sometimes'],
             'order' => ['nullable', 'integer'],
-        ]);
+        ]));
 
         $attributes = collect($validated)->except(['settings', 'order'])->all();
         if (array_key_exists('settings', $validated)) {
@@ -79,10 +78,10 @@ class DashboardViewController extends Controller
         if (is_string($settings)) {
             $decoded = json_decode($settings, true);
 
-            return is_array($decoded) ? $decoded : ['raw' => $settings];
+            return is_array($decoded) ? Typed::arr($decoded) : ['raw' => $settings];
         }
 
-        return is_array($settings) ? $settings : [];
+        return Typed::arr($settings);
     }
 
     public function destroy(int $viewId): RedirectResponse

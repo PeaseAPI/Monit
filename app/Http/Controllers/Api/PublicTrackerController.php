@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Website;
 use App\Services\PixelTracker;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -37,13 +38,13 @@ class PublicTrackerController
         }
 
         // 解析数据
-        $data = $request->validate([
+        $data = Typed::arr($request->validate([
             'url' => 'required|string|max:2048',
             'referrer' => 'nullable|string|max:2048',
             'title' => 'nullable|string|max:256',
             'screen' => 'nullable|string|max:32',
             'user_agent' => 'required|string',
-        ]);
+        ]));
 
         // 组装为像素协议载荷（规格书 §4.1 data.type=data 的标准结构），
         // 注入 request 后复用 PixelTracker::handle 全链路处理。
@@ -52,13 +53,13 @@ class PublicTrackerController
             'url' => $data['url'],
             'referrer' => $data['referrer'] ?? '',
             'title' => $data['title'] ?? '',
-            'resolution' => $this->parseResolution($data['screen'] ?? ''),
+            'resolution' => $this->parseResolution(Typed::string($data['screen'] ?? '')),
         ]]);
 
         // API 客户端可能显式传 user_agent；PixelTracker 内部读取当前请求 UA，
         // 因此这里把显式传入的 UA 同步到请求头，保证解析结果一致。
         if (! empty($data['user_agent'])) {
-            $request->headers->set('User-Agent', (string) $data['user_agent']);
+            $request->headers->set('User-Agent', Typed::string($data['user_agent']));
         }
 
         $this->tracker->onSkip(fn (string $reason) => null);

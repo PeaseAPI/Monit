@@ -196,7 +196,7 @@ class WebPushService
         $pem = $this->rawPrivateToPem($this->b64urlDecode($privateKeyB64));
         openssl_sign($signingInput, $derSignature, $pem, OPENSSL_ALGO_SHA256);
 
-        $jwt = $signingInput.'.'.$this->b64urlEncode($this->derToRawSignature($derSignature));
+        $jwt = $signingInput.'.'.$this->b64urlEncode($this->derToRawSignature(is_string($derSignature) ? $derSignature : ''));
 
         return 'vapid t='.$jwt.', k='.$publicKeyB64;
     }

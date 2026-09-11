@@ -235,7 +235,7 @@ class WebhookSignature
             foreach ($records ?: [] as $record) {
                 $ip = $record['ip'] ?? $record['ipv6'] ?? null;
 
-                if ($ip !== null && self::isPrivateAddress($ip)) {
+                if (is_string($ip) && self::isPrivateAddress($ip)) {
                     return true;
                 }
             }

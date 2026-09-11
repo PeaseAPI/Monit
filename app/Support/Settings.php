@@ -40,7 +40,7 @@ class Settings
             $cached = static::buildArray();
         }
 
-        return static::$cached = static::arrayToObject($cached);
+        return static::$cached = static::arrayToObject(Typed::arr($cached));
     }
 
     /**

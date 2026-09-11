@@ -19,6 +19,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class AuthenticateApiKey
 {
+    /**
+     * @param  Closure(Request): Response  $next
+     */
     public function handle(Request $request, Closure $next): Response
     {
         if (Settings::get('main.api_is_enabled') === 'false') {

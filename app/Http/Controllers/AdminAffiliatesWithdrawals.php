@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AffiliateWithdrawal;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -57,11 +58,11 @@ class AdminAffiliatesWithdrawals extends Controller
 
     public function bulkUpdate(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'action' => ['required', 'in:approve,reject'],
             'ids' => ['required', 'array'],
             'ids.*' => ['integer'],
-        ]);
+        ]));
 
         $method = $validated['action'] === 'approve' ? 'approved' : 'rejected';
         // 修复：主键列名为 affiliate_withdrawal_id（原 whereIn('id') 对不存在的

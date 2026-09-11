@@ -173,7 +173,7 @@ class PixelTrackController extends Controller
         // 防御：Undefined property 会被 Laravel 转为 ErrorException → 被 heatmapCheck
         // 的 catch 吞掉 → 整个 heatmap_check 返回 '{}' → 客户端热图检测与回放开关同步全失效
         $analyticsSettings = settings()->analytics ?? null;
-        $globalHeatmapsEnabled = $analyticsSettings
+        $globalHeatmapsEnabled = $analyticsSettings instanceof \stdClass
             && isset($analyticsSettings->websites_heatmaps_is_enabled)
             && in_array($analyticsSettings->websites_heatmaps_is_enabled, [true, 1, '1', 'true', 'on'], true);
 
@@ -190,7 +190,7 @@ class PixelTrackController extends Controller
 
         // 判断回放是否启用：全局开关 + 网站开关 + 套餐配额（settings 字符串布尔，须显式解析）
         $replayEnabled = false;
-        $globalReplayEnabled = $analyticsSettings
+        $globalReplayEnabled = $analyticsSettings instanceof \stdClass
             && isset($analyticsSettings->sessions_replays_is_enabled)
             && in_array($analyticsSettings->sessions_replays_is_enabled, [true, 1, '1', 'true', 'on'], true);
         if ($globalReplayEnabled && $website->sessions_replays_is_enabled) {

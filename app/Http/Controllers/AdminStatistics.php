@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -205,7 +207,9 @@ class AdminStatistics extends Controller
         $d = [];
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = now()->subDays($i)->format('Y-m-d');
-            $d[] = ['date' => $date, 'count' => $model::whereDate($timeColumn, '<=', $date)->count()];
+            /** @var Builder<Model> $query */
+            $query = $model::whereDate($timeColumn, '<=', $date);
+            $d[] = ['date' => $date, 'count' => $query->count()];
         }
 
         return $d;

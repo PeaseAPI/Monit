@@ -77,14 +77,14 @@ class PublicStatisticsController extends Controller
     {
         $website = Website::where('pixel_key', $pixel_key)->firstOrFail();
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'password' => ['required', 'string'],
-        ]);
+        ]));
 
         $publicPassword = Typed::string($website->settings['public_statistics_password'] ?? '');
 
         // 恒时比较防时序侧信道；配合路由层 throttle 防爆破
-        if ($publicPassword !== '' && hash_equals($publicPassword, (string) $validated['password'])) {
+        if ($publicPassword !== '' && hash_equals($publicPassword, Typed::string($validated['password']))) {
             $request->session()->put('public_stats_auth_'.$website->website_id, true);
 
             return redirect()->route('statistics.public', ['pixel_key' => $pixel_key]);

@@ -52,11 +52,11 @@ class AlipayProcessor
 
             $fields = '';
             foreach ($params as $key => $value) {
-                $fields .= '<input type="hidden" name="'.e($key).'" value="'.e(Typed::string($value)).'">';
+                $fields .= '<input type="hidden" name="'.(string) e(Typed::string($key)).'" value="'.(string) e(Typed::string($value)).'">';
             }
 
             return [
-                'redirect_html' => '<form id="alipay-submit" method="POST" action="'.static::GATEWAY.'?charset=utf-8">'.$fields.'</form><script>document.getElementById("alipay-submit").submit();</script>',
+                'redirect_html' => '<form id="alipay-submit" method="POST" action="'.self::GATEWAY.'?charset=utf-8">'.$fields.'</form><script>document.getElementById("alipay-submit").submit();</script>',
                 'out_trade_no' => $biz['out_trade_no'],
             ];
         } catch (\Throwable $e) {
@@ -122,7 +122,7 @@ class AlipayProcessor
 
         openssl_sign($content, $signature, $privateKey, OPENSSL_ALGO_SHA256);
 
-        return base64_encode($signature);
+        return base64_encode(is_string($signature) ? $signature : '');
     }
 
     protected function normalizePrivateKey(string $key): string

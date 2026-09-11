@@ -100,7 +100,13 @@ class ToolRunner
         }
 
         try {
-            return $this->instance($class)->{$meta['handler']}($input);
+            $result = $this->instance($class)->{$meta['handler']}($input);
+            if (! is_array($result)) {
+                return ['ok' => false, 'error' => 'invalid tool result', 'data' => []];
+            }
+
+            /** @var array{ok: bool, error?: string, data: array<string, mixed>, text?: string} $result */
+            return $result;
         } catch (\Throwable $e) {
             Log::error("SEO tool {$slug} error: ".$e->getMessage(), [
                 'exception' => $e,

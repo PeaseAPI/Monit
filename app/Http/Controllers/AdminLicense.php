@@ -6,6 +6,7 @@ use App\Services\LicenseManager;
 use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\View\View;
 
 /**
@@ -35,12 +36,15 @@ class AdminLicense extends Controller
      */
     public function upload(Request $request)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'license_file' => ['required', 'file', 'max:64'],
-        ]);
+        ]));
 
-        $content = file_get_contents($validated['license_file']->getRealPath());
-        json_decode((string) $content, true);
+        $licenseFile = $validated['license_file'];
+        $content = $licenseFile instanceof UploadedFile
+            ? file_get_contents($licenseFile->getRealPath())
+            : '';
+        json_decode(is_string($content) ? $content : '', true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             return back()->withErrors(['license_file' => __('admin.license_invalid_json')]);

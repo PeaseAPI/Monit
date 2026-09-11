@@ -78,7 +78,7 @@ class TicketController extends Controller
 
     public function reply(Request $request, int $ticketId): RedirectResponse
     {
-        $validated = $request->validate(['message' => ['required', 'string', 'max:20000']]);
+        $validated = Typed::arr($request->validate(['message' => ['required', 'string', 'max:20000']]));
 
         $ticket = $this->user()->tickets()->findOrFail($ticketId);
 
@@ -124,11 +124,10 @@ class TicketController extends Controller
      */
     private function validated(Request $request): array
     {
-        return $request->validate([
-            'subject' => ['required', 'string', 'max:256'],
+        return Typed::arr($request->validate(['subject' => ['required', 'string', 'max:256'],
             'category' => ['required', 'in:'.implode(',', Ticket::CATEGORIES)],
             'priority' => ['required', 'in:'.implode(',', Ticket::PRIORITIES)],
             'message' => ['required', 'string', 'max:20000'],
-        ]);
+        ]));
     }
 }

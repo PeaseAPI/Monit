@@ -33,6 +33,9 @@ class EnsureInstalled
         'build/*', 'assets/*', 'docs/*', 'storage/*',
     ];
 
+    /**
+     * @param  Closure(Request): Response  $next
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $isInstallRoute = $request->is('install', 'install/*');

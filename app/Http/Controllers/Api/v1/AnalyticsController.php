@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SessionReplay;
 use App\Models\Website;
 use App\Services\StatisticsService;
+use App\Support\Typed;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -258,9 +259,9 @@ class AnalyticsController extends Controller
             'mode' => 'advanced',
             'range' => $range,
             'pageviews' => $rows->map(fn ($row) => [
-                'path' => (string) $row->path,
-                'pageviews' => (int) $row->pageviews,
-                'visitors' => (int) $row->visitors,
+                'path' => Typed::string($row->path),
+                'pageviews' => Typed::int($row->pageviews),
+                'visitors' => Typed::int($row->visitors),
             ])->all(),
         ]);
     }
@@ -292,8 +293,8 @@ class AnalyticsController extends Controller
             'mode' => 'lightweight',
             'range' => $range,
             'pageviews' => $rows->map(fn ($row) => [
-                'path' => (string) $row->path,
-                'pageviews' => (int) $row->pageviews,
+                'path' => Typed::string($row->path),
+                'pageviews' => Typed::int($row->pageviews),
             ])->all(),
         ]);
     }

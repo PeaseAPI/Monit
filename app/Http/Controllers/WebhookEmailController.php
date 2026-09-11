@@ -41,9 +41,9 @@ class WebhookEmailController extends Controller
         }
 
         $payload = $request->json()->all() ?: $request->post();
-        $from = strtolower(trim((string) ($payload['from'] ?? '')));
-        $subject = trim((string) ($payload['subject'] ?? ''));
-        $text = trim((string) ($payload['text'] ?? ($payload['body'] ?? '')));
+        $from = strtolower(trim(Typed::string($payload['from'] ?? '')));
+        $subject = trim(Typed::string($payload['subject'] ?? ''));
+        $text = trim(is_scalar($payload['text'] ?? ($payload['body'] ?? '')) ? (string) ($payload['text'] ?? ($payload['body'] ?? '')) : '');
 
         if ($from === '' || $text === '') {
             return response('invalid payload', 422);

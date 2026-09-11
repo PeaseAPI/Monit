@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\TicketRepliedToUser;
 use App\Models\Ticket;
 use App\Models\TicketReply;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +47,7 @@ class AdminTickets extends Controller
 
     public function reply(Request $request, int $ticketId): RedirectResponse
     {
-        $validated = $request->validate(['message' => ['required', 'string', 'max:20000']]);
+        $validated = Typed::arr($request->validate(['message' => ['required', 'string', 'max:20000']]));
 
         $ticket = Ticket::findOrFail($ticketId);
 
@@ -78,9 +79,9 @@ class AdminTickets extends Controller
 
     public function updateStatus(Request $request, int $ticketId): RedirectResponse
     {
-        $validated = $request->validate(['status' => ['required', 'in:0,1,2']]);
+        $validated = Typed::arr($request->validate(['status' => ['required', 'in:0,1,2']]));
 
-        Ticket::findOrFail($ticketId)->update(['status' => (int) $validated['status']]);
+        Ticket::findOrFail($ticketId)->update(['status' => Typed::int($validated['status'])]);
 
         return back()->with('success', __('msg.ticket_status_updated'));
     }

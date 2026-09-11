@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Broadcast;
 use App\Models\Plan;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -105,14 +106,14 @@ class AdminBroadcasts extends Controller
      */
     protected function validated(Request $request): array
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'title' => ['required', 'string', 'max:256'],
             'content' => ['required', 'string'],
             'type' => ['required', 'in:email,push'],
             'target' => ['required', 'in:all,newsletter,plan'],
             'target_plan_id' => ['nullable', 'required_if:target,plan', 'string', 'max:64'],
             'scheduled_at' => ['nullable', 'date', 'after:now'],
-        ]);
+        ]));
 
         if ($validated['target'] !== 'plan') {
             $validated['target_plan_id'] = null;

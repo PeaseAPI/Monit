@@ -912,7 +912,7 @@ class PixelTracker
 
         // 容错：SDK 未先发送 initiate_visitor 时自动补建
         $payloadData = $this->payload['data'] ?? [];
-        $this->upsertVisitor(is_array($payloadData) ? $payloadData : []);
+        $this->upsertVisitor(Typed::arr($payloadData));
 
         return $this->findVisitor();
     }

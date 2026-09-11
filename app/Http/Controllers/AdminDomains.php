@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Domain;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -43,12 +44,12 @@ class AdminDomains extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'user_id' => ['required', 'exists:users,user_id'],
             'scheme' => ['required', 'in:http,https'],
             'host' => ['required', 'string', 'max:256', 'unique:domains,host'],
             'type' => ['required', 'in:0,1'],
-        ]);
+        ]));
 
         Domain::create([
             ...$validated,
@@ -56,7 +57,7 @@ class AdminDomains extends Controller
         ]);
 
         return redirect()->route('admin.domains.index')
-            ->with('success', __('msg.domain_created', ['host' => $validated['host']]));
+            ->with('success', __('msg.domain_created', ['host' => Typed::string($validated['host'])]));
     }
 
     /**
@@ -74,13 +75,12 @@ class AdminDomains extends Controller
     {
         $domain = Domain::findOrFail($domainId);
 
-        $validated = $request->validate([
-            'user_id' => ['required', 'exists:users,user_id'],
+        $validated = Typed::arr($request->validate(['user_id' => ['required', 'exists:users,user_id'],
             'scheme' => ['required', 'in:http,https'],
             'host' => ['required', 'string', 'max:256', 'unique:domains,host,'.$domainId.',domain_id'],
             'type' => ['required', 'in:0,1'],
             'is_enabled' => ['boolean'],
-        ]);
+        ]));
 
         $domain->update($validated);
 

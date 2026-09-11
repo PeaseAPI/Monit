@@ -77,28 +77,28 @@ class AuthController extends Controller
             return $this->loginByPhone($request, SmsService::normalizePhone($identifier));
         }
 
-        $credentials = $request->validate([
+        $credentials = Typed::arr($request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ], [
             'email.required' => __('validation.email_required'),
             'email.email' => __('validation.email_email'),
             'password.required' => __('validation.password_required'),
-        ]);
+        ]));
 
         // 失败锁定检查（锁定期间正确凭证也被拒绝——对标原版语义）
-        if (LoginLockout::blocked('login', $credentials['email'])) {
+        if (LoginLockout::blocked('login', Typed::string($credentials['email']))) {
             return back()->withInput($request->only('email'))
                 ->withErrors(['email' => __('auth.login_locked')]);
         }
 
         $remember = $request->boolean('remember');
 
-        $user = User::where('email', $credentials['email'])->first();
+        $user = User::where('email', Typed::string($credentials['email']))->first();
 
-        if (! $user || $user->password === null || ! Hash::check($credentials['password'], $user->password)) {
+        if (! $user || $user->password === null || ! Hash::check(Typed::string($credentials['password']), $user->password)) {
             // 失败锁定（users.login_lockout_*：N 次失败锁 M 分钟，默认 5/30）
-            LoginLockout::recordFailure('login', $credentials['email']);
+            LoginLockout::recordFailure('login', Typed::string($credentials['email']));
 
             return back()
                 ->withInput($request->only('email'))
@@ -243,12 +243,12 @@ class AuthController extends Controller
             return redirect()->route('login');
         }
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'code' => ['required', 'digits:6'],
         ], [
             'code.required' => __('account.twofa_code_required'),
             'code.digits' => __('account.twofa_code_invalid'),
-        ]);
+        ]));
 
         $userId = $request->session()->get('twofa_user_id');
         $expiresAt = $request->session()->get('twofa_expires_at');
@@ -263,7 +263,7 @@ class AuthController extends Controller
 
         // 一次性消费：同一窗口的码登录后不可复用（RFC 6238 §5.2，防钓鱼重放）
         if (! $user || ! $user->twofa_is_enabled
-            || ! TotpService::consume((string) $user->twofa_token, $validated['code'], "user.{$user->user_id}")) {
+            || ! TotpService::consume(Typed::string($user->twofa_token), Typed::stringOrNull($validated['code']), "user.{$user->user_id}")) {
             return back()->withErrors(['code' => __('account.twofa_code_invalid')]);
         }
 
@@ -339,7 +339,7 @@ class AuthController extends Controller
             $rules['terms'] = ['accepted'];
         }
 
-        $validated = $request->validate($rules, [
+        $validated = Typed::arr($request->validate($rules, [
             'name.required' => __('validation.name_required'),
             'email.required' => __('validation.email_required'),
             'email.email' => __('validation.email_email'),
@@ -352,10 +352,10 @@ class AuthController extends Controller
             'sms_code.required' => __('validation.sms_code_required'),
             'sms_code.digits' => __('auth.sms_code_invalid'),
             'terms.accepted' => __('auth.terms_required'),
-        ]);
+        ]));
 
         // 注册黑名单（后台 设置→用户：域名 / IP，原版 blacklisted_*）
-        $atSuffix = strrchr($validated['email'], '@');
+        $atSuffix = strrchr(Typed::string($validated['email']), '@');
         $emailDomain = strtolower($atSuffix === false ? '' : substr($atSuffix, 1));
         $blacklistedDomains = array_filter(preg_split('/\r\n|\r|\n/', Typed::string(Settings::get('users.blacklisted_domains', ''))) ?: []);
         $blacklistedDomains = array_map(fn ($d) => strtolower(trim($d)), $blacklistedDomains);
@@ -391,9 +391,9 @@ class AuthController extends Controller
         $phone = null;
 
         if ($smsRegister) {
-            $phone = SmsService::normalizePhone($validated['phone']);
+            $phone = SmsService::normalizePhone(Typed::string($validated['phone']));
 
-            if (! SmsService::verify($phone, 'register', (string) $validated['sms_code'])) {
+            if (! SmsService::verify($phone, 'register', Typed::string($validated['sms_code']))) {
                 return back()
                     ->withInput($request->except(['password', 'password_confirmation', 'sms_code']))
                     ->withErrors(['sms_code' => __('auth.sms_code_invalid')]);

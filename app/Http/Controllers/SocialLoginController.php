@@ -503,7 +503,7 @@ class SocialLoginController extends Controller
             openssl_sign("$header.$payload", $signature, $privateKey, OPENSSL_ALGO_SHA256);
         }
 
-        return "$header.$payload.".rtrim(strtr(base64_encode($signature), '+/', '-_'), '=');
+        return "$header.$payload.".rtrim(strtr(base64_encode(is_string($signature) ? $signature : ''), '+/', '-_'), '=');
     }
 
     /**

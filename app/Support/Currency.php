@@ -54,10 +54,11 @@ class Currency
                 $code = strtoupper(trim((string) $code));
 
                 if (preg_match('/^[A-Z]{3}$/', $code)) {
-                    $currencies[$code] = static::normalizeRow(array_merge(
+                    $currencies[$code] = static::normalizeRow(Typed::arr(array_merge(
                         $currencies[$code] ?? [],
                         (array) $row,
-                    ));
+                    )));
+
                 }
             }
         }

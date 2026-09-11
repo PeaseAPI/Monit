@@ -85,14 +85,14 @@ class AdminPages extends Controller
      */
     protected function validated(Request $request): array
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'title' => ['required', 'string', 'max:256'],
             'url' => ['nullable', 'string', 'max:256'],
             'content' => ['required', 'string'],
             'description' => ['nullable', 'string', 'max:1024'],
             'position' => ['nullable', 'in:header,footer,none'],
             'is_published' => ['boolean'],
-        ]);
+        ]));
 
         $validated['url'] = $validated['url'] ?: Str::slug(Typed::string($request->input('title') ?? '')).'-'.Str::lower(Str::random(6));
         $validated['is_published'] = $request->boolean('is_published', false);

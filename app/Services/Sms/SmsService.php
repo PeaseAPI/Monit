@@ -21,8 +21,10 @@ use Illuminate\Support\Facades\Log;
  */
 class SmsService
 {
+    /** @var list<string> */
     public const PURPOSES = ['register', 'login', 'forgot_password', 'phone_bind'];
 
+    /** @var list<string> */
     public const PROVIDERS = ['aliyun', 'tencent', 'log'];
 
     /** 短信功能总开关 */

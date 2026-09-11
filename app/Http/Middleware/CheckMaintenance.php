@@ -25,6 +25,9 @@ class CheckMaintenance
         'up',
     ];
 
+    /**
+     * @param  Closure(Request): Response  $next
+     */
     public function handle(Request $request, Closure $next): Response
     {
         if (Settings::get('main.maintenance_is_enabled') !== 'true') {

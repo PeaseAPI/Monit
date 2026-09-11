@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tax;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -33,7 +34,7 @@ class AdminTaxes extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'name' => ['required', 'string', 'max:256'],
             'description' => ['nullable', 'string'],
             'value' => ['required', 'numeric'],
@@ -41,12 +42,12 @@ class AdminTaxes extends Controller
             'type' => ['required', 'in:inclusive,exclusive'],
             'billing_type' => ['required', 'in:personal,business'],
             'countries' => ['nullable', 'json'],
-        ]);
+        ]));
 
         Tax::create($validated);
 
         return redirect()->route('admin.taxes.index')
-            ->with('success', __('msg.tax_created', ['name' => $validated['name']]));
+            ->with('success', __('msg.tax_created', ['name' => Typed::string($validated['name'])]));
     }
 
     /**
@@ -63,15 +64,14 @@ class AdminTaxes extends Controller
     {
         $tax = Tax::findOrFail($taxId);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:256'],
+        $validated = Typed::arr($request->validate(['name' => ['required', 'string', 'max:256'],
             'description' => ['nullable', 'string'],
             'value' => ['required', 'numeric'],
             'value_type' => ['required', 'in:percentage,fixed'],
             'type' => ['required', 'in:inclusive,exclusive'],
             'billing_type' => ['required', 'in:personal,business'],
             'countries' => ['nullable', 'json'],
-        ]);
+        ]));
 
         $tax->update($validated);
 

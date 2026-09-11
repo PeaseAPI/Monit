@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Models\Annotation;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,11 +37,11 @@ class ApiAnnotationsController extends Controller
     {
         $this->authorizeWebsite($website);
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'name' => ['required', 'string', 'max:256'],
             'datetime' => ['required', 'date'],
             'color' => ['nullable', 'string', 'max:16'],
-        ]);
+        ]));
 
         $annotation = Annotation::create([
             'website_id' => $website->website_id,
@@ -70,11 +71,10 @@ class ApiAnnotationsController extends Controller
         $annotation = Annotation::where('website_id', $website->website_id)
             ->findOrFail($annotationId);
 
-        $validated = $request->validate([
-            'name' => ['sometimes', 'string', 'max:256'],
+        $validated = Typed::arr($request->validate(['name' => ['sometimes', 'string', 'max:256'],
             'datetime' => ['sometimes', 'date'],
             'color' => ['nullable', 'string', 'max:16'],
-        ]);
+        ]));
 
         $annotation->update($validated);
 

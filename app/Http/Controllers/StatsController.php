@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LightweightEvent;
+use App\Models\SessionEvent;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
@@ -16,6 +17,7 @@ use App\Support\TimezoneNames;
 use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -100,7 +102,7 @@ class StatsController extends Controller
         }
 
         // 规格 §5.3 AnalyticsFilters：path/utm/来源/地域/设备等过滤
-        $filters = $request->only(StatisticsService::FILTER_DIMENSIONS);
+        $filters = Typed::arr($request->only(StatisticsService::FILTER_DIMENSIONS));
 
         $stats = StatisticsService::for($website)->lastDays($range)->filters($filters);
 
@@ -747,7 +749,7 @@ class StatsController extends Controller
             ->sortBy('event_id')
             ->take(500)
             ->values();
-
+        /** @var Collection<int, SessionEvent> $allEvents */
         $profile = [
             'label' => '#'.$visitor->visitor_id,
             'country_code' => $visitor->country_code,

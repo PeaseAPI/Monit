@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SeoBacklink;
 use App\Models\Website;
 use App\Services\Seo\BacklinkChecker;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -49,7 +50,7 @@ class SeoBacklinkController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             // 第十二轮：url 规则（FILTER_VALIDATE_URL）接受 javascript: 等任意
             // 协议，而 source_url 会被输出进 href —— 收紧为 http/https 白名单
             'source_url' => 'required|url:http,https|max:2048',
@@ -58,18 +59,18 @@ class SeoBacklinkController extends Controller
             'anchor_text' => 'nullable|string|max:512',
             'rel' => 'nullable|in:dofollow,nofollow,unknown',
             'dr' => 'nullable|integer|min:0|max:100',
-        ]);
+        ]));
 
         $websiteId = null;
 
         if (! empty($validated['website_id'])) {
             $websiteId = Website::where('user_id', $this->user()->user_id)
-                ->where('website_id', (int) $validated['website_id'])
+                ->where('website_id', Typed::int($validated['website_id']))
                 ->value('website_id');
         }
 
         $exists = SeoBacklink::where('user_id', $this->user()->user_id)
-            ->where('url_hash', SeoBacklink::hashOf($validated['source_url'], $validated['target_url'] ?? null))
+            ->where('url_hash', SeoBacklink::hashOf(Typed::string($validated['source_url']), Typed::stringOrNull($validated['target_url'] ?? null)))
             ->exists();
 
         if ($exists) {
@@ -80,9 +81,9 @@ class SeoBacklinkController extends Controller
             'user_id' => $this->user()->user_id,
             'website_id' => $websiteId,
             'source_url' => $validated['source_url'],
-            'source_host' => SeoBacklink::normalizeHost($validated['source_url']),
+            'source_host' => SeoBacklink::normalizeHost(Typed::string($validated['source_url'])),
             'target_url' => $validated['target_url'] ?? null,
-            'url_hash' => SeoBacklink::hashOf($validated['source_url'], $validated['target_url'] ?? null),
+            'url_hash' => SeoBacklink::hashOf(Typed::string($validated['source_url']), Typed::stringOrNull($validated['target_url'] ?? null)),
             'anchor_text' => $validated['anchor_text'] ?? null,
             'rel' => $validated['rel'] ?? 'unknown',
             'dr' => $validated['dr'] ?? null,

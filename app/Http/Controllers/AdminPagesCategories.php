@@ -59,10 +59,10 @@ class AdminPagesCategories extends Controller
      */
     private function validated(Request $request): array
     {
-        return $request->validate([
+        return Typed::arr($request->validate([
             'title' => ['required', 'string', 'max:64'],
             'url' => ['required', 'string', 'max:256', 'regex:/^[a-z0-9-]+$/'],
             'order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-        ]) + ['order' => Typed::int($request->input('order') ?? 0)];
+        ])) + ['order' => Typed::int($request->input('order') ?? 0)];
     }
 }

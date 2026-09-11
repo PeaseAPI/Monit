@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\LoginLockout;
 use App\Services\Sms\SmsService;
 use App\Support\Captcha;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -46,13 +47,13 @@ class ForgotPasswordController extends Controller
                 ->withErrors(['captcha' => __('validation.captcha_failed')]);
         }
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'email' => ['required', 'string', 'max:256'],
         ], [
             'email.required' => __('validation.email_required'),
-        ]);
+        ]));
 
-        $identifier = trim($validated['email']);
+        $identifier = trim(Typed::string($validated['email']));
 
         // 找回密码锁定（users.lost_password_lockout_*：防邮件轰炸，默认 3 次/30 分钟）
         if (LoginLockout::blocked('lost_password', $identifier)) {
@@ -134,7 +135,7 @@ class ForgotPasswordController extends Controller
      */
     public function resetBySms(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'phone' => ['required', 'string', 'regex:/^1[3-9]\d{9}$/'],
             'sms_code' => ['required', 'digits:6'],
             'password' => ['required', 'string', Password::min(8), 'confirmed'],
@@ -146,11 +147,11 @@ class ForgotPasswordController extends Controller
             'password.required' => __('validation.password_required'),
             'password.min' => __('validation.password_min'),
             'password.confirmed' => __('validation.password_confirmed'),
-        ]);
+        ]));
 
-        $phone = SmsService::normalizePhone($validated['phone']);
+        $phone = SmsService::normalizePhone(Typed::string($validated['phone']));
 
-        if (! SmsService::verify($phone, 'forgot_password', $validated['sms_code'])) {
+        if (! SmsService::verify($phone, 'forgot_password', Typed::string($validated['sms_code']))) {
             return back()->withInput($request->except(['password', 'password_confirmation', 'sms_code']))
                 ->withErrors(['sms_code' => __('auth.sms_code_invalid')]);
         }
@@ -166,7 +167,7 @@ class ForgotPasswordController extends Controller
         DB::table('sessions')->where('user_id', $user->user_id)->delete();
 
         $user->forceFill([
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make(Typed::string($validated['password'])),
             'lost_password_code' => null,
             'remember_token' => Str::random(60),
         ])->save();
@@ -207,7 +208,7 @@ class ForgotPasswordController extends Controller
      */
     public function reset(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'code' => ['required', 'string'],
             'email' => ['required', 'email'],
             'password' => ['required', 'string', Password::min(8), 'confirmed'],
@@ -217,7 +218,7 @@ class ForgotPasswordController extends Controller
             'password.required' => __('validation.password_required'),
             'password.min' => __('validation.password_min'),
             'password.confirmed' => __('validation.password_confirmed'),
-        ]);
+        ]));
 
         $user = User::where('email', $validated['email'])
             ->where('lost_password_code', $validated['code'])
@@ -232,7 +233,7 @@ class ForgotPasswordController extends Controller
         DB::table('sessions')->where('user_id', $user->user_id)->delete();
 
         $user->forceFill([
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make(Typed::string($validated['password'])),
             'lost_password_code' => null,
             'remember_token' => Str::random(60),
         ])->save();

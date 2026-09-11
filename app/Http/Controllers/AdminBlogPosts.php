@@ -96,13 +96,13 @@ class AdminBlogPosts extends Controller
      */
     protected function validated(Request $request): array
     {
-        return $request->validate([
+        return Typed::arr($request->validate([
             'title' => ['required', 'string', 'max:256'],
             'url' => ['nullable', 'string', 'max:256'],
             'content' => ['required', 'string'],
             'description' => ['nullable', 'string', 'max:1024'],
             'is_published' => ['boolean'],
-        ]) + [
+        ])) + [
             'url' => Str::slug(Typed::string($request->input('title') ?? '')).'-'.Str::lower(Str::random(6)),
             'is_published' => $request->boolean('is_published', false),
         ];

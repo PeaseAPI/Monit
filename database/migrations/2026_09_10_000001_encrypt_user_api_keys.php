@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Typed;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Crypt;
@@ -35,8 +36,8 @@ return new class extends Migration
         DB::table('users')->whereNotNull('api_key')->orderBy('user_id')->chunkById(500, function ($users): void {
             foreach ($users as $user) {
                 DB::table('users')->where('user_id', $user->user_id)->update([
-                    'api_key_lookup' => hash('sha256', (string) $user->api_key),
-                    'api_key_encrypted' => Crypt::encryptString((string) $user->api_key),
+                    'api_key_lookup' => hash('sha256', Typed::string($user->api_key)),
+                    'api_key_encrypted' => Crypt::encryptString(Typed::string($user->api_key)),
                     'api_key' => null,
                 ]);
             }
@@ -51,7 +52,7 @@ return new class extends Migration
                 $plain = null;
 
                 try {
-                    $plain = Crypt::decryptString((string) $user->api_key_encrypted);
+                    $plain = Crypt::decryptString(Typed::string($user->api_key_encrypted));
                 } catch (Throwable) {
                     $plain = Str::random(60); // 解密失败（APP_KEY 变更等）：重新生成，保证可回滚
                 }

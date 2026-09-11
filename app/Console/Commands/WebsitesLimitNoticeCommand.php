@@ -22,6 +22,11 @@ class WebsitesLimitNoticeCommand extends Command
     protected $description = '站点配额超限时发送邮件通知（事件/事件子项/回放）';
 
     /** 配额映射：月度计数列 => 通知标志列 + 套餐功能键 + 邮件场景 */
+    /**
+     * 配额定义：counter（用量列）=> flag（已提醒标记）/ feature（限额键）/ scene（邮件场景）
+     *
+     * @var array<string, array{flag: string, feature: string, scene: string}>
+     */
     protected const QUOTAS = [
         'current_month_sessions_events' => [
             'flag' => 'plan_sessions_events_limit_notice',
@@ -83,9 +88,9 @@ class WebsitesLimitNoticeCommand extends Command
                     Mail::to($owner->email)->queue(new PlanLimitNotice(
                         $owner,
                         $website,
-                        $meta['scene'],
+                        Typed::string($meta['scene']),
                         $limit,
-                        (int) $website->{$counter}
+                        Typed::int($website->{$counter})
                     ));
 
                     // 标志必须在邮件成功入队后才置位：queue 抛异常（队列连接故障等）

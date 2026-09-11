@@ -31,8 +31,8 @@ class AdminApiController extends Controller
 
     public function createUser(Request $request): JsonResponse
     {
-        $v = $request->validate(['name' => 'required|string|max:128', 'email' => 'required|email|unique:users', 'password' => 'required|string|min:8']);
-        $v['password'] = bcrypt($v['password']);
+        $v = Typed::arr($request->validate(['name' => 'required|string|max:128', 'email' => 'required|email|unique:users', 'password' => 'required|string|min:8']));
+        $v['password'] = bcrypt(Typed::string($v['password']));
         $v['plan_id'] = $request->input('plan_id', 'free');
         $v['status'] = 1;
 
@@ -47,9 +47,9 @@ class AdminApiController extends Controller
     public function updateUser(Request $request, int $userId): JsonResponse
     {
         $user = User::findOrFail($userId);
-        $v = $request->validate(['name' => 'sometimes|string', 'email' => 'sometimes|email|unique:users,email,'.$userId, 'password' => 'sometimes|string|min:8', 'status' => 'sometimes|in:0,1']);
+        $v = Typed::arr($request->validate(['name' => 'sometimes|string', 'email' => 'sometimes|email|unique:users,email,'.$userId, 'password' => 'sometimes|string|min:8', 'status' => 'sometimes|in:0,1']));
         if (isset($v['password'])) {
-            $v['password'] = bcrypt($v['password']);
+            $v['password'] = bcrypt(Typed::string($v['password']));
         }
         $user->update($v);
 
@@ -81,7 +81,7 @@ class AdminApiController extends Controller
     public function updateWebsite(Request $request, int $id): JsonResponse
     {
         $w = Website::findOrFail($id);
-        $w->update($request->validate(['is_enabled' => 'sometimes|boolean', 'name' => 'sometimes|string|max:256']));
+        $w->update(Typed::arr($request->validate(['is_enabled' => 'sometimes|boolean', 'name' => 'sometimes|string|max:256'])));
 
         return response()->json($w);
     }
@@ -100,7 +100,7 @@ class AdminApiController extends Controller
 
     public function createPlan(Request $request): JsonResponse
     {
-        $v = $request->validate(['plan_id' => 'required|string|unique:plans', 'name' => 'required|string', 'prices' => 'required|array', 'settings' => 'required|array']);
+        $v = Typed::arr($request->validate(['plan_id' => 'required|string|unique:plans', 'name' => 'required|string', 'prices' => 'required|array', 'settings' => 'required|array']));
 
         return response()->json(Plan::create($v), 201);
     }
@@ -108,7 +108,7 @@ class AdminApiController extends Controller
     public function updatePlan(Request $request, string $planId): JsonResponse
     {
         $p = Plan::findOrFail($planId);
-        $p->update($request->validate(['name' => 'sometimes|string', 'prices' => 'sometimes|array', 'settings' => 'sometimes|array', 'is_enabled' => 'sometimes|boolean']));
+        $p->update(Typed::arr($request->validate(['name' => 'sometimes|string', 'prices' => 'sometimes|array', 'settings' => 'sometimes|array', 'is_enabled' => 'sometimes|boolean'])));
 
         return response()->json($p);
     }
@@ -142,9 +142,9 @@ class AdminApiController extends Controller
 
     public function updateSettings(Request $request): JsonResponse
     {
-        $v = $request->validate(['settings' => 'required|array']);
-        foreach ($v['settings'] as $key => $value) {
-            Setting::updateOrCreate(['key' => $key], ['value' => is_bool($value) ? ($value ? 'true' : 'false') : (is_array($value) ? json_encode($value) : (string) $value)]);
+        $v = Typed::arr($request->validate(['settings' => 'required|array']));
+        foreach (Typed::arr($v['settings']) as $key => $value) {
+            Setting::updateOrCreate(['key' => $key], ['value' => is_bool($value) ? ($value ? 'true' : 'false') : (is_array($value) ? json_encode($value) : Typed::string($value))]);
         }
         Cache::forget('monit_settings');
 
@@ -168,7 +168,7 @@ class AdminApiController extends Controller
     public function updatePlugin(Request $request, int $pluginId): JsonResponse
     {
         $p = Plugin::findOrFail($pluginId);
-        $p->update($request->validate(['status' => 'sometimes|integer|in:-1,0,1', 'settings' => 'sometimes|array']));
+        $p->update(Typed::arr($request->validate(['status' => 'sometimes|integer|in:-1,0,1', 'settings' => 'sometimes|array'])));
 
         return response()->json($p);
     }

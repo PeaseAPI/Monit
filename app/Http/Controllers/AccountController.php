@@ -72,7 +72,7 @@ class AccountController extends Controller
         $user = $this->user();
         $emailChanged = strtolower(Typed::string($request->input('email'))) !== strtolower((string) $user->email);
 
-        $validated = $request->validate(array_merge([
+        $validated = Typed::arr($request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->user_id.',user_id'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:'.$avatarMax,
@@ -95,7 +95,7 @@ class AccountController extends Controller
             // 敏感操作确认（与其余入口一致：改密码/删账户/关 2FA 均已要求 current_password）：
             // 阻断会话窃取场景下的「改邮箱 → 忘记密码 → 重置邮件发往新邮箱」接管链
             'current_password' => ['required', 'current_password'],
-        ] : []));
+        ] : [])));
 
         // ---- 头像：上传 / 移除（存储于 public/uploads/avatars，DB 存相对 URL） ----
         $avatarUrl = $user->avatar;
@@ -183,10 +183,10 @@ class AccountController extends Controller
      */
     public function updatePassword(Request $request)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'confirmed', Password::defaults()],
-        ]);
+        ]));
 
         $user = $this->user();
 
@@ -199,7 +199,7 @@ class AccountController extends Controller
             ->delete();
 
         $user->forceFill([
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make(Typed::string($validated['password'])),
             'remember_token' => Str::random(60),
         ])->save();
 
@@ -241,7 +241,7 @@ class AccountController extends Controller
             return back()->withErrors(['phone' => __('auth.sms_not_enabled')]);
         }
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'phone' => ['required', 'string', 'regex:/^1[3-9]\d{9}$/', 'unique:users,phone'],
             'sms_code' => ['required', 'digits:6'],
         ], [
@@ -250,11 +250,11 @@ class AccountController extends Controller
             'phone.unique' => __('auth.phone_taken'),
             'sms_code.required' => __('validation.sms_code_required'),
             'sms_code.digits' => __('auth.sms_code_invalid'),
-        ]);
+        ]));
 
-        $phone = SmsService::normalizePhone($validated['phone']);
+        $phone = SmsService::normalizePhone(Typed::string($validated['phone']));
 
-        if (! SmsService::verify($phone, 'phone_bind', (string) $validated['sms_code'])) {
+        if (! SmsService::verify($phone, 'phone_bind', Typed::string($validated['sms_code']))) {
             return back()->withInput()->withErrors(['sms_code' => __('auth.sms_code_invalid')]);
         }
 
@@ -291,13 +291,13 @@ class AccountController extends Controller
      */
     public function twofaEnable(Request $request)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'code' => ['required', 'digits:6'],
-        ]);
+        ]));
 
         $secret = session('twofa_pending_secret');
 
-        if (! $secret || ! TotpService::verify(Typed::string($secret), $validated['code'])) {
+        if (! $secret || ! TotpService::verify(Typed::string($secret), Typed::stringOrNull($validated['code']))) {
             return back()->withErrors(['code' => __('account.twofa_code_invalid')]);
         }
 
@@ -318,16 +318,16 @@ class AccountController extends Controller
      */
     public function twofaDisable(Request $request)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'password' => ['required', 'current_password'],
             'code' => ['required', 'digits:6'],
-        ]);
+        ]));
 
         $user = $this->user();
 
         // 一次性消费：关闭 2FA 的码与登录共用判重池——防止钓鱼拿到「密码+码」后
         // 在有效窗口内重放同一码绕过双重确认
-        if (! TotpService::consume((string) $user->twofa_token, $validated['code'], "user.{$user->user_id}")) {
+        if (! TotpService::consume(Typed::string($user->twofa_token), Typed::stringOrNull($validated['code']), "user.{$user->user_id}")) {
             return back()->withErrors(['code' => __('account.twofa_code_invalid')]);
         }
 
@@ -370,9 +370,9 @@ class AccountController extends Controller
      */
     public function redeemCodeSubmit(Request $request)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'code' => ['required', 'string', 'max:64'],
-        ]);
+        ]));
 
         $code = Code::where('code', $validated['code'])->first();
 
@@ -401,9 +401,8 @@ class AccountController extends Controller
      */
     public function destroy(Request $request)
     {
-        $validated = $request->validate([
-            'password' => ['required', 'current_password'],
-        ]);
+        $validated = Typed::arr($request->validate(['password' => ['required', 'current_password'],
+        ]));
 
         // 先留存快照再删除（Webhook 载荷需要）
         $user = $this->user();

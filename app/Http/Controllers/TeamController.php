@@ -35,9 +35,9 @@ class TeamController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'name' => ['required', 'string', 'max:64'],
-        ]);
+        ]));
 
         Team::create([
             'user_id' => $this->user()->user_id,
@@ -46,7 +46,7 @@ class TeamController extends Controller
         ]);
 
         return redirect()->route('teams.index')
-            ->with('success', __('msg.team_created', ['name' => $validated['name']]));
+            ->with('success', __('msg.team_created', ['name' => Typed::string($validated['name'])]));
     }
 
     /**
@@ -73,13 +73,13 @@ class TeamController extends Controller
 
     public function invite(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'team_id' => ['required', 'exists:teams,team_id'],
             'user_email' => ['required', 'email', 'max:320'],
             'websites_ids' => ['nullable', 'array'],
             'websites_ids.*' => ['integer'],
             'access' => ['nullable', 'array'],
-        ]);
+        ]));
 
         // 归属校验：仅团队 owner 可邀请成员
         $team = Team::where('team_id', $validated['team_id'])
@@ -125,7 +125,7 @@ class TeamController extends Controller
             }
         });
 
-        return back()->with('success', __('msg.invitation_sent', ['email' => $validated['user_email']]));
+        return back()->with('success', __('msg.invitation_sent', ['email' => Typed::string($validated['user_email'])]));
     }
 
     public function accept(Request $request, int $memberId): RedirectResponse

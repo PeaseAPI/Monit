@@ -52,11 +52,11 @@ class NetworkTools
 
         $data = ['A 记录' => $ip !== $domain ? $ip : '未解析'];
         $mx = @dns_get_record($domain, DNS_MX) ?: [];
-        $data['MX 记录'] = $mx ? implode(', ', array_column($mx, 'target')) : '无';
+        $data['MX 记录'] = $mx ? implode(', ', array_map(fn ($v) => Typed::string($v), array_column($mx, 'target'))) : '无';
         $ns = @dns_get_record($domain, DNS_NS) ?: [];
-        $data['NS 记录'] = $ns ? implode(', ', array_column($ns, 'target')) : '无';
+        $data['NS 记录'] = $ns ? implode(', ', array_map(fn ($v) => Typed::string($v), array_column($ns, 'target'))) : '无';
         $txt = @dns_get_record($domain, DNS_TXT) ?: [];
-        $data['TXT 记录'] = $txt ? implode(' | ', array_column($txt, 'txt')) : '无';
+        $data['TXT 记录'] = $txt ? implode(' | ', array_map(fn ($v) => Typed::string($v), array_column($txt, 'txt'))) : '无';
 
         return ['ok' => true, 'data' => $data];
     }
@@ -113,12 +113,12 @@ class NetworkTools
             return ['ok' => false, 'error' => '证书解析失败', 'data' => []];
         }
 
-        $validTo = (int) ($parsed['validTo_time_t'] ?? 0);
+        $validTo = Typed::int($parsed['validTo_time_t'] ?? 0);
 
         return ['ok' => true, 'data' => [
             '颁发给' => data_get($parsed, 'subject.CN') ?? '-',
             '颁发者' => data_get($parsed, 'issuer.O') ?? (data_get($parsed, 'issuer.CN') ?? '-'),
-            '生效日期' => date('Y-m-d', (int) ($parsed['validFrom_time_t'] ?? 0)),
+            '生效日期' => date('Y-m-d', Typed::int($parsed['validFrom_time_t'] ?? 0)),
             '失效日期' => date('Y-m-d', $validTo),
             '剩余天数' => (string) max(0, (int) floor(($validTo - time()) / 86400)),
         ]];
@@ -352,7 +352,7 @@ class NetworkTools
 
         $data = [];
         foreach ($result['response']->headers() as $name => $values) {
-            $data[$name] = implode(', ', (array) $values);
+            $data[$name] = implode(', ', array_map(fn ($v) => Typed::string($v), (array) $values));
         }
 
         return ['ok' => true, 'data' => $data];

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -24,18 +25,18 @@ class WebsitesImportController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'urls' => ['nullable', 'string', 'max:10000'],
             'csv_file' => ['nullable', 'file', 'mimes:csv,txt', 'max:1024'],
             'tracking_type' => ['required', 'in:advanced,lightweight'],
             'timezone' => ['required', 'timezone'],
-        ]);
+        ]));
 
         $urls = [];
 
         // 从文本框读取
         if (! empty($validated['urls'])) {
-            $urls = array_filter(array_map('trim', explode("\n", $validated['urls'])));
+            $urls = array_filter(array_map('trim', explode("\n", Typed::string($validated['urls']))));
         }
 
         // 从 CSV 文件读取（列：name,url）

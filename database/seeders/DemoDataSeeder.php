@@ -15,6 +15,7 @@ use App\Models\Website;
 use App\Models\WebsiteGoal;
 use App\Models\WebsiteVisitor;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Ramsey\Uuid\Uuid;
 
@@ -74,6 +75,7 @@ class DemoDataSeeder extends Seeder
 
     protected function seedWebsites(User $proUser, User $freeUser): void
     {
+        /** @var Collection<int, Website> $websites */
         $websites = collect();
         $siteData = [
             ['name' => '主站', 'host' => 'example.com'],
@@ -110,12 +112,17 @@ class DemoDataSeeder extends Seeder
             ]
         );
 
+        $firstSite = $websites->first();
+        if (! $firstSite instanceof Website) {
+            return;
+        }
+
         $this->command->info('✅ 网站：4 个（pro×3 + free×1）');
-        $this->seedVisitors($websites[0]);
-        $this->seedGoals($websites[0], $proUser);
+        $this->seedVisitors($firstSite);
+        $this->seedGoals($firstSite, $proUser);
         $this->seedPayments($proUser, $freeUser);
         $this->seedTeams($proUser, $freeUser);
-        $this->seedMisc($proUser, $websites[0], $freeUser);
+        $this->seedMisc($proUser, $firstSite, $freeUser);
     }
 
     protected function seedVisitors(Website $site): void

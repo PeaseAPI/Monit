@@ -118,17 +118,17 @@ class PaymentController extends Controller
             abort(404);
         }
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'plan_id' => ['required', 'string', 'exists:plans,plan_id'],
             'processor' => ['required', 'string', 'in:'.implode(',', self::PROCESSORS)],
             'frequency' => ['required', 'in:monthly,annual,lifetime'],
             'code' => ['nullable', 'string'],
-        ]);
+        ]));
 
         $user = $this->user();
-        $plan = Plan::query()->where('plan_id', (int) $validated['plan_id'])->firstOrFail();
-        $processor = $validated['processor'];
-        $frequency = $validated['frequency'];
+        $plan = Plan::query()->where('plan_id', Typed::int($validated['plan_id']))->firstOrFail();
+        $processor = Typed::string($validated['processor']);
+        $frequency = Typed::string($validated['frequency']);
 
         // 服务端强校验：仅允许后台已启用的支付方式（防绕过前端直接 POST）
         if (! in_array($processor, self::enabledProcessors(), true)) {
@@ -136,7 +136,7 @@ class PaymentController extends Controller
         }
 
         try {
-            $order = $this->paymentService->createOrder($user, $plan, $processor, $frequency, $validated['code'] ?? null);
+            $order = $this->paymentService->createOrder($user, $plan, $processor, $frequency, Typed::stringOrNull($validated['code'] ?? null));
         } catch (\RuntimeException $e) {
             // 套餐在该货币下无可用定价（规格书 §10.4：无价不得下单）
             if (str_starts_with($e->getMessage(), 'plan_price_missing')) {
@@ -192,11 +192,11 @@ class PaymentController extends Controller
      */
     public function redeemCode(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'code' => ['required', 'string'],
-        ]);
+        ]));
 
-        $result = $this->paymentService->redeemCode($this->user(), $validated['code']);
+        $result = $this->paymentService->redeemCode($this->user(), Typed::string($validated['code']));
 
         if (! $result['success']) {
             return back()->withErrors(['code' => $result['message']]);

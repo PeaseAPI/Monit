@@ -817,7 +817,7 @@ Route::get('/pwa/sw.js', function () {
 
 // Push Notifications 前端订阅（规格书 §14.5）
 Route::post('/push-notifications/subscribe', function (Request $request) {
-    $validated = $request->validate([
+    $validated = Typed::arr($request->validate([
         // SSRF 防护（安全审计周期 #17）：endpoint 必须是 https 公网地址。
         // 此前仅 required|url，认证用户可注册 http://192.168.1.1/x 之类
         // 内网目标，广播发送时平台向其 POST。复用 WebhookSignature 的
@@ -837,13 +837,13 @@ Route::post('/push-notifications/subscribe', function (Request $request) {
         'website_id' => ['required', 'integer', 'exists:websites,website_id'],
         'keys.auth' => ['required', 'string'],
         'keys.p256dh' => ['required', 'string'],
-    ]);
+    ]));
     PushNotificationSubscriber::create([
         'user_id' => Auth::id(),
         'website_id' => $validated['website_id'],
         'endpoint' => $validated['endpoint'],
-        'keys_auth' => $validated['keys']['auth'],
-        'keys_p256dh' => $validated['keys']['p256dh'],
+        'keys_auth' => Typed::string(data_get($validated, 'keys.auth')),
+        'keys_p256dh' => Typed::string(data_get($validated, 'keys.p256dh')),
         'subscriber_datetime' => now(),
     ]);
 
@@ -852,9 +852,9 @@ Route::post('/push-notifications/subscribe', function (Request $request) {
 
 // Push Notifications 取消订阅（规格书 §14.5）
 Route::post('/push-notifications/unsubscribe', function (Request $request) {
-    $validated = $request->validate([
+    $validated = Typed::arr($request->validate([
         'endpoint' => ['required', 'url'],
-    ]);
+    ]));
 
     PushNotificationSubscriber::where('user_id', Auth::id())
         ->where('endpoint', $validated['endpoint'])

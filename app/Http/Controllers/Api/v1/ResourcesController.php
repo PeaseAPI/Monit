@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Models\Website;
 use App\Models\WebsiteGoal;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -25,13 +26,13 @@ class ResourcesController extends Controller
     {
         $website = $this->ownWebsite($request, $website);
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'key' => ['required', 'string', 'max:128'],
             'type' => ['required', 'in:pageview,click,scroll,custom,location'],
             'path' => ['nullable', 'string', 'max:512'],
             'name' => ['required', 'string', 'max:256'],
             'is_enabled' => ['nullable', 'boolean'],
-        ]);
+        ]));
 
         $goal = $website->goals()->create([
             ...$validated,
@@ -54,13 +55,12 @@ class ResourcesController extends Controller
         $goalModel = WebsiteGoal::where('website_id', $this->ownWebsite($request, $website)->website_id)
             ->where('goal_id', $goal)->firstOrFail();
 
-        $validated = $request->validate([
-            'key' => ['sometimes', 'string', 'max:128'],
+        $validated = Typed::arr($request->validate(['key' => ['sometimes', 'string', 'max:128'],
             'type' => ['sometimes', 'in:pageview,click,scroll,custom,location'],
             'path' => ['sometimes', 'nullable', 'string', 'max:512'],
             'name' => ['sometimes', 'string', 'max:256'],
             'is_enabled' => ['sometimes', 'boolean'],
-        ]);
+        ]));
 
         $goalModel->update($validated);
 
@@ -84,13 +84,13 @@ class ResourcesController extends Controller
 
     public function annotationsStore(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'website_id' => ['required', 'integer'],
             'name' => ['required', 'string', 'max:256'],
             'date' => ['required', 'date'],
-        ]);
+        ]));
 
-        $website = $this->ownWebsite($request, $validated['website_id']);
+        $website = $this->ownWebsite($request, Typed::int($validated['website_id']));
 
         $annotation = $this->user()->annotations()->create([
             'website_id' => $website->website_id,
@@ -105,10 +105,9 @@ class ResourcesController extends Controller
     {
         $annotationModel = $this->user()->annotations()->where('annotation_id', $annotation)->firstOrFail();
 
-        $validated = $request->validate([
-            'name' => ['sometimes', 'string', 'max:256'],
+        $validated = Typed::arr($request->validate(['name' => ['sometimes', 'string', 'max:256'],
             'date' => ['sometimes', 'date'],
-        ]);
+        ]));
 
         $annotationModel->update($validated);
 

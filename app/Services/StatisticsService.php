@@ -92,7 +92,7 @@ final class StatisticsService
             if ($dimension === 'goal_id') {
                 // 目标过滤（规格 §5.3）：限定为已转化该目标的访客（仅 Advanced；LW 无访客关联）
                 if ($model === 'advanced') {
-                    $query->whereIn('visitor_id', function ($q) use ($value) {
+                    $query->whereIn('visitor_id', function (\Illuminate\Database\Query\Builder $q) use ($value) {
                         $q->select('visitor_id')
                             ->from('goals_conversions')
                             ->where('goal_id', (int) $value)
@@ -110,7 +110,7 @@ final class StatisticsService
                         $query->where($dimension, '=', $value);
                     }
                 } else {
-                    $query->whereIn('visitor_id', function ($q) use ($dimension, $value) {
+                    $query->whereIn('visitor_id', function (\Illuminate\Database\Query\Builder $q) use ($dimension, $value) {
                         $q->select('visitor_id')
                             ->from('websites_visitors')
                             ->where('website_id', $this->website->website_id)
@@ -334,8 +334,8 @@ final class StatisticsService
         }
 
         return collect($rows)->map(fn ($row) => [
-            'key' => (string) ($row->k ?? __('stats.unknown')),
-            'count' => (int) $row->total,
+            'key' => Typed::string($row->k ?? __('stats.unknown')),
+            'count' => Typed::int($row->total),
         ])->all();
     }
 
@@ -384,7 +384,7 @@ final class StatisticsService
     /**
      * 顶级访客列表（按访客维度聚合）
      *
-     * @return array<int, array{visitor_id: int|null, visitor_uuid: string, country_code: mixed, device_type: mixed, os_name: mixed, browser_name: mixed, total_events: int, last_date: string}>
+     * @return array<int, array{visitor_id: int|null, visitor_uuid: string, country_code: mixed, city_name: mixed, device_type: mixed, os_name: mixed, browser_name: mixed, total_events: int, first_date: mixed, last_date: mixed, first_referrer: mixed, ip?: mixed}>
      */
     public function topVisitors(int $limit = 50): array
     {
@@ -411,13 +411,13 @@ final class StatisticsService
 
             return collect($rows)->map(fn ($row) => [
                 'visitor_id' => null,
-                'visitor_uuid' => strtolower((string) $row->visitor_uuid),
+                'visitor_uuid' => strtolower(Typed::string($row->visitor_uuid)),
                 'country_code' => $row->country_code,
                 'city_name' => $row->city_name,
                 'device_type' => $row->device_type,
                 'os_name' => $row->os_name,
                 'browser_name' => $row->browser_name,
-                'total_events' => (int) $row->total_events,
+                'total_events' => Typed::int($row->total_events),
                 'first_date' => $row->first_date,
                 'last_date' => $row->last_date,
                 'first_referrer' => $row->first_referrer,
@@ -442,15 +442,15 @@ final class StatisticsService
             ->get();
 
         return collect($rows)->map(fn ($row) => [
-            'visitor_id' => (int) $row->visitor_id,
-            'visitor_uuid' => strtolower((string) $row->visitor_uuid),
+            'visitor_id' => Typed::int($row->visitor_id),
+            'visitor_uuid' => strtolower(Typed::string($row->visitor_uuid)),
             'country_code' => $row->country_code,
             'city_name' => $row->city_name,
             'ip' => $row->ip,
             'device_type' => $row->device_type,
             'os_name' => $row->os_name,
             'browser_name' => $row->browser_name,
-            'total_events' => (int) $row->total_events,
+            'total_events' => Typed::int($row->total_events),
             'first_date' => $row->first_date,
             'last_date' => $row->last_date,
             'first_referrer' => $row->first_referrer,
@@ -671,7 +671,7 @@ final class StatisticsService
             ->limit($limit)
             ->get();
 
-        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => (int) $row->total])->all();
+        return collect($rows)->map(fn ($row) => ['key' => Typed::string($row->k), 'count' => Typed::int($row->total)])->all();
     }
 
     /**
@@ -764,7 +764,7 @@ final class StatisticsService
             ->get();
 
         $result = ['direct' => 0, 'organic' => 0, 'social' => 0, 'referral' => 0, 'campaign' => 0];
-        $selfHost = strtolower((string) ($this->website->host ?? $this->website->domain ?? ''));
+        $selfHost = strtolower(Typed::string($this->website->host ?? $this->website->domain ?? ''));
 
         foreach ($rows as $row) {
             $count = (int) $row->total;
@@ -877,8 +877,9 @@ final class StatisticsService
             }
         }
 
+        /** @var \Closure(array<mixed>): list<array{key: string, count: int}> $toItems */
         $toItems = fn (array $buckets) => array_map(
-            fn ($k, $v) => ['key' => (string) $k, 'count' => $v],
+            fn ($k, $v) => ['key' => Typed::string($k), 'count' => Typed::int($v)],
             array_keys($buckets),
             $buckets
         );
@@ -1070,7 +1071,7 @@ final class StatisticsService
             arsort($map);
 
             return array_slice(array_map(
-                fn ($k, $v) => ['key' => (string) $k, 'count' => (int) $v],
+                fn ($k, $v) => ['key' => Typed::string($k), 'count' => Typed::int($v)],
                 array_keys($map),
                 $map
             ), 0, $limit);

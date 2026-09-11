@@ -43,7 +43,7 @@ class WeChatPayProcessor
 
             $params['sign'] = $this->sign($params);
 
-            $response = Http::withBody($this->toXml($params), 'application/xml')->post(static::UNIFIED_ORDER_URL);
+            $response = Http::withBody($this->toXml($params), 'application/xml')->post(Typed::string(static::UNIFIED_ORDER_URL));
             $xml = simplexml_load_string((string) $response->body());
 
             if ($xml !== false && (string) $xml->return_code === 'SUCCESS' && (string) $xml->result_code === 'SUCCESS') {

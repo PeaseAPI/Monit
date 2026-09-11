@@ -6,6 +6,7 @@ use App\Models\Heatmap;
 use App\Models\HeatmapSnapshotClick;
 use App\Models\HeatmapSnapshotScroll;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,14 +40,14 @@ class HeatmapController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'website_id' => ['required', 'integer'],
             'path' => ['required', 'string', 'max:2048'],
             'name' => ['required', 'string', 'max:256'],
             'is_enabled' => ['boolean'],
-        ]);
+        ]));
 
-        $website = $this->user()->websites()->where('website_id', (int) $validated['website_id'])->firstOrFail();
+        $website = $this->user()->websites()->where('website_id', Typed::int($validated['website_id']))->firstOrFail();
 
         // datetime 列 NOT NULL 无默认值（模型 $timestamps=false），必须显式赋值，否则 SQL 报错 500
         Heatmap::create([
@@ -130,14 +131,14 @@ class HeatmapController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'heatmap_id' => ['required', 'exists:websites_heatmaps,heatmap_id'],
             'path' => ['required', 'string', 'max:2048'],
             'name' => ['required', 'string', 'max:256'],
             'is_enabled' => ['boolean'],
-        ]);
+        ]));
 
-        $heatmap = Heatmap::query()->where('heatmap_id', (int) $validated['heatmap_id'])->firstOrFail();
+        $heatmap = Heatmap::query()->where('heatmap_id', Typed::int($validated['heatmap_id']))->firstOrFail();
         $website = Website::where('website_id', $heatmap->website_id)
             ->where('user_id', $this->user()->user_id)
             ->firstOrFail();

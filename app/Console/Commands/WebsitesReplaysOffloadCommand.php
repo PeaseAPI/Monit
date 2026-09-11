@@ -73,7 +73,8 @@ class WebsitesReplaysOffloadCommand extends Command
                 if (is_string($stored) && $stored !== '') {
                     $decompressed = @gzdecode($stored);
                     if ($decompressed !== false) {
-                        $data = Typed::arr(json_decode($decompressed, true));
+                        $decoded = json_decode($decompressed, true);
+                        $data = is_array($decoded) ? $decoded : [];
                         if (isset($data['events']) && is_array($data['events'])) {
                             $events = $data['events'];
                         } elseif (array_is_list($data)) {

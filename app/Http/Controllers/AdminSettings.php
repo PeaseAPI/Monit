@@ -68,9 +68,11 @@ class AdminSettings extends Controller
 
         // 套餐设置（plan_*）允许任意字段，宽松保存
         if (str_starts_with($group, 'plan_')) {
-            $data = collect($request->except(['_token', '_method', 'group']))
-                ->map(fn ($value) => $value === '1' ? true : $value)
-                ->toArray();
+            $data = Typed::arr(
+                collect($request->except(['_token', '_method', 'group']))
+                    ->map(fn ($value) => $value === '1' ? true : $value)
+                    ->toArray()
+            );
             $this->saveSettings($group, $data);
 
             // 同时清 Cache 与进程内静态缓存（Settings::flush）
@@ -85,7 +87,7 @@ class AdminSettings extends Controller
             return back()->withErrors(['error' => __('msg.invalid_settings_group')]);
         }
 
-        $validated = $request->validate($rules);
+        $validated = Typed::arr($request->validate($rules));
 
         // 未勾选的复选框不会提交，显式置为 false 以支持"取消勾选后保存"
         foreach (array_keys(array_filter($rules, fn ($rule) => str_contains(Typed::string($rule), 'boolean'))) as $field) {
@@ -95,8 +97,8 @@ class AdminSettings extends Controller
         // 多货币清单：code 规范化 + 剔除默认货币行/无效汇率行（规格书 §10.4）
         if ($group === 'payment' && array_key_exists('currencies', $validated)) {
             $validated['currencies'] = $this->sanitizeCurrencies(
-                (array) $validated['currencies'],
-                strtoupper((string) ($validated['currency'] ?? 'CNY')),
+                Typed::arr($validated['currencies'] ?? []),
+                strtoupper(Typed::string($validated['currency'] ?? 'CNY')),
             );
         }
 
@@ -180,7 +182,7 @@ class AdminSettings extends Controller
                 : 'nullable|string|max:4096';
         }
 
-        $validated = $request->validate($rules);
+        $validated = Typed::arr($request->validate($rules));
 
         // 只处理白名单键（validate 已按规则键过滤）
         $writer = app(EnvWriter::class);
@@ -199,7 +201,7 @@ class AdminSettings extends Controller
                 continue;
             }
 
-            $value = trim((string) $value);
+            $value = trim(is_scalar($value) ? (string) $value : '');
 
             // 密钥键空值 = 保持不变；显式勾选 {key}__clear 才清除
             if (in_array($key, $secretKeys, true) && $value === '') {
@@ -267,7 +269,8 @@ class AdminSettings extends Controller
 
         try {
             $row = DB::select('select version() as v');
-            $mysqlVersion = $row[0]->v ?? null;
+            $first = $row[0] ?? null;
+            $mysqlVersion = is_object($first) ? ($first->v ?? null) : null;
         } catch (\Throwable) {
             // 连接失败时留空，页面标红
         }
@@ -364,7 +367,7 @@ class AdminSettings extends Controller
      */
     protected function getGroup(string $group): array
     {
-        return Setting::where('key', 'like', "{$group}.%")->pluck('value', 'key')->toArray();
+        return Typed::arr(Setting::where('key', 'like', "{$group}.%")->pluck('value', 'key')->toArray());
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,11 +20,11 @@ class DomainController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'host' => ['required', 'string', 'max:256'],
             'scheme' => ['nullable', 'in:http,https'],
             'is_enabled' => ['nullable', 'boolean'],
-        ]);
+        ]));
 
         $domain = $this->user()->domains()->create([
             'host' => $validated['host'],
@@ -39,11 +40,10 @@ class DomainController extends Controller
     {
         $domain = $this->user()->domains()->where('domain_id', $domainId)->firstOrFail();
 
-        $validated = $request->validate([
-            'host' => ['sometimes', 'string', 'max:256'],
+        $validated = Typed::arr($request->validate(['host' => ['sometimes', 'string', 'max:256'],
             'scheme' => ['sometimes', 'in:http,https'],
             'is_enabled' => ['sometimes', 'boolean'],
-        ]);
+        ]));
 
         $domain->update($validated);
 

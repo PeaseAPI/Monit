@@ -77,7 +77,7 @@ class SeoAuditController extends Controller
             default => $rules['url'] = 'required|url|max:2048',
         };
 
-        $validated = $request->validate($rules);
+        $validated = Typed::arr($request->validate($rules));
 
         $plan = $this->user()->getPlanSettings();
         $limit = $this->monthlyLimit($plan, 'seo_audits_limit');
@@ -103,7 +103,7 @@ class SeoAuditController extends Controller
         if ($type === 'sitemap') {
             dispatch(function () use ($validated, $bulkLimit) {
                 $urls = app(SitemapMonitor::class)
-                    ->fetch($validated['url'])['urls'];
+                    ->fetch(Typed::string($validated['url']))['urls'];
                 $urls = array_slice($urls, 0, $bulkLimit);
                 foreach ($urls as $url) {
                     RunSeoAuditJob::dispatch($url, $this->user()->user_id, 'single');
@@ -114,7 +114,7 @@ class SeoAuditController extends Controller
         }
 
         if ($type === 'bulk') {
-            $urls = collect(preg_split('/\R/', $validated['urls']) ?: [])
+            $urls = collect(preg_split('/\R/', Typed::string($validated['urls'])) ?: [])
                 ->map(fn (string $u) => static::ensureScheme(trim($u)))
                 ->filter(fn (string $u) => filter_var($u, FILTER_VALIDATE_URL) !== false)
                 ->take($bulkLimit);
@@ -135,7 +135,7 @@ class SeoAuditController extends Controller
             // 同步执行（HTML 离线审计不发起网络请求，耗时极短）；
             // 历史上走队列导致未部署 queue:worker 的实例审计永不执行、记录不落库
             $audit = app(AuditEngine::class)->run(
-                $validated['url'],
+                Typed::string($validated['url']),
                 $this->user(),
                 'html',
                 ['html' => $html, 'with_ai' => true],
@@ -145,7 +145,7 @@ class SeoAuditController extends Controller
         }
 
         // Single：同步执行并直达报告（避免队列未消费导致列表始终为空）
-        $url = static::ensureScheme($validated['url']);
+        $url = static::ensureScheme(Typed::string($validated['url']));
         $audit = app(AuditEngine::class)->run($url, $this->user(), 'single', ['with_ai' => true]);
 
         return redirect()->route('seo.audits.show', $audit->seo_audit_id);
@@ -202,9 +202,9 @@ class SeoAuditController extends Controller
      */
     public function unlock(Request $request, SeoAudit $seoAudit)
     {
-        $validated = $request->validate(['password' => 'required|string|max:64']);
+        $validated = Typed::arr($request->validate(['password' => 'required|string|max:64']));
 
-        if (! $seoAudit->password || ! password_verify($validated['password'], $seoAudit->password)) {
+        if (! $seoAudit->password || ! password_verify(Typed::string($validated['password']), $seoAudit->password)) {
             return back()->withErrors(['password' => __('seo.wrong_password')]);
         }
 
@@ -229,7 +229,7 @@ class SeoAuditController extends Controller
         $url = static::ensureScheme(Typed::string($request->input('url', '')));
         $request->merge(['url' => $url]);
 
-        $validated = $request->validate(['url' => 'required|url|max:2048']);
+        $validated = Typed::arr($request->validate(['url' => 'required|url|max:2048']));
 
         if ($user !== null) {
             return $this->store($request);
@@ -244,7 +244,7 @@ class SeoAuditController extends Controller
             return back()->withErrors(['url' => __('seo.quota_exceeded')]);
         }
 
-        $audit = $engine->run($validated['url'], null, 'single', ['uploader_key' => md5($key)]);
+        $audit = $engine->run(Typed::string($validated['url']), null, 'single', ['uploader_key' => md5($key)]);
 
         return redirect()->route('seo.audits.show', $audit->seo_audit_id);
     }
@@ -301,16 +301,16 @@ class SeoAuditController extends Controller
             abort(403);
         }
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'privacy' => 'required|in:public,private,password',
             'password' => 'nullable|required_if:privacy,password|string|max:64',
             'is_public_directory' => 'nullable|boolean',
-        ]);
+        ]));
 
         $seoAudit->update([
             'privacy' => $validated['privacy'],
             'password' => ($validated['privacy'] === 'password' && ! empty($validated['password']))
-                ? bcrypt($validated['password'])
+                ? bcrypt(Typed::string($validated['password']))
                 : $seoAudit->password,
             'is_public_directory' => (bool) ($validated['is_public_directory'] ?? false),
         ]);
@@ -385,10 +385,10 @@ class SeoAuditController extends Controller
      */
     public function bulkRefresh(Request $request)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'audit_ids' => 'required|array|min:1',
             'audit_ids.*' => 'integer|exists:seo_audits,seo_audit_id',
-        ]);
+        ]));
 
         $audits = SeoAudit::whereIn('seo_audit_id', $validated['audit_ids'])
             ->where('user_id', $this->user()->user_id)
@@ -435,13 +435,13 @@ class SeoAuditController extends Controller
             return view('seo.compare', ['availableAudits' => $availableAudits]);
         }
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'audit_a' => 'integer|exists:seo_audits,seo_audit_id',
             'audit_b' => 'integer|exists:seo_audits,seo_audit_id|different:audit_a',
-        ]);
+        ]));
 
-        $auditA = SeoAudit::query()->where('seo_audit_id', (int) $validated['audit_a'])->firstOrFail();
-        $auditB = SeoAudit::query()->where('seo_audit_id', (int) $validated['audit_b'])->firstOrFail();
+        $auditA = SeoAudit::query()->where('seo_audit_id', Typed::int($validated['audit_a']))->firstOrFail();
+        $auditB = SeoAudit::query()->where('seo_audit_id', Typed::int($validated['audit_b']))->firstOrFail();
 
         // Access check
         foreach ([$auditA, $auditB] as $audit) {

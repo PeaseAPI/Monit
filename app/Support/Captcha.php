@@ -154,6 +154,9 @@ class Captcha
      *
      * @param  array<string, mixed>  $input
      */
+    /**
+     * @param  array<array-key, mixed>  $input
+     */
     public static function tokenFrom(array $input): ?string
     {
         $provider = self::provider();

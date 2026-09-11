@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Annotation;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,14 +41,14 @@ class AnnotationController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'website_id' => ['required', 'integer'],
             'name' => ['required', 'string', 'max:256'],
             'date' => ['required', 'date'],
-        ]);
+        ]));
 
         $user = $this->user();
-        $website = $user->websites()->where('website_id', (int) $validated['website_id'])->firstOrFail();
+        $website = $user->websites()->where('website_id', Typed::int($validated['website_id']))->firstOrFail();
 
         Annotation::create([
             ...$validated,
@@ -60,13 +61,13 @@ class AnnotationController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'annotation_id' => ['required', 'exists:annotations,annotation_id'],
             'name' => ['required', 'string', 'max:256'],
             'date' => ['required', 'date'],
-        ]);
+        ]));
 
-        $annotation = Annotation::query()->where('annotation_id', (int) $validated['annotation_id'])->firstOrFail();
+        $annotation = Annotation::query()->where('annotation_id', Typed::int($validated['annotation_id']))->firstOrFail();
         $website = Website::where('website_id', $annotation->website_id)
             ->where('user_id', $this->user()->user_id)
             ->firstOrFail();

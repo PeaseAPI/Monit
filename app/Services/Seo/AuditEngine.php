@@ -173,7 +173,7 @@ class AuditEngine
             scheme: $scheme,
             host: strtolower(preg_replace('/^www\./', '', $host) ?: $host),
             html: $html,
-            headers: $response->headers(),
+            headers: Typed::arr($response->headers()),
             statusCode: $response->status() === 0 ? 503 : $response->status(),
             responseTimeMs: max(1, $elapsed),
             sizeBytes: strlen($html),
@@ -279,7 +279,7 @@ class AuditEngine
 
         return [
             'valid' => ($parsed['validTo_time_t'] ?? 0) > time(),
-            'valid_to' => date('Y-m-d', (int) ($parsed['validTo_time_t'] ?? 0)),
+            'valid_to' => date('Y-m-d', Typed::int($parsed['validTo_time_t'] ?? 0)),
         ];
     }
 
@@ -300,7 +300,7 @@ class AuditEngine
             }
 
             try {
-                $row = call_user_func($handler, $context);
+                $row = Typed::arr(call_user_func($handler, $context));
             } catch (Throwable $e) {
                 $row = ['passed' => false, 'value' => '执行异常'];
             }
@@ -309,9 +309,9 @@ class AuditEngine
                 'passed' => (bool) ($row['passed'] ?? false),
                 'importance' => $meta['importance'],
                 'category' => $meta['category'],
-                'value' => (string) ($row['value'] ?? ''),
-                'detail' => (string) ($row['detail'] ?? ''),
-                'sub' => (array) ($row['sub'] ?? []),
+                'value' => Typed::string($row['value'] ?? ''),
+                'detail' => Typed::string($row['detail'] ?? ''),
+                'sub' => Typed::arr($row['sub'] ?? []),
             ];
         }
 

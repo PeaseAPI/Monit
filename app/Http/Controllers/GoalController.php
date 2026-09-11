@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GoalConversion;
 use App\Models\Website;
 use App\Models\WebsiteGoal;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,7 +44,7 @@ class GoalController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'website_id' => ['required', 'integer'],
             'key' => ['required', 'string', 'max:256'],
             'type' => ['required', 'in:pageview,scroll,custom'],
@@ -51,10 +52,10 @@ class GoalController extends Controller
             'scroll_percentage' => ['nullable', 'integer', 'min:0', 'max:100'],
             'name' => ['nullable', 'string', 'max:256'],
             'is_enabled' => ['boolean'],
-        ]);
+        ]));
 
         $user = $this->user();
-        $website = $user->websites()->where('website_id', (int) $validated['website_id'])->firstOrFail();
+        $website = $user->websites()->where('website_id', Typed::int($validated['website_id']))->firstOrFail();
 
         WebsiteGoal::create([
             ...$validated,
@@ -68,7 +69,7 @@ class GoalController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'goal_id' => ['required', 'exists:websites_goals,goal_id'],
             'key' => ['required', 'string', 'max:256'],
             'type' => ['required', 'in:pageview,scroll,custom'],
@@ -76,9 +77,9 @@ class GoalController extends Controller
             'scroll_percentage' => ['nullable', 'integer'],
             'name' => ['nullable', 'string', 'max:256'],
             'is_enabled' => ['boolean'],
-        ]);
+        ]));
 
-        $goal = WebsiteGoal::query()->where('goal_id', (int) $validated['goal_id'])->firstOrFail();
+        $goal = WebsiteGoal::query()->where('goal_id', Typed::int($validated['goal_id']))->firstOrFail();
         $website = Website::where('website_id', $goal->website_id)
             ->where('user_id', $this->user()->user_id)
             ->firstOrFail();

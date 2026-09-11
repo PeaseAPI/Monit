@@ -30,13 +30,13 @@ class SeoNotificationHandlerController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'name' => 'required|string|max:64',
             'type' => 'required|in:'.implode(',', self::TYPES),
             'settings' => 'nullable|array',
             'events' => 'required|array|min:1',
             'events.*' => 'in:audit_refreshed,audit_failed,sitemap_changed,domain_expiring',
-        ]);
+        ]));
 
         $limit = Typed::int($this->user()->getPlanSettings()['seo_notifications_limit'] ?? -1);
         $count = $this->user()->notificationHandlers()->count();
@@ -48,8 +48,8 @@ class SeoNotificationHandlerController extends Controller
         $this->user()->notificationHandlers()->create([
             'name' => $validated['name'],
             'type' => $validated['type'],
-            'settings' => $this->settingsFor($validated['type'], $validated['settings'] ?? [])
-                + ['events' => array_values($validated['events'])],
+            'settings' => $this->settingsFor(Typed::string($validated['type']), Typed::arr($validated['settings'] ?? []))
+                + ['events' => array_values(Typed::arr($validated['events']))],
             'is_enabled' => true,
         ]);
 
@@ -63,22 +63,22 @@ class SeoNotificationHandlerController extends Controller
     {
         $this->authorizeOwner($request, $handler);
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'name' => 'sometimes|string|max:64',
             'settings' => 'sometimes|array',
             'events' => 'sometimes|array',
             'events.*' => 'in:audit_refreshed,audit_failed,sitemap_changed,domain_expiring',
             'is_enabled' => 'sometimes|boolean',
-        ]);
+        ]));
 
         $settings = $handler->settings ?? [];
 
         if (isset($validated['settings'])) {
-            $settings = $this->settingsFor($handler->type, $validated['settings']) + $settings;
+            $settings = $this->settingsFor(Typed::string($handler->type), Typed::arr($validated['settings'])) + $settings;
         }
 
         if (isset($validated['events'])) {
-            $settings['events'] = array_values($validated['events']);
+            $settings['events'] = array_values(Typed::arr($validated['events']));
         }
 
         $handler->update(array_filter([

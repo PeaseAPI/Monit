@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Typed;
 use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
@@ -33,9 +34,9 @@ class Setting extends Model
      */
     public static function getGroup(string $prefix): array
     {
-        return static::where('key', 'like', "{$prefix}_%")
+        return Typed::arr(static::where('key', 'like', "{$prefix}_%")
             ->get()
             ->mapWithKeys(fn ($s) => [str_replace("{$prefix}_", '', $s->key) => $s->value])
-            ->toArray();
+            ->toArray());
     }
 }

@@ -230,11 +230,10 @@ class IndexController extends Controller
             return back()->withErrors(['captcha' => __('validation.captcha_failed')]);
         }
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:128'],
+        $validated = Typed::arr($request->validate(['name' => ['required', 'string', 'max:128'],
             'email' => ['required', 'email', 'max:256'],
             'message' => ['required', 'string', 'max:4096'],
-        ]);
+        ]));
 
         $to = Settings::get('main.contact_email', config('mail.from.address'));
 
@@ -303,9 +302,9 @@ class IndexController extends Controller
      */
     public function cookieConsent(Request $request)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'consent' => ['required', 'in:accepted,rejected'],
-        ]);
+        ]));
 
         Log::channel('stack')->info('cookie-consent', [
             'consent' => $validated['consent'],
@@ -349,14 +348,14 @@ class IndexController extends Controller
      */
     public function unsubscribePost(Request $request)
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'email' => ['required', 'email'],
             'sig' => ['required', 'string'],
-        ]);
+        ]));
 
-        $expected = hash_hmac('sha256', $validated['email'], Typed::string(config('app.key')));
+        $expected = hash_hmac('sha256', Typed::string($validated['email']), Typed::string(config('app.key')));
 
-        if (! hash_equals($expected, $validated['sig'])) {
+        if (! hash_equals($expected, Typed::string($validated['sig']))) {
             return redirect()->route('index')->with('error', __('msg.invalid_unsubscribe_link'));
         }
 

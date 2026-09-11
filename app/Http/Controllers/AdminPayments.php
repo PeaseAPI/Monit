@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use App\Models\PaymentAudit;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -45,16 +46,16 @@ class AdminPayments extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'user_id' => ['required', 'exists:users,user_id'],
             'total_amount' => ['required', 'numeric', 'min:0', 'max:99999999'],
             'currency' => ['required', 'string', 'size:3'],
             'payment_processor' => ['required', 'string', 'max:64'],
             'type' => ['required', 'in:one_time,subscription'],
             'plan_id' => ['nullable', 'string', 'max:64', 'exists:plans,plan_id'],
-        ]);
+        ]));
 
-        $user = User::query()->where('user_id', (int) $validated['user_id'])->firstOrFail();
+        $user = User::query()->where('user_id', Typed::int($validated['user_id']))->firstOrFail();
 
         $payment = Payment::create([
             ...$validated,

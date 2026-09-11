@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\ActivateUser;
 use App\Models\User;
 use App\Services\LoginLockout;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -60,14 +61,14 @@ class ActivationController extends Controller
      */
     public function resend(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'email' => ['required', 'email'],
         ], [
             'email.required' => __('validation.email_required'),
             'email.email' => __('validation.email_email'),
-        ]);
+        ]));
 
-        $identifier = strtolower(trim($validated['email']));
+        $identifier = strtolower(trim(Typed::string($validated['email'])));
 
         // 重发激活邮件锁定（默认 3 次/30 分钟）：路由层 throttle 是 IP 维度，
         // 换 IP/分布式请求可绕过；per-email 锁定与找回密码同标准，补齐邮件轰炸面。

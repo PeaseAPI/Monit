@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Payment\PaymentService;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,42 +34,42 @@ class WebhookRazorpayController extends Controller
         $event = $payload['event'] ?? '';
 
         if ($event === 'payment.captured') {
-            $paymentEntity = $payload['payload']['payment']['entity'] ?? [];
-            $paymentId = $paymentEntity['notes']['payment_id'] ?? null;
-            $externalId = $paymentEntity['id'] ?? null;
+            $paymentEntity = Typed::arr(data_get($payload, 'payload.payment.entity', []));
+            $paymentId = Typed::intOrNull(data_get($paymentEntity, 'notes.payment_id'));
+            $externalId = Typed::stringOrNull($paymentEntity['id'] ?? null);
 
             // 金额/币种防篡改：amount 为派萨（最小单位），须与本地订单一致方可入账
             if ($paymentId
                 && $paymentService->verifyGatewayAmount(
-                    (int) $paymentId,
+                    $paymentId,
                     PaymentService::majorUnits(
-                        $paymentEntity['amount'] ?? null,
-                        (string) ($paymentEntity['currency'] ?? '')
+                        Typed::intOrNull($paymentEntity['amount'] ?? null),
+                        Typed::string($paymentEntity['currency'] ?? '')
                     ),
-                    (string) ($paymentEntity['currency'] ?? ''),
+                    Typed::string($paymentEntity['currency'] ?? ''),
                     'razorpay',
                 )) {
-                $paymentService->handlePaymentSuccess((int) $paymentId, $externalId);
+                $paymentService->handlePaymentSuccess($paymentId, Typed::string($externalId));
             }
         }
 
         // 规格 §6.3.1：支付失败事件派发 webhook_payment_failure_url
         if ($event === 'payment.failed') {
-            $paymentEntity = $payload['payload']['payment']['entity'] ?? [];
-            $paymentId = $paymentEntity['notes']['payment_id'] ?? null;
+            $paymentEntity = Typed::arr(data_get($payload, 'payload.payment.entity', []));
+            $paymentId = Typed::intOrNull(data_get($paymentEntity, 'notes.payment_id'));
 
             if ($paymentId) {
                 $paymentService->handlePaymentFailure(
-                    (int) $paymentId,
-                    (string) ($paymentEntity['id'] ?? ''),
-                    (string) ($paymentEntity['error_description'] ?? '')
+                    $paymentId,
+                    Typed::string($paymentEntity['id'] ?? ''),
+                    Typed::string($paymentEntity['error_description'] ?? '')
                 );
             }
         }
 
         if ($event === 'subscription.cancelled') {
-            $subscriptionEntity = $payload['payload']['subscription']['entity'] ?? [];
-            $subscriptionId = $subscriptionEntity['id'] ?? null;
+            $subscriptionEntity = Typed::arr(data_get($payload, 'payload.subscription.entity', []));
+            $subscriptionId = Typed::stringOrNull($subscriptionEntity['id'] ?? null);
             if ($subscriptionId) {
                 $paymentService->handleSubscriptionCancelled($subscriptionId, 'razorpay');
             }

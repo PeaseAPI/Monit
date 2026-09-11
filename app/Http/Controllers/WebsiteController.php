@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Website;
 use App\Support\Typed;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ class WebsiteController extends Controller
         $websites = $this->user()
             ->websites()
             ->withCount([
-                'events as events_count' => fn ($q) => $q->whereIn('type', ['landing_page', 'pageview']),
+                'events as events_count' => fn (Builder $q) => $q->whereIn('type', ['landing_page', 'pageview']),
             ])
             ->orderByDesc('website_id')
             ->get();
@@ -119,8 +120,7 @@ class WebsiteController extends Controller
      */
     protected function validateWebsite(Request $request): array
     {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:256'],
+        return Typed::arr($request->validate(['name' => ['required', 'string', 'max:256'],
             'url' => ['required', 'string', 'max:2048', 'url:http,https'],
             'tracking_type' => ['required', 'in:advanced,lightweight'],
             'excluded_ips' => ['nullable', 'string', 'max:2048'],
@@ -132,7 +132,7 @@ class WebsiteController extends Controller
             'tracking_type.required' => __('validation.tracking_type_required'),
             'tracking_type.in' => __('validation.tracking_type_invalid'),
             'timezone.timezone' => __('validation.timezone_invalid'),
-        ]);
+        ]));
     }
 
     /**

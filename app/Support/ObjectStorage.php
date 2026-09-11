@@ -15,6 +15,7 @@ namespace App\Support;
  */
 class ObjectStorage
 {
+    /** @var list<string> */
     public const DRIVERS = ['s3', 'minio', 'custom', 'aliyun_oss', 'tencent_cos'];
 
     /** 当前生效的存储驱动 */

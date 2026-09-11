@@ -50,7 +50,7 @@ class SeoToolController extends Controller
         abort_unless(array_key_exists($slug, $catalog), 404);
 
         $input = $request->input('input', []);
-        $input = is_array($input) ? $input : ['text' => Typed::string($input)];
+        $input = is_array($input) ? Typed::arr($input) : ['text' => Typed::string($input)];
 
         $quotaError = $this->checkQuota($request);
 

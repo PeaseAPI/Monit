@@ -14,6 +14,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class EnsureUserActive
 {
+    /**
+     * @param  Closure(Request): Response  $next
+     */
     public function handle(Request $request, Closure $next): Response
     {
         // web 组无全局 Authenticate，需主动经 session guard 解析当前用户

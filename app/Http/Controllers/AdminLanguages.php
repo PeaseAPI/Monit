@@ -61,15 +61,15 @@ class AdminLanguages extends Controller
     {
         abort_unless(in_array($code, $this->availableLocales(), true), 404);
 
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'values' => ['required', 'array'],
             'values.*' => ['nullable', 'string', 'max:4096'],
-        ]);
+        ]));
 
         $strings = $this->loadStrings($code);
         $changed = 0;
 
-        foreach ($validated['values'] as $key => $value) {
+        foreach (Typed::arr($validated['values']) as $key => $value) {
             if (array_key_exists($key, $strings) && $value !== null && $value !== $strings[$key]) {
                 $strings[$key] = $value;
                 $changed++;
@@ -95,12 +95,12 @@ class AdminLanguages extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'code' => ['required', 'string', 'max:10', 'regex:/^[a-z]{2}(_[A-Z]{2})?$/'],
             'name' => ['required', 'string', 'max:256'],
-        ]);
+        ]));
 
-        $code = $validated['code'];
+        $code = Typed::string($validated['code']);
         $path = lang_path($code.'.json');
 
         if (! $this->files->exists($path)) {
@@ -108,7 +108,7 @@ class AdminLanguages extends Controller
         }
 
         return redirect()->route('admin.languages.index')
-            ->with('success', __('msg.language_created', ['name' => $validated['name']]));
+            ->with('success', __('msg.language_created', ['name' => Typed::string($validated['name'])]));
     }
 
     /**
@@ -117,8 +117,8 @@ class AdminLanguages extends Controller
     private function availableLocales(): array
     {
         $locales = [];
-        foreach ($this->files->glob(lang_path('*.json')) as $file) {
-            $locales[] = basename($file, '.json');
+        foreach (Typed::arr($this->files->glob(lang_path('*.json'))) as $file) {
+            $locales[] = basename(Typed::string($file), '.json');
         }
 
         return array_map(static fn ($locale) => Typed::string($locale), $locales) ?: [Typed::string(config('app.locale'))];
@@ -136,6 +136,6 @@ class AdminLanguages extends Controller
 
         $decoded = json_decode($this->files->get($path), true);
 
-        return is_array($decoded) ? $decoded : [];
+        return Typed::arr($decoded);
     }
 }

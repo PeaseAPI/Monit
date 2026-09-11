@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Code;
 use App\Models\Plan;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -28,9 +29,9 @@ class AccountPlanController extends Controller
      */
     public function redeemCode(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = Typed::arr($request->validate([
             'code' => 'required|string|max:64',
-        ]);
+        ]));
 
         $code = Code::where('code', $validated['code'])->first();
 

@@ -59,11 +59,11 @@ class AdminHelpCategories extends Controller
      */
     private function validated(Request $request): array
     {
-        return $request->validate([
+        return Typed::arr($request->validate([
             'title' => ['required', 'string', 'max:64'],
             'url' => ['required', 'string', 'max:256', 'regex:/^[a-z0-9-]+$/'],
             'icon' => ['nullable', 'string', 'max:32'],
             'order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-        ]) + ['order' => Typed::int($request->input('order') ?? 0), 'icon' => Typed::string($request->input('icon') ?: 'book')];
+        ])) + ['order' => Typed::int($request->input('order') ?? 0), 'icon' => Typed::string($request->input('icon') ?: 'book')];
     }
 }
