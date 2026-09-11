@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
  */
 class YooKassaProcessor
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
         $shopId = config('services.yookassa.shop_id');

@@ -26,6 +26,9 @@ class QQProvider implements ChineseSocialProvider
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getAccessToken(string $code): array
     {
         $response = Http::asForm()->post('https://graph.qq.com/oauth2.0/token', [
@@ -41,6 +44,9 @@ class QQProvider implements ChineseSocialProvider
         return $params;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getUserInfo(string $accessToken): array
     {
         // 获取 openid

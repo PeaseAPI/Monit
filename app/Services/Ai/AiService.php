@@ -50,6 +50,9 @@ class AiService
     }
 
     /** 服务商预设（config monit.ai.providers） */
+    /**
+     * @return array<string, mixed>
+     */
     public static function providers(): array
     {
         return (array) config('monit.ai.providers', []);
@@ -90,7 +93,7 @@ class AiService
      * @param  string  $prompt  用户消息
      * @param  string|null  $system  系统指令（角色设定）
      * @param  array{temperature?:float,max_tokens?:int}  $options
-     * @return array{ok:bool,content:string,error:?string,provider:string,model:string,usage:array}
+     * @return array{ok:bool,content:string,error:?string,provider:string,model:string,usage:array<string,mixed>}
      */
     public static function chat(string $prompt, ?string $system = null, array $options = []): array
     {

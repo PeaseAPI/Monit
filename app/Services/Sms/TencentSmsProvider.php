@@ -78,6 +78,9 @@ class TencentSmsProvider
     }
 
     /** TC3-HMAC-SHA256 签名请求头 */
+    /**
+     * @return array<string, mixed>
+     */
     protected function signedHeaders(string $jsonBody): array
     {
         $host = 'sms.tencentcloudapi.com';

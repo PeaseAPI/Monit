@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
  */
 class MercadoPagoProcessor
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
         $accessToken = config('services.mercadopago.access_token');

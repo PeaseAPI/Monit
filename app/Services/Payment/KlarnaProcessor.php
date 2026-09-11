@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
  */
 class KlarnaProcessor
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
         $region = config('services.klarna.region', 'eu');

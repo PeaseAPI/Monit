@@ -15,6 +15,9 @@ class MollieProcessor
         return (bool) config('services.mollie.key');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function createOrder(Payment $payment, string $successUrl, string $cancelUrl): array
     {
         try {

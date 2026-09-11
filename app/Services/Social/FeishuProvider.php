@@ -25,6 +25,9 @@ class FeishuProvider implements ChineseSocialProvider
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getAccessToken(string $code): array
     {
         // 先获取 app_access_token
@@ -47,6 +50,9 @@ class FeishuProvider implements ChineseSocialProvider
         return $response->json('data', []);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getUserInfo(string $accessToken): array
     {
         $tokenData = json_decode($accessToken, true) ?? [];

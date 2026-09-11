@@ -26,6 +26,9 @@ class GiteeProvider implements ChineseSocialProvider
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getAccessToken(string $code): array
     {
         $response = Http::asForm()->post('https://gitee.com/oauth/token', [
@@ -39,6 +42,9 @@ class GiteeProvider implements ChineseSocialProvider
         return $response->json();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getUserInfo(string $accessToken): array
     {
         $tokenData = json_decode($accessToken, true) ?? [];

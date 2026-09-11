@@ -15,6 +15,9 @@ class PaystackProcessor
         return (bool) config('services.paystack.secret_key');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function createOrder(Payment $payment, string $successUrl, string $cancelUrl): array
     {
         $secretKey = config('services.paystack.secret_key');

@@ -15,6 +15,9 @@ class RazorpayProcessor
         return (bool) config('services.razorpay.key_id');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function createOrder(Payment $payment, string $successUrl, string $cancelUrl): array
     {
         $apiKey = config('services.razorpay.key_id');

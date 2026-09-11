@@ -145,7 +145,7 @@ class ContentTests
     /**
      * 高频关键词提取（去停用词）
      *
-     * @return array<int, array<string, mixed>>
+     * @return array<int, string>
      */
     public static function topKeywords(string $text, int $limit = 10): array
     {

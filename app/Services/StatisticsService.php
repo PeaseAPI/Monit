@@ -8,6 +8,7 @@ use App\Models\OutboundClick;
 use App\Models\SessionEvent;
 use App\Models\VisitorSession;
 use App\Models\Website;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -31,7 +32,11 @@ class StatisticsService
 
     protected Carbon $endDate;
 
-    /** §5.3 AnalyticsFilters：path 前缀 / 其余精确 */
+    /**
+     * §5.3 AnalyticsFilters：path 前缀 / 其余精确
+     *
+     * @var array<string, string>
+     */
     protected array $filters = [];
 
     /** 允许的过滤器维度 */
@@ -56,6 +61,8 @@ class StatisticsService
     /**
      * 设置过滤器（规格 §5.3）：['path' => '/blog', 'country_code' => 'CN']
      * path 与 referrer_host 为前缀匹配，其余精确匹配
+     *
+     * @param  array<string, mixed>  $filters
      */
     public function filters(array $filters): static
     {
@@ -71,8 +78,10 @@ class StatisticsService
     /**
      * 应用过滤器到 events 级查询（sessions_events / lightweight_events）
      * 访客维度（country/device/os/browser/language）通过子查询限定 visitor_id
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<*>|\Illuminate\Database\Query\Builder  $query
      */
-    protected function applyFilters($query, string $model): void
+    protected function applyFilters(Builder|\Illuminate\Database\Query\Builder $query, string $model): void
     {
         $visitorDimensions = ['country_code', 'continent_code', 'device_type', 'os_name', 'browser_name', 'browser_language',
             // M22：原版 AnalyticsFilters 访客维度补齐
@@ -137,6 +146,8 @@ class StatisticsService
 
     /**
      * 概览：PV / UV / 会话 / 跳出率 / 平均停留时长
+     *
+     * @return array<string, mixed>
      */
     public function overview(): array
     {
@@ -532,6 +543,9 @@ class StatisticsService
     ];
 
     /** 判定 host 是否属于搜索引擎；返回参数名列表或 null */
+    /**
+     * @return array<string, mixed>
+     */
     protected function searchEngineParams(?string $host): ?array
     {
         if (! $host) {
@@ -709,6 +723,9 @@ class StatisticsService
     }
 
     /** 从 referrer_path 解析搜索词；解析失败返回 null */
+    /**
+     * @param  array<string, mixed>  $paramNames
+     */
     protected function extractSearchTerm(?string $path, array $paramNames): ?string
     {
         if (! $path || ! str_contains($path, '?')) {

@@ -26,6 +26,8 @@ class WebhookService
 
     /**
      * 派发事件到配置的回调 URL
+     *
+     * @param  array<string, mixed>  $payload
      */
     public function dispatch(string $event, array $payload = []): void
     {
@@ -71,6 +73,8 @@ class WebhookService
 
     /**
      * 便捷方法：支付成功
+     *
+     * @param  array<string, mixed>  $payload
      */
     public function paymentSuccess(array $payload): void
     {
@@ -79,6 +83,8 @@ class WebhookService
 
     /**
      * 便捷方法：支付失败
+     *
+     * @param  array<string, mixed>  $payload
      */
     public function paymentFailure(array $payload): void
     {
@@ -87,6 +93,8 @@ class WebhookService
 
     /**
      * 便捷方法：用户注册
+     *
+     * @param  array<string, mixed>  $payload
      */
     public function userRegister(array $payload): void
     {
@@ -95,6 +103,8 @@ class WebhookService
 
     /**
      * 便捷方法：用户删除
+     *
+     * @param  array<string, mixed>  $payload
      */
     public function userDelete(array $payload): void
     {
@@ -107,6 +117,8 @@ class WebhookService
      *
      * 原版对标：除四个核心 URL 事件外，其余事件共享统一 URL 键
      * （webhooks.webhook_{event}_url）且带独立启用开关（webhooks.webhooks_{event}）
+     *
+     * @param  array<string, mixed>  $payload
      */
     public function dispatchToggleable(string $event, array $payload = []): void
     {
@@ -136,6 +148,9 @@ class WebhookService
     }
 
     /** Cron 结束（webhooks.webhooks_cron_end + webhooks.end_url） */
+    /**
+     * @param  array<string, mixed>  $results
+     */
     public function cronEnd(array $results = []): void
     {
         $this->dispatchToggleable('cron_end', $results);
@@ -146,30 +161,45 @@ class WebhookService
     }
 
     /** 用户资料更新（webhooks.webhooks_user_update） */
+    /**
+     * @param  array<string, mixed>  $payload
+     */
     public function userUpdate(array $payload): void
     {
         $this->dispatchToggleable('user_update', $payload);
     }
 
     /** 兑换码核销（webhooks.webhooks_code_redeemed） */
+    /**
+     * @param  array<string, mixed>  $payload
+     */
     public function codeRedeemed(array $payload): void
     {
         $this->dispatchToggleable('code_redeemed', $payload);
     }
 
     /** 联系表单（webhooks.webhooks_contact） */
+    /**
+     * @param  array<string, mixed>  $payload
+     */
     public function contact(array $payload): void
     {
         $this->dispatchToggleable('contact', $payload);
     }
 
     /** 新域名监控（webhooks.webhooks_domain_new） */
+    /**
+     * @param  array<string, mixed>  $payload
+     */
     public function domainNew(array $payload): void
     {
         $this->dispatchToggleable('domain_new', $payload);
     }
 
     /** 域名监控变更（webhooks.webhooks_domain_update） */
+    /**
+     * @param  array<string, mixed>  $payload
+     */
     public function domainUpdate(array $payload): void
     {
         $this->dispatchToggleable('domain_update', $payload);
@@ -177,6 +207,8 @@ class WebhookService
 
     /**
      * 裸 URL POST（start_url/end_url 场景，无事件开关包装）
+     *
+     * @param  array<string, mixed>  $payload
      */
     protected function postJson(string $url, string $event, array $payload): void
     {

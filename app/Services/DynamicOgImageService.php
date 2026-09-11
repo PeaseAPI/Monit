@@ -13,6 +13,11 @@ use Intervention\Image\ImageManager;
  */
 class DynamicOgImageService
 {
+    /**
+     * 生成 OG 分享图（1200x630 PNG 响应）
+     *
+     * @return mixed
+     */
     public function generate(string $type, int $id)
     {
         $title = match ($type) {

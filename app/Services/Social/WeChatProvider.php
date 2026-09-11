@@ -26,6 +26,9 @@ class WeChatProvider implements ChineseSocialProvider
         ]).'#wechat_redirect';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getAccessToken(string $code): array
     {
         $response = Http::asForm()->get('https://api.weixin.qq.com/sns/oauth2/access_token', [
@@ -38,6 +41,9 @@ class WeChatProvider implements ChineseSocialProvider
         return $response->json();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getUserInfo(string $accessToken): array
     {
         // 微信的 accessToken 参数需要从 getAccessToken 获取 openid

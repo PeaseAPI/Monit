@@ -35,6 +35,8 @@ class StripeProcessor
 
     /**
      * 创建 Stripe Checkout Session
+     *
+     * @return array<string, mixed>
      */
     public function createCheckoutSession(Payment $payment, string $successUrl, string $cancelUrl): array
     {
@@ -92,6 +94,8 @@ class StripeProcessor
 
     /**
      * 解析 Webhook 事件
+     *
+     * @return array<string, mixed>
      */
     public function parseWebhookEvent(Request $request): array
     {

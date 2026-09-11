@@ -72,6 +72,9 @@ class AliyunSmsProvider
     }
 
     /** RPC V1 签名：POST&%2F&percentEncode(canonicalizedQuery) 的 HMAC-SHA1 */
+    /**
+     * @param  array<string, mixed>  $params
+     */
     protected function sign(array $params): string
     {
         unset($params['Signature']);

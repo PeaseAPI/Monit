@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
  */
 class PayUProcessor
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
         $posId = config('services.payu.pos_id');

@@ -60,6 +60,8 @@ class GeoIp
 
     /**
      * 查询 mmdb 记录（库缺失 / 打开失败 / 查询异常均静默返回 null）
+     *
+     * @return array<string, mixed>
      */
     protected function lookupRecord(string $ip): ?array
     {

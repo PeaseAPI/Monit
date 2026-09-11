@@ -12,7 +12,13 @@ interface ChineseSocialProvider
      */
     public function getAuthorizationUrl(?string $state = null): string;
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getAccessToken(string $code): array;
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getUserInfo(string $accessToken): array;
 }

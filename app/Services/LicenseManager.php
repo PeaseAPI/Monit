@@ -29,7 +29,7 @@ class LicenseManager
     /**
      * 获取验证结果（带缓存）
      *
-     * @return array{valid: bool, reason: string, data: ?array}
+     * @return array{valid: bool, reason: string, data: ?array<string, mixed>}
      */
     public static function status(bool $refresh = false): array
     {
@@ -49,6 +49,8 @@ class LicenseManager
 
     /**
      * 实际验证逻辑
+     *
+     * @return array<string, mixed>
      */
     protected static function doVerify(): array
     {
@@ -95,6 +97,8 @@ class LicenseManager
 
     /**
      * Ed25519 detached 签名校验
+     *
+     * @param  array<string, mixed>  $license
      */
     public static function verifySignature(array $license): bool
     {
@@ -123,6 +127,8 @@ class LicenseManager
 
     /**
      * 规范化待签名字符串（剔除 signature，按键排序 + unescape unicode）
+     *
+     * @param  array<string, mixed>  $license
      */
     public static function canonicalJson(array $license): string
     {
@@ -133,6 +139,8 @@ class LicenseManager
 
     /**
      * 稳定 JSON 编码（键排序、紧凑、不转义斜杠与 unicode）
+     *
+     * @param  array<string, mixed>  $data
      */
     public static function jsonEncode(array $data): string
     {
@@ -146,6 +154,8 @@ class LicenseManager
 
     /**
      * 当前域名是否被授权（支持精确匹配与 *.tld 通配）
+     *
+     * @param  array<string, mixed>  $domains
      */
     public static function domainMatches(array $domains): bool
     {

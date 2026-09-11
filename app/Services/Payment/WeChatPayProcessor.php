@@ -20,6 +20,8 @@ class WeChatPayProcessor
 
     /**
      * 生成 Native 支付二维码链接（code_url → 前端渲染二维码）
+     *
+     * @return array<string, mixed>
      */
     public function createOrder(Payment $payment, string $successUrl, string $cancelUrl): array
     {
@@ -59,6 +61,8 @@ class WeChatPayProcessor
 
     /**
      * 验证回调签名（API v2 MD5）
+     *
+     * @param  array<string, mixed>  $data
      */
     public function verifyCallback(array $data): bool
     {
@@ -78,6 +82,8 @@ class WeChatPayProcessor
 
     /**
      * 主动查单（回调丢失时对账）
+     *
+     * @return array<string, mixed>
      */
     public function queryOrder(string $outTradeNo): ?array
     {
@@ -106,6 +112,9 @@ class WeChatPayProcessor
         return null;
     }
 
+    /**
+     * @param  array<string, mixed>  $params
+     */
     protected function toXml(array $params): string
     {
         $xml = '<xml>';
@@ -117,6 +126,9 @@ class WeChatPayProcessor
         return $xml.'</xml>';
     }
 
+    /**
+     * @param  array<string, mixed>  $params
+     */
     protected function sign(array $params): string
     {
         ksort($params);

@@ -86,6 +86,8 @@ class PaymentService
 
     /**
      * 创建支付订单
+     *
+     * @return array<string, mixed>
      */
     public function createOrder(User $user, Plan $plan, string $processor, string $frequency = 'one_time', ?string $code = null): array
     {
@@ -292,6 +294,8 @@ class PaymentService
 
     /**
      * 兑换码处理（统一走 Code::redemptionIssue/recordRedemption，规格 §10.3）
+     *
+     * @return array<string, mixed>
      */
     public function redeemCode(User $user, string $code): array
     {

@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
  */
 class MyFatoorahProcessor
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
         $isTest = config('services.myfatoorah.is_test', true);

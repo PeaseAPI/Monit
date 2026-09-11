@@ -61,6 +61,8 @@ class PayPalProcessor
 
     /**
      * 创建 PayPal 订单
+     *
+     * @return array<string, mixed>
      */
     public function createOrder(Payment $payment, string $returnUrl, string $cancelUrl): array
     {
@@ -91,11 +93,13 @@ class PayPalProcessor
                 ->post("{$this->baseUrl}/v2/checkout/orders", $orderData);
 
             $data = $response->json();
+            /** @var array<int, array<string, mixed>> $links */
+            $links = $data['links'] ?? [];
 
             return [
                 'processor' => 'paypal',
                 'order_id' => $data['id'] ?? null,
-                'approve_url' => collect($data['links'] ?? [])
+                'approve_url' => collect($links)
                     ->firstWhere('rel', 'approve')['href'] ?? null,
             ];
         } catch (\Throwable $e) {
@@ -105,6 +109,8 @@ class PayPalProcessor
 
     /**
      * 捕获 PayPal 订单
+     *
+     * @return array<string, mixed>
      */
     public function captureOrder(string $orderId): array
     {

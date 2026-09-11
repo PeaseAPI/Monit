@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
  */
 class PaddleProcessor
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
         $paddleConfig = config('services.paddle');

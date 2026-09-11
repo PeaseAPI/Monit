@@ -20,6 +20,8 @@ class AlipayProcessor
 
     /**
      * 构建跳转支付表单（自提交 HTML）
+     *
+     * @return array<string, mixed>
      */
     public function createOrder(Payment $payment, string $successUrl, string $cancelUrl): array
     {
@@ -63,6 +65,8 @@ class AlipayProcessor
 
     /**
      * 验证异步通知签名（RSA2，支付宝公钥）
+     *
+     * @param  array<string, mixed>  $data
      */
     public function verifyNotify(array $data): bool
     {
@@ -96,6 +100,9 @@ class AlipayProcessor
         return response('success', 200)->header('Content-Type', 'text/plain');
     }
 
+    /**
+     * @param  array<string, mixed>  $params
+     */
     protected function sign(array $params): string
     {
         unset($params['sign']);

@@ -31,6 +31,7 @@ class PixelTracker
 
     protected Request $request;
 
+    /** @var array<string, mixed> */
     protected array $payload = [];
 
     protected ?\Closure $skipCallback = null;
@@ -182,6 +183,9 @@ class PixelTracker
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     protected function insertLightweightEvent(string $type, array $data): void
     {
         $geo = $this->geoIp->lookup($this->clientIp());
@@ -290,6 +294,8 @@ class PixelTracker
 
     /**
      * initiate_visitor：upsert 访客记录
+     *
+     * @param  array<string, mixed>  $data
      */
     protected function upsertVisitor(array $data): void
     {
@@ -338,6 +344,8 @@ class PixelTracker
 
     /**
      * landing_page / pageview：写入会话事件
+     *
+     * @param  array<string, mixed>  $data
      */
     protected function insertSessionEvent(string $type, array $data): void
     {
@@ -399,6 +407,8 @@ class PixelTracker
 
     /**
      * click/scroll/form/resize：事件子项
+     *
+     * @param  array<string, mixed>  $data
      */
     protected function insertEventChild(string $type, array $data): void
     {
@@ -593,6 +603,8 @@ class PixelTracker
     /**
      * 回放 chunk 持久化（首建或追加）：单事务 + 行锁，保证「读取→合并→写回」原子。
      * $skipped 以引用传出：配额拒收时调用方提前返回（跳过 Cache 缓冲）。
+     *
+     * @param  array<int|string, mixed>  $events
      */
     protected function persistReplayChunk(VisitorSession $session, array $events, int $chunkSize, bool &$skipped): void
     {
@@ -986,6 +998,8 @@ class PixelTracker
     /**
      * 解析页面 path（按设置裁剪 query）
      *
+     *
+     * @param  array<string, mixed>  $data
      * @return array{0: string, 1: string}
      */
     protected function parseUrlPath(array $data): array
@@ -1003,6 +1017,8 @@ class PixelTracker
 
     /**
      * 解析 referrer 的 host 或 path
+     *
+     * @param  array<string, mixed>  $data
      */
     protected function parseReferrer(array $data, string $part): ?string
     {
@@ -1030,6 +1046,9 @@ class PixelTracker
         return $value ? mb_substr((string) $value, 0, 256) : null;
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     protected function parseResolution(array $data): ?string
     {
         $width = (int) ($data['resolution']['width'] ?? 0);
@@ -1042,6 +1061,9 @@ class PixelTracker
         return $width.'x'.$height;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function filterCustomParameters(mixed $parameters): array
     {
         if (! is_array($parameters)) {
@@ -1056,6 +1078,10 @@ class PixelTracker
         return $filtered;
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
     protected function sanitizeEventData(array $data): array
     {
         $json = json_encode($data, JSON_UNESCAPED_UNICODE);

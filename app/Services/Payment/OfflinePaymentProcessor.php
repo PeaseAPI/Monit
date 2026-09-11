@@ -14,6 +14,8 @@ class OfflinePaymentProcessor
 {
     /**
      * 创建离线支付记录
+     *
+     * @return array<string, mixed>
      */
     public function createOrder(User $user, Payment $payment): array
     {
@@ -31,6 +33,8 @@ class OfflinePaymentProcessor
 
     /**
      * 上传支付凭证
+     *
+     * @return array<string, mixed>
      */
     public function uploadProof(Request $request, Payment $payment): array
     {
@@ -55,6 +59,8 @@ class OfflinePaymentProcessor
 
     /**
      * 管理员确认离线支付
+     *
+     * @return array<string, mixed>
      */
     public function confirmPayment(Payment $payment): array
     {

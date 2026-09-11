@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
  */
 class MidtransProcessor
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
         $serverKey = config('services.midtrans.server_key');

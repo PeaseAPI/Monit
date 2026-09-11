@@ -143,7 +143,11 @@ class SmsService
         return true;
     }
 
-    /** 分发到短信服务商 */
+    /**
+     * 分发到短信服务商
+     *
+     * @return array{0: bool, 1: string}
+     */
     protected static function dispatch(string $phone, string $code, string $purpose): array
     {
         try {
@@ -159,7 +163,11 @@ class SmsService
         }
     }
 
-    /** log 驱动：验证码写日志（开发/测试用） */
+    /**
+     * log 驱动：验证码写日志（开发/测试用）
+     *
+     * @return array{0: bool, 1: string}
+     */
     protected static function logSend(string $phone, string $code, string $purpose): array
     {
         Log::channel(config('logging.default'))->info("[SMS:{$purpose}] {$phone} => {$code}");

@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
  */
 class IyzicoProcessor
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
         $baseUrl = config('services.iyzico.base_url', 'sandbox-api.iyzipay.com');

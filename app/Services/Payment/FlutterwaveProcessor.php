@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
  */
 class FlutterwaveProcessor
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
         $publicKey = config('services.flutterwave.public_key');

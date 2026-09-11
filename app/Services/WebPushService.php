@@ -14,7 +14,11 @@ use App\Support\WebhookSignature;
  */
 class WebPushService
 {
-    /** 最近一次发送的结果状态 */
+    /**
+     * 最近一次发送的结果状态
+     *
+     * @var array{status: int, expired: bool}|array{}
+     */
     public array $lastResults = [];
 
     /**
@@ -89,7 +93,7 @@ class WebPushService
     /**
      * 向单个订阅者发送推送
      *
-     * @param  array  $payload  {title, body, url, icon}
+     * @param  array{title?: string, body?: string, url?: string, icon?: string}  $payload  {title, body, url, icon}
      * @return bool 发送是否成功（404/410 表示订阅已失效可删除）
      */
     public function send(
@@ -146,6 +150,7 @@ class WebPushService
 
         // 1. 应用服务器临时密钥对（P-256）
         $asPrivate = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
+        /** @var \OpenSSLAsymmetricKey $asPrivate */
         $asPublicRaw = $this->publicKeyToRaw($asPrivate);
 
         // 2. ECDH 共享密钥
@@ -209,7 +214,11 @@ class WebPushService
         return substr($okm, 0, $length);
     }
 
-    /** EC 密钥资源 -> raw 65 字节公钥（04||X||Y） */
+    /**
+     * EC 密钥资源 -> raw 65 字节公钥（04||X||Y）
+     *
+     * @param  \OpenSSLAsymmetricKey  $pkey
+     */
     protected function publicKeyToRaw($pkey): string
     {
         $details = openssl_pkey_get_details($pkey);
@@ -271,6 +280,9 @@ class WebPushService
     }
 
     /** 生成 VAPID 密钥对（供 Admin 初始化使用） */
+    /**
+     * @return array<string, mixed>
+     */
     public static function generateVapidKeys(): array
     {
         $key = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
@@ -301,9 +313,12 @@ class WebPushService
     {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
-
     /* ---------------- HTTP ---------------- */
 
+    /**
+     * @param  array<int, string>  $headers
+     * @return array{0: int}
+     */
     protected function post(string $url, string $body, array $headers): array
     {
         $ch = curl_init($url);
