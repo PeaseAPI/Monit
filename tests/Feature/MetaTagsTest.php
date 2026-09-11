@@ -42,7 +42,7 @@ class MetaTagsTest extends TestCase
         $response = $this->get('/seo');
         $response->assertOk();
 
-        $html = $response->getContent();
+        $html = (string) $response->getContent();
         $this->assertStringContainsString('<meta property="og:site_name"', $html);
         $this->assertStringContainsString('<meta property="og:type" content="website">', $html);
         $this->assertStringContainsString('<meta property="og:url" content="'.route('seo.landing').'"', $html);
@@ -82,7 +82,7 @@ class MetaTagsTest extends TestCase
             'datetime' => now(),
         ]);
 
-        $html = $this->get('/blog/meta-test-post')->assertOk()->getContent();
+        $html = (string) $this->get('/blog/meta-test-post')->assertOk()->getContent();
 
         $this->assertStringContainsString(
             '<meta name="description" content="这是文章的 SEO 描述">',
@@ -114,7 +114,7 @@ class MetaTagsTest extends TestCase
             'datetime' => now(),
         ]);
 
-        $html = $this->get('/blog/no-desc-post')->assertOk()->getContent();
+        $html = (string) $this->get('/blog/no-desc-post')->assertOk()->getContent();
 
         $this->assertStringContainsString(
             '<meta name="description" content="内容开头的这段文字应当被截取为 meta 描述">',
@@ -138,7 +138,7 @@ class MetaTagsTest extends TestCase
             'datetime' => now(),
         ]);
 
-        $html = $this->get('/page/about')->assertOk()->getContent();
+        $html = (string) $this->get('/page/about')->assertOk()->getContent();
 
         $this->assertStringContainsString('<meta name="description" content="关于页面的描述">', $html);
         $this->assertStringContainsString('<link rel="canonical" href="'.route('page', 'about').'">', $html);

@@ -10,6 +10,7 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
@@ -25,6 +26,9 @@ class AuthSessionSecurityTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeUser(array $attrs = []): User
     {
         return User::create(array_merge([
@@ -164,7 +168,7 @@ class AuthSessionSecurityTest extends TestCase
             ->get('/social-login/callback/github?code=abc&state=state123');
 
         $this->assertFalse(auth('web')->check(), '未验证的 GitHub email 不得用于匹配本地账号（账号接管）');
-        $this->assertTrue(Hash::check('password123', $victim->fresh()->password));
+        $this->assertTrue(Hash::check('password123', (string) $this->freshModel($victim)->password));
     }
 
     public function test_github_picks_verified_email_over_unverified_primary(): void
@@ -204,7 +208,7 @@ class AuthSessionSecurityTest extends TestCase
             ->get('/social-login/callback/discord?code=abc&state=state123');
 
         $this->assertFalse(auth('web')->check(), 'Discord 未验证 email 不得用于登录匹配');
-        $this->assertTrue(Hash::check('password123', $victim->fresh()->password));
+        $this->assertTrue(Hash::check('password123', (string) $this->freshModel($victim)->password));
     }
 
     /* ---------------- 虚拟邮箱 pre-hijacking ---------------- */
@@ -223,7 +227,7 @@ class AuthSessionSecurityTest extends TestCase
         ]);
     }
 
-    private function qqCallback(string $openid)
+    private function qqCallback(string $openid): TestResponse
     {
         // QQ 提供商配置（getChineseProviderConfig 现要求非空 id/secret）
         config([
@@ -252,7 +256,7 @@ class AuthSessionSecurityTest extends TestCase
         $this->qqCallback('8888');
 
         $this->assertFalse(auth('web')->check(), '@social.login 虚拟邮箱不得匹配本地预注册账号（pre-hijacking）');
-        $this->assertTrue(Hash::check('password123', $attacker->fresh()->password));
+        $this->assertTrue(Hash::check('password123', (string) $this->freshModel($attacker)->password));
     }
 
     public function test_social_login_virtual_email_matches_same_provider_account(): void
@@ -301,7 +305,7 @@ class AuthSessionSecurityTest extends TestCase
         ]);
 
         $this->assertFalse(
-            Hash::check('newpassword1', $user->fresh()->password),
+            Hash::check('newpassword1', (string) $this->freshModel($user)->password),
             '过期的重置码不得修改密码'
         );
     }
@@ -323,7 +327,7 @@ class AuthSessionSecurityTest extends TestCase
             'password_confirmation' => 'newpassword1',
         ]);
 
-        $this->assertTrue(Hash::check('newpassword1', $user->fresh()->password));
+        $this->assertTrue(Hash::check('newpassword1', (string) $this->freshModel($user)->password));
     }
 
     public function test_activation_resend_per_email_lockout(): void

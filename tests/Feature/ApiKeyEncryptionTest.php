@@ -99,11 +99,12 @@ class ApiKeyEncryptionTest extends TestCase
     {
         $key = Str::random(60);
         $user = User::create($this->userPayload($key));
+        $this->assertNotNull($user);
 
         // 篡改密文（模拟 APP_KEY 变更后不可解）
         DB::table('users')->where('user_id', $user->user_id)->update(['api_key_encrypted' => 'garbage']);
 
-        $this->assertNull($user->fresh()->api_key);
+        $this->assertNull($this->freshModel($user)->api_key);
     }
 
     private function userPayload(string $key): array

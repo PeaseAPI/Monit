@@ -54,11 +54,11 @@ class ExternalNotificationSettlementTest extends TestCase
     {
         app(PaymentService::class)->handleExternalPaymentNotification('mercadopago', 'mp_ext_1');
 
-        $this->assertSame(1, (int) $this->payment->fresh()->status);
-        $this->assertSame(9.99, (float) $this->user->fresh()->payment_total_amount);
-        $this->assertSame('mercadopago', $this->user->fresh()->payment_processor);
-        $this->assertSame('USD', $this->user->fresh()->payment_currency);
-        $this->assertSame('pro', $this->user->fresh()->plan_id);
+        $this->assertSame(1, $this->freshModel($this->payment)->status);
+        $this->assertSame(9.99, (float) $this->freshModel($this->user)->payment_total_amount);
+        $this->assertSame('mercadopago', $this->freshModel($this->user)->payment_processor);
+        $this->assertSame('USD', $this->freshModel($this->user)->payment_currency);
+        $this->assertSame('pro', $this->freshModel($this->user)->plan_id);
     }
 
     #[Test]
@@ -69,7 +69,7 @@ class ExternalNotificationSettlementTest extends TestCase
         $service->handleExternalPaymentNotification('mercadopago', 'mp_ext_1');
         $service->handleExternalPaymentNotification('mercadopago', 'mp_ext_1');
 
-        $this->assertSame(9.99, (float) $this->user->fresh()->payment_total_amount);
+        $this->assertSame(9.99, (float) $this->freshModel($this->user)->payment_total_amount);
     }
 
     #[Test]
@@ -77,7 +77,7 @@ class ExternalNotificationSettlementTest extends TestCase
     {
         app(PaymentService::class)->handleExternalPaymentNotification('mercadopago', 'no_such_id');
 
-        $this->assertSame(0, (int) $this->payment->fresh()->status);
-        $this->assertNull($this->user->fresh()->payment_total_amount);
+        $this->assertSame(0, $this->freshModel($this->payment)->status);
+        $this->assertNull($this->freshModel($this->user)->payment_total_amount);
     }
 }

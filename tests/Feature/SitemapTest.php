@@ -31,7 +31,7 @@ class SitemapTest extends TestCase
 
     public function test_核心静态页收录(): void
     {
-        $xml = $this->get('/sitemap.xml')->assertStatus(200)->getContent();
+        $xml = (string) $this->get('/sitemap.xml')->assertStatus(200)->getContent();
 
         $this->assertStringContainsString('<loc>'.route('index').'</loc>', $xml);
         $this->assertStringContainsString('<loc>'.route('plan').'</loc>', $xml);
@@ -41,7 +41,7 @@ class SitemapTest extends TestCase
 
     public function test_changefreq_按语义声明_静态页不编造(): void
     {
-        $xml = $this->get('/sitemap.xml')->assertStatus(200)->getContent();
+        $xml = (string) $this->get('/sitemap.xml')->assertStatus(200)->getContent();
 
         // 首页/博客索引内容常变 → daily
         $this->assertStringContainsString(
@@ -81,7 +81,7 @@ class SitemapTest extends TestCase
             'datetime' => now(),
         ]);
 
-        $xml = $this->get('/sitemap.xml')->assertStatus(200)->getContent();
+        $xml = (string) $this->get('/sitemap.xml')->assertStatus(200)->getContent();
 
         $this->assertStringContainsString('/blog/published-post', $xml);
         $this->assertStringContainsString('<lastmod>', $xml);
@@ -107,7 +107,7 @@ class SitemapTest extends TestCase
             'datetime' => now(),
         ]);
 
-        $xml = $this->get('/sitemap.xml')->assertStatus(200)->getContent();
+        $xml = (string) $this->get('/sitemap.xml')->assertStatus(200)->getContent();
 
         $this->assertStringContainsString('/page/published-page', $xml);
         $this->assertStringNotContainsString('/page/hidden-page', $xml);

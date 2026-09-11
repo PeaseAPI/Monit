@@ -20,6 +20,9 @@ class SettingsGroupsTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeUser(array $attrs = []): User
     {
         return User::create(array_merge([

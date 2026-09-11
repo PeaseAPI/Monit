@@ -96,7 +96,7 @@ class HeatmapReplayE2ETest extends TestCase
         $this->assertNotNull($heatmap->snapshot_id_desktop);
         $row = DB::selectOne('SELECT data FROM heatmaps_snapshots WHERE snapshot_id = ?', [$heatmap->snapshot_id_desktop]);
         $this->assertNotNull($row->data);
-        $decoded = json_decode(gzdecode($row->data), true);
+        $decoded = json_decode((string) gzdecode($row->data), true);
         $this->assertCount(2, $decoded['events']);
 
         // 3. 点击 + 滚动坐标上报 → 归一化坐标存储
@@ -153,7 +153,7 @@ class HeatmapReplayE2ETest extends TestCase
         $this->assertNotNull($replay, '回放主记录应已创建');
 
         $row = DB::selectOne('SELECT data FROM sessions_replays WHERE replay_id = ?', [$replay->replay_id]);
-        $stored = json_decode(gzdecode($row->data), true);
+        $stored = json_decode((string) gzdecode($row->data), true);
         // 存储结构兼容两种：{events: [...]}（新）或直接事件数组（旧合并路径）
         $storedEvents = is_array($stored) && isset($stored['events']) ? $stored['events'] : $stored;
         $this->assertCount(3, $storedEvents);

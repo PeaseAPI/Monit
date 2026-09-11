@@ -168,6 +168,7 @@ class UserInputSsrTest extends TestCase
             'host' => 'example.com', 'scheme' => 'https',
             'is_enabled' => true, 'datetime' => now(),
         ]);
+        $this->assertNotNull($domain);
 
         $this->actingAs($this->user)
             ->put('/domains', [
@@ -177,6 +178,6 @@ class UserInputSsrTest extends TestCase
             ->assertRedirect()
             ->assertSessionHasErrors('host');
 
-        $this->assertSame('example.com', $domain->fresh()->host);
+        $this->assertSame('example.com', $this->freshModel($domain)->host);
     }
 }

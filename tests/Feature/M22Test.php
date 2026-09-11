@@ -51,6 +51,9 @@ class M22Test extends TestCase
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeVisitor(array $attrs = []): WebsiteVisitor
     {
         return WebsiteVisitor::create(array_merge([
@@ -62,6 +65,9 @@ class M22Test extends TestCase
         ], $attrs));
     }
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeSession(WebsiteVisitor $visitor, array $attrs = []): VisitorSession
     {
         return VisitorSession::create(array_merge([
@@ -209,9 +215,9 @@ class M22Test extends TestCase
         $this->user->forceFill(['plan_settings' => ['sessions_events_limit' => 5]])->save();
         $this->website->forceFill(['current_month_sessions_events' => 10, 'plan_sessions_events_limit_notice' => false])->save();
 
-        $this->artisan('monit:websites-limit-notice')->assertSuccessful();
+        $this->artisanCmd('monit:websites-limit-notice')->assertSuccessful();
 
-        $this->assertTrue($this->website->fresh()->plan_sessions_events_limit_notice);
+        $this->assertTrue($this->freshModel($this->website)->plan_sessions_events_limit_notice);
         Mail::assertQueued(PlanLimitNotice::class);
     }
 
@@ -227,17 +233,18 @@ class M22Test extends TestCase
             'password' => bcrypt('x'), 'status' => 1, 'plan_id' => 'free', 'type' => 0,
             'last_activity' => now()->subDays(25),
         ]);
+        $this->assertNotNull($inactive);
 
         // 25 天不活跃 + 提前 7 天提醒（30-7=23 天阈值）→ 触发提醒
-        $this->artisan('monit:users-deletion-reminder')->assertSuccessful();
+        $this->artisanCmd('monit:users-deletion-reminder')->assertSuccessful();
 
-        $this->assertTrue($inactive->fresh()->user_deletion_reminder);
+        $this->assertTrue($this->freshModel($inactive)->user_deletion_reminder);
         Mail::assertQueued(UserDeletionReminder::class);
 
         // 超过 30 天 + 已提醒 → 删除
-        $inactive->fresh()->forceFill(['last_activity' => now()->subDays(31)])->save();
+        $this->freshModel($inactive)->forceFill(['last_activity' => now()->subDays(31)])->save();
 
-        $this->artisan('monit:auto-delete-inactive-users')->assertSuccessful();
+        $this->artisanCmd('monit:auto-delete-inactive-users')->assertSuccessful();
 
         $this->assertDatabaseMissing('users', ['user_id' => $inactive->user_id]);
     }
@@ -253,7 +260,7 @@ class M22Test extends TestCase
             'datetime' => now()->subDays(10),
         ]);
 
-        $this->artisan('monit:housekeeping-cleanup')->assertSuccessful();
+        $this->artisanCmd('monit:housekeeping-cleanup')->assertSuccessful();
 
         $this->assertSame(1, DB::table('account_logs')->count());
         $this->assertSame('login', DB::table('account_logs')->first()->type);

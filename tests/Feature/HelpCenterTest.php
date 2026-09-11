@@ -16,6 +16,9 @@ class HelpCenterTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeUser(array $attrs = []): User
     {
         return User::create(array_merge([
@@ -52,6 +55,7 @@ class HelpCenterTest extends TestCase
         ])->assertSessionHas('success');
 
         $article = HelpArticle::where('title', '如何安装统计代码')->firstOrFail();
+        $this->assertNotNull($article);
         $this->assertNotNull($article->url);
 
         // 前台帮助中心展示分类与文章
@@ -65,7 +69,7 @@ class HelpCenterTest extends TestCase
             ->assertOk()
             ->assertSee('如何安装统计代码')
             ->assertSee('三步完成统计代码安装');
-        $this->assertSame(1, $article->fresh()->views);
+        $this->assertSame(1, $this->freshModel($article)->views);
     }
 
     public function test_unpublished_articles_are_hidden_from_public(): void
@@ -91,6 +95,7 @@ class HelpCenterTest extends TestCase
     public function test_admin_category_update_and_delete(): void
     {
         $admin = $this->makeUser(['type' => 1, 'email' => 'hc-admin3@help.test']);
+        $this->assertNotNull($admin);
         $category = HelpCategory::create([
             'user_id' => $admin->user_id, 'title' => '旧分类', 'url' => 'old-cat', 'order' => 0, 'datetime' => now(),
         ]);
@@ -102,11 +107,11 @@ class HelpCenterTest extends TestCase
         $this->actingAs($admin)->put('/admin/help-categories/'.$category->category_id, [
             'title' => '新分类', 'url' => 'new-cat', 'order' => 2,
         ])->assertSessionHas('success');
-        $this->assertSame('新分类', $category->fresh()->title);
+        $this->assertSame('新分类', $this->freshModel($category)->title);
 
         // 删除分类后文章保留为未分类
         $this->actingAs($admin)->delete('/admin/help-categories/'.$category->category_id)->assertSessionHas('success');
-        $this->assertNull($article->fresh()->category_id);
+        $this->assertNull($this->freshModel($article)->category_id);
         $this->assertDatabaseMissing('help_categories', ['category_id' => $category->category_id]);
     }
 

@@ -101,7 +101,7 @@ class UserNavFeaturesTest extends TestCase
             'monitor_is_enabled' => 1,
         ])->assertRedirect(route('domains.index'));
 
-        $this->assertTrue((bool) $domain->refresh()->monitor_is_enabled);
+        $this->assertTrue($domain->refresh()->monitor_is_enabled);
 
         // 删除
         $this->actingAs($user)->delete("/domains/{$domain->domain_id}")
@@ -161,6 +161,7 @@ class UserNavFeaturesTest extends TestCase
 
         // 单条删除
         $first = InternalNotification::where('user_id', $user->user_id)->first();
+        $this->assertNotNull($first);
         $this->actingAs($user)->delete("/notifications/{$first->internal_notification_id}")->assertRedirect();
         $this->assertDatabaseMissing('internal_notifications', ['internal_notification_id' => $first->internal_notification_id]);
     }

@@ -31,6 +31,9 @@ class AdminAuditTest extends TestCase
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>  $overrides
+     */
     private function target(array $overrides = []): User
     {
         return User::create(array_merge([
@@ -98,7 +101,7 @@ class AdminAuditTest extends TestCase
             ->put(route('admin.users.toggle_status', $admin->user_id))
             ->assertForbidden();
 
-        $this->assertSame(1, $admin->fresh()->status, '自封禁被拒后状态不变');
+        $this->assertSame(1, $this->freshModel($admin)->status, '自封禁被拒后状态不变');
     }
 
     public function test_toggle_status_writes_audit_log(): void
@@ -110,7 +113,7 @@ class AdminAuditTest extends TestCase
             ->put(route('admin.users.toggle_status', $user->user_id))
             ->assertRedirect();
 
-        $this->assertSame(2, $user->fresh()->status);
+        $this->assertSame(2, $this->freshModel($user)->status);
         $this->assertContains(
             'admin_user_status_toggled_by_'.$admin->user_id,
             $this->logsOf($user, 'admin_user_status_toggled')

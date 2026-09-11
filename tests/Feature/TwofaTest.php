@@ -87,7 +87,7 @@ class TwofaTest extends TestCase
         $this->actingAs($user)
             ->delete('/account/twofa', ['password' => 'secret123', 'code' => $code])
             ->assertRedirect();
-        $this->assertFalse($user->fresh()->twofa_is_enabled);
+        $this->assertFalse($this->freshModel($user)->twofa_is_enabled);
 
         // 钓鱼重放场景：用户重新开启 2FA 后，攻击者立刻重放先前拦截的同一码
         // （不 flush cache——判重池必须跨请求生效）
@@ -97,7 +97,7 @@ class TwofaTest extends TestCase
             ->delete('/account/twofa', ['password' => 'secret123', 'code' => $code])
             ->assertSessionHasErrors('code');
         $this->assertTrue(
-            $user->fresh()->twofa_is_enabled,
+            $this->freshModel($user)->twofa_is_enabled,
             '重放的码不应能关闭 2FA'
         );
     }

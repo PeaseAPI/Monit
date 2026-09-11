@@ -46,7 +46,7 @@ class Tasks25RegressionTest extends TestCase
     public function item_1_seo_audit_access_state_grants_visitor_with_matching_uploader_key(): void
     {
         // 验证 accessState 核心修复：user_id=null + uploader_key 匹配 session → 视为作者
-        $source = file_get_contents(
+        $source = (string) file_get_contents(
             app_path('Http/Controllers/SeoAuditController.php')
         );
 
@@ -61,7 +61,7 @@ class Tasks25RegressionTest extends TestCase
     public function item_1_analyze_route_sets_uploader_key_for_guest(): void
     {
         // 验证 analyze() 方法为访客设置 uploader_key = md5(session_id)
-        $source = file_get_contents(
+        $source = (string) file_get_contents(
             app_path('Http/Controllers/SeoAuditController.php')
         );
 
@@ -74,7 +74,7 @@ class Tasks25RegressionTest extends TestCase
     public function item_1_seo_audit_show_uses_access_state_not_simple_auth(): void
     {
         // 验证 show() 方法使用 accessState() 三态矩阵而非简单 auth 检查
-        $source = file_get_contents(
+        $source = (string) file_get_contents(
             app_path('Http/Controllers/SeoAuditController.php')
         );
 
@@ -93,7 +93,7 @@ class Tasks25RegressionTest extends TestCase
     {
         // 验证 store() 对 single 类型同步执行 AuditEngine::run()，不走队列
         // 修复前：走队列导致未部署 queue:worker 的实例审计永不执行、记录不落库
-        $source = file_get_contents(
+        $source = (string) file_get_contents(
             app_path('Http/Controllers/SeoAuditController.php')
         );
 
@@ -188,7 +188,7 @@ class Tasks25RegressionTest extends TestCase
     public function item_7_heatmap_store_assigns_datetime(): void
     {
         // 验证 HeatmapController::store 源码中显式赋值 datetime（修复 NOT NULL 500）
-        $source = file_get_contents(
+        $source = (string) file_get_contents(
             app_path('Http/Controllers/HeatmapController.php')
         );
 
@@ -202,7 +202,7 @@ class Tasks25RegressionTest extends TestCase
     #[Test]
     public function item_8_pixel_js_has_dynamic_rrweb_loader(): void
     {
-        $js = file_get_contents(public_path('assets/pixel/monit.js'));
+        $js = (string) file_get_contents(public_path('assets/pixel/monit.js'));
 
         $this->assertStringContainsString('ensureRrweb', $js);
         $this->assertStringContainsString('rrweb-all.umd.min.js', $js);
@@ -217,7 +217,7 @@ class Tasks25RegressionTest extends TestCase
     #[Test]
     public function item_9_domain_store_calls_whois_immediately(): void
     {
-        $source = file_get_contents(
+        $source = (string) file_get_contents(
             (new \ReflectionMethod(DomainController::class, 'store'))->getFileName()
         );
 
@@ -387,7 +387,7 @@ class Tasks25RegressionTest extends TestCase
     #[Test]
     public function item_19_settings_save_button_is_inline_not_sticky(): void
     {
-        $content = file_get_contents(
+        $content = (string) file_get_contents(
             resource_path('views/admin/settings/index.blade.php')
         );
 
@@ -411,7 +411,7 @@ class Tasks25RegressionTest extends TestCase
     #[Test]
     public function item_20_dark_theme_uses_dark_colors(): void
     {
-        $content = file_get_contents(
+        $content = (string) file_get_contents(
             resource_path('views/themes/dark/index.blade.php')
         );
 
@@ -459,7 +459,7 @@ class Tasks25RegressionTest extends TestCase
     #[Test]
     public function item_2_deploy_readme_mentions_geoip(): void
     {
-        $content = file_get_contents(base_path('deploy/README.md'));
+        $content = (string) file_get_contents(base_path('deploy/README.md'));
 
         $this->assertStringContainsString('geoip:update', $content);
         $this->assertStringContainsString('GeoIP', $content);

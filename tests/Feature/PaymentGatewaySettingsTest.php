@@ -35,6 +35,9 @@ class PaymentGatewaySettingsTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeUser(array $attrs = []): User
     {
         return User::create(array_merge([
@@ -76,7 +79,7 @@ class PaymentGatewaySettingsTest extends TestCase
             'RAZORPAY_WEBHOOK_SECRET' => 'rzp_sig with space',
         ])->assertSessionHas('success');
 
-        $content = file_get_contents($this->tmpEnv);
+        $content = (string) file_get_contents($this->tmpEnv);
 
         // 旧值被替换，新值写入
         $this->assertStringContainsString('STRIPE_KEY=sk_live_NEWKEY', $content);
@@ -105,7 +108,7 @@ class PaymentGatewaySettingsTest extends TestCase
             'STRIPE_KEY' => 'sk_ok',
         ])->assertSessionHas('success');
 
-        $content = file_get_contents($this->tmpEnv);
+        $content = (string) file_get_contents($this->tmpEnv);
 
         // 白名单外键被完全忽略
         $this->assertStringNotContainsString('attacker-controlled-key', $content);
@@ -123,7 +126,7 @@ class PaymentGatewaySettingsTest extends TestCase
             'STRIPE_KEY' => '',
         ])->assertSessionHas('success');
 
-        $this->assertStringNotContainsString('STRIPE_KEY=', file_get_contents($this->tmpEnv));
+        $this->assertStringNotContainsString('STRIPE_KEY=', (string) file_get_contents($this->tmpEnv));
         $this->assertNull((new EnvWriter($this->tmpEnv))->read('STRIPE_KEY'));
     }
 
@@ -136,7 +139,7 @@ class PaymentGatewaySettingsTest extends TestCase
             'PAYPAL_SANDBOX' => '1',
         ])->assertSessionHas('success');
 
-        $this->assertStringContainsString('PAYPAL_SANDBOX=true', file_get_contents($this->tmpEnv));
+        $this->assertStringContainsString('PAYPAL_SANDBOX=true', (string) file_get_contents($this->tmpEnv));
     }
 
     public function test_oversized_value_rejected(): void
@@ -165,7 +168,7 @@ class PaymentGatewaySettingsTest extends TestCase
         // 覆盖多行旧值不残留
         $writer->write('PADDLE_PUBLIC_KEY', 'short');
         $this->assertSame('short', $writer->read('PADDLE_PUBLIC_KEY'));
-        $this->assertStringNotContainsString('MIIEvQIBADANBg', file_get_contents($this->tmpEnv));
+        $this->assertStringNotContainsString('MIIEvQIBADANBg', (string) file_get_contents($this->tmpEnv));
     }
 
     public function test_env_writer_illegal_key_rejected(): void

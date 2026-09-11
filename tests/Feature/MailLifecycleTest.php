@@ -24,6 +24,9 @@ class MailLifecycleTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     private function makeUser(array $attrs = []): User
     {
         return User::create(array_merge([
@@ -47,6 +50,7 @@ class MailLifecycleTest extends TestCase
         $this->assertAuthenticated();
 
         $user = User::where('email', 'direct@test.dev')->first();
+        $this->assertNotNull($user);
         $this->assertSame(1, $user->status);
         $this->assertNull($user->email_activation_code);
 
@@ -69,6 +73,7 @@ class MailLifecycleTest extends TestCase
         $this->assertGuest();
 
         $user = User::where('email', 'pending@test.dev')->first();
+        $this->assertNotNull($user);
         $this->assertSame(0, $user->status);
         $this->assertNotNull($user->email_activation_code);
 
@@ -163,7 +168,7 @@ class MailLifecycleTest extends TestCase
             'scheduled_at' => now()->subMinute(), 'datetime' => now(),
         ]);
 
-        $this->artisan('monit:process-broadcasts')->assertSuccessful();
+        $this->artisanCmd('monit:process-broadcasts')->assertSuccessful();
 
         Queue::assertPushed(SendBroadcastEmail::class, 3);
 
@@ -187,7 +192,7 @@ class MailLifecycleTest extends TestCase
             'email_reports_is_enabled' => true,
         ]);
 
-        $this->artisan('monit:send-email-reports')->assertSuccessful();
+        $this->artisanCmd('monit:send-email-reports')->assertSuccessful();
 
         Queue::assertPushed(SendEmailReport::class, 1);
 
@@ -204,7 +209,7 @@ class MailLifecycleTest extends TestCase
             'plan_id' => 'custom', 'plan_expiration_date' => now()->subDay(),
         ]);
 
-        $this->artisan('monit:users-plan-expiration')->assertSuccessful();
+        $this->artisanCmd('monit:users-plan-expiration')->assertSuccessful();
 
         $this->assertSame('free', $user->refresh()->plan_id);
         Mail::assertQueued(PlanDowngraded::class, 1);

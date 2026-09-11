@@ -17,6 +17,9 @@ class AppShellTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param  array<string, mixed>  $overrides
+     */
     protected function makeUser(array $overrides = []): User
     {
         return User::create(array_merge([

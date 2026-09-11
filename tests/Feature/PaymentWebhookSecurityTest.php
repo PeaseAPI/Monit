@@ -256,13 +256,13 @@ class PaymentWebhookSecurityTest extends TestCase
         $service = app(PaymentService::class);
 
         $service->handlePaymentSuccess($payment->payment_id, 'ext_1');
-        $this->assertSame(9.99, (float) $user->fresh()->payment_total_amount);
+        $this->assertSame(9.99, (float) $this->freshModel($user)->payment_total_amount);
 
         // 网关重复通知：不再累计、不重复续期
         $service->handlePaymentSuccess($payment->payment_id, 'ext_2');
 
-        $this->assertSame(9.99, (float) $user->fresh()->payment_total_amount);
-        $this->assertSame(1, $payment->fresh()->status);
+        $this->assertSame(9.99, (float) $this->freshModel($user)->payment_total_amount);
+        $this->assertSame(1, $this->freshModel($payment)->status);
     }
 
     public function test_payment_success_activates_purchased_plan_snapshot(): void
@@ -277,7 +277,7 @@ class PaymentWebhookSecurityTest extends TestCase
         app(PaymentService::class)->handlePaymentSuccess($payment->payment_id, 'ext_1');
 
         // 激活的必须是本次购买的套餐（payments.plan_id 快照），而非用户当前套餐
-        $this->assertSame('pro', $user->fresh()->plan_id);
+        $this->assertSame('pro', $this->freshModel($user)->plan_id);
     }
 
     public function test_create_order_persists_plan_id(): void

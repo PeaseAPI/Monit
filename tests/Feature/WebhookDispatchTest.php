@@ -96,13 +96,14 @@ class WebhookDispatchTest extends TestCase
             'payment_processor' => 'stripe', 'type' => 'one_time', 'frequency' => 'one_time',
             'status' => 0, 'total_amount' => 19.99, 'currency' => 'USD', 'datetime' => now(),
         ]);
+        $this->assertNotNull($payment);
         Settings::set('webhooks.webhook_payment_failure_url', 'https://example.com/fail-hook');
 
         app(PaymentService::class)->handlePaymentFailure(
             $payment->payment_id, 'pi_ext_123', 'card_declined'
         );
 
-        $this->assertSame(2, (int) $payment->fresh()->status); // 2 = failed
+        $this->assertSame(2, $this->freshModel($payment)->status); // 2 = failed
         Http::assertSent(function ($request) use ($payment) {
             return $request->url() === 'https://example.com/fail-hook'
                 && $request['event'] === 'payment_failure'
@@ -127,7 +128,7 @@ class WebhookDispatchTest extends TestCase
 
         app(PaymentService::class)->handlePaymentFailure($payment->payment_id, 'pi_ext_123', 'late webhook');
 
-        $this->assertSame(1, (int) $payment->fresh()->status); // 仍为已支付
+        $this->assertSame(1, $this->freshModel($payment)->status); // 仍为已支付
         Http::assertNothingSent(); // 不派发
     }
 }

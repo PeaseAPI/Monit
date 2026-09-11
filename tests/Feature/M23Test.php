@@ -36,13 +36,13 @@ class M23Test extends TestCase
     /** 语言文件完整性：6 种语言键集与 en 完全一致且可解析 */
     public function test_language_files_complete(): void
     {
-        $en = json_decode(file_get_contents(lang_path('en.json')), true);
+        $en = json_decode((string) file_get_contents(lang_path('en.json')), true);
 
         foreach (['zh_CN', 'zh_TW', 'ru', 'be', 'ms'] as $locale) {
             $path = lang_path($locale.'.json');
             $this->assertFileExists($path, $locale.'.json 缺失');
 
-            $data = json_decode(file_get_contents($path), true);
+            $data = json_decode((string) file_get_contents($path), true);
             $this->assertNotNull($data, $locale.'.json 解析失败');
             $this->assertSame(array_keys($en), array_keys($data), $locale.' 键集与 en 不一致');
             $this->assertNotEmpty($data['landing.hero_title'], $locale.' landing.hero_title 为空');

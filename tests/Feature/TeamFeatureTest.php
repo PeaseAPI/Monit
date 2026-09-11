@@ -18,6 +18,9 @@ class TeamFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeUser(array $attrs = []): User
     {
         return User::create(array_merge([
@@ -65,6 +68,7 @@ class TeamFeatureTest extends TestCase
         ])->assertSessionHas('success');
 
         $member = TeamMember::where('team_id', $team->team_id)->where('user_email', 'invitee@team.test')->firstOrFail();
+        $this->assertNotNull($member);
         $this->assertSame([$website->website_id], $member->websites_ids);
         $this->assertSame(1, TeamMemberAssociation::where('team_member_id', $member->team_member_id)->count());
 
@@ -76,8 +80,8 @@ class TeamFeatureTest extends TestCase
         // 被邀请人接受
         $this->actingAs($invitee)->put('/teams/accept/'.$member->team_member_id)
             ->assertRedirect()->assertSessionHas('success');
-        $this->assertSame(1, $member->fresh()->status);
-        $this->assertSame($invitee->user_id, $member->fresh()->user_id);
+        $this->assertSame(1, $this->freshModel($member)->status);
+        $this->assertSame($invitee->user_id, $this->freshModel($member)->user_id);
 
         // 成员可访问团队详情（含授权网站显示）
         $this->actingAs($invitee)->get('/teams/'.$team->team_id)

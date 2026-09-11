@@ -44,6 +44,9 @@ class M21Test extends TestCase
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeVisitor(array $attrs = []): WebsiteVisitor
     {
         return WebsiteVisitor::create(array_merge([
@@ -55,6 +58,9 @@ class M21Test extends TestCase
         ], $attrs));
     }
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeSession(WebsiteVisitor $visitor, array $attrs = []): VisitorSession
     {
         return VisitorSession::create(array_merge([

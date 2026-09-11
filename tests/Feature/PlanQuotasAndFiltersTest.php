@@ -186,7 +186,7 @@ class PlanQuotasAndFiltersTest extends TestCase
         $this->post('/pixel-track/px_rp_q', ['data' => json_encode($payload('replays', ['chunk' => base64_encode('[]')]))])->assertStatus(204);
 
         $this->assertDatabaseCount('sessions_replays', 1);
-        $this->assertSame(2, $website->fresh()->current_month_sessions_replays);
+        $this->assertSame(2, $this->freshModel($website)->current_month_sessions_replays);
     }
 
     public function test_replay_chunk_rejected_when_replays_limit_is_zero(): void
@@ -228,9 +228,9 @@ class PlanQuotasAndFiltersTest extends TestCase
         $this->post('/pixel-track/px_rp_z', ['data' => json_encode($payload('replays', ['chunk' => base64_encode('[]')]))])->assertStatus(204);
 
         $this->assertDatabaseCount('sessions_replays', 0);
-        $this->assertSame(0, $website->fresh()->current_month_sessions_replays);
+        $this->assertSame(0, $this->freshModel($website)->current_month_sessions_replays);
         // 0=禁用：不标记限额通知（与配额耗尽区分，避免误导用户升级）
-        $this->assertFalse((bool) $website->fresh()->plan_sessions_replays_limit_notice);
+        $this->assertFalse($this->freshModel($website)->plan_sessions_replays_limit_notice);
     }
 
     public function test_replay_quota_exhausted_marks_limit_notice(): void
@@ -273,7 +273,7 @@ class PlanQuotasAndFiltersTest extends TestCase
         $this->post('/pixel-track/px_rp_n', ['data' => json_encode($payload('replays', ['chunk' => base64_encode('[]')]))])->assertStatus(204);
 
         $this->assertDatabaseCount('sessions_replays', 0);
-        $this->assertTrue((bool) $website->fresh()->plan_sessions_replays_limit_notice);
+        $this->assertTrue($this->freshModel($website)->plan_sessions_replays_limit_notice);
     }
 
     public function test_sessions_replays_session_id_is_unique(): void
@@ -360,9 +360,9 @@ class PlanQuotasAndFiltersTest extends TestCase
         $this->post('/pixel-track/px_ec_z', ['data' => json_encode($payload('click', ['selector' => 'a.btn']))])->assertStatus(204);
 
         $this->assertDatabaseCount('events_children', 0);
-        $this->assertSame(0, $website->fresh()->current_month_events_children);
+        $this->assertSame(0, $this->freshModel($website)->current_month_events_children);
         // 0=禁用：不标记限额通知（与配额耗尽区分，避免误导用户升级）
-        $this->assertFalse((bool) $website->fresh()->plan_events_children_limit_notice);
+        $this->assertFalse($this->freshModel($website)->plan_events_children_limit_notice);
     }
 
     public function test_event_children_quota_exhausted_marks_limit_notice(): void
@@ -403,14 +403,14 @@ class PlanQuotasAndFiltersTest extends TestCase
         $this->post('/pixel-track/px_ec_n', ['data' => json_encode($payload('click', ['selector' => '#one']))])->assertStatus(204);
 
         $this->assertDatabaseCount('events_children', 1);
-        $this->assertSame(1, $website->fresh()->current_month_events_children);
+        $this->assertSame(1, $this->freshModel($website)->current_month_events_children);
 
         // 第 2 个子事件：超限拒收
         $this->post('/pixel-track/px_ec_n', ['data' => json_encode($payload('click', ['selector' => '#two']))])->assertStatus(204);
 
         $this->assertDatabaseCount('events_children', 1);
-        $this->assertSame(1, $website->fresh()->current_month_events_children);
-        $this->assertTrue((bool) $website->fresh()->plan_events_children_limit_notice);
+        $this->assertSame(1, $this->freshModel($website)->current_month_events_children);
+        $this->assertTrue($this->freshModel($website)->plan_events_children_limit_notice);
     }
 
     public function test_event_children_unlimited_when_key_missing(): void
@@ -450,8 +450,8 @@ class PlanQuotasAndFiltersTest extends TestCase
         $this->post('/pixel-track/px_ec_m', ['data' => json_encode($payload('scroll', ['depth' => 75]))])->assertStatus(204);
 
         $this->assertDatabaseCount('events_children', 2);
-        $this->assertSame(2, $website->fresh()->current_month_events_children);
-        $this->assertFalse((bool) $website->fresh()->plan_events_children_limit_notice);
+        $this->assertSame(2, $this->freshModel($website)->current_month_events_children);
+        $this->assertFalse($this->freshModel($website)->plan_events_children_limit_notice);
     }
 
     /* ---------------- §13.1 月度重置 + 通知闭环 ---------------- */
@@ -481,17 +481,18 @@ class PlanQuotasAndFiltersTest extends TestCase
             'plan_sessions_replays_limit_notice' => true,
         ]);
 
-        $this->artisan('monit:website-maintenance')->assertSuccessful();
+        $this->artisanCmd('monit:website-maintenance')->assertSuccessful();
 
         $fresh = $website->fresh();
+        $this->assertNotNull($fresh);
         $this->assertSame(now()->format('Y-m'), $fresh->stats_month);
-        $this->assertSame(0, (int) $fresh->current_month_sessions_events);
-        $this->assertSame(0, (int) $fresh->current_month_events_children);
-        $this->assertSame(0, (int) $fresh->current_month_sessions_replays);
+        $this->assertSame(0, $fresh->current_month_sessions_events);
+        $this->assertSame(0, $fresh->current_month_events_children);
+        $this->assertSame(0, $fresh->current_month_sessions_replays);
         // 三个通知标志必须复位，否则次月超限通知永久静默
-        $this->assertFalse((bool) $fresh->plan_sessions_events_limit_notice);
-        $this->assertFalse((bool) $fresh->plan_events_children_limit_notice);
-        $this->assertFalse((bool) $fresh->plan_sessions_replays_limit_notice);
+        $this->assertFalse($fresh->plan_sessions_events_limit_notice);
+        $this->assertFalse($fresh->plan_events_children_limit_notice);
+        $this->assertFalse($fresh->plan_sessions_replays_limit_notice);
     }
 
     public function test_limit_notice_skips_missing_limit_key(): void
@@ -513,17 +514,18 @@ class PlanQuotasAndFiltersTest extends TestCase
             'current_month_events_children' => 500,
             'current_month_sessions_replays' => 100,
         ]);
+        $this->assertNotNull($website);
 
         DB::table('settings')->updateOrInsert(['key' => 'email_notices_is_enabled'], ['value' => true]);
 
         Mail::fake();
 
-        $this->artisan('monit:websites-limit-notice')->assertSuccessful();
+        $this->artisanCmd('monit:websites-limit-notice')->assertSuccessful();
 
         // 缺键 = 不限：不发信、不标记
         Mail::assertNothingSent();
-        $this->assertFalse((bool) $website->fresh()->plan_events_children_limit_notice);
-        $this->assertFalse((bool) $website->fresh()->plan_sessions_replays_limit_notice);
+        $this->assertFalse($this->freshModel($website)->plan_events_children_limit_notice);
+        $this->assertFalse($this->freshModel($website)->plan_sessions_replays_limit_notice);
     }
 
     public function test_limit_notice_skips_disabled_zero_limit(): void
@@ -548,10 +550,10 @@ class PlanQuotasAndFiltersTest extends TestCase
 
         Mail::fake();
 
-        $this->artisan('monit:websites-limit-notice')->assertSuccessful();
+        $this->artisanCmd('monit:websites-limit-notice')->assertSuccessful();
 
         Mail::assertNothingSent();
-        $this->assertFalse((bool) $website->fresh()->plan_sessions_replays_limit_notice);
+        $this->assertFalse($this->freshModel($website)->plan_sessions_replays_limit_notice);
     }
 
     public function test_plan_limit_missing_key_means_unlimited(): void

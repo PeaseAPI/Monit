@@ -43,7 +43,7 @@ class AccountEmailChangeSecurityTest extends TestCase
             ])
             ->assertSessionHasErrors('current_password');
 
-        $this->assertSame('old@test.dev', $user->fresh()->email, '未提供密码时邮箱不得变更');
+        $this->assertSame('old@test.dev', $this->freshModel($user)->email, '未提供密码时邮箱不得变更');
     }
 
     public function test_email_change_with_wrong_password_is_rejected(): void
@@ -58,7 +58,7 @@ class AccountEmailChangeSecurityTest extends TestCase
             ])
             ->assertSessionHasErrors('current_password');
 
-        $this->assertSame('old@test.dev', $user->fresh()->email, '密码错误时邮箱不得变更');
+        $this->assertSame('old@test.dev', $this->freshModel($user)->email, '密码错误时邮箱不得变更');
     }
 
     public function test_email_change_with_correct_password_succeeds_and_resets_verification(): void
@@ -75,6 +75,7 @@ class AccountEmailChangeSecurityTest extends TestCase
             ->assertRedirect();
 
         $fresh = $user->fresh();
+        $this->assertNotNull($fresh);
         $this->assertSame('new@test.dev', $fresh->email);
         $this->assertNull($fresh->email_verified_at, '邮箱变更后验证标记重置');
     }
@@ -91,6 +92,6 @@ class AccountEmailChangeSecurityTest extends TestCase
             ->assertSessionDoesntHaveErrors()
             ->assertRedirect();
 
-        $this->assertSame('新昵称', $user->fresh()->name, '原邮箱提交时无需密码（回归保护：不破坏日常资料编辑）');
+        $this->assertSame('新昵称', $this->freshModel($user)->name, '原邮箱提交时无需密码（回归保护：不破坏日常资料编辑）');
     }
 }

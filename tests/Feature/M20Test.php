@@ -27,6 +27,9 @@ class M20Test extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeUser(array $attrs = []): User
     {
         return User::create(array_merge([

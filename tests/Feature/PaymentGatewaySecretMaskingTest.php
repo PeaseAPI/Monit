@@ -68,7 +68,7 @@ class PaymentGatewaySecretMaskingTest extends TestCase
         $response = $this->actingAs($admin)->get('/admin/settings');
 
         $response->assertOk();
-        $html = $response->getContent();
+        $html = (string) $response->getContent();
 
         // password 类型密钥明文不得出现（type=password 只挡视觉，源码即明文）
         $this->assertStringNotContainsString('whsec_live_topsecret_9876', $html);

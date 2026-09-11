@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Testing\PendingCommand;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -34,5 +35,34 @@ abstract class TestCase extends BaseTestCase
             @mkdir(dirname($lock), 0777, true);
             touch($lock);
         }
+    }
+
+    /**
+     * 刷新模型并断言仍存在（fresh() 声明 static|null，测试中模型必然未被删除）
+     *
+     * @template TModel of \Illuminate\Database\Eloquent\Model
+     *
+     * @param  TModel  $model
+     * @return TModel
+     */
+    protected function freshModel($model)
+    {
+        $fresh = $model->fresh();
+        $this->assertNotNull($fresh);
+
+        return $fresh;
+    }
+
+    /**
+     * artisan() 声明 PendingCommand|int（直接执行分支），测试中恒为 PendingCommand
+     *
+     * @param  array<string, mixed>  $parameters
+     */
+    protected function artisanCmd(string $command, array $parameters = []): PendingCommand
+    {
+        $cmd = $this->artisan($command, $parameters);
+        $this->assertInstanceOf(PendingCommand::class, $cmd);
+
+        return $cmd;
     }
 }

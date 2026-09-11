@@ -52,7 +52,7 @@ class AdminWithdrawalStateMachineTest extends TestCase
             ->put("/admin/affiliates-withdrawals/{$w->affiliate_withdrawal_id}/approve")
             ->assertRedirect();
 
-        $this->assertSame('approved', $w->fresh()->status);
+        $this->assertSame('approved', $this->freshModel($w)->status);
     }
 
     public function test_pending_withdrawal_can_be_rejected(): void
@@ -63,7 +63,7 @@ class AdminWithdrawalStateMachineTest extends TestCase
             ->put("/admin/affiliates-withdrawals/{$w->affiliate_withdrawal_id}/reject")
             ->assertRedirect();
 
-        $this->assertSame('rejected', $w->fresh()->status);
+        $this->assertSame('rejected', $this->freshModel($w)->status);
     }
 
     public function test_rejected_write_is_blocked_atomically(): void
@@ -76,7 +76,7 @@ class AdminWithdrawalStateMachineTest extends TestCase
             ->put("/admin/affiliates-withdrawals/{$approved->affiliate_withdrawal_id}/reject")
             ->assertSessionHasErrors('status');
 
-        $this->assertSame('approved', $approved->fresh()->status);
+        $this->assertSame('approved', $this->freshModel($approved)->status);
     }
 
     public function test_bulk_update_only_touches_pending_rows(): void
@@ -93,9 +93,9 @@ class AdminWithdrawalStateMachineTest extends TestCase
             ->assertRedirect()
             ->assertSessionHas('success');
 
-        $this->assertSame('rejected', $pending->fresh()->status);
+        $this->assertSame('rejected', $this->freshModel($pending)->status);
         // 已终态行不受批量操作影响
-        $this->assertSame('approved', $approved->fresh()->status);
+        $this->assertSame('approved', $this->freshModel($approved)->status);
     }
 
     public function test_approved_withdrawal_cannot_be_reapproved(): void
@@ -108,7 +108,7 @@ class AdminWithdrawalStateMachineTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHasErrors('status');
 
-        $this->assertSame('approved', $w->fresh()->status);
+        $this->assertSame('approved', $this->freshModel($w)->status);
     }
 
     public function test_rejected_withdrawal_cannot_be_flipped_to_approved(): void
@@ -119,7 +119,7 @@ class AdminWithdrawalStateMachineTest extends TestCase
             ->put("/admin/affiliates-withdrawals/{$w->affiliate_withdrawal_id}/approve")
             ->assertRedirect();
 
-        $this->assertSame('rejected', $w->fresh()->status);
+        $this->assertSame('rejected', $this->freshModel($w)->status);
     }
 
     public function test_approved_withdrawal_cannot_be_rejected(): void
@@ -130,7 +130,7 @@ class AdminWithdrawalStateMachineTest extends TestCase
             ->put("/admin/affiliates-withdrawals/{$w->affiliate_withdrawal_id}/reject")
             ->assertRedirect();
 
-        $this->assertSame('approved', $w->fresh()->status);
+        $this->assertSame('approved', $this->freshModel($w)->status);
     }
 
     public function test_tax_destroy_missing_returns_404(): void

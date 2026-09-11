@@ -19,6 +19,9 @@ class QueryCountRegressionTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param  array<string, mixed>  $overrides
+     */
     protected function makeUser(array $overrides = []): User
     {
         static $seq = 0;

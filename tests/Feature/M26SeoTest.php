@@ -102,6 +102,9 @@ class M26SeoTest extends TestCase
 
     /* ---------------- 报告三态分享与目录 ---------------- */
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeAudit(array $attrs = []): SeoAudit
     {
         return SeoAudit::create(array_merge([
@@ -280,6 +283,7 @@ class M26SeoTest extends TestCase
             ->assertRedirect();
 
         $handler = $this->user->notificationHandlers()->first();
+        $this->assertNotNull($handler);
         $this->assertSame('slack', $handler->type);
         $this->assertTrue($handler->subscribesTo('audit_failed'));
         $this->assertFalse($handler->subscribesTo('audit_refreshed'));
@@ -413,7 +417,7 @@ class M26SeoTest extends TestCase
             'seo_next_audit_at' => now()->subHour(),
         ]);
 
-        $this->artisan('monit:seo-audits-refresh')->assertSuccessful();
+        $this->artisanCmd('monit:seo-audits-refresh')->assertSuccessful();
 
         Queue::assertPushed(RunSeoAuditJob::class);
     }
@@ -427,7 +431,7 @@ class M26SeoTest extends TestCase
             'snapshot' => [], 'created_at' => now()->subDays(400),
         ]);
 
-        $this->artisan('monit:seo-archives-cleanup')->assertSuccessful();
+        $this->artisanCmd('monit:seo-archives-cleanup')->assertSuccessful();
 
         $this->assertSame(0, $audit->archives()->count());
     }
@@ -513,7 +517,7 @@ class M26SeoTest extends TestCase
             'seo_next_audit_at' => now()->subHour(),
         ]);
 
-        $this->artisan('monit:seo-audits-refresh')->assertSuccessful();
+        $this->artisanCmd('monit:seo-audits-refresh')->assertSuccessful();
 
         Queue::assertNotPushed(RunSeoAuditJob::class);
     }
@@ -568,7 +572,7 @@ class M26SeoTest extends TestCase
             'snapshot' => [], 'created_at' => now()->subDays(20),
         ]);
 
-        $this->artisan('monit:seo-archives-cleanup')->assertSuccessful();
+        $this->artisanCmd('monit:seo-archives-cleanup')->assertSuccessful();
 
         $this->assertSame(0, $audit->archives()->count());
     }
@@ -577,14 +581,14 @@ class M26SeoTest extends TestCase
 
     public function test_seo_language_keys_present_in_all_locales(): void
     {
-        $en = json_decode(file_get_contents(lang_path('en.json')), true);
+        $en = json_decode((string) file_get_contents(lang_path('en.json')), true);
 
         foreach (['seo.view_report', 'seo.audits_title', 'seo.tools_title', 'seo.handlers_title', 'seo.quota_exceeded'] as $key) {
             $this->assertArrayHasKey($key, $en);
         }
 
         foreach (['zh_CN', 'zh_TW', 'ru', 'be', 'ms'] as $locale) {
-            $data = json_decode(file_get_contents(lang_path($locale.'.json')), true);
+            $data = json_decode((string) file_get_contents(lang_path($locale.'.json')), true);
             $this->assertSame(array_keys($en), array_keys($data), $locale.' 键集与 en 不一致');
         }
     }

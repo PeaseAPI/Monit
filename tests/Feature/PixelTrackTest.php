@@ -129,8 +129,8 @@ class PixelTrackTest extends TestCase
 
         // 6. 用量计数：2 个 PV 事件 + click 子事件 + outbound_click 各 +1
         $this->website->refresh();
-        $this->assertSame(4, (int) $this->website->current_month_sessions_events);
-        $this->assertSame(2, (int) $this->website->last_24_hours_pageviews);
+        $this->assertSame(4, $this->website->current_month_sessions_events);
+        $this->assertSame(2, $this->website->last_24_hours_pageviews);
     }
 
     public function test_goal_conversion_deduplicates_per_visitor(): void
@@ -241,17 +241,17 @@ class PixelTrackTest extends TestCase
         // 精确匹配路径正常返回
         $r1 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path='.urlencode('/about'));
         $r1->assertStatus(200);
-        $this->assertSame($heatmap->heatmap_id, json_decode($r1->getContent(), true)['heatmap_id']);
+        $this->assertSame($heatmap->heatmap_id, json_decode((string) $r1->getContent(), true)['heatmap_id']);
 
         // 带 query 的访问路径 → pathname 回退匹配到纯路径热图
         $r2 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path='.urlencode('/about?utm_source=newsletter'));
         $r2->assertStatus(200);
-        $this->assertSame($heatmap->heatmap_id, json_decode($r2->getContent(), true)['heatmap_id']);
+        $this->assertSame($heatmap->heatmap_id, json_decode((string) $r2->getContent(), true)['heatmap_id']);
 
         // 无匹配路径 → 响应不含 heatmap_id 键
         $r3 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path='.urlencode('/missing?x=1'));
         $r3->assertStatus(200);
-        $this->assertArrayNotHasKey('heatmap_id', json_decode($r3->getContent(), true));
+        $this->assertArrayNotHasKey('heatmap_id', json_decode((string) $r3->getContent(), true));
     }
 
     /**
@@ -266,7 +266,7 @@ class PixelTrackTest extends TestCase
         // 缺键 = 不限 → 启用
         $r1 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=/');
         $r1->assertStatus(200);
-        $this->assertTrue(json_decode($r1->getContent(), true)['replay_enabled']);
+        $this->assertTrue(json_decode((string) $r1->getContent(), true)['replay_enabled']);
 
         // 显式 0 = 禁用
         $this->website->user->forceFill([
@@ -275,7 +275,7 @@ class PixelTrackTest extends TestCase
 
         $r2 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=/');
         $r2->assertStatus(200);
-        $this->assertFalse(json_decode($r2->getContent(), true)['replay_enabled']);
+        $this->assertFalse(json_decode((string) $r2->getContent(), true)['replay_enabled']);
     }
 
     public function test_replay_data_stored_in_db(): void
@@ -339,7 +339,7 @@ class PixelTrackTest extends TestCase
             'SELECT data FROM sessions_replays WHERE replay_id = ?',
             [$replay->replay_id],
         );
-        $decompressed = @gzdecode($row->data);
+        $decompressed = @(string) gzdecode($row->data);
         $allEvents = json_decode($decompressed, true);
         $this->assertCount(5, $allEvents);
     }
@@ -391,7 +391,7 @@ class PixelTrackTest extends TestCase
 
         // 事件被限额拦截，且限额通知标记已置位
         $this->assertDatabaseCount('sessions_events', 0);
-        $this->assertTrue((bool) $this->website->refresh()->plan_sessions_events_limit_notice);
+        $this->assertTrue($this->website->refresh()->plan_sessions_events_limit_notice);
     }
 
     public function test_disabled_website_is_skipped(): void

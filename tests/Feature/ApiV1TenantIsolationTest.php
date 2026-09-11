@@ -65,7 +65,7 @@ class ApiV1TenantIsolationTest extends TestCase
                 'name' => 'Hacked',
             ])->assertStatus(403);
 
-        $this->assertSame('Target Site', $this->target->fresh()->name);
+        $this->assertSame('Target Site', $this->freshModel($this->target)->name);
     }
 
     public function test_website_destroy_is_tenant_isolated(): void

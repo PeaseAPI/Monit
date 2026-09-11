@@ -201,7 +201,7 @@ class WechatAlipayWebhookSecurityTest extends TestCase
         $response->assertStatus(200);
         $this->assertStringContainsString('SUCCESS', $response->getContent());
         $this->assertDatabaseHas('payments', ['payment_id' => $payment->payment_id, 'status' => 1]);
-        $this->assertSame('pro', $user->fresh()->plan_id);
+        $this->assertSame('pro', $this->freshModel($user)->plan_id);
     }
 
     /* ---------------- Alipay：显式配置检查 + 金额比对 ---------------- */
@@ -276,6 +276,6 @@ class WechatAlipayWebhookSecurityTest extends TestCase
         $response->assertStatus(200);
         $this->assertSame('success', $response->getContent());
         $this->assertDatabaseHas('payments', ['payment_id' => $payment->payment_id, 'status' => 1]);
-        $this->assertSame('pro', $user->fresh()->plan_id);
+        $this->assertSame('pro', $this->freshModel($user)->plan_id);
     }
 }

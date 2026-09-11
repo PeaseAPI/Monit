@@ -90,7 +90,7 @@ class AvatarUploadTest extends TestCase
             ->assertSessionHasErrors('avatar');
 
         $this->assertSame([], glob($this->avatarDir().'/*.php'), '任何 .php 不得落盘');
-        $this->assertNull($user->fresh()->avatar);
+        $this->assertNull($this->freshModel($user)->avatar);
     }
 
     public function test_dangerous_extensions_are_all_rejected(): void
@@ -124,6 +124,7 @@ class AvatarUploadTest extends TestCase
 
         $response->assertRedirect();
         $user = $user->fresh();
+        $this->assertNotNull($user);
         $this->assertNotNull($user->avatar);
         $this->assertMatchesRegularExpression(
             '#^/uploads/avatars/user_\d+_[0-9a-zA-Z]{16}\.png$#',
@@ -147,7 +148,7 @@ class AvatarUploadTest extends TestCase
 
         $this->postProfile($user, ['avatar' => $file])->assertRedirect();
 
-        $avatar = $user->fresh()->avatar;
+        $avatar = $this->freshModel($user)->avatar;
         $this->assertNotNull($avatar);
         $this->assertStringEndsWith('.png', $avatar, '扩展名应统一小写');
         $path = public_path(ltrim($avatar, '/'));
@@ -162,7 +163,7 @@ class AvatarUploadTest extends TestCase
         $this->postProfile($user, [
             'avatar' => UploadedFile::fake()->image('a.png', 8, 8),
         ])->assertRedirect();
-        $firstPath = public_path(ltrim($user->fresh()->avatar, '/'));
+        $firstPath = public_path(ltrim($this->freshModel($user)->avatar, '/'));
 
         // 无 sleep：同一秒内连续上传，历史上 time() 文件名会互相覆盖
         $this->postProfile($user, [
@@ -185,12 +186,12 @@ class AvatarUploadTest extends TestCase
         $this->postProfile($user, [
             'avatar' => UploadedFile::fake()->image('x.png', 8, 8),
         ])->assertRedirect();
-        $path = public_path(ltrim($user->fresh()->avatar, '/'));
+        $path = public_path(ltrim($this->freshModel($user)->avatar, '/'));
         $this->assertFileExists($path);
 
         $this->postProfile($user, ['avatar_remove' => '1'])->assertRedirect();
 
-        $this->assertNull($user->fresh()->avatar);
+        $this->assertNull($this->freshModel($user)->avatar);
         $this->assertFileDoesNotExist($path);
     }
 
@@ -203,6 +204,6 @@ class AvatarUploadTest extends TestCase
 
         $this->postProfile($user, ['avatar' => $file])
             ->assertSessionHasErrors('avatar');
-        $this->assertNull($user->fresh()->avatar);
+        $this->assertNull($this->freshModel($user)->avatar);
     }
 }

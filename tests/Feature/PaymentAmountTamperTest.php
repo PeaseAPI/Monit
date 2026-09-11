@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Payment\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -77,7 +78,7 @@ class PaymentAmountTamperTest extends TestCase
     {
         $this->postRazorpay(999, 'USD')->assertOk();
 
-        $this->assertSame(1, (int) $this->payment->fresh()->status);
+        $this->assertSame(1, $this->freshModel($this->payment)->status);
     }
 
     #[Test]
@@ -85,7 +86,7 @@ class PaymentAmountTamperTest extends TestCase
     {
         $this->postRazorpay(100, 'USD')->assertOk();
 
-        $this->assertSame(0, (int) $this->payment->fresh()->status);
+        $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
     private function postRazorpay(int $minorAmount, string $currency)
@@ -99,7 +100,7 @@ class PaymentAmountTamperTest extends TestCase
         ];
 
         return $this->postJson('/webhooks/razorpay', $payload, [
-            'X-Razorpay-Signature' => hash_hmac('sha256', json_encode($payload), 'rzp_secret'),
+            'X-Razorpay-Signature' => hash_hmac('sha256', (string) json_encode($payload), 'rzp_secret'),
         ]);
     }
 
@@ -110,7 +111,7 @@ class PaymentAmountTamperTest extends TestCase
     {
         $this->postPaystack(999, 'USD')->assertOk();
 
-        $this->assertSame(1, (int) $this->payment->fresh()->status);
+        $this->assertSame(1, $this->freshModel($this->payment)->status);
     }
 
     #[Test]
@@ -118,7 +119,7 @@ class PaymentAmountTamperTest extends TestCase
     {
         $this->postPaystack(100, 'USD')->assertOk();
 
-        $this->assertSame(0, (int) $this->payment->fresh()->status);
+        $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
     #[Test]
@@ -126,7 +127,7 @@ class PaymentAmountTamperTest extends TestCase
     {
         $this->postPaystack(999, 'NGN')->assertOk(); // 金额数值一致但币种不同
 
-        $this->assertSame(0, (int) $this->payment->fresh()->status);
+        $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
     private function postPaystack(int $minorAmount, string $currency)
@@ -140,7 +141,7 @@ class PaymentAmountTamperTest extends TestCase
         ];
 
         return $this->postJson('/webhooks/paystack', $payload, [
-            'x-paystack-signature' => hash_hmac('sha512', json_encode($payload), 'psk_secret'),
+            'x-paystack-signature' => hash_hmac('sha512', (string) json_encode($payload), 'psk_secret'),
         ]);
     }
 
@@ -159,10 +160,10 @@ class PaymentAmountTamperTest extends TestCase
         ];
 
         $this->postJson('/webhooks/paddle-billing', $payload, [
-            'Signature' => hash_hmac('sha256', json_encode($payload), 'paddle_billing_secret'),
+            'Signature' => hash_hmac('sha256', (string) json_encode($payload), 'paddle_billing_secret'),
         ])->assertOk();
 
-        $this->assertSame(1, (int) $this->payment->fresh()->status);
+        $this->assertSame(1, $this->freshModel($this->payment)->status);
     }
 
     #[Test]
@@ -178,10 +179,10 @@ class PaymentAmountTamperTest extends TestCase
         ];
 
         $this->postJson('/webhooks/paddle-billing', $payload, [
-            'Signature' => hash_hmac('sha256', json_encode($payload), 'paddle_billing_secret'),
+            'Signature' => hash_hmac('sha256', (string) json_encode($payload), 'paddle_billing_secret'),
         ])->assertOk();
 
-        $this->assertSame(0, (int) $this->payment->fresh()->status);
+        $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
     /* ---------------- LemonSqueezy（total：美分） ---------------- */
@@ -201,10 +202,10 @@ class PaymentAmountTamperTest extends TestCase
         ];
 
         $this->postJson('/webhooks/lemonsqueezy', $payload, [
-            'X-Signature' => hash_hmac('sha256', json_encode($payload), 'ls_secret'),
+            'X-Signature' => hash_hmac('sha256', (string) json_encode($payload), 'ls_secret'),
         ])->assertOk();
 
-        $this->assertSame(1, (int) $this->payment->fresh()->status);
+        $this->assertSame(1, $this->freshModel($this->payment)->status);
     }
 
     #[Test]
@@ -222,10 +223,10 @@ class PaymentAmountTamperTest extends TestCase
         ];
 
         $this->postJson('/webhooks/lemonsqueezy', $payload, [
-            'X-Signature' => hash_hmac('sha256', json_encode($payload), 'ls_secret'),
+            'X-Signature' => hash_hmac('sha256', (string) json_encode($payload), 'ls_secret'),
         ])->assertOk();
 
-        $this->assertSame(0, (int) $this->payment->fresh()->status);
+        $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
     /* ---------------- Revolut（total_amount：分） ---------------- */
@@ -242,10 +243,10 @@ class PaymentAmountTamperTest extends TestCase
         ];
 
         $this->postJson('/webhooks/revolut', $payload, [
-            'X-Signature' => hash_hmac('sha256', json_encode($payload), 'rev_secret'),
+            'X-Signature' => hash_hmac('sha256', (string) json_encode($payload), 'rev_secret'),
         ])->assertOk();
 
-        $this->assertSame(1, (int) $this->payment->fresh()->status);
+        $this->assertSame(1, $this->freshModel($this->payment)->status);
     }
 
     #[Test]
@@ -260,10 +261,10 @@ class PaymentAmountTamperTest extends TestCase
         ];
 
         $this->postJson('/webhooks/revolut', $payload, [
-            'X-Signature' => hash_hmac('sha256', json_encode($payload), 'rev_secret'),
+            'X-Signature' => hash_hmac('sha256', (string) json_encode($payload), 'rev_secret'),
         ])->assertOk();
 
-        $this->assertSame(0, (int) $this->payment->fresh()->status);
+        $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
     /* ---------------- Crypto.com（amount：分） ---------------- */
@@ -281,10 +282,10 @@ class PaymentAmountTamperTest extends TestCase
         ];
 
         $this->postJson('/webhooks/crypto', $payload, [
-            'X-Signature' => hash_hmac('sha256', json_encode($payload), 'crypto_secret'),
+            'X-Signature' => hash_hmac('sha256', (string) json_encode($payload), 'crypto_secret'),
         ])->assertOk();
 
-        $this->assertSame(1, (int) $this->payment->fresh()->status);
+        $this->assertSame(1, $this->freshModel($this->payment)->status);
     }
 
     #[Test]
@@ -300,10 +301,10 @@ class PaymentAmountTamperTest extends TestCase
         ];
 
         $this->postJson('/webhooks/crypto', $payload, [
-            'X-Signature' => hash_hmac('sha256', json_encode($payload), 'crypto_secret'),
+            'X-Signature' => hash_hmac('sha256', (string) json_encode($payload), 'crypto_secret'),
         ])->assertOk();
 
-        $this->assertSame(0, (int) $this->payment->fresh()->status);
+        $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
     /* ---------------- Paddle 经典（sale_gross：主单位） ---------------- */
@@ -313,7 +314,7 @@ class PaymentAmountTamperTest extends TestCase
     {
         $this->postPaddleClassic('9.99', 'USD')->assertOk();
 
-        $this->assertSame(1, (int) $this->payment->fresh()->status);
+        $this->assertSame(1, $this->freshModel($this->payment)->status);
     }
 
     #[Test]
@@ -321,10 +322,10 @@ class PaymentAmountTamperTest extends TestCase
     {
         $this->postPaddleClassic('1.00', 'USD')->assertOk();
 
-        $this->assertSame(0, (int) $this->payment->fresh()->status);
+        $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
-    private function postPaddleClassic(string $gross, string $currency)
+    private function postPaddleClassic(string $gross, string $currency): TestResponse
     {
         $payload = [
             'alert_name' => 'payment_succeeded',
@@ -353,7 +354,7 @@ class PaymentAmountTamperTest extends TestCase
             'object' => ['id' => 'yoo_1', 'metadata' => ['payment_id' => (string) $this->payment->payment_id]],
         ])->assertOk();
 
-        $this->assertSame(1, (int) $this->payment->fresh()->status);
+        $this->assertSame(1, (int) $this->freshModel($this->payment)->status);
     }
 
     #[Test]
@@ -366,7 +367,7 @@ class PaymentAmountTamperTest extends TestCase
             'object' => ['id' => 'yoo_1', 'metadata' => ['payment_id' => (string) $this->payment->payment_id]],
         ])->assertOk();
 
-        $this->assertSame(0, (int) $this->payment->fresh()->status);
+        $this->assertSame(0, (int) $this->freshModel($this->payment)->status);
     }
 
     private function fakeYookassaLookup(string $value, string $currency): void
@@ -434,7 +435,7 @@ class PaymentAmountTamperTest extends TestCase
             'Stripe-Signature' => "t={$timestamp},v1={$signature}",
         ]), $body)->assertOk();
 
-        $this->assertSame(0, (int) $payment->fresh()->status);
+        $this->assertSame(0, (int) $this->freshModel($payment)->status);
     }
 
     #[Test]
@@ -475,7 +476,7 @@ class PaymentAmountTamperTest extends TestCase
             'Stripe-Signature' => "t={$timestamp},v1={$signature}",
         ]), $body)->assertOk();
 
-        $this->assertSame(0, (int) $payment->fresh()->status);
+        $this->assertSame(0, (int) $this->freshModel($payment)->status);
     }
 
     /* ---------------- Mollie（amount.value：主单位，API 回查） ---------------- */
@@ -628,6 +629,6 @@ class PaymentAmountTamperTest extends TestCase
             'Stripe-Signature' => "t={$timestamp},v1={$signature}",
         ]), $body)->assertOk();
 
-        $this->assertSame(0, (int) $payment->fresh()->status);
+        $this->assertSame(0, (int) $this->freshModel($payment)->status);
     }
 }

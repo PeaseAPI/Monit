@@ -27,6 +27,9 @@ class AdminUserManageTest extends TestCase
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>  $overrides
+     */
     protected function targetUser(array $overrides = []): User
     {
         return User::create(array_merge([
@@ -51,7 +54,7 @@ class AdminUserManageTest extends TestCase
             'plan_settings[affiliate_commission_percentage]', 'plan_settings[no_ads]',
             'plan_settings[white_labeling_is_enabled]', 'plan_settings[export][]',
         ] as $needle) {
-            $this->assertStringContainsString($needle, $response->getContent(), "编辑页缺少字段 {$needle}");
+            $this->assertStringContainsString($needle, (string) $response->getContent(), "编辑页缺少字段 {$needle}");
         }
     }
 
@@ -89,15 +92,15 @@ class AdminUserManageTest extends TestCase
         $response->assertRedirect();
         $user->refresh();
 
-        $this->assertSame(2, (int) $user->status);
-        $this->assertSame(1, (int) $user->type);
-        $this->assertTrue((bool) $user->plan_trial_done);
+        $this->assertSame(2, $user->status);
+        $this->assertSame(1, $user->type);
+        $this->assertTrue($user->plan_trial_done);
         $this->assertSame(7, $user->plan_settings['websites_limit']);
         $this->assertSame(35, $user->plan_settings['affiliate_commission_percentage']);
         $this->assertTrue((bool) $user->plan_settings['email_reports_is_enabled']);
         $this->assertFalse((bool) $user->plan_settings['no_ads']);
         $this->assertSame(['csv', 'pdf'], $user->plan_settings['export']);
-        $this->assertTrue(Hash::check('new-password-1', $user->password));
+        $this->assertTrue(Hash::check('new-password-1', (string) $user->password));
     }
 
     public function test_update_rejects_mismatched_password_confirmation(): void
@@ -145,7 +148,7 @@ class AdminUserManageTest extends TestCase
         $response = $this->get(route('admin.users.view', $user->user_id));
 
         $response->assertOk();
-        $content = $response->getContent();
+        $content = (string) $response->getContent();
         $this->assertStringContainsString('SAFE123', $content);
         $this->assertStringContainsString('pk_test_api_key_xyz', $content);
         $this->assertStringContainsString('测试公司', $content);
@@ -159,10 +162,10 @@ class AdminUserManageTest extends TestCase
         $user = $this->targetUser(['status' => 1]);
 
         $this->put(route('admin.users.toggle_status', $user->user_id));
-        $this->assertSame(2, (int) $user->fresh()->status);
+        $this->assertSame(2, $this->freshModel($user)->status);
 
         $this->put(route('admin.users.toggle_status', $user->user_id));
-        $this->assertSame(1, (int) $user->fresh()->status);
+        $this->assertSame(1, $this->freshModel($user)->status);
     }
 
     public function test_create_user_defaults_to_cn_locale(): void
@@ -178,7 +181,7 @@ class AdminUserManageTest extends TestCase
         $this->assertNotNull($user);
         $this->assertSame('zh_CN', $user->language);
         $this->assertSame('Asia/Shanghai', $user->timezone);
-        $this->assertSame(1, (int) $user->status);
+        $this->assertSame(1, $user->status);
         $this->assertSame('admin', $user->source);
     }
 

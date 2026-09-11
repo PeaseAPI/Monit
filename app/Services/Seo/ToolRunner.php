@@ -102,7 +102,12 @@ class ToolRunner
         try {
             $tool = $this->instance($class);
             $handler = Typed::string($meta['handler']);
-            // 目录驱动派发：handler 名来自 config('seo.tools') 注册表（非用户输入），已用 method_exists 校验
+            // method_exists 对同一 $tool 变量窄化，使 PHPStan 放行注册表驱动的动态方法调用
+            if (! method_exists($tool, $handler)) {
+                return ['ok' => false, 'error' => __('seo.tool_not_available'), 'data' => []];
+            }
+            // 目录驱动派发：handler 名来自 config('seo.tools') 注册表（非用户输入），
+            // 已用 method_exists 对同一实例校验；数据驱动方法名无法静态化，故显式豁免
             $result = $tool->{$handler}($input); // @phpstan-ignore method.dynamicName (注册表动态派发为刻意设计)
             if (! is_array($result)) {
                 return ['ok' => false, 'error' => 'invalid tool result', 'data' => []];

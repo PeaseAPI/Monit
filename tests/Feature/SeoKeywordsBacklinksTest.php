@@ -54,6 +54,9 @@ class SeoKeywordsBacklinksTest extends TestCase
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>  $overrides
+     */
     protected function makeKeyword(array $overrides = []): SeoKeyword
     {
         return SeoKeyword::create(array_merge([

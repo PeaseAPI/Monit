@@ -38,6 +38,9 @@ class CodeRedemptionTest extends TestCase
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>  $overrides
+     */
     protected function makeCode(array $overrides = []): Code
     {
         return Code::create(array_merge([

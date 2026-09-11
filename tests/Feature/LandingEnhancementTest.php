@@ -106,6 +106,7 @@ class LandingEnhancementTest extends TestCase
 
         // 套餐：三档 + CNY/USD 双币直配价
         $plus = Plan::find('plus');
+        $this->assertNotNull($plus);
         $this->assertSame(9.0, (float) $plus->prices['CNY']['monthly']);
         $this->assertSame(99.0, (float) $plus->prices['CNY']['annual']);
         $this->assertSame(1.9, (float) $plus->prices['USD']['monthly']);

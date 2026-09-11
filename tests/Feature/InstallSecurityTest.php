@@ -106,7 +106,7 @@ class InstallSecurityTest extends TestCase
 
             // 持锁期间：直接拒绝（错误回渲染），不得创建管理员、不得落锁
             $response->assertOk();
-            $this->assertStringContainsString('安装正在进行中', $response->getContent());
+            $this->assertStringContainsString('安装正在进行中', (string) $response->getContent());
             $this->assertFalse(User::where('type', 1)->exists(), '持锁期间不得创建管理员');
             $this->assertFileDoesNotExist(InstallState::lockPath(), '持锁期间不得写入安装锁');
         } finally {

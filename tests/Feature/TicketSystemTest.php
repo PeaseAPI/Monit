@@ -20,6 +20,9 @@ class TicketSystemTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeUser(array $attrs = []): User
     {
         return User::create(array_merge([
@@ -74,7 +77,7 @@ class TicketSystemTest extends TestCase
             'message' => '已为您检查，请在网站 head 标签中粘贴脚本。',
         ])->assertSessionHas('success');
 
-        $this->assertSame(Ticket::STATUS_ANSWERED, $ticket->fresh()->status);
+        $this->assertSame(Ticket::STATUS_ANSWERED, $this->freshModel($ticket)->status);
         Mail::assertSent(TicketRepliedToUser::class, fn ($mail) => $mail->ticket->ticket_id === $ticket->ticket_id);
     }
 
@@ -89,7 +92,7 @@ class TicketSystemTest extends TestCase
             'message' => '仍然没有数据，请再帮忙看看。',
         ])->assertSessionHas('success');
 
-        $this->assertSame(Ticket::STATUS_OPEN, $ticket->fresh()->status);
+        $this->assertSame(Ticket::STATUS_OPEN, $this->freshModel($ticket)->status);
         Mail::assertSent(TicketUserRepliedToAdmin::class);
     }
 
@@ -133,7 +136,7 @@ class TicketSystemTest extends TestCase
         $reply = TicketReply::where('ticket_id', $ticket->ticket_id)->where('via', 'email')->first();
         $this->assertNotNull($reply);
         $this->assertFalse($reply->is_staff);
-        $this->assertSame(Ticket::STATUS_OPEN, $ticket->fresh()->status);
+        $this->assertSame(Ticket::STATUS_OPEN, $this->freshModel($ticket)->status);
         Mail::assertSent(TicketUserRepliedToAdmin::class);
     }
 

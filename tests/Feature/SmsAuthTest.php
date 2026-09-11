@@ -243,7 +243,7 @@ class SmsAuthTest extends TestCase
             'password' => 'newpassword123',
         ])->assertRedirect(route('dashboard'));
 
-        $this->assertTrue(Hash::check('newpassword123', $user->refresh()->password));
+        $this->assertTrue(Hash::check('newpassword123', (string) $user->refresh()->password));
     }
 
     public function test_phone_bind_in_account(): void
