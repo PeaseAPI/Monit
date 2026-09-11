@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PageCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 自定义页面分类管理
@@ -12,6 +13,9 @@ use Illuminate\Http\Request;
  */
 class AdminPagesCategories extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $categories = PageCategory::with('user')->orderBy('order')->orderByDesc('page_category_id')->paginate(50);
@@ -49,6 +53,9 @@ class AdminPagesCategories extends Controller
             ->with('success', __('msg.category_deleted'));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function validated(Request $request): array
     {
         return $request->validate([

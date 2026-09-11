@@ -16,10 +16,14 @@ use App\Support\Brand;
 use App\Support\Captcha;
 use App\Support\Currency;
 use App\Support\Settings;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\View\View;
 
 /**
  * 公开前台控制器
@@ -27,6 +31,9 @@ use Illuminate\Support\Facades\Mail;
  */
 class IndexController extends Controller
 {
+    /**
+     * @return RedirectResponse|View
+     */
     public function index(Request $request)
     {
         if (Auth::check()) {
@@ -74,6 +81,9 @@ class IndexController extends Controller
         ]);
     }
 
+    /**
+     * @return View
+     */
     public function blog(Request $request)
     {
         // 博客总开关（content.blog_is_enabled，默认开启）
@@ -88,6 +98,9 @@ class IndexController extends Controller
         return view('blog', compact('posts'));
     }
 
+    /**
+     * @return View
+     */
     public function blogPost(string $url)
     {
         abort_unless(self::contentOn('blog_is_enabled'), 404);
@@ -97,6 +110,9 @@ class IndexController extends Controller
         return view('blog_post', compact('post'));
     }
 
+    /**
+     * @return View
+     */
     public function page(string $url)
     {
         // 自定义页面总开关（content.pages_is_enabled，默认开启）
@@ -109,6 +125,8 @@ class IndexController extends Controller
 
     /**
      * 自定义页面索引（规格书 §6.1：/pages）
+     *
+     * @return View
      */
     public function pages()
     {
@@ -119,6 +137,9 @@ class IndexController extends Controller
         return view('pages', compact('pages'));
     }
 
+    /**
+     * @return View
+     */
     public function help()
     {
         // 帮助中心（A3）：后台维护的分类/文章优先；无数据时视图回退内置静态内容
@@ -132,6 +153,9 @@ class IndexController extends Controller
         return view('help', compact('categories', 'articles', 'hasContent'));
     }
 
+    /**
+     * @return View
+     */
     public function helpArticle(string $url)
     {
         $article = HelpArticle::where('is_published', true)->where('url', $url)->firstOrFail();
@@ -165,6 +189,8 @@ class IndexController extends Controller
 
     /**
      * 联盟计划公开介绍页（规格 §6.1：/affiliate，插件启用时）
+     *
+     * @return View
      */
     public function affiliate()
     {
@@ -181,6 +207,9 @@ class IndexController extends Controller
         ]);
     }
 
+    /**
+     * @return View
+     */
     public function contact()
     {
         return view('contact');
@@ -188,6 +217,8 @@ class IndexController extends Controller
 
     /**
      * 联系表单提交（规格书 §6.1：/contact）
+     *
+     * @return RedirectResponse
      */
     public function contactSend(Request $request)
     {
@@ -217,6 +248,8 @@ class IndexController extends Controller
 
     /**
      * 站点地图（规格书 §6.1：/sitemap，SEO sitemap.xml）
+     *
+     * @return Response
      */
     public function sitemap()
     {
@@ -262,6 +295,8 @@ class IndexController extends Controller
 
     /**
      * Cookie 同意记录（规格书 §6.1：/cookie-consent，GDPR）
+     *
+     * @return JsonResponse
      */
     public function cookieConsent(Request $request)
     {
@@ -280,6 +315,8 @@ class IndexController extends Controller
 
     /**
      * 邮件退订（规格书 §6.1：/unsubscribe，HMAC 签名链接）
+     *
+     * @return RedirectResponse|View
      */
     public function unsubscribe(Request $request)
     {
@@ -304,6 +341,8 @@ class IndexController extends Controller
 
     /**
      * 邮件退订 POST 处理（规格书 §6.1：/unsubscribe POST）
+     *
+     * @return RedirectResponse
      */
     public function unsubscribePost(Request $request)
     {
@@ -328,12 +367,17 @@ class IndexController extends Controller
 
     /**
      * 维护模式页面（规格书 §6.1：/maintenance）
+     *
+     * @return Response
      */
     public function maintenance()
     {
         return response()->view('maintenance', [], 503);
     }
 
+    /**
+     * @return View
+     */
     public function plan()
     {
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
@@ -341,6 +385,9 @@ class IndexController extends Controller
         return view('plan', compact('plans'));
     }
 
+    /**
+     * @return View
+     */
     public function apiDocs()
     {
         return view('api_docs');
@@ -349,6 +396,8 @@ class IndexController extends Controller
     /**
      * 服务条款静态页（content.terms_html）
      * 优先级：后台 content 组富文本 → 站内自定义页面（url=terms）→ 默认文案
+     *
+     * @return View
      */
     public function terms()
     {
@@ -359,6 +408,8 @@ class IndexController extends Controller
 
     /**
      * 隐私政策静态页（content.privacy_html）
+     *
+     * @return View
      */
     public function privacy()
     {

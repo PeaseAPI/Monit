@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 /**
  * Monit 邮箱激活
@@ -18,6 +19,8 @@ class ActivationController extends Controller
 {
     /**
      * 激活用户账号
+     *
+     * @return RedirectResponse
      */
     public function activate(Request $request, string $code)
     {
@@ -44,6 +47,8 @@ class ActivationController extends Controller
 
     /**
      * 显示重新发送激活邮件表单
+     *
+     * @return View
      */
     public function showResendForm()
     {
@@ -91,6 +96,8 @@ class ActivationController extends Controller
 
     /**
      * 激活邮件已发送提示页
+     *
+     * @return View
      */
     public function sent()
     {

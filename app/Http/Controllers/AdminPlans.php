@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Plan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 套餐管理
@@ -12,6 +13,9 @@ use Illuminate\Http\Request;
  */
 class AdminPlans extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $plans = Plan::orderBy('order')->get();
@@ -19,6 +23,9 @@ class AdminPlans extends Controller
         return view('admin.plans.index', compact('plans'))->with('adminNav', 'plans');
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         return view('admin.plans.create')->with('adminNav', 'plans');
@@ -56,6 +63,9 @@ class AdminPlans extends Controller
             ->with('success', __('msg.plan_created', ['name' => $validated['name']]));
     }
 
+    /**
+     * @return View
+     */
     public function edit(string $planId)
     {
         $plan = Plan::findOrFail($planId);
@@ -99,6 +109,8 @@ class AdminPlans extends Controller
     /**
      * 解析表单功能矩阵输入（features[key]）为 settings 数组
      * bool 型未勾选 -> false；int 型空值 -> 0（规格书 §10.2）
+     *
+     * @return array<string, mixed>
      */
     protected function resolveFeatureSettings(Request $request): array
     {

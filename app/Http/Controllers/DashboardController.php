@@ -6,6 +6,7 @@ use App\Models\DashboardView;
 use App\Models\Website;
 use App\Services\StatisticsService;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * Monit 仪表盘
@@ -13,6 +14,9 @@ use Illuminate\Http\Request;
  */
 class DashboardController extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $user = $request->user();
@@ -61,6 +65,8 @@ class DashboardController extends Controller
 
     /**
      * 像素安装指引
+     *
+     * @return View
      */
     public function install(Request $request, Website $website)
     {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\Plan;
+use App\Models\User;
 use App\Services\Payment\AlipayProcessor;
 use App\Services\Payment\CryptoComProcessor;
 use App\Services\Payment\FlutterwaveProcessor;
@@ -28,6 +29,7 @@ use App\Services\Payment\StripeProcessor;
 use App\Services\Payment\WeChatPayProcessor;
 use App\Services\Payment\YooKassaProcessor;
 use App\Support\Settings;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -106,6 +108,8 @@ class PaymentController extends Controller
 
     /**
      * 发起支付（规格书 §11：22 处理器统一入口）
+     *
+     * @return mixed
      */
     public function checkout(Request $request)
     {
@@ -220,6 +224,8 @@ class PaymentController extends Controller
 
     /**
      * Stripe Webhook
+     *
+     * @return JsonResponse
      */
     public function stripeWebhook(Request $request)
     {
@@ -261,6 +267,8 @@ class PaymentController extends Controller
 
     /**
      * PayPal Webhook
+     *
+     * @return JsonResponse
      */
     public function paypalWebhook(Request $request)
     {
@@ -491,6 +499,8 @@ class PaymentController extends Controller
      * 通用托管结算型处理器（14 个，规格书 §11）
      * createCheckout 构造网关结算参数；生产环境由服务端向网关发起请求后跳转，
      * 此处渲染结算确认页（支付完成后由各自 Webhook 回调 finalize）。
+     *
+     * @param  User  $user
      */
     protected function redirectToGenericProcessor($user, Plan $plan, Payment $payment, string $processor, string $frequency): View|RedirectResponse
     {
@@ -537,6 +547,8 @@ class PaymentController extends Controller
      * - 开关型（stripe/paypal/razorpay/offline/wechat/alipay）：settings payment.{key}_is_enabled
      * - 凭据型（其余 16 网关）：config/services.{gateway} 任一凭据非空即视为可用
      * 结果按 PROCESSORS 声明顺序返回，保证“第一个启用项”成为结账页默认选择。
+     *
+     * @return list<string>
      */
     public static function enabledProcessors(): array
     {

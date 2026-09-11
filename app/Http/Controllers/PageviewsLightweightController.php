@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Website;
 use App\Services\StatisticsService;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 用户中心 - 轻量页面浏览分析
@@ -12,6 +13,9 @@ use Illuminate\Http\Request;
  */
 class PageviewsLightweightController extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request, Website $website)
     {
         $range = (int) ($request->query('range', 7));

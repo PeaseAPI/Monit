@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 系统设置（AdminSettings，94K 最大控制器）
@@ -27,6 +28,8 @@ class AdminSettings extends Controller
 {
     /**
      * 设置主页面（所有分组选项卡）
+     *
+     * @return View
      */
     public function index(Request $request)
     {
@@ -118,6 +121,9 @@ class AdminSettings extends Controller
     /**
      * 多货币清单清洗（规格书 §10.4）：
      * code 规范化为 3 位大写字母；剔除默认货币行（基准恒为 1）与无有效汇率的行
+     *
+     * @param  array<string, mixed>  $currencies
+     * @return array<string, mixed>
      */
     protected function sanitizeCurrencies(array $currencies, string $default): array
     {
@@ -234,6 +240,8 @@ class AdminSettings extends Controller
 
     /**
      * 「缓存」面板数据（只读状态）
+     *
+     * @return array<string, mixed>
      */
     protected function cachePanel(): array
     {
@@ -246,6 +254,8 @@ class AdminSettings extends Controller
 
     /**
      * 「健康检查」面板数据（原系统 health 运维页）
+     *
+     * @return array<string, mixed>
      */
     protected function healthPanel(): array
     {
@@ -281,6 +291,8 @@ class AdminSettings extends Controller
 
     /**
      * 「支持与授权」面板数据（原系统 support/license 组）
+     *
+     * @return array<string, mixed>
      */
     protected function supportPanel(): array
     {
@@ -298,6 +310,9 @@ class AdminSettings extends Controller
     /* 设置分组 & 保存 */
     /* --------------------------------------------------------------------- */
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function allSettings(): array
     {
         return [
@@ -340,11 +355,17 @@ class AdminSettings extends Controller
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function getGroup(string $group): array
     {
         return Setting::where('key', 'like', "{$group}.%")->pluck('value', 'key')->toArray();
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     protected function saveSettings(string $group, array $data): void
     {
         DB::transaction(function () use ($group, $data) {
@@ -365,6 +386,9 @@ class AdminSettings extends Controller
     /* 验证规则 */
     /* --------------------------------------------------------------------- */
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function getValidationRules(string $group): array
     {
         $rules = match ($group) {
@@ -874,6 +898,9 @@ class AdminSettings extends Controller
      *
      * 上传的文件存入 storage/app/public/branding/，并将 URL 写入对应 _url 字段。
      * 上传优先于 URL 直填：有文件上传则覆盖 URL 字段，无则保留原 URL。
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
      */
     protected function handleBrandingUploads(Request $request, array $validated): array
     {

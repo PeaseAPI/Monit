@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SeoToolUse;
 use App\Models\Website;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -30,6 +31,8 @@ class WebsiteSeoController extends Controller
 
     /**
      * 更新 SEO 监控设置（复审排期即时重算）
+     *
+     * @return RedirectResponse
      */
     public function update(Request $request, Website $website)
     {

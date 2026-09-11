@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Website;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 /**
  * Monit 网站管理 CRUD
@@ -13,6 +15,9 @@ use Illuminate\Support\Str;
  */
 class WebsiteController extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $websites = $request->user()
@@ -26,6 +31,9 @@ class WebsiteController extends Controller
         return view('websites.index', compact('websites'));
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         return view('websites.create');
@@ -62,6 +70,9 @@ class WebsiteController extends Controller
             ->with('success', __('msg.website_created', ['name' => $website->name]));
     }
 
+    /**
+     * @return View
+     */
     public function edit(Request $request, Website $website)
     {
         return view('websites.edit', compact('website'));
@@ -102,6 +113,9 @@ class WebsiteController extends Controller
      | 辅助
      --------------------------------------------------------------------- */
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function validateWebsite(Request $request): array
     {
         return $request->validate([
@@ -161,6 +175,8 @@ class WebsiteController extends Controller
 
     /**
      * 网站AJAX数据（规格书 §6.2.3：/websites-ajax）
+     *
+     * @return JsonResponse
      */
     public function ajax(Request $request)
     {

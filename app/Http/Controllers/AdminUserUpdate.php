@@ -122,7 +122,9 @@ class AdminUserUpdate extends Controller
             'email_reports_is_enabled', 'teams_is_enabled', 'no_ads', 'api_is_enabled',
             'white_labeling_is_enabled', 'seo_ai_is_enabled', 'export',
         ];
-        $planSettings = collect($request->input('plan_settings', []))
+        /** @var array<string, mixed> $planSettingsRaw */
+        $planSettingsRaw = $request->input('plan_settings', []);
+        $planSettings = collect($planSettingsRaw)
             ->only($planKeys)
             ->toArray();
 

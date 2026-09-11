@@ -7,6 +7,7 @@ use App\Models\Website;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 用户中心 - 图表标注
@@ -16,6 +17,9 @@ class AnnotationController extends Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * @return View
+     */
     public function index(Request $request, Website $website)
     {
         $annotations = $website->annotations()
@@ -26,6 +30,9 @@ class AnnotationController extends Controller
         return view('stats.annotations', compact('website', 'annotations'));
     }
 
+    /**
+     * @return View
+     */
     public function create(Request $request, Website $website)
     {
         return view('stats.annotation_create', compact('website'));

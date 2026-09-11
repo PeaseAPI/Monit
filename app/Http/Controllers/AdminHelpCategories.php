@@ -7,12 +7,16 @@ use App\Models\HelpCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 帮助中心分类管理
  */
 class AdminHelpCategories extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $categories = HelpCategory::with('user')->orderBy('order')->orderByDesc('category_id')->paginate(50);
@@ -49,6 +53,9 @@ class AdminHelpCategories extends Controller
         return redirect()->route('admin.help-categories.index')->with('success', __('msg.category_deleted'));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function validated(Request $request): array
     {
         return $request->validate([

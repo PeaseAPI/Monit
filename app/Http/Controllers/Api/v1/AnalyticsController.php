@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Models\SessionReplay;
 use App\Models\Website;
 use App\Services\StatisticsService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
@@ -23,6 +24,9 @@ class AnalyticsController
         return in_array($range, [1, 7, 30, 90], true) ? $range : 7;
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function realtime(Website $website)
     {
         $this->authorizeWebsite($website);
@@ -31,6 +35,9 @@ class AnalyticsController
         return response()->json(['realtime' => $stats->realtime()]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function visitors(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -40,6 +47,9 @@ class AnalyticsController
         return response()->json(['visitors' => $stats->topVisitors(50)]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function events(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -52,6 +62,9 @@ class AnalyticsController
         ]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function metrics(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -64,6 +77,9 @@ class AnalyticsController
         ]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function topPages(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -74,6 +90,9 @@ class AnalyticsController
         return response()->json(['top_pages' => $stats->breakdown('path', $limit)]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function topReferrers(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -84,6 +103,9 @@ class AnalyticsController
         return response()->json(['top_referrers' => $stats->breakdownWithUtm('referrer_host', $limit)]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function topCountries(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -94,6 +116,9 @@ class AnalyticsController
         return response()->json(['top_countries' => $stats->breakdown('country_code', $limit)]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function topBrowsers(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -104,6 +129,9 @@ class AnalyticsController
         return response()->json(['top_browsers' => $stats->breakdown('browser_name', $limit)]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function topDevices(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -114,6 +142,9 @@ class AnalyticsController
         return response()->json(['top_devices' => $stats->breakdown('device_type', $limit)]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function topOperatingSystems(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -124,6 +155,9 @@ class AnalyticsController
         return response()->json(['top_os' => $stats->breakdown('os_name', $limit)]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function sessions(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -136,6 +170,9 @@ class AnalyticsController
         ]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function goals(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -145,6 +182,9 @@ class AnalyticsController
         return response()->json(['goals' => $stats->goalsConversions()]);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function utm(Website $website, Request $request)
     {
         $this->authorizeWebsite($website);
@@ -157,6 +197,8 @@ class AnalyticsController
     /**
      * 统计聚合查询（规格书 §8：/api/statistics 最大端点）
      * 一次返回 overview + series + 全部 top 维度。
+     *
+     * @return JsonResponse
      */
     public function statistics(Website $website, Request $request)
     {
@@ -188,6 +230,8 @@ class AnalyticsController
     /**
      * 高级模式页面浏览（规格书 §8：/api/pageviews-advanced）
      * 数据源 sessions_events（landing_page / pageview）。
+     *
+     * @return JsonResponse
      */
     public function pageviewsAdvanced(Website $website, Request $request)
     {
@@ -220,6 +264,8 @@ class AnalyticsController
     /**
      * 轻量模式页面浏览（规格书 §8：/api/pageviews-lightweight）
      * 数据源 lightweight_events（landing_page / pageview；轻量模式无访客维度，仅计 pageviews）。
+     *
+     * @return JsonResponse
      */
     public function pageviewsLightweight(Website $website, Request $request)
     {
@@ -250,6 +296,8 @@ class AnalyticsController
 
     /**
      * 会话回放（规格书 §8：/api/replays）
+     *
+     * @return JsonResponse
      */
     public function replays(Website $website, Request $request)
     {
@@ -290,6 +338,9 @@ class AnalyticsController
     }
 
     /** 把 range 天数换算为 [start, end] 日期（与 StatisticsService::lastDays 对齐） */
+    /**
+     * @return array{0: string, 1: string}
+     */
     protected function resolveRangeDates(int $range): array
     {
         return [

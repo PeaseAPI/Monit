@@ -6,6 +6,7 @@ use App\Models\Domain;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 自定义域名管理
@@ -13,6 +14,9 @@ use Illuminate\Http\Request;
  */
 class AdminDomains extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $query = Domain::with('user');
@@ -27,6 +31,9 @@ class AdminDomains extends Controller
         return view('admin.domains.index', compact('domains'))->with('adminNav', 'domains');
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         $users = User::where('status', 1)->orderBy('name')->limit(1000)->pluck('name', 'user_id');
@@ -52,6 +59,9 @@ class AdminDomains extends Controller
             ->with('success', __('msg.domain_created', ['host' => $validated['host']]));
     }
 
+    /**
+     * @return View
+     */
     public function edit(int $domainId)
     {
         $domain = Domain::findOrFail($domainId);

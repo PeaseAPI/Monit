@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Tax;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 税费管理
@@ -12,6 +13,9 @@ use Illuminate\Http\Request;
  */
 class AdminTaxes extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $taxes = Tax::orderBy('tax_id')->get();
@@ -19,6 +23,9 @@ class AdminTaxes extends Controller
         return view('admin.taxes.index', compact('taxes'))->with('adminNav', 'taxes');
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         return view('admin.taxes.create')->with('adminNav', 'taxes');
@@ -42,6 +49,9 @@ class AdminTaxes extends Controller
             ->with('success', __('msg.tax_created', ['name' => $validated['name']]));
     }
 
+    /**
+     * @return View
+     */
     public function edit(int $taxId)
     {
         $tax = Tax::findOrFail($taxId);
@@ -82,6 +92,8 @@ class AdminTaxes extends Controller
     /**
      * 批量导入税费（CSV）
      * 规格书 §6.3.3：/admin/taxes-import
+     *
+     * @return View
      */
     public function importForm()
     {

@@ -7,6 +7,7 @@ use App\Models\Plan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 兑换码管理 + 已兑换记录
@@ -14,6 +15,9 @@ use Illuminate\Support\Str;
  */
 class AdminCodes extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $codes = Code::withCount('redeemedCodes')->orderByDesc('code_id')->paginate(25);
@@ -21,6 +25,9 @@ class AdminCodes extends Controller
         return view('admin.codes.index', compact('codes'))->with('adminNav', 'codes');
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
@@ -39,6 +46,9 @@ class AdminCodes extends Controller
             ->with('success', __('msg.code_created'));
     }
 
+    /**
+     * @return View
+     */
     public function edit(int $codeId)
     {
         $code = Code::findOrFail($codeId);
@@ -64,6 +74,9 @@ class AdminCodes extends Controller
             ->with('success', __('msg.code_deleted'));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function validated(Request $request): array
     {
         $validated = $request->validate([

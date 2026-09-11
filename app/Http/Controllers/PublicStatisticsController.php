@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Website;
 use App\Services\StatisticsService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * Monit 公开统计页
@@ -14,6 +16,8 @@ class PublicStatisticsController extends Controller
 {
     /**
      * 公开统计页入口
+     *
+     * @return View
      */
     public function show(Request $request, string $pixel_key)
     {
@@ -65,6 +69,8 @@ class PublicStatisticsController extends Controller
 
     /**
      * 公开统计密码验证
+     *
+     * @return RedirectResponse
      */
     public function authenticate(Request $request, string $pixel_key)
     {

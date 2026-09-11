@@ -7,12 +7,14 @@ use App\Services\Sms\SmsService;
 use App\Services\TotpService;
 use App\Services\WebhookService;
 use App\Support\Settings;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 /**
  * Monit 账号设置
@@ -22,6 +24,8 @@ class AccountController extends Controller
 {
     /**
      * 账号设置首页
+     *
+     * @return View
      */
     public function index(Request $request)
     {
@@ -44,6 +48,8 @@ class AccountController extends Controller
 
     /**
      * 账户日志（规格书 §6.2.5：/account-logs）
+     *
+     * @return View
      */
     public function logs(Request $request)
     {
@@ -55,6 +61,8 @@ class AccountController extends Controller
     /**
      * 更新个人资料（对标 monit.cn /account：头像 / 防钓鱼码 / 账单信息）
      * 邮箱变更时重置 email_verified_at：防止「已验证身份」随邮箱漂移到他人地址
+     *
+     * @return RedirectResponse
      */
     public function update(Request $request)
     {
@@ -169,6 +177,8 @@ class AccountController extends Controller
 
     /**
      * 修改密码
+     *
+     * @return RedirectResponse
      */
     public function updatePassword(Request $request)
     {
@@ -197,6 +207,8 @@ class AccountController extends Controller
 
     /**
      * 生成新的 API Token
+     *
+     * @return RedirectResponse
      */
     public function regenerateApiToken(Request $request)
     {
@@ -207,6 +219,8 @@ class AccountController extends Controller
 
     /**
      * 撤销 API Token
+     *
+     * @return RedirectResponse
      */
     public function revokeApiToken(Request $request)
     {
@@ -217,6 +231,8 @@ class AccountController extends Controller
 
     /**
      * 绑定手机号（M17 §12.5）：验证码校验通过后写入 phone + phone_verified_at
+     *
+     * @return RedirectResponse
      */
     public function phoneBind(Request $request)
     {
@@ -251,6 +267,8 @@ class AccountController extends Controller
 
     /**
      * 两步验证（规格书 §12.4）：开始设置 —— 生成新密钥，待确认后启用
+     *
+     * @return RedirectResponse
      */
     public function twofaSetup(Request $request)
     {
@@ -267,6 +285,8 @@ class AccountController extends Controller
 
     /**
      * 两步验证：确认启用（需输入认证器 6 位码）
+     *
+     * @return RedirectResponse
      */
     public function twofaEnable(Request $request)
     {
@@ -292,6 +312,8 @@ class AccountController extends Controller
 
     /**
      * 两步验证：关闭（需密码 + 动态码双重确认）
+     *
+     * @return RedirectResponse
      */
     public function twofaDisable(Request $request)
     {
@@ -318,6 +340,8 @@ class AccountController extends Controller
 
     /**
      * 删除账户表单页面（规格书 §6.2.5：/account-delete）
+     *
+     * @return View
      */
     public function deleteForm(Request $request)
     {
@@ -328,6 +352,8 @@ class AccountController extends Controller
 
     /**
      * 兑换码表单页面（规格书 §6.2.5：/account-redeem-code）
+     *
+     * @return View
      */
     public function redeemCodeForm(Request $request)
     {
@@ -338,6 +364,8 @@ class AccountController extends Controller
 
     /**
      * 提交兑换码（规格书 §6.2.5：/account-redeem-code POST）
+     *
+     * @return RedirectResponse
      */
     public function redeemCodeSubmit(Request $request)
     {
@@ -367,6 +395,8 @@ class AccountController extends Controller
 
     /**
      * 删除账户（数据导出+永久删除）
+     *
+     * @return RedirectResponse
      */
     public function destroy(Request $request)
     {

@@ -19,6 +19,9 @@ use Illuminate\Http\Request;
  */
 class SetLocale
 {
+    /**
+     * @return mixed
+     */
     public function handle(Request $request, Closure $next)
     {
         $locales = (array) config('monit.locales');

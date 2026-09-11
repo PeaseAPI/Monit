@@ -20,6 +20,9 @@ use Illuminate\Support\Str;
  */
 class SocialLoginController extends Controller
 {
+    /**
+     * @var array<string, array<string, mixed>>
+     */
     protected array $providers = [
         'google' => [
             'authorize_url' => 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -77,6 +80,8 @@ class SocialLoginController extends Controller
     /**
      * 国内社交登录提供商映射（规格书 §12.3）
      * 通过服务容器延迟实例化，避免未配置时报错
+     *
+     * @var array<string, class-string>
      */
     protected array $chineseProviders = [
         'qq' => QQProvider::class,
@@ -250,6 +255,8 @@ class SocialLoginController extends Controller
 
     /**
      * 获取国内社交登录配置（规格书 §12.3）
+     *
+     * @return array<string, mixed>
      */
     protected function getChineseProviderConfig(string $provider): ?array
     {
@@ -298,6 +305,8 @@ class SocialLoginController extends Controller
 
     /**
      * 用 authorization code 换取 access_token
+     *
+     * @return array<string, mixed>
      */
     protected function getAccessToken(string $provider, string $code): ?array
     {
@@ -334,6 +343,8 @@ class SocialLoginController extends Controller
 
     /**
      * 用 access_token 获取用户信息
+     *
+     * @return array<string, mixed>
      */
     protected function getUserInfo(string $provider, string $accessToken): ?array
     {
@@ -366,7 +377,9 @@ class SocialLoginController extends Controller
             if ($provider === 'github' && empty($data['email'])) {
                 $emailResponse = Http::withToken($accessToken)
                     ->get($config['userinfo_email_url']);
-                $emails = collect($emailResponse->json() ?? []);
+                /** @var array<int, array<string, mixed>> $emailsRaw */
+                $emailsRaw = $emailResponse->json() ?? [];
+                $emails = collect($emailsRaw);
 
                 $verified = $emails->filter(fn ($e) => ($e['verified'] ?? false) === true);
                 $pick = $verified->firstWhere('primary', true) ?? $verified->first();
@@ -423,6 +436,8 @@ class SocialLoginController extends Controller
 
     /**
      * Apple id_token 解码获取用户信息（规格书 §12.3）
+     *
+     * @return array<string, mixed>
      */
     protected function getAppleUserInfo(string $idToken): ?array
     {
@@ -480,6 +495,8 @@ class SocialLoginController extends Controller
 
     /**
      * 登录或注册用户
+     *
+     * @param  array<string, mixed>  $userInfo
      */
     protected function loginOrRegister(string $provider, array $userInfo): RedirectResponse
     {

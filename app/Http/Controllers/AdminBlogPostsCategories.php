@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BlogPostsCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 博客文章分类管理
@@ -12,6 +13,9 @@ use Illuminate\Http\Request;
  */
 class AdminBlogPostsCategories extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $categories = BlogPostsCategory::with('user')->orderBy('order')->orderByDesc('category_id')->paginate(50);
@@ -49,6 +53,9 @@ class AdminBlogPostsCategories extends Controller
             ->with('success', __('msg.category_deleted'));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function validated(Request $request): array
     {
         return $request->validate([

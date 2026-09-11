@@ -6,6 +6,7 @@ use App\Models\Website;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 /**
  * 用户中心 - 网站批量导入
@@ -13,6 +14,9 @@ use Illuminate\Support\Str;
  */
 class WebsitesImportController extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         return view('websites.import');

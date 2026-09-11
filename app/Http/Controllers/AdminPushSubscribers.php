@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PushNotificationSubscriber;
 use App\Support\PluginManager;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - Push 订阅者管理（插件 push-notifications）
@@ -12,6 +13,9 @@ use Illuminate\Http\RedirectResponse;
  */
 class AdminPushSubscribers extends Controller
 {
+    /**
+     * @return RedirectResponse|View
+     */
     public function index()
     {
         // 插件未启用时引导到插件页

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\View\View;
 
 /**
  * Monit 密码重置
@@ -24,6 +25,8 @@ class ForgotPasswordController extends Controller
 {
     /**
      * 显示忘记密码表单
+     *
+     * @return View
      */
     public function showLinkRequestForm()
     {
@@ -116,6 +119,8 @@ class ForgotPasswordController extends Controller
 
     /**
      * 短信重置密码表单（M17 §12.5）
+     *
+     * @return View
      */
     public function showResetSmsForm(Request $request)
     {
@@ -172,6 +177,8 @@ class ForgotPasswordController extends Controller
 
     /**
      * 显示重置密码表单
+     *
+     * @return RedirectResponse|View
      */
     public function showResetForm(Request $request, string $code)
     {

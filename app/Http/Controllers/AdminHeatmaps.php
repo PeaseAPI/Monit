@@ -6,6 +6,7 @@ use App\Models\Heatmap;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 平台级热图管理
@@ -13,6 +14,9 @@ use Illuminate\Support\Facades\DB;
  */
 class AdminHeatmaps extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $heatmaps = Heatmap::with('website')

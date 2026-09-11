@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\OutboundClick;
 use App\Models\Website;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 用户中心 - 出站点击统计
@@ -12,6 +13,9 @@ use Illuminate\Http\Request;
  */
 class OutboundClicksController extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request, Website $website)
     {
         $range = (int) ($request->query('range', 7));

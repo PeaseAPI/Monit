@@ -22,6 +22,8 @@ class EnsureInstalled
     /**
      * 未安装时仍可直接访问的路径：
      * 向导自身 + 健康检查 + 像素采集（保持在线）+ 静态资源（向导页样式/图标）
+     *
+     * @var array<int, string>
      */
     protected array $allowed = [
         'install', 'install/*',

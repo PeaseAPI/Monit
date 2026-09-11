@@ -7,6 +7,7 @@ use App\Support\Csv;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -15,6 +16,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class AdminLogs extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $query = $this->buildQuery($request);
@@ -90,6 +94,8 @@ class AdminLogs extends Controller
     /**
      * 查看单条日志详情
      * 规格书 附B：AdminLog.index
+     *
+     * @return View
      */
     public function show(int $logId)
     {

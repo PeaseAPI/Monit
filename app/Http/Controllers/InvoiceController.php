@@ -6,6 +6,7 @@ use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Setting;
 use Barry\DomPDF\Facade\Pdf;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 /**
@@ -33,6 +34,8 @@ class InvoiceController extends Controller
 
     /**
      * 下载发票 PDF
+     *
+     * @return Response
      */
     public function download(Payment $payment)
     {

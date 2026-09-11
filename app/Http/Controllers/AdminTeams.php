@@ -6,6 +6,7 @@ use App\Models\Team;
 use App\Models\TeamMember;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 团队与成员管理
@@ -13,6 +14,9 @@ use Illuminate\Support\Facades\DB;
  */
 class AdminTeams extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $teams = Team::with('owner')
@@ -23,6 +27,9 @@ class AdminTeams extends Controller
         return view('admin.teams.index', compact('teams'))->with('adminNav', 'teams');
     }
 
+    /**
+     * @return View
+     */
     public function members(int $teamId)
     {
         $team = Team::with('owner')->findOrFail($teamId);

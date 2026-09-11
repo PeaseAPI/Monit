@@ -7,6 +7,7 @@ use App\Models\PushNotificationCampaign;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 站内通知管理
@@ -14,6 +15,9 @@ use Illuminate\Http\Request;
  */
 class AdminNotifications extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $notifications = InternalNotification::with('user')->orderByDesc('internal_notification_id')->paginate(25);
@@ -21,6 +25,9 @@ class AdminNotifications extends Controller
         return view('admin.notifications.index', compact('notifications'))->with('adminNav', 'notifications');
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         return view('admin.notifications.form')->with('adminNav', 'notifications');
@@ -82,6 +89,9 @@ class AdminNotifications extends Controller
     // Push Notification Campaign 管理（规格书 §14.5）
     // ========================================
 
+    /**
+     * @return View
+     */
     public function pushIndex()
     {
         $campaigns = PushNotificationCampaign::orderByDesc('push_notification_campaign_id')->paginate(25);
@@ -89,6 +99,9 @@ class AdminNotifications extends Controller
         return view('admin.push-notifications.index', compact('campaigns'))->with('adminNav', 'push-notifications');
     }
 
+    /**
+     * @return View
+     */
     public function pushCreate()
     {
         return view('admin.push-notifications.create')->with('adminNav', 'push-notifications');
@@ -113,6 +126,9 @@ class AdminNotifications extends Controller
             ->with('success', __('msg.campaign_created'));
     }
 
+    /**
+     * @return View
+     */
     public function pushEdit(int $campaign)
     {
         $campaign = PushNotificationCampaign::findOrFail($campaign);

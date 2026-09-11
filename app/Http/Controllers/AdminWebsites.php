@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Website;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 网站管理
@@ -12,6 +13,9 @@ use Illuminate\Http\Request;
  */
 class AdminWebsites extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $query = Website::with('user');

@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Support\PluginManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 插件管理（规格书 §14：状态机 uninstalled → installed → active）
  */
 class AdminPlugins extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $plugins = PluginManager::scan();

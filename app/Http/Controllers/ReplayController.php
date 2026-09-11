@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\SessionReplay;
 use App\Models\Website;
 use App\Support\ObjectStorage;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 /**
  * 用户中心 - 会话回放
@@ -15,6 +17,9 @@ use Illuminate\Support\Facades\DB;
  */
 class ReplayController extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request, Website $website)
     {
         $range = (int) ($request->query('range') ?: 7);
@@ -28,6 +33,9 @@ class ReplayController extends Controller
         return view('stats.replays.index', compact('website', 'replays', 'range'));
     }
 
+    /**
+     * @return View
+     */
     public function show(Request $request, Website $website, int $replayId)
     {
         $replay = SessionReplay::with(['visitor', 'session.events'])
@@ -40,6 +48,8 @@ class ReplayController extends Controller
     /**
      * 返回回放事件 JSON（供 rrweb-player 消费）
      * 读取优先级：DB LONGBLOB（data 列）→ Cache → 对象存储（is_offloaded）→ EventChild 回退
+     *
+     * @return JsonResponse
      */
     public function events(Request $request, Website $website, int $replayId)
     {

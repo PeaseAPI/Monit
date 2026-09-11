@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\DashboardView;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 仪表盘视图管理（规格书 §6.2.1：自定义视图 DashboardViews）
  */
 class DashboardViewController extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $views = DashboardView::where('user_id', auth()->id())->orderBy('order')->get();
@@ -43,6 +47,7 @@ class DashboardViewController extends Controller
     {
         $view = DashboardView::where('user_id', auth()->id())->findOrFail($viewId);
 
+        /** @var array<string, mixed> $validated */
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:128'],
             'settings' => ['sometimes'],
@@ -64,6 +69,8 @@ class DashboardViewController extends Controller
 
     /**
      * 表单以 JSON 文本域提交，模型 cast 需要 array —— 统一归一化
+     *
+     * @return array<string, mixed>
      */
     private function normalizeSettings(mixed $settings): array
     {

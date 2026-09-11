@@ -118,6 +118,9 @@ class TicketController extends Controller
         return back()->with('success', __('msg.ticket_closed'));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function validated(Request $request): array
     {
         return $request->validate([

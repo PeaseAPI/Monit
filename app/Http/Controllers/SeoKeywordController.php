@@ -6,6 +6,7 @@ use App\Models\SeoKeyword;
 use App\Models\Website;
 use App\Services\PlanLimitService;
 use App\Services\Seo\RankTracker;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Throwable;
@@ -46,6 +47,8 @@ class SeoKeywordController extends Controller
 
     /**
      * 添加跟踪关键词（套餐 seo_keywords_limit 配额）
+     *
+     * @return RedirectResponse
      */
     public function store(Request $request, PlanLimitService $limits)
     {
@@ -93,6 +96,8 @@ class SeoKeywordController extends Controller
 
     /**
      * 手动录入排名快照
+     *
+     * @return RedirectResponse
      */
     public function snapshot(Request $request, SeoKeyword $keyword, RankTracker $tracker)
     {
@@ -109,6 +114,8 @@ class SeoKeywordController extends Controller
 
     /**
      * 立即刷新排名（需 SerpApi 已配置）
+     *
+     * @return RedirectResponse
      */
     public function refresh(Request $request, SeoKeyword $keyword, RankTracker $tracker)
     {
@@ -131,6 +138,8 @@ class SeoKeywordController extends Controller
 
     /**
      * 更新跟踪设置（开关 / 间隔）
+     *
+     * @return RedirectResponse
      */
     public function update(Request $request, SeoKeyword $keyword)
     {
@@ -149,6 +158,9 @@ class SeoKeywordController extends Controller
         return back()->with('success', __('seo.keyword_updated'));
     }
 
+    /**
+     * @return RedirectResponse
+     */
     public function destroy(Request $request, SeoKeyword $keyword)
     {
         $this->authorizeOwn($request, $keyword);

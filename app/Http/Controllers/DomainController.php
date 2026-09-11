@@ -6,6 +6,7 @@ use App\Models\Domain;
 use App\Services\Seo\DomainMonitor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 用户中心 - 自定义域名管理
@@ -25,6 +26,9 @@ class DomainController extends Controller
         'regex:/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i',
     ];
 
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $domains = $request->user()->domains()->orderBy('domain_id')->get();
@@ -32,6 +36,9 @@ class DomainController extends Controller
         return view('domains.index', compact('domains'));
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         return view('domains.create');
@@ -73,6 +80,9 @@ class DomainController extends Controller
             ->with('success', __('msg.domain_created', ['host' => $host]));
     }
 
+    /**
+     * @return View
+     */
     public function show(Request $request, int $domainId)
     {
         $domain = $request->user()->domains()->findOrFail($domainId);

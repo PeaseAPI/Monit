@@ -6,9 +6,12 @@ use App\Models\Heatmap;
 use App\Models\HeatmapSnapshotClick;
 use App\Models\HeatmapSnapshotScroll;
 use App\Models\Website;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 /**
  * 用户中心 - 热图管理
@@ -16,6 +19,9 @@ use Illuminate\Support\Facades\DB;
  */
 class HeatmapController extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request, Website $website)
     {
         $heatmaps = $website->heatmaps()->orderByDesc('heatmap_id')->get();
@@ -23,6 +29,9 @@ class HeatmapController extends Controller
         return view('stats.heatmaps.index', compact('website', 'heatmaps'));
     }
 
+    /**
+     * @return View
+     */
     public function create(Request $request, Website $website)
     {
         return view('stats.heatmaps.create', compact('website'));
@@ -52,6 +61,9 @@ class HeatmapController extends Controller
             ->with('success', __('msg.heatmap_created'));
     }
 
+    /**
+     * @return View
+     */
     public function show(Request $request, Website $website, int $heatmapId)
     {
         $heatmap = $website->heatmaps()->findOrFail($heatmapId);
@@ -157,6 +169,8 @@ class HeatmapController extends Controller
     /**
      * 热图AJAX数据（规格书 §6.2.2：/heatmaps-ajax）
      * clicks/scrolls 表按 snapshot_id 关联（无 heatmap_id 列）；坐标列为 x_normalized/y_normalized，滚动列为 max_scroll
+     *
+     * @return JsonResponse
      */
     public function ajax(Request $request, Website $website, int $heatmapId)
     {
@@ -187,6 +201,8 @@ class HeatmapController extends Controller
     /**
      * 返回热图 DOM 快照 JSON（供 rrweb-player 渲染网页截图）
      * 数据是 gzencode 压缩的，解压后直接输出 JSON
+     *
+     * @return Response|JsonResponse
      */
     public function snapshot(Request $request, Website $website, int $heatmapId)
     {

@@ -10,6 +10,7 @@ use App\Models\Website;
 use App\Models\WebsiteVisitor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 统计概览
@@ -17,6 +18,9 @@ use Illuminate\Support\Facades\DB;
  */
 class AdminStatistics extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $totalUsers = User::count();
@@ -59,6 +63,9 @@ class AdminStatistics extends Controller
         return view('admin.statistics.index', compact('totalUsers', 'activeUsers', 'newUsersToday', 'totalWebsites', 'enabledWebsites', 'totalPayments', 'totalRevenue', 'monthlyRevenue', 'totalVisitors', 'totalSessions', 'totalEvents', 'planDistribution', 'dailyActiveUsers', 'countries', 'points', 'byCountry', 'totalVisits', 'dailyAvg'))->with('adminNav', 'statistics');
     }
 
+    /**
+     * @return View
+     */
     public function database()
     {
         $tables = ['users', 'websites', 'plans', 'payments', 'domains', 'codes', 'taxes'];
@@ -74,6 +81,9 @@ class AdminStatistics extends Controller
         return view('admin.statistics.database', compact('stats'))->with('adminNav', 'statistics');
     }
 
+    /**
+     * @return View
+     */
     public function localFiles()
     {
         $uploadPath = storage_path('app/public');
@@ -82,6 +92,9 @@ class AdminStatistics extends Controller
         return view('admin.statistics.local-files', compact('fileStats'))->with('adminNav', 'statistics');
     }
 
+    /**
+     * @return View
+     */
     public function growth()
     {
         $userGrowth = $this->getGrowthData(User::class, 30);
@@ -91,6 +104,9 @@ class AdminStatistics extends Controller
         return view('admin.statistics.growth', compact('userGrowth', 'websiteGrowth', 'paymentGrowth'))->with('adminNav', 'statistics');
     }
 
+    /**
+     * @return View
+     */
     public function users(Request $request)
     {
         $days = match ($request->query('period', '30d')) {
@@ -107,6 +123,9 @@ class AdminStatistics extends Controller
         return view('admin.statistics.users', compact('newUsers', 'bySource', 'byCountry', 'days'))->with('adminNav', 'statistics');
     }
 
+    /**
+     * @return View
+     */
     public function payments(Request $request)
     {
         $days = match ($request->query('period', '30d')) {
@@ -123,6 +142,9 @@ class AdminStatistics extends Controller
         return view('admin.statistics.payments', compact('revenue', 'byProcessor', 'byPlan', 'days'))->with('adminNav', 'statistics');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function getDirectoryStats(string $path): array
     {
         $totalSize = 0;
@@ -167,6 +189,9 @@ class AdminStatistics extends Controller
         return $c;
     }
 
+    /**
+     * @return list<array{date: string, count: int}>
+     */
     private function getGrowthData(string $model, int $days): array
     {
         // users/websites 表用 created_at；payments 业务时间列为 datetime

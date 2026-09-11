@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 多语言文案编辑
@@ -21,6 +22,9 @@ class AdminLanguages extends Controller
         $this->files = $files;
     }
 
+    /**
+     * @return View
+     */
     public function index()
     {
         $languages = [];
@@ -36,6 +40,9 @@ class AdminLanguages extends Controller
         return view('admin.languages.index', compact('languages'))->with('adminNav', 'languages');
     }
 
+    /**
+     * @return View
+     */
     public function edit(string $code)
     {
         abort_unless(in_array($code, $this->availableLocales(), true), 404);
@@ -77,6 +84,9 @@ class AdminLanguages extends Controller
             ->with('success', __('msg.language_updated', ['count' => $changed]));
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         return view('admin.languages.create')->with('adminNav', 'languages');
@@ -100,6 +110,9 @@ class AdminLanguages extends Controller
             ->with('success', __('msg.language_created', ['name' => $validated['name']]));
     }
 
+    /**
+     * @return list<string>
+     */
     private function availableLocales(): array
     {
         $locales = [];
@@ -110,6 +123,9 @@ class AdminLanguages extends Controller
         return $locales ?: [config('app.locale')];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function loadStrings(string $code): array
     {
         $path = lang_path($code.'.json');

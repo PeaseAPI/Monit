@@ -7,6 +7,7 @@ use App\Models\PaymentAudit;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 支付管理
@@ -14,6 +15,9 @@ use Illuminate\Http\Request;
  */
 class AdminPayments extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $query = Payment::with('user');
@@ -29,6 +33,9 @@ class AdminPayments extends Controller
         return view('admin.payments.index', compact('payments'))->with('adminNav', 'payments');
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         $users = User::where('status', 1)->orderBy('name')->limit(1000)->pluck('name', 'user_id');
@@ -61,6 +68,9 @@ class AdminPayments extends Controller
             ->with('success', __('msg.payment_created'));
     }
 
+    /**
+     * @return View
+     */
     public function view(int $paymentId)
     {
         $payment = Payment::with('user')->findOrFail($paymentId);

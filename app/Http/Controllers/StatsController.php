@@ -13,8 +13,11 @@ use App\Support\CountryNames;
 use App\Support\Csv;
 use App\Support\LocaleNames;
 use App\Support\TimezoneNames;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Ramsey\Uuid\Uuid;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Monit 网站详情统计页面
@@ -25,6 +28,8 @@ class StatsController extends Controller
     /**
      * AI 数据洞察（规格书 §12.6：统计摘要喂给国内大模型生成分析）
      * POST /stats/{website}/ai-insight，throttle + can:own + ai 设置组双重门控
+     *
+     * @return JsonResponse
      */
     public function aiInsight(Request $request, Website $website)
     {
@@ -83,6 +88,8 @@ class StatsController extends Controller
 
     /**
      * 网站统计概览
+     *
+     * @return View
      */
     public function index(Request $request, Website $website)
     {
@@ -115,6 +122,8 @@ class StatsController extends Controller
 
     /**
      * 实时在线（规格书 §6.2.1：/realtime，按秒刷新）
+     *
+     * @return View
      */
     public function realtime(Request $request, Website $website)
     {
@@ -129,6 +138,8 @@ class StatsController extends Controller
 
     /**
      * 实时数据 JSON 端点（页面轮询用）
+     *
+     * @return JsonResponse
      */
     public function realtimeData(Request $request, Website $website)
     {
@@ -140,6 +151,8 @@ class StatsController extends Controller
 
     /**
      * 访客列表
+     *
+     * @return mixed
      */
     public function visitors(Request $request, Website $website)
     {
@@ -165,6 +178,8 @@ class StatsController extends Controller
     /**
      * M22 访客列表导出：JSON / CSV（最近 90 天，LIMIT 5000 对齐原版）
      * 需套餐 export 功能（规格书 §10.2 export；-1/1 视为启用，0 视为关闭）
+     *
+     * @return StreamedResponse|JsonResponse
      */
     protected function exportVisitors(Website $website, StatisticsService $stats, string $format)
     {
@@ -223,6 +238,8 @@ class StatsController extends Controller
 
     /**
      * 来源分析
+     *
+     * @return View
      */
     public function referrers(Request $request, Website $website)
     {
@@ -242,6 +259,8 @@ class StatsController extends Controller
 
     /**
      * 统计概览（别名路由，复用 index 逻辑）
+     *
+     * @return mixed
      */
     public function overview(Request $request, Website $website)
     {
@@ -250,6 +269,8 @@ class StatsController extends Controller
 
     /**
      * 事件列表
+     *
+     * @return View
      */
     public function events(Request $request, Website $website)
     {
@@ -276,6 +297,8 @@ class StatsController extends Controller
 
     /**
      * 热门页面
+     *
+     * @return View
      */
     public function topPages(Request $request, Website $website)
     {
@@ -296,6 +319,8 @@ class StatsController extends Controller
 
     /**
      * 热门来源（别名，复用 referrers）
+     *
+     * @return mixed
      */
     public function topReferrers(Request $request, Website $website)
     {
@@ -304,6 +329,8 @@ class StatsController extends Controller
 
     /**
      * 热门国家
+     *
+     * @return View
      */
     public function topCountries(Request $request, Website $website)
     {
@@ -329,6 +356,8 @@ class StatsController extends Controller
 
     /**
      * 热门浏览器
+     *
+     * @return View
      */
     public function topBrowsers(Request $request, Website $website)
     {
@@ -349,6 +378,8 @@ class StatsController extends Controller
 
     /**
      * 热门设备
+     *
+     * @return View
      */
     public function topDevices(Request $request, Website $website)
     {
@@ -369,6 +400,8 @@ class StatsController extends Controller
 
     /**
      * 热门操作系统
+     *
+     * @return View
      */
     public function topOperatingSystems(Request $request, Website $website)
     {
@@ -389,6 +422,8 @@ class StatsController extends Controller
 
     /**
      * M21 行为分析（GA/CNZZ 对标）：时段 + 渠道 + 入口页 + 离开页 + 搜索词 + 忠诚度
+     *
+     * @return View
      */
     public function behavior(Request $request, Website $website)
     {
@@ -414,6 +449,8 @@ class StatsController extends Controller
 
     /**
      * M21 热门城市（GA「位置」/CNZZ「地域分布」）
+     *
+     * @return View
      */
     public function topCities(Request $request, Website $website)
     {
@@ -433,6 +470,8 @@ class StatsController extends Controller
 
     /**
      * M21 热门语言（GA「用户语言」）
+     *
+     * @return View
      */
     public function topLanguages(Request $request, Website $website)
     {
@@ -458,6 +497,8 @@ class StatsController extends Controller
 
     /**
      * M21 热门分辨率（CNZZ「分辨率」）
+     *
+     * @return View
      */
     public function topResolutions(Request $request, Website $website)
     {
@@ -477,6 +518,8 @@ class StatsController extends Controller
 
     /**
      * M22 热门浏览器时区（原版 browser-timezones 页，规格书 §5.1.1）
+     *
+     * @return View
      */
     public function topTimezones(Request $request, Website $website)
     {
@@ -502,6 +545,8 @@ class StatsController extends Controller
 
     /**
      * M22 大洲分布（原版 continents 页，规格书 §5.1.1）
+     *
+     * @return View
      */
     public function topContinents(Request $request, Website $website)
     {
@@ -527,6 +572,8 @@ class StatsController extends Controller
 
     /**
      * M22 明暗主题偏好（原版 themes 页，规格书 §5.1.1）
+     *
+     * @return View
      */
     public function topThemes(Request $request, Website $website)
     {
@@ -546,6 +593,8 @@ class StatsController extends Controller
 
     /**
      * M22 引荐分类页（原版 social/search/ai_referrers 三页合一，规格书 §5.5）
+     *
+     * @return View
      */
     public function referralCategories(Request $request, Website $website)
     {
@@ -564,6 +613,8 @@ class StatsController extends Controller
 
     /**
      * M22 引荐路径钻取（原版 referrer_paths_modal，规格书 §5.5）
+     *
+     * @return View
      */
     public function referrerPaths(Request $request, Website $website, string $host)
     {
@@ -584,6 +635,8 @@ class StatsController extends Controller
 
     /**
      * M22 UTM 钻取（原版 utms_medium_campaign_modal，规格书 §5.5）
+     *
+     * @return View
      */
     public function utmDrilldown(Request $request, Website $website, string $source)
     {
@@ -604,6 +657,8 @@ class StatsController extends Controller
 
     /**
      * M22 出站路径钻取（原版 outbound_clicks_paths_modal，规格书 §5.5）
+     *
+     * @return View
      */
     public function outboundClickPaths(Request $request, Website $website, string $host)
     {
@@ -624,6 +679,8 @@ class StatsController extends Controller
 
     /**
      * 单访客详情（规格书 §6.2.2：/visitor）
+     *
+     * @return View
      */
     public function visitorDetail(Request $request, Website $website, string $visitorId)
     {
@@ -715,6 +772,8 @@ class StatsController extends Controller
 
     /**
      * 单会话详情（规格书 §6.2.2：/session-ajax）
+     *
+     * @return View
      */
     public function sessionDetail(Request $request, Website $website, int $sessionId)
     {

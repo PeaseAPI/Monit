@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Support\Settings;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 发票 / 信用票据（红冲）
@@ -15,6 +16,9 @@ use App\Support\Settings;
  */
 class AdminInvoice extends Controller
 {
+    /**
+     * @return View
+     */
     public function invoice(int $paymentId)
     {
         $payment = Payment::with('user')->findOrFail($paymentId);
@@ -27,6 +31,9 @@ class AdminInvoice extends Controller
         ]);
     }
 
+    /**
+     * @return View
+     */
     public function creditNote(int $paymentId)
     {
         $payment = Payment::with('user')->findOrFail($paymentId);
@@ -41,6 +48,8 @@ class AdminInvoice extends Controller
 
     /**
      * 开票方信息：business 组（后台「发票信息」）优先，回退站点常规设置
+     *
+     * @return array<string, mixed>
      */
     private function companyInfo(): array
     {
@@ -69,6 +78,8 @@ class AdminInvoice extends Controller
 
     /**
      * 信用票据列表（规格书 §6.3.3：AdminCreditNotes）
+     *
+     * @return View
      */
     public function creditNotesIndex()
     {

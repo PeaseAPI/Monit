@@ -11,6 +11,7 @@ use App\Services\Seo\AuditTestRegistry;
 use App\Services\Seo\SitemapMonitor;
 use App\Support\Csv;
 use App\Support\Settings;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -59,6 +60,8 @@ class SeoAuditController extends Controller
     /**
      * 发起审计（登录用户：配额校验后入队）
      * 支持四种审计类型：single / sitemap / bulk / html
+     *
+     * @return RedirectResponse
      */
     public function store(Request $request)
     {
@@ -193,6 +196,8 @@ class SeoAuditController extends Controller
 
     /**
      * 密码解锁（写入 session 后回报告页）
+     *
+     * @return RedirectResponse
      */
     public function unlock(Request $request, SeoAudit $seoAudit)
     {
@@ -209,6 +214,8 @@ class SeoAuditController extends Controller
 
     /**
      * 访客即时分析（uploader_key 限额）
+     *
+     * @return mixed
      */
     public function analyze(Request $request, AuditEngine $engine)
     {
@@ -281,6 +288,8 @@ class SeoAuditController extends Controller
 
     /**
      * 作者更新分享设置（privacy / 目录收录）
+     *
+     * @return RedirectResponse
      */
     public function share(Request $request, SeoAudit $seoAudit)
     {
@@ -305,6 +314,9 @@ class SeoAuditController extends Controller
         return back()->with('success', __('seo.share_updated'));
     }
 
+    /**
+     * @return RedirectResponse
+     */
     public function destroy(Request $request, SeoAudit $seoAudit)
     {
         if ((int) $seoAudit->user_id !== (int) $request->user()->user_id && ! $request->user()->isAdmin()) {
@@ -318,6 +330,8 @@ class SeoAuditController extends Controller
 
     /**
      * AI 审计摘要（异步队列生成，刷新后查看）
+     *
+     * @return RedirectResponse
      */
     public function aiSummary(Request $request, SeoAudit $seoAudit)
     {
@@ -336,6 +350,8 @@ class SeoAuditController extends Controller
 
     /**
      * 重新审计（re-audit）：对已有 URL 发起新一轮检测
+     *
+     * @return RedirectResponse
      */
     public function refresh(Request $request, SeoAudit $seoAudit)
     {
@@ -360,6 +376,8 @@ class SeoAuditController extends Controller
 
     /**
      * 批量重新审计：对选定历史 URL 重新检测
+     *
+     * @return RedirectResponse
      */
     public function bulkRefresh(Request $request)
     {
@@ -394,6 +412,8 @@ class SeoAuditController extends Controller
 
     /**
      * 审计对比：并排查看两份审计差异
+     *
+     * @return View|RedirectResponse
      */
     public function compare(Request $request)
     {
@@ -467,6 +487,9 @@ class SeoAuditController extends Controller
         return 'denied';
     }
 
+    /**
+     * @param  array<string, mixed>  $plan
+     */
     protected function monthlyLimit(array $plan, string $key): int
     {
         return (int) ($plan[$key] ?? -1);
@@ -475,6 +498,8 @@ class SeoAuditController extends Controller
     /**
      * 批量审计单次入队上限（seo_bulk_limit）：-1/缺键=默认 50；0=禁批量；N=上限。
      * 不用 ?: 50——那会把显式配置 0 静默改成 50，违背「0=禁用」语义。
+     *
+     * @param  array<string, mixed>  $plan
      */
     protected function bulkLimit(array $plan): int
     {

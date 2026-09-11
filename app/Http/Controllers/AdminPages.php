@@ -6,6 +6,7 @@ use App\Models\Page;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - CMS 自定义页面管理
@@ -13,6 +14,9 @@ use Illuminate\Support\Str;
  */
 class AdminPages extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $pages = Page::orderByDesc('page_id')->paginate(25);
@@ -20,6 +24,9 @@ class AdminPages extends Controller
         return view('admin.pages.index', compact('pages'))->with('adminNav', 'pages');
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         return view('admin.pages.form', ['page' => new Page])->with('adminNav', 'pages');
@@ -40,6 +47,9 @@ class AdminPages extends Controller
             ->with('success', __('msg.page_created'));
     }
 
+    /**
+     * @return View
+     */
     public function edit(int $pageId)
     {
         $page = Page::findOrFail($pageId);
@@ -69,6 +79,9 @@ class AdminPages extends Controller
             ->with('success', __('msg.page_deleted'));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function validated(Request $request): array
     {
         $validated = $request->validate([

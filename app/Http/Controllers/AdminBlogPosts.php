@@ -6,6 +6,7 @@ use App\Models\BlogPost;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 博客文章管理
@@ -13,6 +14,9 @@ use Illuminate\Support\Str;
  */
 class AdminBlogPosts extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $posts = BlogPost::with('category')->orderByDesc('post_id')->paginate(25);
@@ -20,6 +24,9 @@ class AdminBlogPosts extends Controller
         return view('admin.blog_posts.index', compact('posts'))->with('adminNav', 'blog_posts');
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         return view('admin.blog_posts.form', ['post' => new BlogPost])->with('adminNav', 'blog_posts');
@@ -40,6 +47,9 @@ class AdminBlogPosts extends Controller
             ->with('success', __('msg.blog_post_created'));
     }
 
+    /**
+     * @return View
+     */
     public function edit(int $postId)
     {
         $post = BlogPost::findOrFail($postId);
@@ -80,6 +90,9 @@ class AdminBlogPosts extends Controller
             ->with('success', __('msg.blog_post_deleted'));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function validated(Request $request): array
     {
         return $request->validate([

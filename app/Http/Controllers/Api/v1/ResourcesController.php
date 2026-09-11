@@ -122,6 +122,9 @@ class ResourcesController
 
     /* ---------------- 辅助 ---------------- */
 
+    /**
+     * @return mixed
+     */
     protected function ownWebsite(Request $request, int $websiteId)
     {
         return $request->user()->websites()->where('websites.website_id', $websiteId)->firstOrFail();

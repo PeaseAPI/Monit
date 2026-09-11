@@ -7,12 +7,16 @@ use App\Models\HelpCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 帮助中心文章管理
  */
 class AdminHelpArticles extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $articles = HelpArticle::with('category')->orderBy('order')->orderByDesc('article_id')->paginate(25);
@@ -20,6 +24,9 @@ class AdminHelpArticles extends Controller
         return view('admin.help_articles.index', compact('articles'))->with('adminNav', 'help-articles');
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         return view('admin.help_articles.form', [
@@ -39,6 +46,9 @@ class AdminHelpArticles extends Controller
         return redirect()->route('admin.help-articles.index')->with('success', __('msg.help_article_created'));
     }
 
+    /**
+     * @return View
+     */
     public function edit(int $articleId)
     {
         return view('admin.help_articles.form', [
@@ -69,6 +79,9 @@ class AdminHelpArticles extends Controller
         return redirect()->route('admin.help-articles.index')->with('success', __('msg.help_article_deleted'));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function validated(Request $request): array
     {
         return $request->validate([

@@ -8,6 +8,7 @@ use App\Models\WebsiteGoal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 /**
  * 用户中心 - 目标转化管理
@@ -15,6 +16,9 @@ use Illuminate\Support\Facades\DB;
  */
 class GoalController extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request, Website $website)
     {
         $goals = $website->goals()
@@ -29,6 +33,9 @@ class GoalController extends Controller
         return view('stats.goals', compact('website', 'goals'));
     }
 
+    /**
+     * @return View
+     */
     public function create(Request $request, Website $website)
     {
         return view('stats.goal_create', compact('website'));

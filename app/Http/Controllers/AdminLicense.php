@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Services\LicenseManager;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 授权许可（规格书 §15.2：Ed25519 离线签名 License）
  */
 class AdminLicense extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $status = LicenseManager::status($request->boolean('refresh'));
@@ -24,6 +29,8 @@ class AdminLicense extends Controller
 
     /**
      * 上传 license.json 替换并立即重验
+     *
+     * @return RedirectResponse
      */
     public function upload(Request $request)
     {
@@ -50,6 +57,8 @@ class AdminLicense extends Controller
 
     /**
      * 强制重新验证（清除缓存）
+     *
+     * @return RedirectResponse
      */
     public function refresh()
     {

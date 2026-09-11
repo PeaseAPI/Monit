@@ -6,6 +6,7 @@ use App\Models\Broadcast;
 use App\Models\Plan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 邮件/推送广播管理
@@ -14,6 +15,9 @@ use Illuminate\Http\Request;
  */
 class AdminBroadcasts extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         $broadcasts = Broadcast::with('user')->orderByDesc('broadcast_id')->paginate(25);
@@ -21,6 +25,9 @@ class AdminBroadcasts extends Controller
         return view('admin.broadcasts.index', compact('broadcasts'))->with('adminNav', 'broadcasts');
     }
 
+    /**
+     * @return View
+     */
     public function create()
     {
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
@@ -43,6 +50,9 @@ class AdminBroadcasts extends Controller
             ->with('success', __('msg.broadcast_created'));
     }
 
+    /**
+     * @return View
+     */
     public function edit(int $broadcastId)
     {
         $broadcast = Broadcast::findOrFail($broadcastId);
@@ -90,6 +100,9 @@ class AdminBroadcasts extends Controller
             ->with('success', __('msg.broadcast_deleted'));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function validated(Request $request): array
     {
         $validated = $request->validate([
@@ -111,6 +124,8 @@ class AdminBroadcasts extends Controller
     /**
      * 查看广播详情（含发送状态统计）
      * 规格书 §6.3.4：/admin/broadcast-view
+     *
+     * @return View
      */
     public function show(int $broadcastId)
     {

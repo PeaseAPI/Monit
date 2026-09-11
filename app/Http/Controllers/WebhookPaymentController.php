@@ -9,6 +9,7 @@ use App\Services\Payment\WeChatPayProcessor;
 use App\Support\WebhookSignature;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 /**
  * 通用支付 Webhook 控制器（规格书 §11：其余处理器）
@@ -372,6 +373,8 @@ class WebhookPaymentController extends Controller
     /**
      * WeChat Pay Native 回调（XML，规格书 §11：中国）
      * LIBXML_NONET 禁止网络实体解析（XXE 防御）
+     *
+     * @return JsonResponse|Response
      */
     public function wechatPay(Request $request)
     {
@@ -412,6 +415,8 @@ class WebhookPaymentController extends Controller
 
     /**
      * Alipay 异步通知（规格书 §11：中国）
+     *
+     * @return mixed
      */
     public function alipay(Request $request)
     {

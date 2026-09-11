@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SeoBacklink;
 use App\Models\Website;
 use App\Services\Seo\BacklinkChecker;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -43,6 +44,8 @@ class SeoBacklinkController extends Controller
 
     /**
      * 添加反链（手动台账 / API 发现结果导入）
+     *
+     * @return RedirectResponse
      */
     public function store(Request $request)
     {
@@ -92,6 +95,8 @@ class SeoBacklinkController extends Controller
 
     /**
      * 立即重验单条反链
+     *
+     * @return RedirectResponse
      */
     public function verify(Request $request, SeoBacklink $backlink, BacklinkChecker $checker)
     {
@@ -130,6 +135,9 @@ class SeoBacklinkController extends Controller
         }, 'seo-backlinks-'.now()->format('Ymd-His').'.csv', ['Content-Type' => 'text/csv']);
     }
 
+    /**
+     * @return RedirectResponse
+     */
     public function destroy(Request $request, SeoBacklink $backlink)
     {
         $this->authorizeOwn($request, $backlink);

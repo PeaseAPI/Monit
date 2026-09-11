@@ -69,6 +69,8 @@ class PublicTrackerController
 
     /**
      * "1920x1080" → ['width' => 1920, 'height' => 1080]
+     *
+     * @return array<string, mixed>
      */
     protected function parseResolution(string $screen): array
     {

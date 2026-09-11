@@ -9,6 +9,7 @@ use App\Models\SessionReplay;
 use App\Models\User;
 use App\Models\Website;
 use App\Models\WebsiteGoal;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 概览（对标原版 admin 仪表台：8 张统计卡 + 最新用户/支付）
@@ -16,6 +17,9 @@ use App\Models\WebsiteGoal;
  */
 class AdminIndex extends Controller
 {
+    /**
+     * @return View
+     */
     public function index()
     {
         // 原版仪表台统计卡（总数 + 本月增量）

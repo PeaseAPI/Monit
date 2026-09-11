@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 用户中心 - 访客详情
@@ -12,6 +13,9 @@ use Illuminate\Http\Request;
  */
 class VisitorController extends Controller
 {
+    /**
+     * @return View
+     */
     public function show(Request $request, Website $website, int $visitorId)
     {
         $visitor = WebsiteVisitor::where('website_id', $website->website_id)

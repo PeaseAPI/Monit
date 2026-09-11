@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Annotation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 全平台标注管理
@@ -12,6 +13,9 @@ use Illuminate\Http\Request;
  */
 class AdminAnnotations extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $annotations = Annotation::with('website')

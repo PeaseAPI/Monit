@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\View\View;
 
 /**
  * Monit 认证（中文优先）
@@ -29,6 +30,9 @@ use Illuminate\Validation\Rules\Password;
  */
 class AuthController extends Controller
 {
+    /**
+     * @return View
+     */
     public function showLogin(Request $request)
     {
         return view('auth.login', [
@@ -217,6 +221,8 @@ class AuthController extends Controller
 
     /**
      * 两步验证页（规格书 §12.4）
+     *
+     * @return RedirectResponse|View
      */
     public function showTwoFactor(Request $request)
     {
@@ -279,6 +285,9 @@ class AuthController extends Controller
         return redirect()->intended(route('dashboard'));
     }
 
+    /**
+     * @return RedirectResponse|View
+     */
     public function showRegister(Request $request)
     {
         // 注册总开关（main.registration_is_enabled）：关闭时前台不可达
@@ -549,6 +558,9 @@ class AuthController extends Controller
     }
 
     /** 国家黑名单 users.blacklisted_countries（逗号分隔 ISO alpha-2） */
+    /**
+     * @return list<string>
+     */
     public static function blacklistedCountries(): array
     {
         $raw = (string) Settings::get('users.blacklisted_countries', '');

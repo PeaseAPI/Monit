@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NotificationHandler;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -23,6 +24,9 @@ class SeoNotificationHandlerController extends Controller
         ]);
     }
 
+    /**
+     * @return RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -51,6 +55,9 @@ class SeoNotificationHandlerController extends Controller
         return back()->with('success', __('seo.saved'));
     }
 
+    /**
+     * @return RedirectResponse
+     */
     public function update(Request $request, NotificationHandler $handler)
     {
         $this->authorizeOwner($request, $handler);
@@ -84,6 +91,9 @@ class SeoNotificationHandlerController extends Controller
         return back()->with('success', __('seo.saved'));
     }
 
+    /**
+     * @return RedirectResponse
+     */
     public function destroy(Request $request, NotificationHandler $handler)
     {
         $this->authorizeOwner($request, $handler);
@@ -93,6 +103,10 @@ class SeoNotificationHandlerController extends Controller
         return back()->with('success', __('seo.deleted'));
     }
 
+    /**
+     * @param  array<string, mixed>  $raw
+     * @return array<string, mixed>
+     */
     protected function settingsFor(string $type, array $raw): array
     {
         $allowed = match ($type) {

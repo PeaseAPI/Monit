@@ -14,6 +14,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class CheckMaintenance
 {
+    /**
+     * @var array<int, string>
+     */
     protected array $except = [
         'maintenance',
         'admin',

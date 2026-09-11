@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SessionReplay;
 use App\Models\VisitorSession;
 use App\Models\Website;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SpotlightController extends Controller
@@ -12,6 +13,8 @@ class SpotlightController extends Controller
     /**
      * 聚焦搜索（规格书 §6.2.1：全局快速跳转/搜索）
      * Ctrl+K 风格的全局搜索
+     *
+     * @return JsonResponse
      */
     public function search(Request $request)
     {

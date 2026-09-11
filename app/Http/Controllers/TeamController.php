@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\TeamMemberAssociation;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 /**
  * 用户中心 - 团队协作
@@ -15,6 +17,9 @@ use Illuminate\Support\Facades\DB;
  */
 class TeamController extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $teams = Team::where('user_id', $request->user()->user_id)->get();
@@ -43,6 +48,9 @@ class TeamController extends Controller
             ->with('success', __('msg.team_created', ['name' => $validated['name']]));
     }
 
+    /**
+     * @return View
+     */
     public function show(Request $request, int $teamId)
     {
         // 归属校验：仅团队 owner 或已接受邀请的成员可访问
@@ -85,7 +93,9 @@ class TeamController extends Controller
         }
 
         // 授权网站必须属于团队 owner（防越权授权他人网站）
-        $websiteIds = collect($validated['websites_ids'] ?? [])
+        /** @var array<int, mixed> $websiteIdsRaw */
+        $websiteIdsRaw = $validated['websites_ids'] ?? [];
+        $websiteIds = collect($websiteIdsRaw)
             ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $request->user()->websites()->where('website_id', $id)->exists())
             ->unique()
@@ -171,6 +181,8 @@ class TeamController extends Controller
 
     /**
      * 团队AJAX数据（规格书 §6.2.4：/teams-ajax）
+     *
+     * @return JsonResponse
      */
     public function ajax(Request $request)
     {
@@ -184,6 +196,8 @@ class TeamController extends Controller
 
     /**
      * 团队关联AJAX（规格书 §6.2.4：/teams-associations-ajax）
+     *
+     * @return JsonResponse
      */
     public function associationsAjax(Request $request)
     {

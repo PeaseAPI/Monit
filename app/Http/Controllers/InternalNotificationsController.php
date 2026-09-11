@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 用户中心 - 内部通知
@@ -11,6 +12,9 @@ use Illuminate\Http\Request;
  */
 class InternalNotificationsController extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $notifications = $request->user()->internalNotifications()

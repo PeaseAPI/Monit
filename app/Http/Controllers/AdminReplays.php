@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SessionReplay;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * 管理后台 - 平台级会话回放管理
@@ -12,6 +13,9 @@ use Illuminate\Http\Request;
  */
 class AdminReplays extends Controller
 {
+    /**
+     * @return View
+     */
     public function index(Request $request)
     {
         $replays = SessionReplay::with(['website', 'session'])
