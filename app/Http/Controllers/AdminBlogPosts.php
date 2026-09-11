@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BlogPost;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -38,7 +39,7 @@ class AdminBlogPosts extends Controller
 
         BlogPost::create([
             ...$validated,
-            'user_id' => auth()->user()->user_id,
+            'user_id' => Auth::user()->user_id,
             'type' => $validated['is_published'] ? 'blog' : 'draft',
             'datetime' => now(),
         ]);

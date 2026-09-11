@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -14,7 +15,7 @@ class AccountPaymentsController extends Controller
     public function index(): View
     {
         // datetime 为下单时间列（payments 无 created_at 时间戳列）
-        $payments = Payment::where('user_id', auth()->id())
+        $payments = Payment::where('user_id', Auth::id())
             ->with('plan')
             ->orderByDesc('datetime')
             ->paginate(15);

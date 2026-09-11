@@ -6,6 +6,7 @@ use App\Models\AccountLog;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 /**
@@ -34,7 +35,10 @@ class M19Test extends TestCase
 
         // 同一测试进程内 guard 缓存了封禁前的旧用户对象（真实环境每请求独立进程无此问题），
         // 重建 auth 实例以模拟"新请求从 session+DB 重新解析用户"
+        // 注意：forgetInstance 只清 container，还须清 Facade::$resolvedInstance 缓存，
+        // 否则 Auth facade（如 EnsureUserActive 中间件）仍持有旧 AuthManager/旧 user 快照
         $this->app->forgetInstance('auth');
+        Auth::clearResolvedInstances();
 
         $response = $this->get('/dashboard');
 

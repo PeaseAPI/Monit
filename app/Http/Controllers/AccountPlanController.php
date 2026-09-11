@@ -6,6 +6,7 @@ use App\Models\Code;
 use App\Models\Plan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -16,7 +17,7 @@ class AccountPlanController extends Controller
 {
     public function index(): View
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $currentPlan = Plan::find($user->plan_id);
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
 

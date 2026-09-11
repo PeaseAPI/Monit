@@ -7,6 +7,7 @@ use App\Models\EventChild;
 use App\Models\Website;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * API 事件子项端点（规格书 §8：/api/events-children）
@@ -36,7 +37,7 @@ class ApiEventsChildrenController extends Controller
 
     protected function authorizeWebsite(Website $website): void
     {
-        if ((int) $website->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
+        if ((int) $website->user_id !== (int) Auth::id() && ! Auth::user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

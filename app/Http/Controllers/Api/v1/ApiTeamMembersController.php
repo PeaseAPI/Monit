@@ -7,6 +7,7 @@ use App\Models\Team;
 use App\Models\TeamMember;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * API 团队成员端点（规格书 §8：/api/team-members）
@@ -47,7 +48,7 @@ class ApiTeamMembersController extends Controller
 
     protected function authorizeTeam(Team $team): void
     {
-        if ((int) $team->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
+        if ((int) $team->user_id !== (int) Auth::id() && ! Auth::user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DashboardView;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -17,7 +18,7 @@ class DashboardViewController extends Controller
      */
     public function index(Request $request)
     {
-        $views = DashboardView::where('user_id', auth()->id())->orderBy('order')->get();
+        $views = DashboardView::where('user_id', Auth::id())->orderBy('order')->get();
 
         return view('dashboard-views.index', compact('views'));
     }
@@ -33,7 +34,7 @@ class DashboardViewController extends Controller
 
         DashboardView::create([
             'website_id' => $validated['website_id'] ?? null,
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'name' => $validated['name'],
             'settings' => $this->normalizeSettings($validated['settings']),
             'order' => $validated['order'] ?? 0,
@@ -45,7 +46,7 @@ class DashboardViewController extends Controller
 
     public function update(Request $request, int $viewId): RedirectResponse
     {
-        $view = DashboardView::where('user_id', auth()->id())->findOrFail($viewId);
+        $view = DashboardView::where('user_id', Auth::id())->findOrFail($viewId);
 
         /** @var array<string, mixed> $validated */
         $validated = $request->validate([
@@ -85,7 +86,7 @@ class DashboardViewController extends Controller
 
     public function destroy(int $viewId): RedirectResponse
     {
-        $view = DashboardView::where('user_id', auth()->id())->findOrFail($viewId);
+        $view = DashboardView::where('user_id', Auth::id())->findOrFail($viewId);
         $view->delete();
 
         return back()->with('success', __('msg.dashboard_view_deleted'));

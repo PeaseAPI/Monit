@@ -7,6 +7,7 @@ use App\Models\SessionReplay;
 use App\Models\Website;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * API 会话回放端点（规格书 §8：/api/replays）
@@ -43,7 +44,7 @@ class ApiReplaysController extends Controller
 
     protected function authorizeWebsite(Website $website): void
     {
-        if ((int) $website->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
+        if ((int) $website->user_id !== (int) Auth::id() && ! Auth::user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

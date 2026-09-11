@@ -190,7 +190,7 @@ class AdminUserUpdate extends Controller
         // 限制二：禁用/未确认用户不应获得有效会话（绕过 completeLogin 的状态检查）
         abort_if($user->status !== 1, 403, __('msg.forbidden_admin'));
 
-        // 审计先行：login() 后 auth()->id() 变为目标用户，admin 身份须在切换前留痕
+        // 审计先行：login() 后 Auth::id() 变为目标用户，admin 身份须在切换前留痕
         $this->logAdminAction($user, 'admin_login_as');
 
         Auth::login($user, true);

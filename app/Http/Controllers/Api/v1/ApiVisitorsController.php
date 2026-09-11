@@ -7,6 +7,7 @@ use App\Models\Website;
 use App\Models\WebsiteVisitor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * API 访客端点（规格书 §8：/api/visitors）
@@ -49,7 +50,7 @@ class ApiVisitorsController extends Controller
 
     protected function authorizeWebsite(Website $website): void
     {
-        if ((int) $website->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
+        if ((int) $website->user_id !== (int) Auth::id() && ! Auth::user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

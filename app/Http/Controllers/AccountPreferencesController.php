@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -14,7 +15,7 @@ class AccountPreferencesController extends Controller
 {
     public function index(): View
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $preferences = $user->preferences ?? [];
 
         $timezones = timezone_identifiers_list();
@@ -37,7 +38,7 @@ class AccountPreferencesController extends Controller
             'stats_default_range' => 'nullable|in:24h,7d,30d,90d,12m',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         $preferences = $user->preferences ?? [];
 
         if ($request->filled('language')) {

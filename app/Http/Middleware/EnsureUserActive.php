@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -16,10 +17,10 @@ class EnsureUserActive
     public function handle(Request $request, Closure $next): Response
     {
         // web 组无全局 Authenticate，需主动经 session guard 解析当前用户
-        $user = auth()->guard('web')->user();
+        $user = Auth::guard('web')->user();
 
         if ($user !== null && (int) $user->status !== 1) {
-            auth()->guard('web')->logout();
+            Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 

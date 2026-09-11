@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\Setting;
 use Barry\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -24,7 +25,7 @@ class InvoiceController extends Controller
         abort_unless(PaymentController::invoiceEnabled(), 404);
 
         // status 为 tinyint（1=paid）；datetime 为下单时间列（无 created_at 时间戳列）
-        $payments = Payment::where('user_id', auth()->id())
+        $payments = Payment::where('user_id', Auth::id())
             ->where('status', 1)
             ->orderByDesc('datetime')
             ->paginate(15);
@@ -40,11 +41,11 @@ class InvoiceController extends Controller
     public function download(Payment $payment)
     {
         // 确保用户只能下载自己的发票
-        if ($payment->user_id !== auth()->id()) {
+        if ($payment->user_id !== Auth::id()) {
             abort(403);
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
         $plan = Plan::find($payment->plan_id);
         $billing = $user->billing ?? [];
 
@@ -68,7 +69,7 @@ class InvoiceController extends Controller
      */
     public function creditNotes(): View
     {
-        $creditNotes = Payment::where('user_id', auth()->id())
+        $creditNotes = Payment::where('user_id', Auth::id())
             ->where('type', 'refund')
             ->orderByDesc('datetime')
             ->paginate(15);

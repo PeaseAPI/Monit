@@ -7,6 +7,7 @@ use App\Models\Annotation;
 use App\Models\Website;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * API 标注端点（规格书 §8：/api/annotations）
@@ -43,7 +44,7 @@ class ApiAnnotationsController extends Controller
 
         $annotation = Annotation::create([
             'website_id' => $website->website_id,
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'name' => $validated['name'],
             'datetime' => $validated['datetime'],
             'color' => $validated['color'] ?? '#3B82F6',
@@ -93,7 +94,7 @@ class ApiAnnotationsController extends Controller
 
     protected function authorizeWebsite(Website $website): void
     {
-        if ((int) $website->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
+        if ((int) $website->user_id !== (int) Auth::id() && ! Auth::user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }
