@@ -18,7 +18,6 @@ use Illuminate\Database\Eloquent\Casts\AsStringable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Concerns\HasUniqueStringIds;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon as IlluminateCarbon;
 use Illuminate\Support\Collection;
@@ -253,8 +252,7 @@ class ModelCastHelper
         }
 
         try {
-            /** @var Model $modelInstance */
-            $modelInstance = $modelClassReflection->getNativeReflection()->newInstanceWithoutConstructor();
+            $modelInstance = ModelHelper::newInstanceWithoutConstructor($modelClassReflection);
         } catch (ReflectionException) {
             throw new ShouldNotHappenException();
         }

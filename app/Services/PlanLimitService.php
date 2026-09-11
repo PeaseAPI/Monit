@@ -17,7 +17,10 @@ class PlanLimitService
     public function checkLimit(User $user, string $feature, int $increment = 1): bool
     {
         $settings = $user->getPlanSettings();
-        $limit = $settings[$feature] ?? 0;
+        // 缺键 = 不限（全库统一语义）：生产套餐 quota() 与 config 均未收录
+        // annotations_limit/dashboard_views_limit/seo_keywords_limit 等键，
+        // 若缺键判 0 会把全部付费用户的对应功能当「未启用」禁掉
+        $limit = $settings[$feature] ?? -1;
 
         // -1 表示不限；0 表示功能未启用（由 isFeatureEnabled 拦截）
         if ($limit === -1) {
@@ -55,7 +58,8 @@ class PlanLimitService
     public function getRemaining(User $user, string $feature): int
     {
         $settings = $user->getPlanSettings();
-        $limit = $settings[$feature] ?? 0;
+        // 缺键 = 不限（与 checkLimit 一致）
+        $limit = $settings[$feature] ?? -1;
 
         if ($limit === -1) {
             return -1; // 不限
@@ -85,7 +89,7 @@ class PlanLimitService
     {
         $user = $website->user;
         $settings = $user->getPlanSettings();
-        $limit = $settings['sessions_events_limit'] ?? 0;
+        $limit = $settings['sessions_events_limit'] ?? -1; // 缺键=不限（书写统一）
 
         if ($limit <= 0) {
             return true;
@@ -101,7 +105,7 @@ class PlanLimitService
     {
         $user = $website->user;
         $settings = $user->getPlanSettings();
-        $limit = $settings['sessions_replays_limit'] ?? 0;
+        $limit = $settings['sessions_replays_limit'] ?? -1; // 缺键=不限（书写统一）
 
         if ($limit <= 0) {
             return true;

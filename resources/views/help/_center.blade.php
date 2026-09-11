@@ -1,4 +1,4 @@
-{{-- 帮助中心主体（样式对标 help.aliyun.com）：渐变 hero + 大搜索框 + 分类区块 + 文章卡片 --}}
+{{-- 帮助中心主体（样式对标 help.aliyun.com）：渐变 hero + 大搜索 + 左文档目录树 + 右分类文章列表 --}}
 @php
     $articlesByCategory = $articles->groupBy(fn ($a) => $a->category_id ?? 0);
     $searchData = $articles->map(fn ($a) => [
@@ -40,30 +40,51 @@
             <div class="rounded-2xl border border-zinc-200 bg-white p-6"><h2 class="text-lg font-semibold">{{ __('help.gdpr_compliant') }}</h2><p class="mt-2 text-sm text-zinc-600">{{ __('help.gdpr_compliant_desc') }}</p></div>
         </div>
     @else
-        <p data-help-empty class="hidden py-16 text-center text-sm text-zinc-400">{{ __('help.no_results') }}</p>
+        {{-- 两栏：左文档目录树（lg+ sticky；<lg 折叠于顶部）+ 右分类文章列表 --}}
+        <div class="lg:grid lg:grid-cols-[260px_1fr] lg:gap-10">
+            {{-- 左：目录树（移动端 details 折叠） --}}
+            <aside class="mb-8 lg:mb-0">
+                <details open class="rounded-2xl border border-zinc-200 bg-white lg:border-0 lg:bg-transparent lg:p-0">
+                    <summary class="flex cursor-pointer list-none items-center justify-between px-5 py-4 font-semibold text-zinc-900 lg:hidden [&::-webkit-details-marker]:hidden">
+                        {{ __('help.doc_nav') }}
+                        <svg class="h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="px-4 pb-4 lg:p-0">
+                        <div class="lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-1">
+                            @include('help._nav', ['navCategories' => $categories, 'navArticles' => $articles, 'currentArticleUrl' => null, 'collapsible' => true])
+                        </div>
+                    </div>
+                </details>
+            </aside>
 
-        @foreach ($categories as $category)
-            @php($catArticles = $articlesByCategory->get($category->category_id, collect()))
-            @continue($catArticles->isEmpty())
-        <section id="help-cat-{{ $category->category_id }}" data-help-region class="scroll-mt-24 {{ $loop->first ? '' : 'mt-12' }}">
-            <div class="flex items-center gap-3">
-                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                </span>
-                <h2 class="text-xl font-bold text-zinc-900">{{ $category->title }}</h2>
-                <span class="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs text-zinc-500">{{ $catArticles->count() }}</span>
+            {{-- 右：分类区块 + 行式文章列表 --}}
+            <div class="min-w-0" data-help-main>
+                <p data-help-empty class="hidden py-16 text-center text-sm text-zinc-400">{{ __('help.no_results') }}</p>
+
+                @foreach ($categories as $category)
+                    @php($catArticles = $articlesByCategory->get($category->category_id, collect()))
+                    @continue($catArticles->isEmpty())
+                <section id="help-cat-{{ $category->category_id }}" data-help-region class="scroll-mt-24 rounded-2xl border border-zinc-200 bg-white p-6 {{ $loop->first ? '' : 'mt-6' }}">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        </span>
+                        <h2 class="text-xl font-bold text-zinc-900">{{ $category->title }}</h2>
+                        <span class="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs text-zinc-500">{{ $catArticles->count() }}</span>
+                    </div>
+                    @include('help._cards', ['cards' => $catArticles])
+                </section>
+                @endforeach
+
+                @php($orphanArticles = $articlesByCategory->get(0, collect()))
+                @if ($orphanArticles->isNotEmpty())
+                <section data-help-region class="mt-6 rounded-2xl border border-zinc-200 bg-white p-6">
+                    <h2 class="text-xl font-bold text-zinc-900">{{ __('help.uncategorized') }}</h2>
+                    @include('help._cards', ['cards' => $orphanArticles])
+                </section>
+                @endif
             </div>
-            @include('help._cards', ['cards' => $catArticles])
-        </section>
-        @endforeach
-
-        @php($orphanArticles = $articlesByCategory->get(0, collect()))
-        @if ($orphanArticles->isNotEmpty())
-        <section data-help-region class="mt-12">
-            <h2 class="text-xl font-bold text-zinc-900">{{ __('help.uncategorized') }}</h2>
-            @include('help._cards', ['cards' => $orphanArticles])
-        </section>
-        @endif
+        </div>
     @endif
 
     {{-- 没找到答案 → 联系客服横幅 --}}

@@ -11,7 +11,7 @@
         @if($user->api_key)
             <div class="mt-3 flex items-center gap-3">
                 <code class="flex-1 rounded-xl bg-zinc-100 px-4 py-2.5 text-xs text-zinc-700 font-mono break-all select-all">{{ $user->api_key }}</code>
-                <button type="button" onclick="navigator.clipboard.writeText('{{ $user->api_key }}')" class="rounded-xl border border-zinc-300 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50">
+                <button type="button" data-api-key="{{ $user->api_key }}" onclick="navigator.clipboard.writeText(this.dataset.apiKey)" class="rounded-xl border border-zinc-300 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50">
                     {{ __('account.copy') }}
                 </button>
             </div>
@@ -20,7 +20,7 @@
                 {{-- 重新生成 --}}
                 <form method="POST" action="{{ route('account-api.regenerate') }}">
                     @csrf @method('PUT')
-                    <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700" onclick="return confirm('{{ __('account.confirm_regenerate') }}')">
+                    <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700" onclick="return confirm(this.dataset.msg)" data-msg="{{ __('account.confirm_regenerate') }}">
                         {{ __('account.regenerate_api_key') }}
                     </button>
                 </form>
@@ -28,7 +28,7 @@
                 {{-- 吊销 --}}
                 <form method="POST" action="{{ route('account-api.revoke') }}">
                     @csrf @method('DELETE')
-                    <button class="rounded-xl border border-red-300 px-5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50" onclick="return confirm('{{ __('account.confirm_revoke') }}')">
+                    <button class="rounded-xl border border-red-300 px-5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50" onclick="return confirm(this.dataset.msg)" data-msg="{{ __('account.confirm_revoke') }}">
                         {{ __('account.revoke_api_key') }}
                     </button>
                 </form>

@@ -21,7 +21,16 @@
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.description') }}</label>
         <input type="text" name="description" value="{{ old('description', $article->description) }}" class="form-input"></div>
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.content') }}</label>
-        <textarea name="content" rows="12" required class="form-input font-mono">{{ old('content', $article->content) }}</textarea></div>
+        <textarea name="content" rows="12" required class="form-input font-mono">{{ old('content', $article->content) }}</textarea>
+        <p class="mt-1.5 text-xs leading-relaxed text-zinc-400">
+            {{ __('admin.help_content_hint') }}
+            <code class="rounded bg-zinc-100 px-1">h2/h3</code>
+            <code class="rounded bg-zinc-100 px-1">table</code>
+            <code class="rounded bg-zinc-100 px-1">pre/code</code>
+            <code class="rounded bg-zinc-100 px-1">ol.doc-steps</code>
+            <code class="rounded bg-zinc-100 px-1">div.doc-note--info/warn/tip</code>
+            <code class="rounded bg-zinc-100 px-1">details.doc-faq</code>
+        </p></div>
     <div class="grid gap-4 sm:grid-cols-2">
         <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.order') }}</label>
             <input type="number" name="order" value="{{ old('order', $article->order ?? 0) }}" min="0" max="9999" class="form-input"></div>

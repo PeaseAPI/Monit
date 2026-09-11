@@ -198,4 +198,38 @@ class AdminUserManageTest extends TestCase
         $this->assertSame('9.00 元', \App\Support\Currency::format(9, 'CNY'));
         $this->assertSame('$0.14', \App\Support\Currency::format(0.14, 'USD'));
     }
+
+    public function test_update_preserves_keys_outside_form_and_accepts_seo_keys(): void
+    {
+        // 修复前整列替换：表单未包含的键（管理员手工配置的 M26 SEO 配额）
+        // 在每次保存用户资料时被静默抹掉；且 SEO 键不在白名单，无法经表单配置
+        $this->actingAs($this->adminUser());
+        $user = $this->targetUser([
+            'plan_settings' => ['seo_keywords_limit' => 33, 'websites_limit' => 5],
+        ]);
+
+        // 表单只提交部分键（旧编辑页形态），并携带新白名单内的 SEO 键
+        $this->put(route('admin.users.update', $user->user_id), [
+            'name' => 'Target X', 'email' => $user->email, 'status' => 1, 'type' => 0,
+            'plan_id' => 'custom',
+            'plan_settings' => ['websites_limit' => 8, 'seo_audits_limit' => 500],
+        ])->assertRedirect();
+
+        $user->refresh();
+        $this->assertSame(8, $user->plan_settings['websites_limit']);
+        $this->assertSame(500, $user->plan_settings['seo_audits_limit']); // 新白名单键可配
+        $this->assertSame(33, $user->plan_settings['seo_keywords_limit']); // 非表单键保留
+
+        // 显式提交空串 = 清除该键（回归套餐默认），其余键继续保留
+        $this->put(route('admin.users.update', $user->user_id), [
+            'name' => 'Target X', 'email' => $user->email, 'status' => 1, 'type' => 0,
+            'plan_id' => 'custom',
+            'plan_settings' => ['websites_limit' => ''],
+        ])->assertRedirect();
+
+        $user->refresh();
+        $this->assertArrayNotHasKey('websites_limit', $user->plan_settings);
+        $this->assertSame(33, $user->plan_settings['seo_keywords_limit']);
+        $this->assertSame(500, $user->plan_settings['seo_audits_limit']);
+    }
 }

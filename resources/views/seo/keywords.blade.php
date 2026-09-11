@@ -114,7 +114,7 @@
                                 <button class="rounded-lg bg-zinc-100 px-3 py-1 text-xs text-zinc-700 hover:bg-zinc-200">{{ __('seo.save') }}</button>
                             </form>
                         </details>
-                        <form method="POST" action="{{ route('seo.keywords.destroy', $kw->seo_keyword_id) }}" class="ml-3 inline" onsubmit="return confirm('{{ __('seo.confirm_delete') }}')">
+                        <form method="POST" action="{{ route('seo.keywords.destroy', $kw->seo_keyword_id) }}" class="ml-3 inline" onsubmit="return confirm(this.dataset.msg)" data-msg="{{ __('seo.confirm_delete') }}">
                             @csrf @method('DELETE')
                             <button class="text-sm text-red-600 hover:underline">{{ __('common.delete') }}</button>
                         </form>

@@ -35,6 +35,8 @@ class AdminLogs extends Controller
 
     /**
      * 列表/下载共用的过滤查询构造
+     *
+     * @return \Illuminate\Database\Eloquent\Builder<AccountLog>
      */
     private function buildQuery(Request $request)
     {
@@ -47,6 +49,7 @@ class AdminLogs extends Controller
             ->orderByDesc('log_id');
     }
 
+    /** @param  Collection<int, AccountLog>  $logs */
     private function downloadCsv(Collection $logs): StreamedResponse
     {
         $filename = 'monit-logs-'.now()->format('Ymd-His').'.csv';

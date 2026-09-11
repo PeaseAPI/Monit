@@ -220,6 +220,61 @@ class PixelTrackTest extends TestCase
         $this->assertDatabaseHas('heatmap_snapshot_scrolls', ['max_scroll' => 100]);
     }
 
+    /**
+     * heatmap_check pathname 回退：热图通常按纯路径（/about）配置，而 PIXEL 上报的
+     * path 是 pathname + search——带 ?utm_source=... 的访问也必须匹配到底图热图，
+     * 否则该热图永远等不到底图快照（用户反馈「暂无热图/无底图」根因之一）
+     */
+    public function test_heatmap_check_matches_pure_path_heatmap_despite_query_string(): void
+    {
+        $heatmap = Heatmap::create([
+            'website_id' => $this->website->website_id,
+            'path' => '/about',
+            'name' => 'About Heatmap',
+            'is_enabled' => true,
+            'datetime' => now(),
+        ]);
+
+        // 精确匹配路径正常返回
+        $r1 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=' . urlencode('/about'));
+        $r1->assertStatus(200);
+        $this->assertSame($heatmap->heatmap_id, json_decode($r1->getContent(), true)['heatmap_id']);
+
+        // 带 query 的访问路径 → pathname 回退匹配到纯路径热图
+        $r2 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=' . urlencode('/about?utm_source=newsletter'));
+        $r2->assertStatus(200);
+        $this->assertSame($heatmap->heatmap_id, json_decode($r2->getContent(), true)['heatmap_id']);
+
+        // 无匹配路径 → 响应不含 heatmap_id 键
+        $r3 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=' . urlencode('/missing?x=1'));
+        $r3->assertStatus(200);
+        $this->assertArrayNotHasKey('heatmap_id', json_decode($r3->getContent(), true));
+    }
+
+    /**
+     * heatmap_check replay_enabled 语义（回放停止增长的可观测闭环）：
+     * 全局/网站开关开启时，套餐 sessions_replays_limit 缺键（-1 不限）→ true；
+     * 显式 0（= 功能禁用，统一配额语义）→ false，客户端因此不启动 rrweb 录制
+     */
+    public function test_heatmap_check_replay_enabled_respects_plan_quota_zero(): void
+    {
+        \App\Support\Settings::set('analytics.sessions_replays_is_enabled', 'true');
+
+        // 缺键 = 不限 → 启用
+        $r1 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=/');
+        $r1->assertStatus(200);
+        $this->assertTrue(json_decode($r1->getContent(), true)['replay_enabled']);
+
+        // 显式 0 = 禁用
+        $this->website->user->forceFill([
+            'plan_settings' => ['sessions_events_limit' => -1, 'sessions_replays_limit' => 0],
+        ])->save();
+
+        $r2 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=/');
+        $r2->assertStatus(200);
+        $this->assertFalse(json_decode($r2->getContent(), true)['replay_enabled']);
+    }
+
     public function test_replay_data_stored_in_db(): void
     {
         // 1. 创建 visitor + session

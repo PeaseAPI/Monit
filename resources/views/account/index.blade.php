@@ -74,6 +74,9 @@
                         </a>
                     @empty
                         <p class="text-xs text-zinc-400">{{ __('account.social_none_enabled') }}</p>
+                        @if((int) $user->type === 1)
+                            <a href="{{ route('admin.settings.index') }}" class="w-full text-xs font-medium text-brand-600 hover:underline">{{ __('account.social_admin_hint') }}</a>
+                        @endif
                     @endforelse
                 </div>
                 <p class="mt-2 text-xs text-zinc-400">{{ __('account.social_hint') }}</p>
@@ -253,6 +256,30 @@
         </form>
         </div>
     </div>
+    @else
+    {{-- 短信服务未开通：显示状态卡片而非静默消失（管理员附开通指引） --}}
+    <div class="card mt-6">
+        <div class="card-header flex items-center gap-2">
+            <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/></svg>
+            {{ __('account.phone_title') }}
+        </div>
+        <div class="p-6">
+            <div class="rounded-xl bg-zinc-50 px-4 py-3">
+                <p class="text-sm text-zinc-500">{{ __('account.phone_bind_unavailable') }}</p>
+            </div>
+            @if($user->phone)
+                <div class="mt-3 flex items-center gap-2">
+                    <span class="rounded-xl bg-zinc-100 px-3 py-2 text-sm text-zinc-600">+86 {{ $user->phone }}</span>
+                    @if($user->phone_verified_at)
+                        <span class="text-xs text-emerald-600">{{ __('account.phone_verified') }}</span>
+                    @endif
+                </div>
+            @endif
+            @if((int) $user->type === 1)
+                <a href="{{ route('admin.settings.index') }}" class="mt-3 inline-block text-xs font-medium text-brand-600 hover:underline">{{ __('account.phone_bind_admin_hint') }}</a>
+            @endif
+        </div>
+    </div>
     @endif
 
     {{-- 两步验证（规格书 §12.4） --}}
@@ -268,7 +295,7 @@
             <p class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
                 <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>{{ __('account.twofa_status_on') }}
             </p>
-            <form method="POST" action="{{ route('account.twofa.disable') }}" class="mt-4 space-y-3" onsubmit="return confirm('{{ __('account.twofa_disable_confirm') }}')">@csrf @method('DELETE')
+            <form method="POST" action="{{ route('account.twofa.disable') }}" class="mt-4 space-y-3" onsubmit="return confirm(this.dataset.msg)" data-msg="{{ __('account.twofa_disable_confirm') }}">@csrf @method('DELETE')
                 <div><label class="form-label">{{ __('account.current_password') }}</label><input type="password" name="password" class="form-input" autocomplete="current-password"></div>
                 <div><label class="form-label">{{ __('account.twofa_code_label') }}</label><input type="text" name="code" inputmode="numeric" pattern="\d{6}" class="form-input" autocomplete="one-time-code">@error('code')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror</div>
                 <button class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700">{{ __('account.twofa_disable_btn') }}</button>
@@ -301,7 +328,7 @@
         <div class="border-b border-red-100 bg-red-100/40 px-6 py-4 text-sm font-semibold text-red-900">{{ __('account.delete_account') }}</div>
         <div class="p-6">
         <p class="text-sm text-red-700/90">{{ __('account.delete_warning') }}</p>
-        <form method="POST" action="{{ route('account.destroy') }}" class="mt-4 space-y-3" onsubmit="return confirm('{{ __('account.delete_confirm') }}')">@csrf @method('DELETE')
+        <form method="POST" action="{{ route('account.destroy') }}" class="mt-4 space-y-3" onsubmit="return confirm(this.dataset.msg)" data-msg="{{ __('account.delete_confirm') }}">@csrf @method('DELETE')
             <div><label class="form-label !text-red-700">{{ __('account.current_password') }}</label><input type="password" name="password" class="form-input border-red-300 focus:border-red-500" autocomplete="current-password"></div>
             <button class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700">{{ __('account.delete_account_btn') }}</button>
         </form>

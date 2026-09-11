@@ -64,7 +64,7 @@
                                 <span class="mx-2 text-zinc-200">|</span>
                                 <a href="{{ route('websites.edit', $website->website_id) }}" class="font-medium text-zinc-600 hover:text-brand-600">{{ __('common.edit') }}</a>
                                 <span class="mx-2 text-zinc-200">|</span>
-                                <form method="POST" action="{{ route('websites.destroy', $website->website_id) }}" class="inline" onsubmit="return confirm('{{ __('websites.confirm_delete') }} {{ $website->name }}? {{ __('websites.confirm_delete_warning') }}')">
+                                <form method="POST" action="{{ route('websites.destroy', $website->website_id) }}" class="inline" onsubmit="return confirm(this.dataset.msg)" data-msg="{{ __('websites.confirm_delete') }} {{ $website->name }}? {{ __('websites.confirm_delete_warning') }}">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="font-medium text-red-500 hover:text-red-600">{{ __('common.delete') }}</button>

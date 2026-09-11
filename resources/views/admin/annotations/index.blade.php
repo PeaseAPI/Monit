@@ -18,7 +18,7 @@
             <td class="px-6 py-3 text-zinc-700">{{ $a->website?->host ?? $a->website_id }}</td>
             <td class="px-6 py-3 text-zinc-500">{{ $a->date?->format('Y-m-d') }}</td>
             <td class="px-6 py-3 text-right">
-                <form method="POST" action="{{ route('admin.annotations.destroy', $a->annotation_id) }}" class="inline">@csrf @method('DELETE')<button class="text-sm text-red-500 hover:text-red-700" onclick="return confirm('{{ __('common.confirm_delete') }}')">{{ __('common.delete') }}</button></form>
+                <form method="POST" action="{{ route('admin.annotations.destroy', $a->annotation_id) }}" class="inline">@csrf @method('DELETE')<button class="text-sm text-red-500 hover:text-red-700" onclick="return confirm(this.dataset.msg)" data-msg="{{ __('common.confirm_delete') }}">{{ __('common.delete') }}</button></form>
             </td>
         </tr>
         @empty<tr><td class="px-6 py-8 text-center text-zinc-500" colspan="5">{{ __('common.no_data') }}</td></tr>@endforelse

@@ -66,10 +66,15 @@ class WebsitesLimitNoticeCommand extends Command
                     continue;
                 }
 
-                $limit = (int) ($owner->getPlanSettings()[$meta['feature']] ?? 0);
+                // 缺键 ?? -1 = 不限（custom 套餐 plan_settings 不与 plan_defaults 合并，
+                // 对齐采集侧 insertEventChild / persistReplayChunk 的缺键语义）；
+                // 原 ?? 0 会把缺键用户判成「限额 0」→ 任何用量都误发超限邮件
+                $limit = (int) ($owner->getPlanSettings()[$meta['feature']] ?? -1);
 
-                // -1 = 不限；未超限跳过
-                if ($limit === -1 || $website->{$counter} < $limit) {
+                // -1 = 不限；0 = 功能禁用（与采集侧 0 不标记一致——用户没有此功能，
+                // 发「配额超限」邮件反而误导其升级；生产 Plus 套餐 sessions_replays_limit=0）；
+                // 未超限跳过
+                if ($limit === -1 || $limit === 0 || $website->{$counter} < $limit) {
                     continue;
                 }
 
@@ -81,12 +86,15 @@ class WebsitesLimitNoticeCommand extends Command
                         $limit,
                         (int) $website->{$counter}
                     ));
-                } catch (\Throwable $e) {
-                    // 邮件失败不阻断
-                }
 
-                $website->update([$meta['flag'] => true]);
-                $sent++;
+                    // 标志必须在邮件成功入队后才置位：queue 抛异常（队列连接故障等）
+                    // 时不标记，下一轮 Cron 重试，避免「已标记但从未发出」的通知静默丢失
+                    //（修复前 update 在 try 外无条件执行，队列挂掉即通知丢失整月）
+                    $website->update([$meta['flag'] => true]);
+                    $sent++;
+                } catch (\Throwable $e) {
+                    // 邮件失败不阻断本轮其他站点，下轮重试
+                }
             }
         }
 

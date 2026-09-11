@@ -61,7 +61,7 @@ class PaymentDefaultProcessorTest extends TestCase
         $this->actingAs($this->makeUser())->get('/payments')
             ->assertOk()
             ->assertSee('name="frequency" value="annual"', false)
-            ->assertSee('render("annual")', false);
+            ->assertSee('data-default-freq="annual"', false);
     }
 
     public function test_checkout_rejects_processor_that_is_not_enabled(): void

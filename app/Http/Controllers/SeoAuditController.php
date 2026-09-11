@@ -86,8 +86,17 @@ class SeoAuditController extends Controller
         }
 
         // Sitemap / Bulk：多 URL 入队
+        $bulkLimit = $this->bulkLimit($plan);
+        if ($bulkLimit === 0) {
+            // 0=当前套餐不含批量审计：提前拦截。否则 sitemap 闭包静默空转、
+            // bulk 入队 0 个任务却提示「已入队」，误导用户以为已执行
+            return back()->withErrors([
+                'url' => __('seo.quota_exceeded'),
+                'urls' => __('seo.quota_exceeded'),
+            ])->withInput();
+        }
+
         if ($type === 'sitemap') {
-            $bulkLimit = $this->monthlyLimit($plan, 'seo_bulk_limit') ?: 50;
             dispatch(function () use ($validated, $request, $bulkLimit) {
                 $urls = app(SitemapMonitor::class)
                     ->fetch($validated['url'])['urls'] ?? [];
@@ -101,7 +110,6 @@ class SeoAuditController extends Controller
         }
 
         if ($type === 'bulk') {
-            $bulkLimit = $this->monthlyLimit($plan, 'seo_bulk_limit') ?: 50;
             $urls = collect(preg_split('/\R/', $validated['urls']))
                 ->map(fn (string $u) => static::ensureScheme(trim($u)))
                 ->filter(fn (string $u) => filter_var($u, FILTER_VALIDATE_URL))
@@ -462,6 +470,17 @@ class SeoAuditController extends Controller
     protected function monthlyLimit(array $plan, string $key): int
     {
         return (int) ($plan[$key] ?? -1);
+    }
+
+    /**
+     * 批量审计单次入队上限（seo_bulk_limit）：-1/缺键=默认 50；0=禁批量；N=上限。
+     * 不用 ?: 50——那会把显式配置 0 静默改成 50，违背「0=禁用」语义。
+     */
+    protected function bulkLimit(array $plan): int
+    {
+        $raw = (int) ($plan['seo_bulk_limit'] ?? -1);
+
+        return $raw === 0 ? 0 : ($raw > 0 ? $raw : 50);
     }
 
     protected function guestAllowed(): bool

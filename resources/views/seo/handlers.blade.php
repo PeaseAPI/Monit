@@ -42,7 +42,7 @@
                     <td class="px-6 py-3 text-zinc-500">{{ collect($handler->settings['events'] ?? [])->map(fn ($e) => __("seo.event_{$e}"))->implode('、') }}</td>
                     <td class="px-6 py-3">{{ $handler->is_enabled ? __('common.enabled') : __('common.disabled') }}</td>
                     <td class="px-6 py-3 text-right">
-                        <form method="POST" action="{{ route('seo.handlers.destroy', $handler->notification_handler_id) }}" class="inline" onsubmit="return confirm('{{ __('seo.confirm_delete') }}')">
+                        <form method="POST" action="{{ route('seo.handlers.destroy', $handler->notification_handler_id) }}" class="inline" onsubmit="return confirm(this.dataset.msg)" data-msg="{{ __('seo.confirm_delete') }}">
                             @csrf @method('DELETE')
                             <button class="text-sm text-red-600 hover:underline">{{ __('common.delete') }}</button>
                         </form>

@@ -18,7 +18,15 @@
     $height = $height ?? '420px';
 @endphp
 
-<div class="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white">
+<div class="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white"
+     data-user-map
+     data-map-id="{{ $mapId }}"
+     data-points="{{ json_encode($points ?? []) }}"
+     data-countries="{{ json_encode($countries ?? (object) []) }}"
+     data-baidu-key="{{ $baiduKey }}"
+     data-google-key="{{ $googleKey }}"
+     data-users-label="{{ __('admin.stat_users') }}"
+     data-no-data-text="{{ __('admin.no_data') }}">
     <div class="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
         <h2 class="flex items-center gap-2 text-base font-semibold text-zinc-900">
             <svg class="h-[18px] w-[18px] text-brand-600" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3M3.5 9h17m-17 6h17"/></svg>
@@ -33,19 +41,21 @@
         <div id="{{ $mapId }}" style="height: {{ $height }}; width: 100%;"></div>
         <script>
             (function () {
-                const points = @json($points ?? []);
+                var root = document.currentScript.closest('[data-user-map]');
+                if (!root) { return; }
+                var points = JSON.parse(root.dataset.points || '[]');
                 window.initMonitBaiduMap = function () {
-                    const map = new BMap.Map('{{ $mapId }}');
-                    let center = new BMap.Point(105.403119, 36.982834); // 默认中国中心
+                    var map = new BMap.Map(root.dataset.mapId);
+                    var center = new BMap.Point(105.403119, 36.982834); // 默认中国中心
                     if (points.length) { center = new BMap.Point(points[0].lng, points[0].lat); }
                     map.centerAndZoom(center, 5);
                     map.enableScrollWheelZoom(true);
                     map.addControl(new BMap.NavigationControl());
                     map.addControl(new BMap.ScaleControl());
                     points.forEach(function (p) {
-                        const marker = new BMap.Marker(new BMap.Point(p.lng, p.lat));
+                        var marker = new BMap.Marker(new BMap.Point(p.lng, p.lat));
                         map.addOverlay(marker);
-                        const label = new BMap.Label(p.label + ' · ' + p.count, {
+                        var label = new BMap.Label(p.label + ' · ' + p.count, {
                             offset: new BMap.Size(14, -8),
                         });
                         label.setStyle({ color: '#18181b', border: '1px solid #e4e4e7', padding: '2px 6px', borderRadius: '6px', fontSize: '12px', background: '#fff' });
@@ -55,8 +65,8 @@
                         map.setViewport(points.map(function (p) { return new BMap.Point(p.lng, p.lat); }));
                     }
                 };
-                const s = document.createElement('script');
-                s.src = 'https://api.map.baidu.com/api?v=3.0&ak={{ $baiduKey }}&callback=initMonitBaiduMap';
+                var s = document.createElement('script');
+                s.src = 'https://api.map.baidu.com/api?v=3.0&ak=' + root.dataset.baiduKey + '&callback=initMonitBaiduMap';
                 document.body.appendChild(s);
             })();
         </script>
@@ -65,16 +75,18 @@
         <div id="{{ $mapId }}" style="height: {{ $height }}; width: 100%;"></div>
         <script>
             (function () {
-                const points = @json($points ?? []);
+                var root = document.currentScript.closest('[data-user-map]');
+                if (!root) { return; }
+                var points = JSON.parse(root.dataset.points || '[]');
                 window.initMonitGoogleMap = function () {
-                    const map = new google.maps.Map(document.getElementById('{{ $mapId }}'), {
+                    var map = new google.maps.Map(document.getElementById(root.dataset.mapId), {
                         zoom: 4,
                         center: points.length
                             ? { lat: points[0].lat, lng: points[0].lng }
                             : { lat: 35, lng: 105 },
                     });
                     points.forEach(function (p) {
-                        const marker = new google.maps.Marker({
+                        var marker = new google.maps.Marker({
                             position: { lat: p.lat, lng: p.lng },
                             map: map,
                             title: p.label + ' · ' + p.count,
@@ -82,8 +94,8 @@
                         });
                     });
                 };
-                const s = document.createElement('script');
-                s.src = 'https://maps.googleapis.com/maps/api/js?key={{ $googleKey }}&callback=initMonitGoogleMap';
+                var s = document.createElement('script');
+                s.src = 'https://maps.googleapis.com/maps/api/js?key=' + root.dataset.googleKey + '&callback=initMonitGoogleMap';
                 document.body.appendChild(s);
             })();
         </script>
@@ -97,20 +109,22 @@
         <script src="{{ asset('vendor/svgmap/svgMap.min.js') }}"></script>
         <script>
             (function () {
+                var root = document.currentScript.closest('[data-user-map]');
+                if (!root) { return; }
                 new svgMap({
-                    targetElementID: '{{ $mapId }}',
+                    targetElementID: root.dataset.mapId,
                     data: {
                         data: {
-                            users: { name: '', format: '{0} {{ __('admin.stat_users') }}', thousandSeparator: ',' },
+                            users: { name: '', format: '{0} ' + root.dataset.usersLabel, thousandSeparator: ',' },
                         },
                         applyData: 'users',
-                        values: @json($countries ?? (object) []),
+                        values: JSON.parse(root.dataset.countries || '{}'),
                     },
                     colorMin: '#dbeafe',
                     colorMax: '#1d4ed8',
                     colorNoData: '#f4f4f5',
                     flagType: 'emoji',
-                    noDataText: {{ json_encode(__('admin.no_data')) }},
+                    noDataText: root.dataset.noDataText,
                 });
             })();
         </script>

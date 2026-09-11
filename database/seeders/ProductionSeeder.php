@@ -128,6 +128,12 @@ class ProductionSeeder extends Seeder
             'websites_heatmaps_limit' => -1,
             'websites_goals_limit' => -1,
             'domains_limit' => -1,
+            // M22/M26 新增配额键显式补齐（-1=不限）：缺键曾令修复前的
+            // PlanLimitService（?? 0 / isFeatureEnabled ?? false）把付费用户
+            // 的注释、仪表盘、SEO 关键词功能整个禁掉。分层限额数值待产品定夺
+            'annotations_limit' => -1,
+            'dashboard_views_limit' => -1,
+            'seo_keywords_limit' => -1,
             'api_is_enabled' => true,
             'affiliate_commission_percentage' => 30,
         ];

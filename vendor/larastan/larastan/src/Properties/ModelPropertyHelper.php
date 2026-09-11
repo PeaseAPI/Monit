@@ -20,6 +20,7 @@ use PHPStan\Type\TypeCombinator;
 use ReflectionException;
 
 use function array_key_exists;
+use function array_keys;
 use function array_map;
 use function count;
 use function in_array;
@@ -30,6 +31,9 @@ class ModelPropertyHelper
 {
     /** @var array<string, SchemaTable> */
     private array $tables = [];
+
+    /** @var array<string, bool> */
+    private array $accessorCache = [];
 
     public function __construct(
         private TypeStringResolver $stringResolver,
@@ -70,8 +74,7 @@ class ModelPropertyHelper
         }
 
         try {
-            /** @var Model $modelInstance */
-            $modelInstance = $classReflectionOrTable->getNativeReflection()->newInstanceWithoutConstructor();
+            $modelInstance = ModelHelper::newInstanceWithoutConstructor($classReflectionOrTable);
         } catch (ReflectionException) {
             return false;
         }
@@ -89,11 +92,26 @@ class ModelPropertyHelper
         return array_key_exists($propertyName, $this->tables[$tableName]->columns);
     }
 
+    /** @return list<string> */
+    public function getDatabasePropertyNames(ClassReflection $classReflection): array
+    {
+        if (! $this->migrationsLoaded()) {
+            $this->loadMigrations();
+        }
+
+        try {
+            $model = ModelHelper::newInstanceWithoutConstructor($classReflection);
+        } catch (ReflectionException) {
+            return [];
+        }
+
+        return array_keys($this->tables[$model->getTable()]->columns ?? []);
+    }
+
     public function getDatabaseProperty(ClassReflection $classReflection, string $propertyName): ModelProperty
     {
         try {
-            /** @var Model $modelInstance */
-            $modelInstance = $classReflection->getNativeReflection()->newInstanceWithoutConstructor();
+            $modelInstance = ModelHelper::newInstanceWithoutConstructor($classReflection);
         } catch (ReflectionException) {
             throw new ShouldNotHappenException();
         }
@@ -166,6 +184,17 @@ class ModelPropertyHelper
             return false;
         }
 
+        $cacheKey = $classReflection->getCacheKey() . '-' . $propertyName . '-' . ($strictGenerics ? '1' : '0');
+
+        if (array_key_exists($cacheKey, $this->accessorCache)) {
+            return $this->accessorCache[$cacheKey];
+        }
+
+        return $this->accessorCache[$cacheKey] = $this->resolveHasAccessor($classReflection, $propertyName, $strictGenerics);
+    }
+
+    private function resolveHasAccessor(ClassReflection $classReflection, string $propertyName, bool $strictGenerics): bool
+    {
         $camelCase = Str::camel($propertyName);
 
         if (! $classReflection->hasNativeMethod($camelCase)) {

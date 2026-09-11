@@ -29,7 +29,7 @@
     </div>
     <div class="flex gap-2">
         <a href="{{ route('admin.users.view', $user->user_id) }}" class="btn btn-secondary">{{ __('common.view') }}</a>
-        <a href="{{ route('admin.users.login-as', $user->user_id) }}" class="btn btn-ghost" onclick="return confirm('{{ __('admin.login_as_confirm') }}')">{{ __('admin.login_as') }}</a>
+        <a href="{{ route('admin.users.login-as', $user->user_id) }}" class="btn btn-ghost" onclick="return confirm(this.dataset.msg)" data-msg="{{ __('admin.login_as_confirm') }}">{{ __('admin.login_as') }}</a>
     </div>
 </div>
 

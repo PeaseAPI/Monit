@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 
 class Team extends Model
@@ -26,7 +27,8 @@ class Team extends Model
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
-    public function members()
+    /** @return HasMany<TeamMember, $this> */
+    public function members(): HasMany
     {
         return $this->hasMany(TeamMember::class, 'team_id', 'team_id');
     }

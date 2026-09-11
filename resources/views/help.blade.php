@@ -4,7 +4,7 @@
 @section('content')
 @include('help._center')
 
-{{-- 搜索：按关键词过滤文章卡片，隐藏无命中的分类区块（数据来自 _center 的 JSON 块） --}}
+{{-- 搜索：按关键词过滤右侧文章列表与左侧目录树条目，隐藏无命中的分类区块（数据来自 _center 的 JSON 块） --}}
 <script>
     (function () {
         var input = document.querySelector('[data-help-search]');
@@ -20,6 +20,7 @@
 
             if (q === '') {
                 document.querySelectorAll('[data-help-card]').forEach(function (c) { c.style.display = ''; });
+                document.querySelectorAll('[data-help-nav-item]').forEach(function (c) { c.style.display = ''; });
                 document.querySelectorAll('[data-help-region]').forEach(function (s) { s.style.display = ''; });
                 if (emptyTip) emptyTip.classList.add('hidden');
                 return;
@@ -35,6 +36,11 @@
                 var show = !!matched[card.getAttribute('href')];
                 card.style.display = show ? '' : 'none';
                 if (show) total++;
+            });
+            // 左侧目录树条目同步过滤（仅首页模式条目带 data-help-nav-title）
+            document.querySelectorAll('[data-help-nav-item]').forEach(function (item) {
+                var url = item.getAttribute('href');
+                item.style.display = matched[url] ? '' : 'none';
             });
             document.querySelectorAll('[data-help-region]').forEach(function (s) {
                 var anyVisible = Array.prototype.some.call(s.querySelectorAll('[data-help-card]'), function (c) { return c.style.display !== 'none'; });

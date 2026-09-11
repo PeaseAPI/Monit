@@ -85,18 +85,6 @@ parameters:
 			path: app/Http/Controllers/AdminDomains.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Heatmap\:\:\$snapshots\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/AdminHeatmaps.php
-
-		-
-			message: '#^Relation ''snapshots'' is not found in App\\Models\\Heatmap model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/AdminHeatmaps.php
-
-		-
 			message: '#^Relation ''website'' is not found in App\\Models\\Heatmap model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
@@ -205,12 +193,6 @@ parameters:
 			path: app/Http/Controllers/AdminTickets.php
 
 		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Ticket model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/AdminTickets.php
-
-		-
 			message: '#^Relation ''user'' is not found in App\\Models\\AccountLog model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
@@ -241,19 +223,7 @@ parameters:
 			path: app/Http/Controllers/Api/v1/AdminApiController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\SessionReplay\:\:\$visitor\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Http/Controllers/Api/v1/AnalyticsController.php
-
-		-
 			message: '#^Relation ''session'' is not found in App\\Models\\SessionReplay model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/v1/AnalyticsController.php
-
-		-
-			message: '#^Relation ''visitor'' is not found in App\\Models\\SessionReplay model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Http/Controllers/Api/v1/AnalyticsController.php
@@ -269,12 +239,6 @@ parameters:
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Http/Controllers/Api/v1/ApiSessionsController.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Contracts\\Auth\\StatefulGuard\:\:setRememberDuration\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: app/Http/Controllers/AuthController.php
 
 		-
 			message: '#^Method App\\Http\\Controllers\\FaviconController\:\:__invoke\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
@@ -391,12 +355,6 @@ parameters:
 			path: app/Http/Controllers/ReplayController.php
 
 		-
-			message: '#^Relation ''visitor'' is not found in App\\Models\\SessionReplay model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/ReplayController.php
-
-		-
 			message: '#^Job class App\\Jobs\\Seo\\SeoAiSummaryJob constructor invoked with 2 parameters in App\\Jobs\\Seo\\SeoAiSummaryJob\:\:dispatch\(\), 1 required\.$#'
 			identifier: arguments.count
 			count: 1
@@ -440,12 +398,6 @@ parameters:
 
 		-
 			message: '#^Relation ''events'' is not found in App\\Models\\VisitorSession model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/SessionAjaxController.php
-
-		-
-			message: '#^Relation ''member'' is not found in App\\Models\\TeamMemberAssociation model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Http/Controllers/SessionAjaxController.php
@@ -553,21 +505,9 @@ parameters:
 			path: app/Http/Controllers/TeamController.php
 
 		-
-			message: '#^Relation ''members'' is not found in App\\Models\\Team model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/TeamController.php
-
-		-
 			message: '#^Relation ''team'' is not found in App\\Models\\TeamMember model\.$#'
 			identifier: larastan.relationExistence
 			count: 2
-			path: app/Http/Controllers/TeamController.php
-
-		-
-			message: '#^Relation ''website'' is not found in App\\Models\\TeamMemberAssociation model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
 			path: app/Http/Controllers/TeamController.php
 
 		-
@@ -1055,12 +995,6 @@ parameters:
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Services/Seo/AuditContext.php
-
-		-
-			message: '#^Class Illuminate\\Http\\Client\\Response constructor invoked with 2 parameters, 1 required\.$#'
-			identifier: arguments.count
-			count: 2
-			path: app/Services/Seo/AuditEngine.php
 
 		-
 			message: '#^Offset ''category'' on array\{passed\: bool, importance\: string, category\: string\} on left side of \?\? always exists and is not nullable\.$#'

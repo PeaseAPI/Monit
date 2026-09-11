@@ -312,6 +312,10 @@ return [
     | 免费库下载（免注册，每月更新）：
     |   curl -L https://download.db-ip.com/free/dbip-country-lite-$(date +%Y-%m).mmdb.gz \
     |     | gunzip > storage/app/geoip/country.mmdb
+    | 免费城市库下载（免注册，每月更新；必须用 city 库，country 库无 city 字段
+    | 只能识别到国家）：
+    |     curl -L https://download.db-ip.com/free/dbip-city-lite-$(date +%Y-%m).mmdb.gz \
+    |     | gunzip > storage/app/geoip/country.mmdb
     | 未放置库文件时国家维度显示为空，不影响其余采集。
     */
     'geoip' => [

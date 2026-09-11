@@ -68,7 +68,7 @@
             @foreach ($tabGroups as $groupLabel => $tabs)
                 <p class="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-widest text-zinc-400 first:pt-3">{{ $groupLabel }}</p>
                 @foreach ($tabs as $tab => $label)
-                    <button type="button" onclick="switchTab('{{ $tab }}')"
+                    <button type="button" onclick="switchTab(this.dataset.tab)"
                         class="settings-tab flex w-full items-center justify-between border-l-2 px-4 py-2 text-left text-sm font-medium transition {{ $loop->parent->first && $loop->first ? 'border-brand-600 bg-brand-50/70 text-brand-700' : 'border-transparent text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900' }}"
                         data-tab="{{ $tab }}">
                         <span class="truncate">{{ $label }}</span>

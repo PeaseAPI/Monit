@@ -15,6 +15,7 @@ use App\Models\SessionReplay;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -410,6 +411,27 @@ class PixelTracker
             return;
         }
 
+        // 事件子项配额（规格 §10.2：events_children_limit；-1 不限、显式配置 0=无此功能）。
+        // 原实现完全不检查且 current_month_events_children 从未递增——M22 通知
+        // Cron（websites_events_children_notice）的比较恒为假，通知与配额双双失效。
+        // 判定对齐 persistReplayChunk 的回放配额：0 或超限一律拒收；
+        // 缺键 ?? -1 = 不限（custom 用户 plan_settings 不与 plan_defaults 合并）。
+        $planSettings = $this->website->user?->getPlanSettings() ?? [];
+        $childLimit = $planSettings['events_children_limit'] ?? -1;
+        $childAllowed = ($childLimit === -1)
+            || ($childLimit > 0 && $this->website->current_month_events_children < $childLimit);
+
+        if (! $childAllowed) {
+            // 0=功能禁用不标记不打扰；超限标记通知（对齐 sessions_replays_limit）
+            if ($childLimit > 0 && ! $this->website->plan_events_children_limit_notice) {
+                $this->website->forceFill(['plan_events_children_limit_notice' => true])->save();
+            }
+
+            $this->skip($childLimit > 0 ? 'event_children_limit' : 'event_children_disabled');
+
+            return;
+        }
+
         EventChild::create([
             'event_id' => $event->event_id,
             'session_id' => $event->session_id,
@@ -421,6 +443,9 @@ class PixelTracker
             'date' => now(),
             'expiration_date' => now()->addDays(config('monit.pixel.events_retention_days')),
         ]);
+
+        // 用量计数：WebsitesLimitNoticeCommand 与配额判定依赖此列
+        $this->website->increment('current_month_events_children');
     }
 
     /**
@@ -535,62 +560,25 @@ class PixelTracker
         $events = array_values($events);
         $chunkSize = strlen(json_encode($events, JSON_UNESCAPED_UNICODE));
 
-        // 确保 replay 主记录存在
-        $replay = SessionReplay::where('session_id', $session->session_id)->first();
-        if (! $replay) {
-            // 回放配额（规格 §10.2：sessions_replays_limit；-1 不限）
-            $replayLimit = $this->website->user?->getPlanSettings()['sessions_replays_limit'] ?? 0;
-            if ($replayLimit > 0 && $this->website->current_month_sessions_replays >= $replayLimit) {
-                $this->skip('replays_limit');
+        // 事务 + 行锁：同一会话的多个 chunk 并发到达时，"读取→合并→写回"必须
+        // 原子执行，否则两个请求读到同一份旧 data 后互相覆盖（整批事件丢失）。
+        // lockForUpdate 串行化同会话回放的追加写。
+        //
+        // session_id 有唯一索引（2026_09_10 迁移）：MySQL InnoDB 对不存在行的
+        // lockForUpdate 走 gap lock 天然防并发首建；sqlite（网页安装向导默认库）
+        // 无 gap lock，两个并发请求可能同时走到 create → 撞唯一索引。
+        // 捕获后重跑一次：第二次 lockForUpdate 必命中对方已建行，转追加分支，
+        // 该 chunk 事件不丢失。
+        $skipped = false;
 
-                return;
-            }
+        try {
+            $this->persistReplayChunk($session, $events, $chunkSize, $skipped);
+        } catch (UniqueConstraintViolationException) {
+            $this->persistReplayChunk($session, $events, $chunkSize, $skipped);
+        }
 
-            // 压缩初始事件数据
-            $compressed = gzencode(json_encode($events, JSON_UNESCAPED_UNICODE), 9);
-
-            $replay = SessionReplay::create([
-                'session_id' => $session->session_id,
-                'visitor_id' => $session->visitor_id,
-                'website_id' => $this->website->website_id,
-                'user_id' => $this->website->user_id ?? $this->website->user?->user_id,
-                'events' => count($events),
-                'size' => $chunkSize,
-                'datetime' => now(),
-                'is_too_short' => count($events) < 5,
-            ]);
-
-            // 用原生 SQL 写入 LONGBLOB data 列（Eloquent 对二进制数据有编码问题）
-            if ($compressed !== false) {
-                DB::statement(
-                    'UPDATE sessions_replays SET data = ? WHERE replay_id = ?',
-                    [$compressed, $replay->replay_id],
-                );
-            }
-
-            $this->website->increment('current_month_sessions_replays');
-        } else {
-            // 追加事件到已有 replay：读取 → 解压 → 合并 → 重新压缩 → 写回
-            $existingEvents = [];
-            $row = DB::selectOne(
-                'SELECT data FROM sessions_replays WHERE replay_id = ?',
-                [$replay->replay_id],
-            );
-            if ($row && $row->data) {
-                $decompressed = @gzdecode($row->data);
-                if ($decompressed !== false) {
-                    $existingEvents = json_decode($decompressed, true) ?: [];
-                }
-            }
-
-            // 合并新事件
-            $allEvents = array_merge($existingEvents, $events);
-            $compressed = gzencode(json_encode($allEvents, JSON_UNESCAPED_UNICODE), 9);
-
-            DB::statement(
-                'UPDATE sessions_replays SET data = ?, events = ?, size = ?, last_datetime = ? WHERE replay_id = ?',
-                [$compressed !== false ? $compressed : null, count($allEvents), strlen(json_encode($allEvents, JSON_UNESCAPED_UNICODE)), now(), $replay->replay_id],
-            );
+        if ($skipped) {
+            return;
         }
 
         // Cache 仍保留（供 OffloadCommand 中间缓冲 & 回退兼容）
@@ -600,6 +588,90 @@ class PixelTracker
         Cache::put($chunkKey, $events, now()->addDays(config('monit.pixel.replays_retention_days')));
         $keys[] = $chunkKey;
         Cache::put($cacheKey, $keys, now()->addDays(config('monit.pixel.replays_retention_days')));
+    }
+
+    /**
+     * 回放 chunk 持久化（首建或追加）：单事务 + 行锁，保证「读取→合并→写回」原子。
+     * $skipped 以引用传出：配额拒收时调用方提前返回（跳过 Cache 缓冲）。
+     */
+    protected function persistReplayChunk(VisitorSession $session, array $events, int $chunkSize, bool &$skipped): void
+    {
+        DB::transaction(function () use ($session, $events, $chunkSize, &$skipped): void {
+            $replay = SessionReplay::where('session_id', $session->session_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $replay) {
+                // 回放配额（规格 §10.2：sessions_replays_limit；-1 不限、显式配置 0=无此功能）。
+                // 判定与 PixelTrackController::doHeatmapCheck 的 replay_enabled 严格一致：
+                // 0（落地页明确宣传「该套餐无回放」）或超限时一律拒收——
+                // 原实现「>0 才检查」会把 0（禁用）误放行，造成配额绕过。
+                // 缺键 ?? -1 = 不限：对齐 sessions_events_limit 的既有模式
+                //（custom 用户 plan_settings 不与 plan_defaults 合并，未配置即不加限）。
+                $replayLimit = $this->website->user?->getPlanSettings()['sessions_replays_limit'] ?? -1;
+                $replayAllowed = ($replayLimit === -1)
+                    || ($replayLimit > 0 && $this->website->current_month_sessions_replays < $replayLimit);
+
+                if (! $replayAllowed) {
+                    // 标记限额通知（WebsitesLimitNoticeCommand 汇总 → 用户中心展示；
+                    // 对齐 sessions_events_limit 超限处理。0=功能禁用，不标记不打扰）
+                    if ($replayLimit > 0 && ! $this->website->plan_sessions_replays_limit_notice) {
+                        $this->website->forceFill(['plan_sessions_replays_limit_notice' => true])->save();
+                    }
+
+                    $this->skip($replayLimit > 0 ? 'replays_limit' : 'replays_disabled');
+                    $skipped = true;
+
+                    return;
+                }
+
+                // 压缩初始事件数据
+                $compressed = gzencode(json_encode($events, JSON_UNESCAPED_UNICODE), 9);
+
+                $replay = SessionReplay::create([
+                    'session_id' => $session->session_id,
+                    'visitor_id' => $session->visitor_id,
+                    'website_id' => $this->website->website_id,
+                    'user_id' => $this->website->user_id ?? $this->website->user?->user_id,
+                    'events' => count($events),
+                    'size' => $chunkSize,
+                    'datetime' => now(),
+                    'is_too_short' => count($events) < 5,
+                ]);
+
+                // 用原生 SQL 写入 LONGBLOB data 列（Eloquent 对二进制数据有编码问题）
+                if ($compressed !== false) {
+                    DB::statement(
+                        'UPDATE sessions_replays SET data = ? WHERE replay_id = ?',
+                        [$compressed, $replay->replay_id],
+                    );
+                }
+
+                $this->website->increment('current_month_sessions_replays');
+            } else {
+                // 追加事件到已有 replay：读取 → 解压 → 合并 → 重新压缩 → 写回
+                $existingEvents = [];
+                $row = DB::selectOne(
+                    'SELECT data FROM sessions_replays WHERE replay_id = ?',
+                    [$replay->replay_id],
+                );
+                if ($row && $row->data) {
+                    $decompressed = @gzdecode($row->data);
+                    if ($decompressed !== false) {
+                        $existingEvents = json_decode($decompressed, true) ?: [];
+                    }
+                }
+
+                // 合并新事件
+                $allEvents = array_merge($existingEvents, $events);
+                $compressed = gzencode(json_encode($allEvents, JSON_UNESCAPED_UNICODE), 9);
+
+                DB::statement(
+                    'UPDATE sessions_replays SET data = ?, events = ?, size = ?, last_datetime = ? WHERE replay_id = ?',
+                    [$compressed !== false ? $compressed : null, count($allEvents), strlen(json_encode($allEvents, JSON_UNESCAPED_UNICODE)), now(), $replay->replay_id],
+                );
+            }
+        });
     }
 
     /**

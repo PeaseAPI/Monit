@@ -61,6 +61,8 @@
 
             <p class="admin-nav-heading">{{ __('admin.nav_section_manage') }}</p>
             {!! $navItem('users', 'users', __('admin.sidebar_users'), route('admin.users.index')) !!}
+            {!! $navItem('tickets', 'info', __('admin.sidebar_tickets'), route('admin.tickets.index')) !!}
+            {!! $navItem('help-articles', 'info', __('admin.sidebar_help_articles'), route('admin.help-articles.index')) !!}
             {!! $navItem('settings', 'settings', __('admin.sidebar_settings'), route('admin.settings.index')) !!}
             {!! $navItem('plans', 'plans', __('admin.sidebar_plans'), route('admin.plans.index')) !!}
             {!! $navItem('languages', 'languages', __('admin.sidebar_languages'), route('admin.languages.index')) !!}
@@ -81,7 +83,6 @@
                     {!! $navItem('pages-categories', 'pages', __('admin.sidebar_categories'), route('admin.pages-categories.index')) !!}
                     {!! $navItem('pages', 'pages', __('admin.sidebar_pages'), route('admin.pages.index')) !!}
                     {!! $navItem('help-categories', 'info', __('admin.sidebar_help_categories'), route('admin.help-categories.index')) !!}
-                    {!! $navItem('help-articles', 'info', __('admin.sidebar_help_articles'), route('admin.help-articles.index')) !!}
                 </div>
             </div>
 
@@ -103,7 +104,6 @@
             {!! $navItem('api', 'api', __('admin.sidebar_api_docs'), route('api.docs')) !!}
             {!! $navItem('codes', 'codes', __('admin.sidebar_codes'), route('admin.codes.index')) !!}
             {!! $navItem('taxes', 'taxes', __('admin.sidebar_taxes'), route('admin.taxes.index')) !!}
-            {!! $navItem('tickets', 'info', __('admin.sidebar_tickets'), route('admin.tickets.index')) !!}
             {!! $navItem('payments', 'payments', __('admin.sidebar_payments'), route('admin.payments.index')) !!}
             {!! $navItem('affiliates-withdrawals', 'wallet', __('admin.sidebar_affiliates_withdrawals'), route('admin.affiliates-withdrawals.index')) !!}
 

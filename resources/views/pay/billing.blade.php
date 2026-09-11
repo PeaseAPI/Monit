@@ -16,7 +16,7 @@
         <form method="POST" action="{{ route('pay.billing.cancel') }}" class="mt-4">
             @csrf
             <button class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700"
-                    onclick="return confirm('{{ __('pay.confirm_cancel') }}')">
+                    onclick="return confirm(this.dataset.msg)" data-msg="{{ __('pay.confirm_cancel') }}">
                 {{ __('pay.cancel_subscription') }}
             </button>
         </form>

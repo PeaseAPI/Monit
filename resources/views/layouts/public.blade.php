@@ -26,6 +26,7 @@
     <x-site-footer/>
 
     @include('parts.cookie_consent')
+    @stack('scripts')
     @include('parts.brand_footer_scripts')
 </body>
 </html>

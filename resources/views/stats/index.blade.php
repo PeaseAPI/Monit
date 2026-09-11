@@ -60,6 +60,8 @@
                 <p class="mt-1 text-xs text-zinc-400">{{ __('stats.ai_insight_desc') }}</p>
             </div>
             <button type="button" id="ai-insight-btn" data-url="{{ route('stats.ai_insight', $website->website_id) }}" data-range="{{ $range }}"
+                data-text-idle="{{ __('stats.ai_insight_generate') }}" data-text-loading="{{ __('stats.ai_insight_loading') }}"
+                data-text-failed="{{ __('stats.ai_insight_failed') }}" data-text-disabled="{{ __('stats.ai_insight_disabled') }}"
                 class="rounded-xl bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
                 {{ __('stats.ai_insight_generate') }}
             </button>
@@ -70,7 +72,7 @@
         document.getElementById('ai-insight-btn')?.addEventListener('click', async function () {
             const btn = this, box = document.getElementById('ai-insight-result');
             btn.disabled = true;
-            btn.textContent = "{{ __('stats.ai_insight_loading') }}";
+            btn.textContent = btn.dataset.textLoading;
             box.classList.add('hidden');
             try {
                 const res = await fetch(btn.dataset.url, {
@@ -79,14 +81,14 @@
                     body: JSON.stringify({ range: btn.dataset.range }),
                 });
                 const data = await res.json();
-                if (! res.ok) { box.textContent = data.error === 'ai_disabled' ? "{{ __('stats.ai_insight_disabled') }}" : "{{ __('stats.ai_insight_failed') }}"; }
+                if (! res.ok) { box.textContent = data.error === 'ai_disabled' ? btn.dataset.textDisabled : btn.dataset.textFailed; }
                 else { box.textContent = data.insight; }
             } catch (e) {
-                box.textContent = "{{ __('stats.ai_insight_failed') }}";
+                box.textContent = btn.dataset.textFailed;
             } finally {
                 box.classList.remove('hidden');
                 btn.disabled = false;
-                btn.textContent = "{{ __('stats.ai_insight_generate') }}";
+                btn.textContent = btn.dataset.textIdle;
             }
         });
     </script>

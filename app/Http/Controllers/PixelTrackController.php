@@ -152,11 +152,28 @@ class PixelTrackController extends Controller
                 ->first();
         }
 
+        if (! $heatmap) {
+            // pathname 回退：热图通常按纯路径配置（如 /about），而 PIXEL 上报的 path
+            // 是 pathname + search——访问带 ?utm_source=... 等查询参数时精确匹配失败，
+            // 导致该热图永远等不到底图快照（用户反馈「暂无热图/无底图」根因之一）
+            $pathname = parse_url($path, PHP_URL_PATH) ?: '/';
+            if ($pathname !== $path) {
+                $heatmap = Heatmap::where('website_id', $website->website_id)
+                    ->where('is_enabled', true)
+                    ->where('path', $pathname)
+                    ->first();
+            }
+        }
+
         // 全局热图开关开启但无匹配 Heatmap → 自动创建（修复热图无数据根因）
         // 注意：settings 存储为 'true'/'false' 字符串，必须显式解析布尔，
         // 否则 (bool)'false' === true 导致后台关闭后仍自动建热图（真实 bug）
+        // 另外 analytics 分组对象可能只含部分键（settings 按需写入），必须 isset
+        // 防御：Undefined property 会被 Laravel 转为 ErrorException → 被 heatmapCheck
+        // 的 catch 吞掉 → 整个 heatmap_check 返回 '{}' → 客户端热图检测与回放开关同步全失效
         $analyticsSettings = settings()->analytics ?? null;
         $globalHeatmapsEnabled = $analyticsSettings
+            && isset($analyticsSettings->websites_heatmaps_is_enabled)
             && in_array($analyticsSettings->websites_heatmaps_is_enabled, [true, 1, '1', 'true', 'on'], true);
 
         if (! $heatmap && $globalHeatmapsEnabled) {
@@ -173,9 +190,12 @@ class PixelTrackController extends Controller
         // 判断回放是否启用：全局开关 + 网站开关 + 套餐配额（settings 字符串布尔，须显式解析）
         $replayEnabled = false;
         $globalReplayEnabled = $analyticsSettings
+            && isset($analyticsSettings->sessions_replays_is_enabled)
             && in_array($analyticsSettings->sessions_replays_is_enabled, [true, 1, '1', 'true', 'on'], true);
         if ($globalReplayEnabled && $website->sessions_replays_is_enabled) {
-            $replayLimit = $website->user?->getPlanSettings()['sessions_replays_limit'] ?? 0;
+            // 缺键 ?? -1 = 不限（对齐 PixelTracker::persistReplayChunk；
+            // 仅显式配置 0 = 无此功能才回 false）
+            $replayLimit = $website->user?->getPlanSettings()['sessions_replays_limit'] ?? -1;
             $replayEnabled = ($replayLimit === -1) || ($replayLimit > 0 && $website->current_month_sessions_replays < $replayLimit);
         }
 

@@ -20,7 +20,7 @@
             <label class="block text-sm font-medium text-zinc-700">{{ __('account.confirm_password') }}</label>
             <input type="password" name="password" class="form-input" required>
         </div>
-        <button type="submit" class="mt-4 rounded-xl bg-red-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-red-700" onclick="return confirm('{{ __('account.delete_confirm_msg') }}')">{{ __('account.delete_account_btn') }}</button>
+        <button type="submit" class="mt-4 rounded-xl bg-red-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-red-700" onclick="return confirm(this.dataset.msg)" data-msg="{{ __('account.delete_confirm_msg') }}">{{ __('account.delete_account_btn') }}</button>
     </form>
 </div>
 @endsection

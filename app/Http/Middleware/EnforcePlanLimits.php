@@ -26,8 +26,11 @@ class EnforcePlanLimits
 
         $planLimitService = new PlanLimitService;
 
-        // 检查功能是否启用
-        if (! $planLimitService->isFeatureEnabled($user, $feature)) {
+        // 数量限额键（*_limit）没有布尔开关语义：缺键=不限，直接进入配额检查。
+        // 修复前数量键缺键会被 isFeatureEnabled 的 (bool)(... ?? false) 判为
+        // 「未启用」——生产套餐 quota() 未收录 annotations_limit /
+        // dashboard_views_limit 等键时，全部付费用户的对应功能被误禁
+        if (! str_ends_with($feature, '_limit') && ! $planLimitService->isFeatureEnabled($user, $feature)) {
             return back()->withErrors([
                 'plan' => __('plan.feature_not_enabled'),
             ])->withInput();

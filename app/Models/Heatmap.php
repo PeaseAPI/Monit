@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 
 class Heatmap extends Model
@@ -31,7 +32,8 @@ class Heatmap extends Model
         return $this->belongsTo(Website::class, 'website_id', 'website_id');
     }
 
-    public function snapshots()
+    /** @return HasMany<HeatmapSnapshot, $this> */
+    public function snapshots(): HasMany
     {
         return $this->hasMany(HeatmapSnapshot::class, 'heatmap_id', 'heatmap_id');
     }

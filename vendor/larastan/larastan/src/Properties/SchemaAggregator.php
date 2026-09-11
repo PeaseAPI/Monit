@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Larastan\Larastan\Properties;
 
 use Exception;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use PhpParser;
 use PhpParser\NodeFinder;
+use PHPStan\Reflection\InitializerExprContext;
+use PHPStan\Reflection\InitializerExprTypeResolver;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Type\ObjectType;
 use ReflectionException;
@@ -25,8 +26,11 @@ use function strtolower;
 final class SchemaAggregator
 {
     /** @param array<string, SchemaTable> $tables */
-    public function __construct(private ReflectionProvider $reflectionProvider, public array $tables = [])
-    {
+    public function __construct(
+        private ReflectionProvider $reflectionProvider,
+        private InitializerExprTypeResolver $initializerExprTypeResolver,
+        public array $tables = [],
+    ) {
     }
 
     /** @param  array<int, PhpParser\Node\Stmt> $stmts */
@@ -128,7 +132,11 @@ final class SchemaAggregator
 
             $class = $this->reflectionProvider->getClass($value->class->name);
 
-            $constantValueType = $class->getConstant($value->name->toString())->getValueType();
+            $constant          = $class->getConstant($value->name->toString());
+            $constantValueType = $this->initializerExprTypeResolver->getType(
+                $constant->getValueExpr(),
+                InitializerExprContext::fromClassReflection($constant->getDeclaringClass()),
+            );
 
             if ($constantValueType->getConstantStrings() !== []) {
                 $tableName = $constantValueType->getConstantStrings()[0]->getValue();
@@ -237,11 +245,13 @@ final class SchemaAggregator
                 }
 
                 $columnName = Str::snake(class_basename($modelClass)) . '_id';
+
                 if ($secondArg instanceof PhpParser\Node\Scalar\String_) {
                     $columnName = $secondArg->value;
                 }
 
                 $type = $this->getModelReferenceType($modelClass);
+
                 if ($unsigned && ($type === null || $type === 'int')) {
                     $type = 'non-negative-int';
                 }
@@ -262,37 +272,28 @@ final class SchemaAggregator
                     }
                 }
 
-                if (
-                    $firstMethodCall->name->name === 'timestamps'
-                    || $firstMethodCall->name->name === 'timestampsTz'
-                    || $firstMethodCall->name->name === 'nullableTimestamps'
-                    || $firstMethodCall->name->name === 'nullableTimestampsTz'
-                    || $firstMethodCall->name->name === 'rememberToken'
-                ) {
-                    switch (strtolower($firstMethodCall->name->name)) {
-                        case 'droptimestamps':
-                        case 'droptimestampstz':
-                            $table->dropColumn('created_at');
-                            $table->dropColumn('updated_at');
-                            break;
+                switch (strtolower($firstMethodCall->name->name)) {
+                    case 'remembertoken':
+                        $table->setColumn(new SchemaColumn('remember_token', 'string', $nullable));
+                        continue 2;
 
-                        case 'remembertoken':
-                            $table->setColumn(new SchemaColumn('remember_token', 'string', $nullable));
-                            break;
+                    case 'dropremembertoken':
+                        $table->dropColumn('remember_token');
+                        continue 2;
 
-                        case 'dropremembertoken':
-                            $table->dropColumn('remember_token');
-                            break;
+                    case 'timestamps':
+                    case 'timestampstz':
+                    case 'nullabletimestamps':
+                    case 'nullabletimestampstz':
+                        $table->setColumn(new SchemaColumn('created_at', 'string', true));
+                        $table->setColumn(new SchemaColumn('updated_at', 'string', true));
+                        continue 2;
 
-                        case 'timestamps':
-                        case 'timestampstz':
-                        case 'nullabletimestamps':
-                            $table->setColumn(new SchemaColumn('created_at', 'string', true));
-                            $table->setColumn(new SchemaColumn('updated_at', 'string', true));
-                            break;
-                    }
-
-                    continue;
+                    case 'droptimestamps':
+                    case 'droptimestampstz':
+                        $table->dropColumn('created_at');
+                        $table->dropColumn('updated_at');
+                        continue 2;
                 }
 
                 $defaultsMap = [
@@ -307,6 +308,7 @@ final class SchemaAggregator
                     'ipAddress' => 'ip_address',
                     'macAddress' => 'mac_address',
                 ];
+
                 if (! array_key_exists($firstMethodCall->name->name, $defaultsMap)) {
                     continue;
                 }
@@ -412,9 +414,9 @@ final class SchemaAggregator
     private function getModelReferenceType(string $modelClass): string|null
     {
         $classReflection = $this->reflectionProvider->getClass($modelClass);
+
         try {
-            /** @var Model $modelInstance */
-            $modelInstance = $classReflection->getNativeReflection()->newInstanceWithoutConstructor();
+            $modelInstance = ModelHelper::newInstanceWithoutConstructor($classReflection);
         } catch (ReflectionException) {
             return null;
         }

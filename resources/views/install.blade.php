@@ -167,7 +167,7 @@
 @elseif ($step === 'database')
         <h2>数据库配置</h2>
         <p class="sub">Monit 使用 MySQL 存储数据（推荐 5.7+ / 8.0），数据库不存在时将自动创建</p>
-        <form method="POST" action="{{ route('install.database.submit') }}" id="db-form">
+        <form method="POST" action="{{ route('install.database.submit') }}" id="db-form" data-test-url="{{ route('install.test-db') }}">
             <div class="grid">
                 <div>
                     <label>数据库主机</label>
@@ -265,7 +265,7 @@
                 btnTest.textContent = '正在测试…';
                 result.className = 'test-result';
                 result.textContent = '';
-                fetch("{{ route('install.test-db') }}", { method: 'POST', body: data })
+                fetch(form.dataset.testUrl, { method: 'POST', body: data })
                     .then(function (r) { return r.json(); })
                     .then(function (json) {
                         result.className = 'test-result ' + (json.ok ? 'ok' : 'bad');

@@ -2,7 +2,7 @@
 @section('title', __('payments.title'))
 
 @section('content')
-<div class="max-w-5xl">
+<div class="mx-auto max-w-5xl">
     {{-- Hero：当前套餐状态 --}}
     <div class="overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-indigo-800 p-8 text-white shadow-lg">
         <div class="flex flex-wrap items-center justify-between gap-6">
@@ -44,7 +44,7 @@
 
             {{-- 计费周期分段切换（联动所有卡片价格与表单 hidden frequency）
                  默认选中周期由后台 payment.default_payment_frequency 控制（取值见上方 PHP 块） --}}
-            <div id="freq-switch" class="flex rounded-2xl border border-zinc-200 bg-white p-1 shadow-sm">
+            <div id="freq-switch" data-save-text="{{ __('payments.save_percent', ['percent' => ':percent']) }}" data-default-freq="{{ $defaultFrequency }}" class="flex rounded-2xl border border-zinc-200 bg-white p-1 shadow-sm">
                 @foreach(['monthly', 'annual', 'lifetime'] as $fi => $frequency)
                     <button type="button" data-freq="{{ $frequency }}"
                             class="rounded-xl px-4 py-2 text-sm font-medium transition {{ $frequency === $defaultFrequency ? 'bg-brand-600 text-white shadow' : 'text-zinc-600 hover:bg-zinc-100' }}">
@@ -62,6 +62,8 @@
                         'annual' => \App\Support\Currency::planPrice($plan, $currency, 'annual'),
                         'lifetime' => \App\Support\Currency::planPrice($plan, $currency, 'lifetime'),
                     ];
+                    // 供 JS 切换周期渲染（@json 只传简单变量：复杂表达式会被 Blade 编译器错误截断）
+                    $planPrices = array_map(fn ($p) => $p !== null ? number_format($p, 2) : null, $prices);
                     // 年付相对 12 个月付的节省比例（两档价格齐全且年付更划算才显示）
                     $savePercent = null;
                     if ($prices['monthly'] !== null && $prices['monthly'] > 0 && $prices['annual'] !== null && $prices['annual'] > 0) {
@@ -82,7 +84,7 @@
                     <div class="mt-4 flex items-baseline gap-1.5">
                         <span class="text-sm font-medium text-zinc-400">{{ \App\Support\Currency::symbol($currency) }}</span>
                         <span class="text-4xl font-extrabold tracking-tight text-zinc-900 tabular-nums plan-price"
-                              data-prices='@json([array_map(fn($p) => $p !== null ? number_format($p, 2) : null, $prices)])'></span>
+                              data-prices='@json([$planPrices])'></span>
                     </div>
                     <p class="mt-1 text-xs font-medium text-zinc-400 plan-suffix"
                        data-suffix-monthly="/ {{ __('payments.monthly') }}" data-suffix-annual="/ {{ __('payments.frequency_annual') }}" data-suffix-lifetime="{{ __('payments.price_suffix_lifetime') }}"></p>
@@ -158,7 +160,9 @@
 
 <script>
     (function () {
-        var saveText = {{ json_encode(__('payments.save_percent', ['percent' => ':percent'])) }};
+        var switcher = document.getElementById('freq-switch');
+        if (!switcher) { return; }
+        var saveText = switcher.dataset.saveText;
         var prices = document.querySelectorAll('.plan-price');
         var suffixes = document.querySelectorAll('.plan-suffix');
         var saves = document.querySelectorAll('.plan-save');
@@ -194,7 +198,7 @@
             });
         });
 
-        render({!! json_encode($defaultFrequency, JSON_UNESCAPED_UNICODE) !!});
+        render(switcher.dataset.defaultFreq || 'monthly');
     })();
 </script>
 @endsection

@@ -13,7 +13,7 @@
     $ccPosX = \App\Support\Settings::get('cookie_consent.cookie_consent_position_x') === 'left' ? 'items-start text-left' : 'items-center sm:justify-between';
 @endphp
 @if ($ccOn)
-<div id="monit-cookie-banner" hidden class="fixed inset-x-0 {{ $ccPosY }} z-[60] border-zinc-200 bg-white/95 backdrop-blur">
+<div id="monit-cookie-banner" hidden data-consent-url="{{ route('cookie.consent') }}" class="fixed inset-x-0 {{ $ccPosY }} z-[60] border-zinc-200 bg-white/95 backdrop-blur">
     <div class="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-4 sm:flex-row {{ $ccPosX }}">
         <div>
             <p class="font-semibold text-zinc-900">{{ \App\Support\Settings::get('cookie_consent.cookie_consent_title', '我们使用 Cookie') }}</p>
@@ -41,7 +41,7 @@
         banner.hidden = true;
 
         var token = document.querySelector('meta[name="csrf-token"]');
-        fetch("{{ route('cookie.consent') }}", {
+        fetch(banner.dataset.consentUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

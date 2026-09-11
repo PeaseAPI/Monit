@@ -44,7 +44,7 @@
                     <input type="hidden" name="name" value="{{ $view->name }}">
                     <button type="submit" class="rounded-lg bg-zinc-100 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-200">{{ __('msg.edit') }}</button>
                 </form>
-                <form method="POST" action="{{ route('dashboard-views.destroy', $view->dashboard_view_id ?? $view->id) }}" onsubmit="return confirm('{{ __('msg.confirm_delete_view') }}')">
+                <form method="POST" action="{{ route('dashboard-views.destroy', $view->dashboard_view_id ?? $view->id) }}" onsubmit="return confirm(this.dataset.msg)" data-msg="{{ __('msg.confirm_delete_view') }}">
                     @csrf @method('DELETE')
                     <button type="submit" class="rounded-lg bg-red-50 px-3 py-1.5 text-sm text-red-600 hover:bg-red-100">{{ __('msg.delete') }}</button>
                 </form>

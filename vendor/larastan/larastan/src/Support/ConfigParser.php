@@ -16,7 +16,6 @@ use PHPStan\Type\Constant\ConstantIntegerType;
 use PHPStan\Type\Constant\ConstantStringType;
 use PHPStan\Type\FileTypeMapper;
 use PHPStan\Type\Type;
-use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RegexIterator;
 use SplFileInfo;
@@ -44,6 +43,9 @@ final class ConfigParser
 
     /** @var array<string, Node\Stmt\Return_> */
     private array $parsedConfigFiles = [];
+
+    /** @var array<string, true> */
+    private array $unparsableConfigFiles = [];
 
     /** @param list<non-empty-string> $configPaths */
     public function __construct(
@@ -81,6 +83,10 @@ final class ConfigParser
             $configKeyParts = explode('.', $key);
             $configFileName = array_shift($configKeyParts);
 
+            if (array_key_exists($configFileName, $this->unparsableConfigFiles)) {
+                return [];
+            }
+
             if (array_key_exists($configFileName, $this->parsedConfigFiles)) {
                 $cachedConfigFile = $this->parsedConfigFiles[$configFileName];
             } else {
@@ -88,6 +94,8 @@ final class ConfigParser
 
                 // We could not parse the file or couldn't find the return array
                 if ($cachedConfigFile === null) {
+                    $this->unparsableConfigFiles[$configFileName] = true;
+
                     return [];
                 }
 
@@ -152,6 +160,7 @@ final class ConfigParser
                     }
 
                     $itemKey = (string) $item->key->value;
+
                     if ($itemKey !== $configKeyPart) {
                         continue;
                     }
@@ -168,7 +177,10 @@ final class ConfigParser
                 continue;
             }
 
-            $returnTypes[] = $scope->getType($ret);
+            $type = $scope->getType($ret);
+
+            $this->parsedConfigs[$key] = $type;
+            $returnTypes[]             = $type;
         }
 
         return $returnTypes;

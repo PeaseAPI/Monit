@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Larastan\Larastan\Reflection\AnnotationScopeMethodParameterReflection;
 use Larastan\Larastan\Reflection\DynamicWhereParameterReflection;
 use Larastan\Larastan\Reflection\EloquentBuilderMethodReflection;
@@ -20,6 +21,7 @@ use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\ShouldNotHappenException;
 use PHPStan\TrinaryLogic;
 use PHPStan\Type\Generic\GenericObjectType;
+use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 use PHPStan\Type\VerbosityLevel;
 
@@ -47,23 +49,32 @@ class BuilderHelper
      * @var string[]
      */
     public array $passthru = [
+        'aggregate',
         'average',
         'avg',
         'count',
         'dd',
         'dump',
         'doesntExist',
+        'doesntExistOr',
         'exists',
+        'existsOr',
+        'explain',
         'getBindings',
         'getConnection',
         'getGrammar',
+        'getRawBindings',
+        'implode',
         'insert',
         'insertGetId',
         'insertOrIgnore',
+        'insertOrIgnoreUsing',
         'insertUsing',
         'max',
         'min',
+        'numericAggregate',
         'raw',
+        'rawValue',
         'sum',
         'toSql',
         'toRawSql',
@@ -76,13 +87,21 @@ class BuilderHelper
         private bool $checkProperties,
         private MacroMethodsClassReflectionExtension $macroMethodsClassReflectionExtension,
     ) {
+    }
+
+    /** @return string[] */
+    public function getPassthru(): array
+    {
         // @phpstan-ignore-next-line
         if (! defined('LARAVEL_VERSION') || version_compare(LARAVEL_VERSION, '12.15.0', '<')) {
-            return;
+            return $this->passthru;
         }
 
         // @phpstan-ignore-next-line
-        $this->passthru[] = 'getCountForPagination';
+        $passthru   = $this->passthru;
+        $passthru[] = 'getCountForPagination';
+
+        return $passthru;
     }
 
     public function dynamicWhere(
@@ -157,6 +176,7 @@ class BuilderHelper
             if ($reflection->hasNativeMethod($methodName)) {
                 $methodReflection  = $reflection->getNativeMethod($methodName);
                 $hasScopeAttribute = false;
+
                 foreach ($methodReflection->getAttributes() as $attribute) {
                     // using string instead of class constant to avoid failing on older Laravel versions
                     if ($attribute->getName() === 'Illuminate\Database\Eloquent\Attributes\Scope') {
@@ -190,6 +210,7 @@ class BuilderHelper
                 $methodTag = $reflection->getMethodTags()[$scopeName];
 
                 $parameters = [];
+
                 foreach ($methodTag->getParameters() as $parameterName => $parameterTag) {
                     $parameters[] = new AnnotationScopeMethodParameterReflection(
                         $parameterName,
@@ -236,7 +257,7 @@ class BuilderHelper
 
         $queryBuilderReflection = $this->reflectionProvider->getClass(QueryBuilder::class);
 
-        if (in_array($methodName, $this->passthru, true)) {
+        if (in_array($methodName, $this->getPassthru(), true)) {
             return $queryBuilderReflection->getNativeMethod($methodName);
         }
 
@@ -249,17 +270,31 @@ class BuilderHelper
             return $this->macroMethodsClassReflectionExtension->getMethod($queryBuilderReflection, $methodName);
         }
 
-        return $this->dynamicWhere($methodName, new GenericObjectType($eloquentBuilder->getName(), [$modelType]));
+        return $this->dynamicWhere($methodName, $this->getBuilderType($eloquentBuilder->getName(), $modelType));
+    }
+
+    public function getBuilderType(string $builderClassName, Type $modelType): ObjectType
+    {
+        if (! $this->reflectionProvider->getClass($builderClassName)->isGeneric()) {
+            return new ObjectType($builderClassName);
+        }
+
+        return new GenericObjectType($builderClassName, [$modelType]);
     }
 
     /**
      * @throws MissingMethodFromReflectionException
-     * @throws ShouldNotHappenException
+     * @throws InvalidArgumentException
      */
     public function determineBuilderName(string $modelClassName): string
     {
         $modelReflection = $this->reflectionProvider->getClass($modelClassName);
-        $method          = $modelReflection->getNativeMethod('newEloquentBuilder');
+
+        if (! $modelReflection->is(Model::class)) {
+            throw new InvalidArgumentException($modelClassName . ' is not a Model.');
+        }
+
+        $method = $modelReflection->getNativeMethod('newEloquentBuilder');
 
         if ($method->getDeclaringClass()->getName() === Model::class) {
             $attrs = $modelReflection->getNativeReflection()->getAttributes('Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder'); //@phpstan-ignore argument.type (Attribute class might not exist)
@@ -286,5 +321,18 @@ class BuilderHelper
         }
 
         return $returnType->describe(VerbosityLevel::value());
+    }
+
+    public function determineBuilderClass(string $modelClassName, Type $modelType): Type|null
+    {
+        try {
+            $builderClassName = $this->determineBuilderName($modelClassName);
+        } catch (InvalidArgumentException) {
+            return null;
+        } catch (MissingMethodFromReflectionException) {
+            $builderClassName = EloquentBuilder::class;
+        }
+
+        return $this->getBuilderType($builderClassName, $modelType);
     }
 }

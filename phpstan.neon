@@ -1,6 +1,7 @@
 includes:
     - vendor/larastan/larastan/extension.neon
     - phpstan-baseline.neon
+    - phpstan-include.php
 
 parameters:
     level: 5
@@ -9,3 +10,5 @@ parameters:
         - routes
         - config
         - database
+    bootstrapFiles:
+        - phpstan-bootstrap.php

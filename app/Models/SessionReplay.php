@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 
 class SessionReplay extends Model
@@ -41,7 +42,8 @@ class SessionReplay extends Model
         return $this->belongsTo(Website::class, 'website_id', 'website_id');
     }
 
-    public function visitor()
+    /** @return BelongsTo<WebsiteVisitor, $this> */
+    public function visitor(): BelongsTo
     {
         return $this->belongsTo(WebsiteVisitor::class, 'visitor_id', 'visitor_id');
     }

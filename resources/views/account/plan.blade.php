@@ -33,8 +33,17 @@
         @foreach($plans as $plan)
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 {{ $user->plan_id === $plan->plan_id ? 'ring-2 ring-brand-600' : '' }}">
             <h4 class="font-semibold text-zinc-900">{{ $plan->name }}</h4>
+            @php
+                $planCurrency = \App\Support\Currency::normalize($user->payment_currency ?? '');
+                $planPrice = \App\Support\Currency::planPrice($plan, $planCurrency, 'monthly');
+            @endphp
             <p class="mt-1 text-2xl font-bold text-brand-600">
-                @json($plan->prices)
+                @if($planPrice !== null && $planPrice > 0)
+                    {{ \App\Support\Currency::format($planPrice, $planCurrency) }}
+                    <span class="text-sm font-medium text-zinc-400">/ {{ __('payments.monthly') }}</span>
+                @else
+                    {{ __('account.free_plan') }}
+                @endif
             </p>
             @if($user->plan_id !== $plan->plan_id)
             <a href="{{ route('payments.index', ['plan' => $plan->plan_id]) }}" class="mt-3 inline-block rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">

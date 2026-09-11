@@ -86,11 +86,18 @@ class AdminUserUpdate extends Controller
             'plan_settings.annotations_limit' => ['nullable', 'integer', 'min:-1'],
             'plan_settings.domains_limit' => ['nullable', 'integer', 'min:-1'],
             'plan_settings.dashboard_views_limit' => ['nullable', 'integer', 'min:-1'],
+            // M26 SEO 配额（此前白名单缺失：表单提交即被剥除，且保存会抹掉既有键）
+            'plan_settings.seo_audits_limit' => ['nullable', 'integer', 'min:-1'],
+            'plan_settings.seo_bulk_limit' => ['nullable', 'integer', 'min:-1'],
+            'plan_settings.seo_keywords_limit' => ['nullable', 'integer', 'min:-1'],
+            'plan_settings.seo_notifications_limit' => ['nullable', 'integer', 'min:-1'],
+            'plan_settings.seo_tools_limit' => ['nullable', 'integer', 'min:-1'],
+            'plan_settings.seo_history_retention_days' => ['nullable', 'integer', 'min:0'],
             'plan_settings.affiliate_commission_percentage' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
         // 权限开关（未勾选不提交 → 显式 false）
-        foreach (['email_reports_is_enabled', 'teams_is_enabled', 'no_ads', 'api_is_enabled', 'white_labeling_is_enabled'] as $flag) {
+        foreach (['email_reports_is_enabled', 'teams_is_enabled', 'no_ads', 'api_is_enabled', 'white_labeling_is_enabled', 'seo_ai_is_enabled'] as $flag) {
             $request->merge(['plan_settings' => array_merge(
                 (array) $request->input('plan_settings', []),
                 [$flag => $request->boolean('plan_settings.'.$flag)],
@@ -110,12 +117,20 @@ class AdminUserUpdate extends Controller
             'sessions_replays_limit', 'sessions_replays_retention', 'sessions_replays_time_limit',
             'websites_heatmaps_limit', 'websites_goals_limit', 'annotations_limit',
             'domains_limit', 'dashboard_views_limit', 'affiliate_commission_percentage',
+            'seo_audits_limit', 'seo_bulk_limit', 'seo_keywords_limit',
+            'seo_notifications_limit', 'seo_tools_limit', 'seo_history_retention_days',
             'email_reports_is_enabled', 'teams_is_enabled', 'no_ads', 'api_is_enabled',
-            'white_labeling_is_enabled', 'export',
+            'white_labeling_is_enabled', 'seo_ai_is_enabled', 'export',
         ];
         $planSettings = collect($request->input('plan_settings', []))
             ->only($planKeys)
             ->toArray();
+
+        // 修复前整列替换：表单未包含的既有键（如手工配置的 M26 SEO 配额）会在
+        // 每次保存用户资料时被静默抹掉。现先合并既有键、再剔除显式提交的
+        // null/空串（视同清除该键、回归套餐默认）——两种语义并存
+        $merged = array_merge((array) $user->plan_settings, $planSettings);
+        $planSettings = array_filter($merged, fn ($v) => $v !== null && $v !== '');
 
         // 密码（独立处理，空则不改）
         if (! empty($validated['password'])) {

@@ -258,3 +258,157 @@
     .reveal { animation: none; }
 }
 
+/* ============================================================
+ * 帮助文档正文排版（help_article .help-doc，样式对标 help.aliyun.com 文档页）
+ * Tailwind v4 未装 typography 插件，prose 类无效，故手写作用域样式
+ * ============================================================ */
+.help-doc { color: var(--color-zinc-700); }
+.help-doc > *:first-child { margin-top: 0; }
+
+.help-doc h2 {
+    margin: 2.25rem 0 1rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--color-zinc-100);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-zinc-900);
+    scroll-margin-top: 6rem;
+}
+.help-doc h3 {
+    margin: 1.75rem 0 .75rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-zinc-900);
+    scroll-margin-top: 6rem;
+}
+.help-doc p { margin: .75rem 0; }
+.help-doc a { color: var(--color-brand-600); text-decoration: underline; text-underline-offset: 3px; }
+.help-doc a:hover { color: var(--color-brand-700); }
+.help-doc strong { color: var(--color-zinc-900); font-weight: 600; }
+
+.help-doc ul,
+.help-doc ol { margin: .75rem 0; padding-left: 1.4rem; }
+.help-doc ul { list-style: disc; }
+.help-doc ol { list-style: decimal; }
+.help-doc li { margin: .4rem 0; padding-left: .25rem; }
+.help-doc li::marker { color: var(--color-zinc-400); }
+
+.help-doc code {
+    border-radius: .375rem;
+    background: var(--color-zinc-100);
+    padding: .125rem .4rem;
+    font-size: .85em;
+    color: var(--color-rose-600);
+}
+.help-doc pre {
+    margin: 1rem 0;
+    overflow-x: auto;
+    border-radius: .75rem;
+    background: var(--color-zinc-950);
+    padding: 1rem 1.25rem;
+}
+.help-doc pre code {
+    background: transparent;
+    padding: 0;
+    font-size: .8125rem;
+    line-height: 1.7;
+    color: var(--color-emerald-300);
+}
+
+.help-doc table {
+    width: 100%;
+    margin: 1rem 0;
+    border-collapse: collapse;
+    font-size: .875rem;
+    display: block;
+    overflow-x: auto;
+}
+.help-doc th,
+.help-doc td {
+    border: 1px solid var(--color-zinc-200);
+    padding: .5rem .75rem;
+    text-align: left;
+    vertical-align: top;
+}
+.help-doc th { background: var(--color-zinc-50); font-weight: 600; color: var(--color-zinc-900); white-space: nowrap; }
+
+/* 信息提示条：doc-note--info 蓝 / doc-note--warn 橙 / doc-note--tip 绿 */
+.help-doc .doc-note {
+    margin: 1rem 0;
+    border-left: 4px solid;
+    border-radius: .5rem;
+    padding: .875rem 1.125rem;
+    font-size: .875rem;
+}
+.help-doc .doc-note p { margin: 0; }
+.help-doc .doc-note--info { border-color: var(--color-sky-500); background: var(--color-sky-50); color: var(--color-sky-900); }
+.help-doc .doc-note--warn { border-color: var(--color-amber-500); background: var(--color-amber-50); color: var(--color-amber-900); }
+.help-doc .doc-note--tip { border-color: var(--color-emerald-500); background: var(--color-emerald-50); color: var(--color-emerald-900); }
+
+/* FAQ 折叠面板（阿里云「常见问题」样式） */
+.help-doc details.doc-faq {
+    margin: .75rem 0;
+    border: 1px solid var(--color-zinc-200);
+    border-radius: .625rem;
+    background: var(--color-zinc-50);
+}
+.help-doc details.doc-faq summary {
+    cursor: pointer;
+    list-style: none;
+    padding: .625rem .875rem;
+    font-weight: 500;
+    color: var(--color-zinc-800);
+    position: relative;
+    padding-right: 2.25rem;
+}
+.help-doc details.doc-faq summary::-webkit-details-marker { display: none; }
+.help-doc details.doc-faq summary::after {
+    content: '+';
+    position: absolute;
+    right: .875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-zinc-400);
+    font-weight: 600;
+}
+.help-doc details.doc-faq[open] summary::after { content: '−'; }
+.help-doc details.doc-faq > div {
+    padding: .25rem .875rem .75rem;
+    font-size: .875rem;
+    color: var(--color-zinc-600);
+}
+
+/* 有序步骤列表（带圆角数字标号） */
+.help-doc ol.doc-steps { list-style: none; padding-left: 0; counter-reset: doc-step; }
+.help-doc ol.doc-steps > li {
+    position: relative;
+    margin: .625rem 0;
+    padding-left: 2.1rem;
+}
+.help-doc ol.doc-steps > li::marker { content: none; }
+.help-doc ol.doc-steps > li::before {
+    counter-increment: doc-step;
+    content: counter(doc-step);
+    position: absolute;
+    left: 0;
+    top: .1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 9999px;
+    background: var(--color-brand-600);
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+/* 右栏「本页目录」滚动高亮 */
+.help-toc .toc-active {
+    border-left-color: var(--color-brand-600) !important;
+    background: var(--color-brand-50);
+    color: var(--color-brand-700) !important;
+    font-weight: 500;
+}
+

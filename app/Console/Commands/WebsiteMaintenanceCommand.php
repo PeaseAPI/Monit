@@ -53,6 +53,12 @@ class WebsiteMaintenanceCommand extends Command
                     'current_month_sessions_events' => 0,
                     'current_month_events_children' => 0,
                     'current_month_sessions_replays' => 0,
+                    // 规格 §13.1 websites_events_reset：plan_*_limit_notice 标志随计数一并归零，
+                    // 否则超限用户终身只收一次通知，跨月后 WebsitesLimitNoticeCommand
+                    // 的 where(flag,false) 永远查不到该站点，后续每月超限全部静默
+                    'plan_sessions_events_limit_notice' => false,
+                    'plan_events_children_limit_notice' => false,
+                    'plan_sessions_replays_limit_notice' => false,
                     'last_24_hours_pageviews' => 0,
                     'last_7_days_pageviews' => 0,
                 ]);

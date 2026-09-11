@@ -24,7 +24,8 @@
 
         <div class="flex flex-wrap items-center gap-2">
             @if (count($websites) > 1)
-                <select onchange="window.location='{{ route('dashboard') }}?website_id='+this.value+'&range={{ $range }}'"
+                <select data-base-url="{{ route('dashboard') }}" data-range="{{ $range }}"
+                        onchange="window.location=this.dataset.baseUrl+'?website_id='+this.value+'&range='+this.dataset.range"
                         class="rounded-xl border-zinc-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500">
                     @foreach ($websites as $w)
                         <option value="{{ $w->website_id }}" {{ $w->website_id === $website->website_id ? 'selected' : '' }}>{{ $w->name }}</option>

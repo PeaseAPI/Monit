@@ -4,6 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $log_id
+ * @property int $user_id
+ * @property string $type
+ * @property string $ip
+ * @property string $device_type
+ * @property string $os_name
+ * @property string $browser_name
+ * @property string $continent_code
+ * @property string $country_code
+ * @property string $city_name
+ * @property \Illuminate\Support\Carbon|null $datetime
+ * @property User|null $user
+ */
 class AccountLog extends Model
 {
     protected $primaryKey = 'log_id';

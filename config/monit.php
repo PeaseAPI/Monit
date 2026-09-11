@@ -71,6 +71,9 @@ return [
         'websites_goals_limit' => 10,
         'annotations_limit' => 10,
         'domains_limit' => 1,
+        // M22/M26 配额键兜底（仅 plan 记录缺失时生效；数值为建议值，产品可调）
+        'dashboard_views_limit' => 10,
+        'seo_keywords_limit' => 20,
         'teams_is_enabled' => false,
         'websites_sessions_replays_is_enabled' => false,
         'websites_heatmaps_is_enabled' => false,
@@ -174,6 +177,16 @@ return [
         'websites_heatmaps_limit' => ['label' => '热图数上限', 'type' => 'int', 'default' => 10],
         'domains_limit' => ['label' => '自定义域名上限', 'type' => 'int', 'default' => 3],
         'additional_domains' => ['label' => '额外域名数', 'type' => 'int', 'default' => 0],
+        'sessions_replays_time_limit' => ['label' => '单条回放时长上限（分钟）', 'type' => 'int', 'default' => 5],
+        // M26 SEO 配额（此前 Plan 编辑器无法配置，只能改库）；limit 类 default=-1
+        // 与 quota()/代码缺省语义一致；retention 类不可为 -1（保留期 -1 天=全删）
+        'seo_audits_limit' => ['label' => 'SEO 月度审计数', 'type' => 'int', 'default' => -1],
+        'seo_bulk_limit' => ['label' => 'SEO 批量审计单次 URL 数', 'type' => 'int', 'default' => -1],
+        'seo_keywords_limit' => ['label' => 'SEO 关键词跟踪数', 'type' => 'int', 'default' => -1],
+        'seo_notifications_limit' => ['label' => 'SEO 通知监控数', 'type' => 'int', 'default' => -1],
+        'seo_tools_limit' => ['label' => 'SEO 工具月度次数', 'type' => 'int', 'default' => -1],
+        'seo_history_retention_days' => ['label' => 'SEO 报告留存（天）', 'type' => 'int', 'default' => 90],
+        'seo_ai_is_enabled' => ['label' => 'SEO AI 摘要', 'type' => 'bool', 'default' => false],
         'affiliate_commission_percentage' => ['label' => '联盟佣金比例（%，插件启用时）', 'type' => 'int', 'default' => 20],
         'email_reports_is_enabled' => ['label' => '邮件报表', 'type' => 'bool', 'default' => false],
         'teams_is_enabled' => ['label' => '团队功能', 'type' => 'bool', 'default' => false],

@@ -75,18 +75,8 @@
 
         {{-- 回放播放器区域（rrweb-player）--}}
     <div class="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
-        <div class="px-6 py-4 border-b border-zinc-100 flex items-center justify-between">
+        <div class="px-6 py-4 border-b border-zinc-100">
             <h2 class="text-lg font-semibold text-zinc-800">{{ __('stats.replay_player') }}</h2>
-            <div class="flex items-center gap-2" id="replay-controls" style="display:none">
-                <button id="replay-play" class="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700">▶ {{ __('stats.replay_play') }}</button>
-                <button id="replay-pause" class="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50" style="display:none">⏸ {{ __('stats.replay_pause') }}</button>
-                <select id="replay-speed" class="rounded-lg border border-zinc-200 px-2 py-1 text-xs text-zinc-600">
-                    <option value="1">1x</option>
-                    <option value="2">2x</option>
-                    <option value="4">4x</option>
-                    <option value="8">8x</option>
-                </select>
-            </div>
         </div>
         <div id="replay-container" class="relative bg-zinc-900" style="min-height:480px" data-events-url="{{ route('stats.replays.events', [$website->website_id, $replay->replay_id]) }}">
             <div id="replay-loading" class="absolute inset-0 flex items-center justify-center">
@@ -114,7 +104,6 @@
     const eventsUrl = document.getElementById('replay-container').dataset.eventsUrl;
     const loading = document.getElementById('replay-loading');
     const empty = document.getElementById('replay-empty');
-    const controls = document.getElementById('replay-controls');
     const container = document.getElementById('replay-container');
 
     fetch(eventsUrl)
@@ -125,35 +114,26 @@
                 empty.style.display = '';
                 return;
             }
-            controls.style.display = '';
-
-            // 创建 rrweb-player 目标 DOM
+            // 控制条统一使用 rrweb-player 自带底栏（进度/时间/倍速/播放暂停齐全），
+            // 不再叠加自定义按钮——修复播放键与时间戳重叠、控制区拥挤问题
             const playerRoot = document.createElement('div');
             playerRoot.style.width = '100%';
             container.appendChild(playerRoot);
 
+            // 视口高度随容器宽度自适应（约 16:10，钳制 420-760px），替代固定 480px 裁剪
+            const playerHeight = Math.max(420, Math.min(760, Math.round(container.clientWidth * 0.62)));
+
             try {
-                const player = new rrwebPlayer({
+                new rrwebPlayer({
                     target: playerRoot,
                     props: {
                         events: events,
                         width: container.clientWidth,
-                        height: 480,
+                        height: playerHeight,
                         autoPlay: false,
                         showController: true,
                         UNSAFE_replayCanvas: true,
                     },
-                });
-
-                // 播放/暂停按钮
-                const playBtn = document.getElementById('replay-play');
-                const pauseBtn = document.getElementById('replay-pause');
-                playBtn.addEventListener('click', () => { player.play(); playBtn.style.display='none'; pauseBtn.style.display=''; });
-                pauseBtn.addEventListener('click', () => { player.pause(); pauseBtn.style.display='none'; playBtn.style.display=''; });
-
-                // 速度选择
-                document.getElementById('replay-speed').addEventListener('change', function () {
-                    player.setSpeed(Number(this.value));
                 });
             } catch (e) {
                 console.error('rrweb-player init failed:', e);

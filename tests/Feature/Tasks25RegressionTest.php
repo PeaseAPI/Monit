@@ -204,8 +204,10 @@ class Tasks25RegressionTest extends TestCase
 
         $this->assertStringContainsString('ensureRrweb', $js);
         $this->assertStringContainsString('rrweb-all.umd.min.js', $js);
-        $this->assertStringContainsString('cdn.jsdelivr.net', $js);
         $this->assertStringContainsString('data-replay', $js);
+        // 仅自托管：不回退第三方 CDN（隐私承诺「零第三方请求」；jsDelivr 的
+        // rrweb dist 自带失效 sourceMappingURL 会再次制造 map 404）
+        $this->assertStringNotContainsString('cdn.jsdelivr.net', $js);
     }
 
     /* ========== #9: 域名添加后即时 whois ========== */

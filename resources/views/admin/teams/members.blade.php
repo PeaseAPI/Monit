@@ -19,7 +19,7 @@
             <td class="px-6 py-3"><span class="rounded-full px-2 py-0.5 text-xs {{ $m->status === 1 ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500' }}">{{ $m->status === 1 ? __('admin.member_active') : __('admin.member_invited') }}</span></td>
             <td class="px-6 py-3 text-zinc-500">{{ $m->last_activity?->format('Y-m-d H:i') ?: '—' }}</td>
             <td class="px-6 py-3 text-right">
-                <form method="POST" action="{{ route('admin.teams.members.destroy', [$m->team_id, $m->team_member_id]) }}" class="inline">@csrf @method('DELETE')<button class="text-sm text-red-500 hover:text-red-700" onclick="return confirm('{{ __('common.confirm_delete') }}')">{{ __('common.delete') }}</button></form>
+                <form method="POST" action="{{ route('admin.teams.members.destroy', [$m->team_id, $m->team_member_id]) }}" class="inline">@csrf @method('DELETE')<button class="text-sm text-red-500 hover:text-red-700" onclick="return confirm(this.dataset.msg)" data-msg="{{ __('common.confirm_delete') }}">{{ __('common.delete') }}</button></form>
             </td>
         </tr>
         @empty<tr><td class="px-6 py-8 text-center text-zinc-500" colspan="6">{{ __('common.no_data') }}</td></tr>@endforelse

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -32,7 +33,8 @@ class Code extends Model
         ];
     }
 
-    public function redeemedCodes()
+    /** @return HasMany<RedeemedCode, $this> */
+    public function redeemedCodes(): HasMany
     {
         return $this->hasMany(RedeemedCode::class, 'code_id', 'code_id');
     }

@@ -31,7 +31,11 @@
                                     <div id="click-no-snapshot" class="absolute inset-0 flex items-center justify-center bg-zinc-50 {{ ($hasSnapshot || $hasLegacySnapshot) ? 'hidden' : '' }}">
                 <div class="text-center">
                     <svg class="mx-auto h-12 w-12 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
-                    <p class="mt-3 text-sm text-zinc-400">{{ __('stats.no_heatmaps') }}</p>
+                    <p class="mt-3 text-sm text-zinc-500">{{ __('stats.heatmap_waiting_snapshot') }}</p>
+                    <p class="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-zinc-400">{{ __('stats.heatmap_waiting_snapshot_hint') }}</p>
+                    <button type="button" onclick="window.open(this.dataset.url, '_blank')"
+                            data-url="{{ $website->scheme }}://{{ $website->host }}{{ $heatmap->path }}"
+                            class="mt-4 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700">{{ __('stats.heatmap_generate_snapshot') }}</button>
                 </div>
             </div>
             @if($hasLegacySnapshot)
@@ -73,10 +77,21 @@
 <script src="{{ asset('assets/pixel/rrweb-player.min.js') }}"></script>
 <script id="json-clicks" type="application/json">@json($clicks)</script>
 <script id="json-scrolls" type="application/json">@json($scrolls)</script>
+@php
+    // @json 指令参数须为简单变量：复杂表达式（含 "]), " 序列）会被 Blade 编译器错误截断产出损坏 PHP
+    $mapMeta = [
+        'snapshot_url' => route('stats.heatmaps.snapshot', [$website->website_id, $heatmap->heatmap_id]),
+        'device' => $device,
+        'no_data_text' => __('stats.no_click_data'),
+        'no_scroll_data_text' => __('stats.no_scroll_data'),
+    ];
+@endphp
+<script id="json-map-meta" type="application/json">@json($mapMeta)</script>
 <script>
 const clicksData = JSON.parse(document.getElementById('json-clicks').textContent);
 const scrollsData = JSON.parse(document.getElementById('json-scrolls').textContent);
-const snapshotUrl = '{{ route("stats.heatmaps.snapshot", [$website->website_id, $heatmap->heatmap_id]) }}?device={{ $device }}';
+const mapMeta = JSON.parse(document.getElementById('json-map-meta').textContent);
+const snapshotUrl = mapMeta.snapshot_url + '?device=' + mapMeta.device;
 let clickReplayer = null;
 let scrollReplayer = null;
 
@@ -156,7 +171,7 @@ function drawClickHeatmap() {
     const container = canvas.parentElement;
     canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!clicksData.length) { ctx.fillStyle = '#a1a1aa'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('{{ __("stats.no_click_data") }}', canvas.width / 2, canvas.height / 2); return; }
+    if (!clicksData.length) { ctx.fillStyle = '#a1a1aa'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(mapMeta.no_data_text, canvas.width / 2, canvas.height / 2); return; }
     const maxCount = Math.max(...clicksData.map(c => parseInt(c.count) || 1));
     clicksData.forEach(point => {
         const x = parseFloat(point.x_normalized) / 100 * canvas.width;
@@ -178,7 +193,7 @@ function drawScrollHeatmap() {
     canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const entries = Object.entries(scrollsData);
-    if (!entries.length) { ctx.fillStyle = '#a1a1aa'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('{{ __("stats.no_scroll_data") }}', canvas.width / 2, canvas.height / 2); return; }
+    if (!entries.length) { ctx.fillStyle = '#a1a1aa'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(mapMeta.noScrollDataText, canvas.width / 2, canvas.height / 2); return; }
     const maxCount = Math.max(...entries.map(e => e[1]));
     const barHeight = Math.max(4, canvas.height / 100);
     entries.forEach(([scrollPct, count]) => {

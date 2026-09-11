@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 
 class Ticket extends Model
@@ -29,7 +30,8 @@ class Ticket extends Model
         return ['status' => 'integer', 'last_reply_at' => 'datetime', 'datetime' => 'datetime'];
     }
 
-    public function user()
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }

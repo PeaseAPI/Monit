@@ -76,7 +76,8 @@ HTML;
         <div class="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
             <div class="flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-zinc-700">{{ __('dashboard.embed_code') }}</h3>
-                <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('snippet').textContent).then(()=>{this.textContent='{{ __('dashboard.copied') }}';setTimeout(()=>this.textContent='{{ __('dashboard.copy_code') }}',1500)})"
+                <button type="button" data-copied-text="{{ __('dashboard.copied') }}" data-copy-text="{{ __('dashboard.copy_code') }}"
+                        onclick="navigator.clipboard.writeText(document.getElementById('snippet').textContent).then(()=>{this.textContent=this.dataset.copiedText;setTimeout(()=>this.textContent=this.dataset.copyText,1500)})"
                         class="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700">
                     {{ __('dashboard.copy_code') }}
                 </button>

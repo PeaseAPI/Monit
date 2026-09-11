@@ -92,7 +92,7 @@
                             @csrf
                             <button class="ml-3 text-sm text-zinc-600 hover:underline">{{ __('seo.re_audit') }}</button>
                         </form>
-                        <form method="POST" action="{{ route('seo.audits.destroy', $audit->seo_audit_id) }}" class="inline" onsubmit="return confirm('{{ __('seo.confirm_delete') }}')">
+                        <form method="POST" action="{{ route('seo.audits.destroy', $audit->seo_audit_id) }}" class="inline" onsubmit="return confirm(this.dataset.msg)" data-msg="{{ __('seo.confirm_delete') }}">
                             @csrf @method('DELETE')
                             <button class="ml-3 text-sm text-red-600 hover:underline">{{ __('common.delete') }}</button>
                         </form>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -27,12 +28,14 @@ class TeamMemberAssociation extends Model
         ];
     }
 
-    public function website()
+    /** @return BelongsTo<Website, $this> */
+    public function website(): BelongsTo
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');
     }
 
-    public function member()
+    /** @return BelongsTo<TeamMember, $this> */
+    public function member(): BelongsTo
     {
         return $this->belongsTo(TeamMember::class, 'team_member_id', 'team_member_id');
     }

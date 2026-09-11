@@ -234,6 +234,24 @@ class M26SeoTest extends TestCase
         $this->assertSame(0, SeoToolUse::count());
     }
 
+    public function test_bulk_audit_rejected_when_bulk_limit_zero(): void
+    {
+        // 0=禁批量（seo_bulk_limit）：提前拦截并提示，而非入队 0 个任务后
+        // 返回「已入队」成功提示误导用户；sitemap 闭包同理不得静默空转
+        Queue::fake();
+        $this->user->forceFill(['plan_settings' => array_merge((array) $this->user->plan_settings, ['seo_bulk_limit' => 0])])->save();
+
+        $this->actingAs($this->user)
+            ->post(route('seo.audits.store'), [
+                'type' => 'bulk',
+                'urls' => "https://a.test/page\nhttps://b.test/page",
+            ])
+            ->assertSessionHasErrors();
+
+        Queue::assertNothingPushed();
+        $this->assertSame(0, SeoAudit::count());
+    }
+
     public function test_offline_tools_return_expected_output(): void
     {
         $runner = app(ToolRunner::class);

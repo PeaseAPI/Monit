@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\HelpArticle;
 use App\Models\HelpCategory;
 use App\Models\User;
+use Database\Seeders\HelpCenterSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -107,5 +108,54 @@ class HelpCenterTest extends TestCase
         $this->actingAs($admin)->delete('/admin/help-categories/'.$category->category_id)->assertSessionHas('success');
         $this->assertNull($article->fresh()->category_id);
         $this->assertDatabaseMissing('help_categories', ['category_id' => $category->category_id]);
+    }
+
+    /**
+     * Round 10：官方文档种子幂等入库（10 分类 / 45 篇），前台完整可见
+     */
+    public function test_help_center_seeder_is_idempotent_and_public(): void
+    {
+        $this->seed(HelpCenterSeeder::class);
+        $this->seed(HelpCenterSeeder::class); // 重复执行不产生重复数据
+
+        $this->assertSame(10, HelpCategory::count());
+        $this->assertSame(45, HelpArticle::count());
+
+        // 未分类之外的每篇文章都有归属分类
+        $this->assertSame(45, HelpArticle::whereNotNull('category_id')->count());
+        $this->assertSame(45, HelpArticle::where('is_published', true)->count());
+
+        // 前台首页展示分类与文章
+        $this->get('/help')
+            ->assertOk()
+            ->assertSee(__('help.doc_nav'))
+            ->assertSee('快速入门')
+            ->assertSee('管理员指南')
+            ->assertSee('五分钟接入：从注册到看到数据')
+            ->assertSee('系统设置详解（全部设置分组）');
+    }
+
+    /**
+     * Round 10：详情页三栏文档布局（左目录树 + 右本页目录容器 + 上下篇）
+     */
+    public function test_article_detail_renders_doc_layout_and_toc(): void
+    {
+        $this->seed(HelpCenterSeeder::class);
+
+        $article = HelpArticle::where('url', 'quick-start')->firstOrFail();
+
+        $this->get('/help/article/'.$article->url)
+            ->assertOk()
+            ->assertSee('help-doc')                       // 正文排版作用域
+            ->assertSee('help-toc')                       // 右栏本页目录容器
+            ->assertSee(__('help.on_this_page'))
+            ->assertSee(__('help.doc_nav'))
+            ->assertSee('help-nav')                       // 左侧目录树
+            // 正文内含提示条 / 步骤 / 代码块组件
+            ->assertSee('doc-note')
+            ->assertSee('doc-steps')
+            // 同分类上下篇导航存在
+            ->assertSee(__('help.prev_article'))
+            ->assertSee(__('help.next_article'));
     }
 }

@@ -139,7 +139,24 @@ class IndexController extends Controller
             ->orderBy('order')->limit(5)
             ->get();
 
-        return view('help_article', compact('article', 'related'));
+        // 左侧文档目录树（仿帮助文档站：当前分类展开高亮）
+        $navCategories = HelpCategory::orderBy('order')->orderBy('category_id')->get();
+        $navArticles = HelpArticle::where('is_published', true)
+            ->orderBy('order')->orderByDesc('article_id')
+            ->get(['article_id', 'category_id', 'title', 'url']);
+
+        // 同分类内的上一篇 / 下一篇（按 order 升序）
+        $siblings = HelpArticle::where('is_published', true)
+            ->where('category_id', $article->category_id)
+            ->orderBy('order')->orderByDesc('article_id')
+            ->get(['article_id', 'title', 'url']);
+        $currentIndex = $siblings->search(fn ($a) => $a->article_id === $article->article_id);
+        $prevArticle = $currentIndex > 0 ? $siblings[$currentIndex - 1] : null;
+        $nextArticle = $currentIndex !== false && $currentIndex < $siblings->count() - 1 ? $siblings[$currentIndex + 1] : null;
+
+        return view('help_article', compact(
+            'article', 'related', 'navCategories', 'navArticles', 'prevArticle', 'nextArticle',
+        ));
     }
 
     /**
@@ -212,14 +229,26 @@ class IndexController extends Controller
 
         // lastmod：文章用发布时间、CMS 页用更新时间（搜索引擎抓取调度信号；
         // 静态路由无自然修改时间，省略该元素比编造值更符合规范）
-        foreach (BlogPost::where('is_published', true)->orderByDesc('datetime')->limit(500)->get() as $post) {
-            $urls[] = ['loc' => route('blog.post', $post->url), 'priority' => '0.7',
-                'lastmod' => optional($post->updated_at ?? $post->datetime)->toAtomString()];
+        //
+        // SEO 关键路径永不 500：content 表（2026_08_28_000015 建）在个别老安装
+        // 可能未迁移到位——查询异常时优雅降级为仅静态 URL，而不是让搜索引擎
+        // 抓到 500（关联线上事故：生产 /sitemap.xml 500）
+        try {
+            foreach (BlogPost::where('is_published', true)->orderByDesc('datetime')->limit(500)->get() as $post) {
+                $urls[] = ['loc' => route('blog.post', $post->url), 'priority' => '0.7',
+                    'lastmod' => optional($post->updated_at ?? $post->datetime)->toAtomString()];
+            }
+        } catch (\Throwable) {
+            // blog_posts 表缺失/异常：跳过文章条目
         }
 
-        foreach (Page::where('is_published', true)->limit(200)->get() as $page) {
-            $urls[] = ['loc' => route('page', $page->url), 'priority' => '0.5',
-                'lastmod' => optional($page->updated_at)->toAtomString()];
+        try {
+            foreach (Page::where('is_published', true)->limit(200)->get() as $page) {
+                $urls[] = ['loc' => route('page', $page->url), 'priority' => '0.5',
+                    'lastmod' => optional($page->updated_at)->toAtomString()];
+            }
+        } catch (\Throwable) {
+            // pages 表缺失/异常：跳过 CMS 页条目
         }
 
         return response()

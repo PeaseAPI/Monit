@@ -76,6 +76,29 @@
 
     /* ---------------- 发送 ---------------- */
 
+    /* 浏览器对 sendBeacon / keepalive fetch 共享 64KB 队列配额（含请求头开销），
+     * 超限后请求被浏览器直接丢弃（控制台报 "Reached maximum amount of queued data
+     * of 64Kb for keepalive requests"，数据静默丢失）。回放批次 / DOM 全量快照等
+     * 大 payload 必须绕开 keepalive 通道改走普通 fetch（无 64KB 限制；服务端
+     * nginx client_max_body_size 20m 可承载）。阈值预留 8KB 余量给请求头。 */
+    var MAX_KEEPALIVE_BODY = 56 * 1024;
+
+    function post(body, keepalive) {
+        try {
+            return fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body,
+                keepalive: !!keepalive,
+                credentials: 'omit',
+                cache: 'no-store',
+                mode: 'cors'
+            }).catch(function () {});
+        } catch (e) {
+            return null;
+        }
+    }
+
     function send(payload, useBeacon) {
         payload.visitor_uuid = getVisitorUuid();
         if (settings.mode === 'advanced') {
@@ -87,25 +110,22 @@
         payload.url = location.href;
 
         var body = 'data=' + encodeURIComponent(JSON.stringify(payload));
+        var beaconSafe = body.length <= MAX_KEEPALIVE_BODY;
 
-        if (useBeacon && navigator.sendBeacon) {
+        if (useBeacon && beaconSafe && navigator.sendBeacon) {
             try {
-                navigator.sendBeacon(endpoint, new Blob([body], { type: 'application/x-www-form-urlencoded' }));
-                return;
-            } catch (e) { /* 降级 fetch */ }
+                // 返回 false = 入队失败（64KB 配额已被占满等）→ 降级重试
+                if (navigator.sendBeacon(endpoint, new Blob([body], { type: 'application/x-www-form-urlencoded' }))) {
+                    return null;
+                }
+            } catch (e) { /* 降级重试 */ }
+            // 配额满导致 beacon 失败时 keepalive fetch 受同样的 64KB 限制，
+            // 但小 payload 仍有机会入队 —— 卸载期保命优先尝试
+            return post(body, true);
         }
 
-        try {
-            fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: body,
-                keepalive: true,
-                credentials: 'omit',
-                cache: 'no-store',
-                mode: 'cors'
-            }).catch(function () {});
-        } catch (e) {}
+        // 大 payload（回放批次 / 热图快照）或常规请求：普通 fetch 不受 64KB 配额限制
+        return post(body, false);
     }
 
     /* ---------------- 页面数据 ---------------- */
@@ -300,39 +320,45 @@
             this.loading = true;
 
             var self = this;
-            var local = host + '/assets/pixel/rrweb-all.umd.min.js';
-            var candidates = [
-                local,
-                'https://cdn.jsdelivr.net/npm/rrweb@2.0.0-alpha.18/dist/rrweb.umd.min.js'
-            ];
-
-            var tryLoad = function (i) {
-                if (i >= candidates.length) {
-                    // 全部失败：仍然回调（让调用方继续，只是 rrweb 不可用）
-                    self.loading = false;
-                    cb();
-                    return;
-                }
+            // 仅自托管（host 上的 rrweb-all.umd.min.js）：不回退第三方 CDN。
+            // 原因 1：jsDelivr 的 rrweb dist 文件自带失效 sourceMappingURL 注释，
+            //         DevTools 打开时又会产生 map 404（与已修复的本地文件同病）；
+            // 原因 2：项目隐私承诺是「零第三方请求」（GDPR/自托管），回退 CDN 违背。
+            // 加载失败时仅 console.warn 诊断（无网络请求），调用方继续走
+            // 「rrweb 不可用」容错分支（回放/热图快照静默降级，页面不受影响）。
+            var tryLoad = function () {
                 var s = document.createElement('script');
-                s.src = candidates[i];
+                s.src = host + '/assets/pixel/rrweb-all.umd.min.js';
                 s.async = true;
                 s.onload = function () {
-                    if (window.rrweb) {
-                        self.loading = false;
-                        cb();
-                        // 触发排队回调
-                        if (self._pendingCbs) {
-                            var pending = self._pendingCbs;
-                            self._pendingCbs = null;
-                            pending.forEach(function (fn) { fn(); });
-                        }
-                    } else tryLoad(i + 1);
+                    if (!window.rrweb) {
+                        // 脚本加载但全局缺失（被 CSP/扩展拦截等）
+                        console.warn('[Monit] rrweb script loaded but window.rrweb missing');
+                    }
+                    self.loading = false;
+                    cb();
+                    // 触发排队回调
+                    if (self._pendingCbs) {
+                        var pending = self._pendingCbs;
+                        self._pendingCbs = null;
+                        pending.forEach(function (fn) { fn(); });
+                    }
                 };
-                s.onerror = function () { tryLoad(i + 1); };
+                s.onerror = function () {
+                    console.warn('[Monit] rrweb script failed to load:', s.src);
+                    self.loading = false;
+                    cb();
+                    // 触发排队回调
+                    if (self._pendingCbs) {
+                        var pending = self._pendingCbs;
+                        self._pendingCbs = null;
+                        pending.forEach(function (fn) { fn(); });
+                    }
+                };
                 document.head.appendChild(s);
             };
 
-            tryLoad(0);
+            tryLoad();
         },
 
         // Start rrweb recording if replay OR heatmap needs it.
@@ -403,7 +429,34 @@
             // Only send replay data if replay is enabled
             if (!settings.replay) { this._buffer = []; return; }
 
-            send({ type: 'replays', data: { events: this._buffer.splice(0) } }, true);
+            // 按 payload 字节预算分批：rrweb 每 10s 的全量快照（checkoutEveryNms）
+            // 单事件可达数十 KB，整包一次性发送会撞上 sendBeacon / keepalive fetch
+            // 共享的 64KB 队列配额而被浏览器整体丢弃。分批后由 send() 自动为
+            // 超限批次选择普通 fetch 通道。批次串行发送：后端按"读取→合并→写回"
+            // 追加事件，乱序并发到达会互相覆盖（丢整批）。
+            var events = this._buffer.splice(0);
+            var batches = [];
+            var batch = [];
+            var batchBytes = 0;
+            for (var i = 0; i < events.length; i++) {
+                var bytes;
+                try { bytes = JSON.stringify(events[i]).length; } catch (e) { bytes = 0; }
+                if (batch.length && batchBytes + bytes > 48 * 1024) {
+                    batches.push(batch);
+                    batch = [];
+                    batchBytes = 0;
+                }
+                batch.push(events[i]);
+                batchBytes += bytes;
+            }
+            if (batch.length) batches.push(batch);
+
+            var pending = Promise.resolve();
+            batches.forEach(function (b) {
+                pending = pending.then(function () {
+                    return send({ type: 'replays', data: { events: b } }, false) || Promise.resolve();
+                });
+            });
         }
     };
 

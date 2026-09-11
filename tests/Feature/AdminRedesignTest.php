@@ -133,9 +133,10 @@ class AdminRedesignTest extends TestCase
         $this->assertSame('baidu', Settings::get('maps.provider'));
         $this->assertSame('TEST_BAIDU_AK', Settings::get('maps.baidu_key'));
 
-        // 统计页按百度渲染：加载百度 API 并打点
+        // 统计页按百度渲染：加载百度 API 并打点（AK 经 data-baidu-key 注入、脚本内拼接 URL）
         $this->get(route('admin.statistics'))->assertOk()
-            ->assertSee('api.map.baidu.com/api?v=3.0&ak=TEST_BAIDU_AK', false)
+            ->assertSee('api.map.baidu.com/api?v=3.0&ak=', false)
+            ->assertSee('data-baidu-key="TEST_BAIDU_AK"', false)
             ->assertSee('BMap.Map', false);
 
         // 清空 AK：自动回退内置 SVG，避免空白
@@ -160,6 +161,7 @@ class AdminRedesignTest extends TestCase
         Settings::flush();
 
         $this->get(route('admin.statistics'))->assertOk()
-            ->assertSee('maps.googleapis.com/maps/api/js?key=TEST_G_KEY', false);
+            ->assertSee('maps.googleapis.com/maps/api/js?key=', false)
+            ->assertSee('data-google-key="TEST_G_KEY"', false);
     }
 }

@@ -21,7 +21,7 @@
             <td class="px-6 py-3 text-right whitespace-nowrap">
                 <form method="POST" action="{{ route('admin.blog-posts.toggle-publish', $p->post_id) }}" class="inline">@csrf @method('PUT')<button class="mr-3 text-sm text-zinc-500 hover:text-brand-600">{{ $p->is_published ? __('msg.action_unpublish') : __('msg.action_publish') }}</button></form>
                 <a href="{{ route('admin.blog-posts.edit', $p->post_id) }}" class="mr-3 text-sm text-zinc-500 hover:text-brand-600">{{ __('common.edit') }}</a>
-                <form method="POST" action="{{ route('admin.blog-posts.destroy', $p->post_id) }}" class="inline">@csrf @method('DELETE')<button class="text-sm text-red-500 hover:text-red-700" onclick="return confirm('{{ __('common.confirm_delete') }}')">{{ __('common.delete') }}</button></form>
+                <form method="POST" action="{{ route('admin.blog-posts.destroy', $p->post_id) }}" class="inline">@csrf @method('DELETE')<button class="text-sm text-red-500 hover:text-red-700" onclick="return confirm(this.dataset.msg)" data-msg="{{ __('common.confirm_delete') }}">{{ __('common.delete') }}</button></form>
             </td>
         </tr>
         @empty<tr><td class="px-6 py-8 text-center text-zinc-500" colspan="4">{{ __('common.no_data') }}</td></tr>@endforelse

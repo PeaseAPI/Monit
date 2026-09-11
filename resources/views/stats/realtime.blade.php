@@ -14,7 +14,7 @@
             <span id="realtime-count" class="text-6xl font-bold text-zinc-900">{{ $count }}</span>
         </div>
         <p class="mt-3 text-sm text-zinc-500">{{ __('stats.online_visitors') }}</p>
-        <p class="mt-1 text-xs text-zinc-400" id="realtime-updated">{{ now()->toDateTimeString() }}</p>
+        <p class="mt-1 text-xs text-zinc-400" id="realtime-updated" data-url="{{ route('stats.realtime.data', $website->website_id) }}">{{ now()->toDateTimeString() }}</p>
     </div>
 
     @if(! empty($overview))
@@ -29,7 +29,7 @@
 
 <script>
     (function () {
-        var url = {{ json_encode(route('stats.realtime.data', $website->website_id)) }};
+        var url = document.getElementById('realtime-updated').dataset.url;
         function tick() {
             fetch(url, { headers: { 'Accept': 'application/json' } })
                 .then(function (r) { return r.json(); })

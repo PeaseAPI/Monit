@@ -7,11 +7,14 @@ use MaxMind\Db\Reader;
 /**
  * Monit GeoIP 地理位置解析
  *
- * 本地 MaxMind mmdb 库查询（GeoLite2 与 db-ip country lite 格式兼容）：
+ * 本地 MaxMind mmdb 库查询（GeoLite2 与 db-ip city lite 格式兼容）：
  * - 库路径由 config('services.geoip.mmdb_path') 指定，默认 storage/app/geoip/country.mmdb
- * - 免费库下载（免注册，每月更新）：
- *   curl -L https://download.db-ip.com/free/dbip-country-lite-$(date +%Y-%m).mmdb.gz \
+ * - **必须使用 City（城市）库**：country 库无 city 字段，位置只能识别到国家。
+ *   免费城市库下载（免注册，每月更新）：
+ *   curl -L https://download.db-ip.com/free/dbip-city-lite-$(date +%Y-%m).mmdb.gz \
  *     | gunzip > storage/app/geoip/country.mmdb
+ * - City 库记录含 city.names / location；无城市判定的 IP（CDN/数据中心）自动
+ *   回退为仅显示国家——满足「优先城市、无法判定才只显示国家」的展示要求
  * - 未放置库文件时静默返回空结果（国家显示为未知，不影响采集）
  *
  * 关联：PixelTracker（写入 continent_code/country_code）、CountryNames（展示层国名/国旗）

@@ -9,7 +9,7 @@
 
 <div class="mb-6 rounded-2xl border border-zinc-200 bg-white p-6">
     <h2 class="text-sm font-semibold text-zinc-900">{{ __('admin.category_new') }}</h2>
-    <form method="POST" id="category-form" action="{{ route('admin.blog-posts-categories.store') }}" class="mt-4 grid gap-4 sm:grid-cols-4">
+    <form method="POST" id="category-form" action="{{ route('admin.blog-posts-categories.store') }}" data-store-url="{{ route('admin.blog-posts-categories.store') }}" data-update-base="{{ url('admin/blog-posts-categories') }}" class="mt-4 grid gap-4 sm:grid-cols-4">
         @csrf
         <input type="hidden" name="_method" value="POST" id="form-method">
         <div>
@@ -45,8 +45,8 @@
             <td class="px-6 py-3 font-mono text-xs text-zinc-500">{{ $category->url }}</td>
             <td class="px-6 py-3 text-zinc-500">{{ $category->order ?? 0 }}</td>
             <td class="px-6 py-3 text-right whitespace-nowrap">
-                <button onclick="editCategory({{ $category->category_id }}, {{ Js::from($category->title) }}, {{ Js::from($category->url) }}, {{ $category->order ?? 0 }})" class="mr-3 text-sm text-zinc-500 hover:text-brand-600">{{ __('common.edit') }}</button>
-                <form method="POST" action="{{ route('admin.blog-posts-categories.destroy', $category->category_id) }}" class="inline">@csrf @method('DELETE')<button class="text-sm text-red-500 hover:text-red-700" onclick="return confirm('{{ __('common.confirm_delete') }}')">{{ __('common.delete') }}</button></form>
+                <button type="button" data-edit-category="{{ $category->category_id }}" data-title="{{ $category->title }}" data-url="{{ $category->url }}" data-order="{{ $category->order ?? 0 }}" class="mr-3 text-sm text-zinc-500 hover:text-brand-600">{{ __('common.edit') }}</button>
+                <form method="POST" action="{{ route('admin.blog-posts-categories.destroy', $category->category_id) }}" class="inline">@csrf @method('DELETE')<button class="text-sm text-red-500 hover:text-red-700" onclick="return confirm(this.dataset.msg)" data-msg="{{ __('common.confirm_delete') }}">{{ __('common.delete') }}</button></form>
             </td>
         </tr>
         @empty<tr><td class="px-6 py-8 text-center text-zinc-500" colspan="4">{{ __('common.no_data') }}</td></tr>@endforelse
@@ -57,7 +57,7 @@
 <script>
 function editCategory(id, title, url, order) {
     var form = document.getElementById('category-form');
-    form.action = '{{ url('admin/blog-posts-categories') }}/' + id;
+    form.action = form.dataset.updateBase + '/' + id;
     document.getElementById('form-method').value = 'PUT';
     document.getElementById('f-title').value = title;
     document.getElementById('f-url').value = url;
@@ -66,9 +66,14 @@ function editCategory(id, title, url, order) {
 }
 function resetForm() {
     var form = document.getElementById('category-form');
-    form.action = '{{ route('admin.blog-posts-categories.store') }}';
+    form.action = form.dataset.storeUrl;
     document.getElementById('form-method').value = 'POST';
     form.reset();
 }
+document.querySelectorAll('[data-edit-category]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        editCategory(Number(btn.dataset.editCategory), btn.dataset.title, btn.dataset.url, Number(btn.dataset.order));
+    });
+});
 </script>
 @endsection
