@@ -613,12 +613,6 @@ parameters:
 			path: app/Services/ImageOptimizer.php
 
 		-
-			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
-			identifier: larastan.noEnvCallsOutsideOfConfig
-			count: 1
-			path: app/Services/LicenseManager.php
-
-		-
 			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
 			identifier: nullCoalesce.offset
 			count: 1

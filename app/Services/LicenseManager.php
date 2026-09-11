@@ -194,11 +194,11 @@ class LicenseManager
     }
 
     /**
-     * 内置公钥（hex）；可用 MONIT_LICENSE_PUBLIC_KEY 覆盖
+     * 内置公钥（hex）；经 config/monit.php license.public_key ← MONIT_LICENSE_PUBLIC_KEY
+     * （env 只在 config 层读取：config:cache 后运行时 env() 恒为 null，勿在此直读）
      */
     public static function publicKey(): string
     {
-        return (string) (config('monit.license.public_key')
-            ?? trim((string) env('MONIT_LICENSE_PUBLIC_KEY', '')));
+        return trim((string) config('monit.license.public_key', ''));
     }
 }
