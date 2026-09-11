@@ -2,6 +2,7 @@
 
 namespace App\Services\Seo;
 
+use App\Support\Typed;
 use DOMDocument;
 use DOMNodeList;
 
@@ -113,7 +114,9 @@ class AuditContext
     {
         foreach ($this->headers as $key => $value) {
             if (strcasecmp((string) $key, $name) === 0) {
-                return is_array($value) ? implode(', ', $value) : (string) $value;
+                return is_array($value)
+                    ? implode(', ', array_map(static fn ($v) => Typed::string($v), $value))
+                    : Typed::string($value);
             }
         }
 

@@ -11,6 +11,7 @@ use App\Services\Seo\AuditTestRegistry;
 use App\Services\Seo\SitemapMonitor;
 use App\Support\Csv;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -126,7 +127,7 @@ class SeoAuditController extends Controller
         }
 
         if ($type === 'html') {
-            $html = $request->input('html', '');
+            $html = Typed::string($request->input('html', ''));
             if (trim($html) === '') {
                 return back()->withErrors(['html' => __('seo.html_required')])->withInput();
             }
@@ -225,7 +226,7 @@ class SeoAuditController extends Controller
             abort(403, __('seo.guest_disabled'));
         }
 
-        $url = static::ensureScheme($request->input('url', ''));
+        $url = static::ensureScheme(Typed::string($request->input('url', '')));
         $request->merge(['url' => $url]);
 
         $validated = $request->validate(['url' => 'required|url|max:2048']);
@@ -235,7 +236,7 @@ class SeoAuditController extends Controller
         }
 
         $key = $request->session()->getId();
-        $cap = (int) Settings::get('seo.audits_guest_monthly_limit', 5);
+        $cap = Typed::int(Settings::get('seo.audits_guest_monthly_limit', 5));
 
         if ($cap >= 0 && SeoAudit::where('uploader_key', md5($key))
             ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
@@ -266,8 +267,8 @@ class SeoAuditController extends Controller
                 foreach ($rows as $row) {
                     fputcsv($out, [
                         // url 含用户提交的路径/查询串，过公式注入防护
-                        Csv::sanitizeCell($row->url), $row->score, $row->status, $row->major_issues,
-                        $row->moderate_issues, $row->minor_issues, $row->created_at?->format('Y-m-d H:i'),
+                        Csv::sanitizeCell(Typed::string($row->url)), Typed::string($row->score), Typed::string($row->status), Typed::string($row->major_issues),
+                        Typed::string($row->moderate_issues), Typed::string($row->minor_issues), Typed::string($row->created_at?->format('Y-m-d H:i') ?? ''),
                     ]);
                 }
             });
@@ -495,7 +496,7 @@ class SeoAuditController extends Controller
      */
     protected function monthlyLimit(array $plan, string $key): int
     {
-        return (int) ($plan[$key] ?? -1);
+        return Typed::int($plan[$key] ?? -1);
     }
 
     /**
@@ -506,7 +507,7 @@ class SeoAuditController extends Controller
      */
     protected function bulkLimit(array $plan): int
     {
-        $raw = (int) ($plan['seo_bulk_limit'] ?? -1);
+        $raw = Typed::int($plan['seo_bulk_limit'] ?? -1);
 
         return $raw === 0 ? 0 : ($raw > 0 ? $raw : 50);
     }

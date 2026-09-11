@@ -4,6 +4,7 @@ namespace App\Services\Seo\Tests;
 
 use App\Services\Seo\AuditContext;
 use App\Services\Seo\AuditTestRegistry;
+use App\Support\Typed;
 
 /**
  * 性能测试组（performance 类别）
@@ -38,7 +39,7 @@ class PerformanceTests
      */
     public function responseTime(AuditContext $c): array
     {
-        $max = (int) AuditTestRegistry::threshold('response_time_max', 1500);
+        $max = Typed::int(AuditTestRegistry::threshold('response_time_max', 1500));
 
         return [
             'passed' => $c->responseTimeMs > 0 && $c->responseTimeMs <= $max,
@@ -51,7 +52,7 @@ class PerformanceTests
      */
     public function pageSize(AuditContext $c): array
     {
-        $max = (int) AuditTestRegistry::threshold('page_size_max', 3000000);
+        $max = Typed::int(AuditTestRegistry::threshold('page_size_max', 3000000));
 
         return [
             'passed' => $c->sizeBytes > 0 && $c->sizeBytes <= $max,
@@ -65,7 +66,7 @@ class PerformanceTests
     public function domSize(AuditContext $c): array
     {
         $count = $c->dom()->getElementsByTagName('*')->length;
-        $max = (int) AuditTestRegistry::threshold('dom_size_max', 1500);
+        $max = Typed::int(AuditTestRegistry::threshold('dom_size_max', 1500));
 
         return [
             'passed' => $count <= $max,
@@ -90,7 +91,7 @@ class PerformanceTests
             }
         }
 
-        $max = (int) AuditTestRegistry::threshold('http_requests_max', 50);
+        $max = Typed::int(AuditTestRegistry::threshold('http_requests_max', 50));
 
         return [
             'passed' => $count <= $max,

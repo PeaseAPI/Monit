@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use App\Support\Typed;
 use App\Support\WebhookSignature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -21,8 +22,8 @@ class PayPalProcessor
 
     public function __construct()
     {
-        $this->clientId = config('services.paypal.client_id');
-        $this->clientSecret = config('services.paypal.client_secret');
+        $this->clientId = Typed::stringOrNull(config('services.paypal.client_id'));
+        $this->clientSecret = Typed::stringOrNull(config('services.paypal.client_secret'));
         $this->baseUrl = config('services.paypal.sandbox', true)
             ? 'https://api-m.sandbox.paypal.com'
             : 'https://api-m.paypal.com';
@@ -53,7 +54,9 @@ class PayPalProcessor
                     'grant_type' => 'client_credentials',
                 ]);
 
-            return $response->json('access_token');
+            $token = $response->json('access_token');
+
+            return is_string($token) ? $token : null;
         } catch (\Throwable) {
             return null;
         }
@@ -92,15 +95,15 @@ class PayPalProcessor
             $response = Http::withToken($accessToken)
                 ->post("{$this->baseUrl}/v2/checkout/orders", $orderData);
 
-            $data = $response->json();
-            /** @var array<int, array<string, mixed>> $links */
+            $data = Typed::arr($response->json());
             $links = $data['links'] ?? [];
+
+            $approve = collect(Typed::arr($links))->firstWhere('rel', 'approve');
 
             return [
                 'processor' => 'paypal',
-                'order_id' => $data['id'] ?? null,
-                'approve_url' => collect($links)
-                    ->firstWhere('rel', 'approve')['href'] ?? null,
+                'order_id' => Typed::stringOrNull($data['id'] ?? null),
+                'approve_url' => is_array($approve) ? Typed::stringOrNull($approve['href'] ?? null) : null,
             ];
         } catch (\Throwable $e) {
             return ['error' => $e->getMessage()];
@@ -123,12 +126,12 @@ class PayPalProcessor
             $response = Http::withToken($accessToken)
                 ->post("{$this->baseUrl}/v2/checkout/orders/{$orderId}/capture");
 
-            $data = $response->json();
+            $data = Typed::arr($response->json());
 
             return [
                 'captured' => ($data['status'] ?? '') === 'COMPLETED',
-                'external_id' => $data['id'] ?? $orderId,
-                'payment_id' => $data['purchase_units'][0]['custom_id'] ?? null,
+                'external_id' => Typed::stringOrNull($data['id'] ?? null) ?? $orderId,
+                'payment_id' => Typed::stringOrNull(data_get($data, 'purchase_units.0.custom_id')),
             ];
         } catch (\Throwable $e) {
             return ['error' => $e->getMessage()];
@@ -146,7 +149,7 @@ class PayPalProcessor
     {
         $webhookId = config('services.paypal.webhook_id');
 
-        if (empty($webhookId) || ! $this->isConfigured()) {
+        if (! is_string($webhookId) || $webhookId === '' || ! $this->isConfigured()) {
             return false;
         }
 

@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 
 /**
@@ -47,9 +48,9 @@ class MidtransProcessor
 
     public function handleWebhook(Request $request): ?Payment
     {
-        $customField = json_decode($request->input('custom_field1', '{}'), true);
-        $user = User::query()->where('user_id', (int) ($customField['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', (int) ($customField['plan_id'] ?? 0))->first();
+        $customField = Typed::arr(json_decode(Typed::string($request->input('custom_field1', '{}')), true));
+        $user = User::query()->where('user_id', Typed::int($customField['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', Typed::int($customField['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -64,10 +65,10 @@ class MidtransProcessor
             'user_id' => $user->user_id,
             'plan_id' => $plan->plan_id,
             'processor' => 'midtrans',
-            'payment_id_external' => $request->input('transaction_id'),
-            'payment_frequency' => $customField['frequency'] ?? 'one_time',
+            'payment_id_external' => Typed::string($request->input('transaction_id')),
+            'payment_frequency' => Typed::string($customField['frequency'] ?? 'one_time'),
             'payment_type' => 'one_time',
-            'base_amount' => $request->input('gross_amount', 0),
+            'base_amount' => Typed::float($request->input('gross_amount', 0)),
             'discount_amount' => 0,
             'taxes_amount' => 0,
             'total_amount' => $request->input('gross_amount', 0),

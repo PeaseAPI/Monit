@@ -3,6 +3,7 @@
 namespace App\Services\Sms;
 
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -30,11 +31,11 @@ final class TencentSmsProvider
     public static function make(): static
     {
         return new self(
-            (string) (Settings::get('sms.sms_tencent_secret_id') ?: config('services.sms_tencent.secret_id', '')),
-            (string) (Settings::get('sms.sms_tencent_secret_key') ?: config('services.sms_tencent.secret_key', '')),
-            (string) (Settings::get('sms.sms_tencent_sdk_app_id') ?: config('services.sms_tencent.sdk_app_id', '')),
-            (string) (Settings::get('sms.sms_tencent_sign_name') ?: config('services.sms_tencent.sign_name', '')),
-            (string) (Settings::get('sms.sms_tencent_template_id') ?: config('services.sms_tencent.template_id', '')),
+            Typed::string(Settings::get('sms.sms_tencent_secret_id') ?: config('services.sms_tencent.secret_id', '')),
+            Typed::string(Settings::get('sms.sms_tencent_secret_key') ?: config('services.sms_tencent.secret_key', '')),
+            Typed::string(Settings::get('sms.sms_tencent_sdk_app_id') ?: config('services.sms_tencent.sdk_app_id', '')),
+            Typed::string(Settings::get('sms.sms_tencent_sign_name') ?: config('services.sms_tencent.sign_name', '')),
+            Typed::string(Settings::get('sms.sms_tencent_template_id') ?: config('services.sms_tencent.template_id', '')),
         );
     }
 
@@ -63,15 +64,15 @@ final class TencentSmsProvider
             ->withBody($body, 'application/json; charset=utf-8')
             ->post(static::ENDPOINT);
 
-        $result = $response->json();
-        $sendStatus = $result['Response']['SendStatusSet'][0] ?? null;
+        $result = Typed::arr($response->json());
+        $sendStatus = Typed::arr(data_get($result, 'Response.SendStatusSet.0'));
 
-        if ($response->failed() || isset($result['Response']['Error'])) {
-            return [false, (string) ($result['Response']['Error']['Message'] ?? 'tencent_request_failed')];
+        if ($response->failed() || data_get($result, 'Response.Error') !== null) {
+            return [false, Typed::string(data_get($result, 'Response.Error.Message') ?? 'tencent_request_failed')];
         }
 
-        if ($sendStatus && (($sendStatus['Code'] ?? '') !== 'Ok')) {
-            return [false, (string) ($sendStatus['Message'] ?? $sendStatus['Code'] ?? 'tencent_send_failed')];
+        if ($sendStatus !== [] && (($sendStatus['Code'] ?? '') !== 'Ok')) {
+            return [false, Typed::string(data_get($sendStatus, 'Message') ?? data_get($sendStatus, 'Code') ?? 'tencent_send_failed')];
         }
 
         return [true, ''];

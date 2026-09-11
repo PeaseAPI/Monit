@@ -15,6 +15,7 @@ use App\Models\SessionReplay;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
+use App\Support\Typed;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -73,6 +74,7 @@ class PixelTracker
             return;
         }
 
+        /** @var array<string, mixed> $payload */
         $this->payload = $payload;
 
         // 2. 前置校验（爬虫 / IP 排除 / 站点禁用 / 用户状态 / 限额）
@@ -102,7 +104,7 @@ class PixelTracker
         }
 
         // host 匹配验证（去 www. 前缀比对）
-        $urlHost = parse_url($this->payload['url'] ?? '', PHP_URL_HOST) ?: '';
+        $urlHost = parse_url(Typed::string($this->payload['url'] ?? ''), PHP_URL_HOST) ?: '';
         if ($urlHost !== '' && ! $this->website->matchesHost($urlHost)) {
             $this->skip('host_mismatch');
 
@@ -154,8 +156,8 @@ class PixelTracker
 
     protected function handleLightweight(): void
     {
-        $type = $this->payload['type'];
-        $data = $this->payload['data'] ?? [];
+        $type = Typed::string($this->payload['type']);
+        $data = Typed::arr($this->payload['data'] ?? []);
 
         switch ($type) {
             case 'landing_page':
@@ -196,7 +198,7 @@ class PixelTracker
         LightweightEvent::create([
             'website_id' => $this->website->website_id,
             // 访客标识（访客明细与旅程：按 uuid 聚合列表 / 行为时间线）
-            'visitor_uuid' => $this->uuidToBinary($this->payload['visitor_uuid'] ?? ''),
+            'visitor_uuid' => $this->uuidToBinary(Typed::stringOrNull($this->payload['visitor_uuid'] ?? null)),
             'type' => $type,
             'path' => $path,
             'referrer_host' => $this->parseReferrer($data, 'host'),
@@ -209,13 +211,13 @@ class PixelTracker
             'city_name' => $geo['city_name'],
             'os_name' => $osName,
             'browser_name' => $browserName,
-            'browser_language' => substr((string) ($data['language'] ?? ''), 0, 16) ?: null,
-            'browser_timezone' => substr((string) ($data['timezone'] ?? ''), 0, 64) ?: null,
+            'browser_language' => substr(Typed::string($data['language'] ?? ''), 0, 16) ?: null,
+            'browser_timezone' => substr(Typed::string($data['timezone'] ?? ''), 0, 64) ?: null,
             'screen_resolution' => $this->parseResolution($data),
             'device_type' => $this->uaParser->deviceType(),
-            'theme' => substr((string) ($data['theme'] ?? ''), 0, 8) ?: null,
+            'theme' => substr(Typed::string($data['theme'] ?? ''), 0, 8) ?: null,
             'date' => now(),
-            'expiration_date' => now()->addDays(config('monit.pixel.events_retention_days')),
+            'expiration_date' => now()->addDays(Typed::int(config('monit.pixel.events_retention_days'))),
         ]);
     }
 
@@ -225,8 +227,8 @@ class PixelTracker
 
     protected function handleAdvanced(): void
     {
-        $type = $this->payload['type'];
-        $data = $this->payload['data'] ?? [];
+        $type = Typed::string($this->payload['type']);
+        $data = Typed::arr($this->payload['data'] ?? []);
 
         switch ($type) {
             case 'initiate_visitor':
@@ -299,7 +301,7 @@ class PixelTracker
      */
     protected function upsertVisitor(array $data): void
     {
-        $uuidBinary = $this->uuidToBinary($this->payload['visitor_uuid'] ?? '');
+        $uuidBinary = $this->uuidToBinary(Typed::stringOrNull($this->payload['visitor_uuid'] ?? null));
         if ($uuidBinary === null) {
             $this->skip('invalid_uuid');
 
@@ -325,11 +327,11 @@ class PixelTracker
                 'os_version' => $osVersion,
                 'browser_name' => $browserName,
                 'browser_version' => $browserVersion,
-                'browser_language' => substr((string) ($data['language'] ?? ''), 0, 16) ?: null,
-                'browser_timezone' => substr((string) ($data['timezone'] ?? ''), 0, 64) ?: null,
+                'browser_language' => substr(Typed::string($data['language'] ?? ''), 0, 16) ?: null,
+                'browser_timezone' => substr(Typed::string($data['timezone'] ?? ''), 0, 64) ?: null,
                 'screen_resolution' => $this->parseResolution($data),
                 'device_type' => $this->uaParser->deviceType(),
-                'theme' => substr((string) ($data['theme'] ?? ''), 0, 8) ?: null,
+                'theme' => substr(Typed::string($data['theme'] ?? ''), 0, 8) ?: null,
                 'date' => now(),
                 'last_date' => now(),
             ]],
@@ -366,23 +368,23 @@ class PixelTracker
         [$path, $query] = $this->parseUrlPath($data);
 
         $event = SessionEvent::create([
-            'event_uuid_binary' => $this->uuidToBinary($this->payload['visitor_session_event_uuid'] ?? Uuid::uuid4()->toString()),
+            'event_uuid_binary' => $this->uuidToBinary(Typed::string($this->payload['visitor_session_event_uuid'] ?? Uuid::uuid4()->toString())),
             'session_id' => $session->session_id,
             'visitor_id' => $visitor->visitor_id,
             'website_id' => $this->website->website_id,
             'type' => $type,
             'path' => $path,
-            'title' => mb_substr((string) ($data['title'] ?? ''), 0, 512) ?: null,
+            'title' => mb_substr(Typed::string($data['title'] ?? ''), 0, 512) ?: null,
             'referrer_host' => $this->parseReferrer($data, 'host'),
             'referrer_path' => $this->parseReferrer($data, 'path'),
             'utm_source' => $this->extractUtm($query, 'utm_source'),
             'utm_medium' => $this->extractUtm($query, 'utm_medium'),
             'utm_campaign' => $this->extractUtm($query, 'utm_campaign'),
-            'viewport_width' => (int) ($data['viewport']['width'] ?? 0) ?: null,
-            'viewport_height' => (int) ($data['viewport']['height'] ?? 0) ?: null,
+            'viewport_width' => Typed::int(data_get($data, 'viewport.width')) ?: null,
+            'viewport_height' => Typed::int(data_get($data, 'viewport.height')) ?: null,
             'has_bounced' => $type === 'landing_page',
             'date' => now(),
-            'expiration_date' => now()->addDays(config('monit.pixel.events_retention_days')),
+            'expiration_date' => now()->addDays(Typed::int(config('monit.pixel.events_retention_days'))),
         ]);
 
         // pageview 出现 => 该会话未跳出
@@ -451,7 +453,7 @@ class PixelTracker
             'data' => $this->sanitizeEventData($data),
             'count' => 1,
             'date' => now(),
-            'expiration_date' => now()->addDays(config('monit.pixel.events_retention_days')),
+            'expiration_date' => now()->addDays(Typed::int(config('monit.pixel.events_retention_days'))),
         ]);
 
         // 用量计数：WebsitesLimitNoticeCommand 与配额判定依赖此列
@@ -463,7 +465,7 @@ class PixelTracker
      */
     protected function insertOutboundClick(?int $visitorId, ?int $eventId): void
     {
-        $url = $this->payload['outbound_url'] ?? '';
+        $url = Typed::string($this->payload['outbound_url'] ?? '');
 
         OutboundClick::create([
             'website_id' => $this->website->website_id,
@@ -471,7 +473,7 @@ class PixelTracker
             'visitor_id' => $visitorId,
             'host' => mb_substr((string) (parse_url($url, PHP_URL_HOST) ?? ''), 0, 256) ?: null,
             'path' => mb_substr((string) (parse_url($url, PHP_URL_PATH) ?? ''), 0, 2048) ?: null,
-            'title' => mb_substr((string) ($this->payload['outbound_title'] ?? ''), 0, 512) ?: null,
+            'title' => mb_substr(Typed::string($this->payload['outbound_title'] ?? ''), 0, 512) ?: null,
             'datetime' => now(),
         ]);
     }
@@ -481,7 +483,7 @@ class PixelTracker
      */
     protected function handleGoalConversion(?WebsiteVisitor $visitor, ?SessionEvent $event, ?VisitorSession $session): void
     {
-        $goalKey = (string) ($this->payload['goal_key'] ?? '');
+        $goalKey = Typed::string($this->payload['goal_key'] ?? '');
         if ($goalKey === '') {
             $this->skip('invalid_goal_key');
 
@@ -519,7 +521,7 @@ class PixelTracker
             'session_id' => $session?->session_id,
             'visitor_id' => $visitor?->visitor_id,
             'website_id' => $this->website->website_id,
-            'expiration_date' => now()->addDays(config('monit.pixel.events_retention_days')),
+            'expiration_date' => now()->addDays(Typed::int(config('monit.pixel.events_retention_days'))),
         ]);
     }
 
@@ -528,7 +530,7 @@ class PixelTracker
      */
     protected function handleReplayChunk(): void
     {
-        $sessionIdBinary = $this->uuidToBinary($this->payload['visitor_session_uuid'] ?? '');
+        $sessionIdBinary = $this->uuidToBinary(Typed::stringOrNull($this->payload['visitor_session_uuid'] ?? null));
         if ($sessionIdBinary === null) {
             $this->skip('invalid_uuid');
 
@@ -593,11 +595,11 @@ class PixelTracker
 
         // Cache 仍保留（供 OffloadCommand 中间缓冲 & 回退兼容）
         $cacheKey = "session_replay_keys_{$session->session_id}";
-        $keys = Cache::get($cacheKey, []);
+        $keys = Typed::arr(Cache::get($cacheKey));
         $chunkKey = 'session_replay_chunk_'.md5($session->session_id.'_'.count($keys).'_'.uniqid('', true));
-        Cache::put($chunkKey, $events, now()->addDays(config('monit.pixel.replays_retention_days')));
+        Cache::put($chunkKey, $events, now()->addDays(Typed::int(config('monit.pixel.replays_retention_days'))));
         $keys[] = $chunkKey;
-        Cache::put($cacheKey, $keys, now()->addDays(config('monit.pixel.replays_retention_days')));
+        Cache::put($cacheKey, $keys, now()->addDays(Typed::int(config('monit.pixel.replays_retention_days'))));
     }
 
     /**
@@ -667,10 +669,13 @@ class PixelTracker
                     'SELECT data FROM sessions_replays WHERE replay_id = ?',
                     [$replay->replay_id],
                 );
-                if ($row && $row->data) {
-                    $decompressed = @gzdecode($row->data);
-                    if ($decompressed !== false) {
-                        $existingEvents = json_decode($decompressed, true) ?: [];
+                if ($row !== null) {
+                    $stored = data_get($row, 'data');
+                    if (is_string($stored) && $stored !== '') {
+                        $decompressed = @gzdecode($stored);
+                        if ($decompressed !== false) {
+                            $existingEvents = Typed::arr(json_decode($decompressed, true));
+                        }
                     }
                 }
 
@@ -701,7 +706,7 @@ class PixelTracker
             $device = 'desktop';
         }
 
-        $data = $this->payload['data'] ?? [];
+        $data = Typed::arr($this->payload['data'] ?? []);
 
         // Only store snapshots that contain valid rrweb events (Meta type 4 + FullSnapshot type 2).
         // If rrweb failed to start, the client sends { events: [], viewport: {...} } — skip storing
@@ -711,11 +716,11 @@ class PixelTracker
         $hasFull = false;
         if (is_array($events)) {
             foreach ($events as $event) {
-                if (isset($event['type'])) {
-                    if ((int) $event['type'] === 4) {
+                if (is_array($event) && isset($event['type'])) {
+                    if (Typed::int($event['type']) === 4) {
                         $hasMeta = true;
                     }
-                    if ((int) $event['type'] === 2) {
+                    if (Typed::int($event['type']) === 2) {
                         $hasFull = true;
                     }
                 }
@@ -775,9 +780,9 @@ class PixelTracker
 
         $device = $this->currentDeviceColumn($heatmap);
 
-        $x = max(0, min(100, (float) ($this->payload['x_normalized'] ?? 0)));
-        $y = max(0, min(100, (float) ($this->payload['y_normalized'] ?? 0)));
-        $count = max(1, min(10, (int) ($this->payload['count'] ?? 1)));
+        $x = max(0, min(100, Typed::float($this->payload['x_normalized'] ?? 0)));
+        $y = max(0, min(100, Typed::float($this->payload['y_normalized'] ?? 0)));
+        $count = max(1, min(10, Typed::int($this->payload['count'] ?? 1)));
 
         HeatmapSnapshotClick::create([
             'website_id' => $this->website->website_id,
@@ -785,7 +790,7 @@ class PixelTracker
             'x_normalized' => $x,
             'y_normalized' => $y,
             'count' => $count,
-            'expiration_date' => now()->addDays(config('monit.pixel.events_retention_days'))->toDateString(),
+            'expiration_date' => now()->addDays(Typed::int(config('monit.pixel.events_retention_days')))->toDateString(),
             'datetime' => now(),
         ]);
     }
@@ -802,9 +807,9 @@ class PixelTracker
 
         $device = $this->currentDeviceColumn($heatmap);
 
-        $maxScroll = (int) round(max(0, min(100, (int) ($this->payload['max_scroll'] ?? 0))) / 10) * 10;
+        $maxScroll = Typed::int(round(max(0, min(100, Typed::int($this->payload['max_scroll'] ?? 0))) / 10)) * 10;
 
-        $uuidBinary = $this->uuidToBinary($this->payload['visitor_session_event_uuid'] ?? '');
+        $uuidBinary = $this->uuidToBinary(Typed::stringOrNull($this->payload['visitor_session_event_uuid'] ?? null));
         if ($uuidBinary === null) {
             $this->skip('invalid_uuid');
 
@@ -817,7 +822,7 @@ class PixelTracker
                 'snapshot_id' => $heatmap->{"snapshot_id_{$device}"},
                 'event_uuid_binary' => $uuidBinary,
                 'max_scroll' => $maxScroll,
-                'expiration_date' => now()->addDays(config('monit.pixel.events_retention_days'))->toDateString(),
+                'expiration_date' => now()->addDays(Typed::int(config('monit.pixel.events_retention_days')))->toDateString(),
                 'last_datetime' => now(),
                 'datetime' => now(),
             ]],
@@ -831,7 +836,7 @@ class PixelTracker
      */
     protected function findEnabledHeatmap(): ?Heatmap
     {
-        $heatmapId = (int) ($this->payload['heatmap_id'] ?? 0);
+        $heatmapId = Typed::int($this->payload['heatmap_id'] ?? 0);
 
         $heatmap = Heatmap::where('website_id', $this->website->website_id)
             ->where('heatmap_id', $heatmapId)
@@ -887,7 +892,7 @@ class PixelTracker
 
     protected function findVisitor(): ?WebsiteVisitor
     {
-        $uuidBinary = $this->uuidToBinary($this->payload['visitor_uuid'] ?? '');
+        $uuidBinary = $this->uuidToBinary(Typed::stringOrNull($this->payload['visitor_uuid'] ?? null));
         if ($uuidBinary === null) {
             return null;
         }
@@ -906,14 +911,15 @@ class PixelTracker
         }
 
         // 容错：SDK 未先发送 initiate_visitor 时自动补建
-        $this->upsertVisitor($this->payload['data'] ?? []);
+        $payloadData = $this->payload['data'] ?? [];
+        $this->upsertVisitor(is_array($payloadData) ? $payloadData : []);
 
         return $this->findVisitor();
     }
 
     protected function findSession(WebsiteVisitor $visitor): ?VisitorSession
     {
-        $uuidBinary = $this->uuidToBinary($this->payload['visitor_session_uuid'] ?? '');
+        $uuidBinary = $this->uuidToBinary(Typed::stringOrNull($this->payload['visitor_session_uuid'] ?? null));
         if ($uuidBinary === null) {
             return null;
         }
@@ -930,14 +936,14 @@ class PixelTracker
 
         if ($session) {
             // 会话超时 => 开新会话
-            $timeout = (int) config('monit.pixel.session_timeout');
+            $timeout = Typed::int(config('monit.pixel.session_timeout'));
             if ($session->date && $session->date->diffInSeconds(now()) <= $timeout) {
                 return $session;
             }
         }
 
         return VisitorSession::create([
-            'session_uuid_binary' => $this->uuidToBinary($this->payload['visitor_session_uuid'] ?? Uuid::uuid4()->toString()),
+            'session_uuid_binary' => $this->uuidToBinary(Typed::stringOrNull($this->payload['visitor_session_uuid'] ?? null) ?? Uuid::uuid4()->toString()),
             'visitor_id' => $visitor->visitor_id,
             'website_id' => $this->website->website_id,
             'date' => now(),
@@ -951,7 +957,7 @@ class PixelTracker
             return null;
         }
 
-        $eventUuidBinary = $this->uuidToBinary($this->payload['visitor_session_event_uuid'] ?? '');
+        $eventUuidBinary = $this->uuidToBinary(Typed::stringOrNull($this->payload['visitor_session_event_uuid'] ?? null));
         if ($eventUuidBinary !== null) {
             $event = SessionEvent::where('website_id', $this->website->website_id)
                 ->where('event_uuid_binary', $eventUuidBinary)
@@ -1004,7 +1010,7 @@ class PixelTracker
      */
     protected function parseUrlPath(array $data): array
     {
-        $url = (string) ($data['url'] ?? $this->payload['url'] ?? '');
+        $url = Typed::string($data['url'] ?? $this->payload['url'] ?? '');
         $path = (string) (parse_url($url, PHP_URL_PATH) ?: '/');
         $query = (string) (parse_url($url, PHP_URL_QUERY) ?: '');
 
@@ -1022,7 +1028,7 @@ class PixelTracker
      */
     protected function parseReferrer(array $data, string $part): ?string
     {
-        $referrer = (string) ($data['referrer'] ?? '');
+        $referrer = Typed::string($data['referrer'] ?? '');
         if ($referrer === '') {
             return null;
         }
@@ -1051,8 +1057,8 @@ class PixelTracker
      */
     protected function parseResolution(array $data): ?string
     {
-        $width = (int) ($data['resolution']['width'] ?? 0);
-        $height = (int) ($data['resolution']['height'] ?? 0);
+        $width = Typed::int(data_get($data, 'resolution.width'));
+        $height = Typed::int(data_get($data, 'resolution.height'));
 
         if ($width <= 0 || $height <= 0) {
             return null;
@@ -1071,8 +1077,8 @@ class PixelTracker
         }
 
         $filtered = [];
-        foreach (array_slice($parameters, 0, (int) config('monit.pixel.max_custom_parameters')) as $key => $value) {
-            $filtered[mb_substr((string) $key, 0, 64)] = mb_substr((string) $value, 0, 256);
+        foreach (array_slice($parameters, 0, Typed::int(config('monit.pixel.max_custom_parameters'))) as $key => $value) {
+            $filtered[mb_substr(Typed::string($key), 0, 64)] = mb_substr(Typed::string($value), 0, 256);
         }
 
         return $filtered;
@@ -1086,7 +1092,7 @@ class PixelTracker
     {
         $json = json_encode($data, JSON_UNESCAPED_UNICODE);
 
-        return json_decode(mb_substr((string) $json, 0, 8192), true) ?: [];
+        return Typed::arr(json_decode(mb_substr(Typed::string($json), 0, 8192), true));
     }
 
     /**

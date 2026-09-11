@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 
 /**
@@ -47,11 +48,11 @@ class YooKassaProcessor
             return null;
         }
 
-        $object = $request->input('object', []);
-        $metadata = $object['metadata'] ?? [];
+        $object = Typed::arr($request->input('object'));
+        $metadata = Typed::arr($object['metadata'] ?? []);
 
-        $user = User::query()->where('user_id', (int) ($metadata['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', (int) ($metadata['plan_id'] ?? 0))->first();
+        $user = User::query()->where('user_id', Typed::int($metadata['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', Typed::int($metadata['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -61,14 +62,14 @@ class YooKassaProcessor
             'user_id' => $user->user_id,
             'plan_id' => $plan->plan_id,
             'processor' => 'yookassa',
-            'payment_id_external' => $object['id'] ?? null,
-            'payment_frequency' => $metadata['frequency'] ?? 'one_time',
-            'payment_type' => $object['payment_method']['type'] ?? 'one_time',
-            'base_amount' => $object['amount']['value'] ?? 0,
+            'payment_id_external' => Typed::stringOrNull($object['id'] ?? null),
+            'payment_frequency' => Typed::string($metadata['frequency'] ?? 'one_time'),
+            'payment_type' => Typed::string(data_get($object, 'payment_method.type') ?? 'one_time'),
+            'base_amount' => Typed::float(data_get($object, 'amount.value')),
             'discount_amount' => 0,
             'taxes_amount' => 0,
-            'total_amount' => $object['amount']['value'] ?? 0,
-            'currency' => $object['amount']['currency'] ?? 'RUB',
+            'total_amount' => Typed::float(data_get($object, 'amount.value')),
+            'currency' => Typed::string(data_get($object, 'amount.currency') ?? 'RUB'),
             'email' => $user->email,
             'name' => $user->name,
             'datetime' => now(),

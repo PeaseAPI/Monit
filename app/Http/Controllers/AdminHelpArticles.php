@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HelpArticle;
 use App\Models\HelpCategory;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -93,10 +94,10 @@ class AdminHelpArticles extends Controller
             'order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_published' => ['boolean'],
         ]) + [
-            'url' => Str::slug($request->input('title') ?? '').'-'.Str::lower(Str::random(6)),
+            'url' => Str::slug(Typed::string($request->input('title') ?? '')).'-'.Str::lower(Str::random(6)),
             'is_published' => $request->boolean('is_published', false),
-            'order' => (int) ($request->input('order') ?? 0),
-            'category_id' => $request->filled('category_id') ? (int) $request->input('category_id') : null,
+            'order' => Typed::int($request->input('order') ?? 0),
+            'category_id' => $request->filled('category_id') ? Typed::int($request->input('category_id')) : null,
         ];
     }
 }

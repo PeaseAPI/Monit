@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SessionReplay;
 use App\Models\Website;
 use App\Services\StatisticsService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -319,7 +320,7 @@ class AnalyticsController extends Controller
                 'session_id' => $replay->session_id,
                 'visitor_id' => $replay->visitor_id,
                 'is_offloaded' => $replay->is_offloaded,
-                'datetime' => optional($replay->datetime)->toIso8601String(),
+                'datetime' => $replay->datetime !== null ? Carbon::parse($replay->datetime)->toIso8601String() : null,
                 'country_code' => $replay->visitor?->country_code,
                 'device_type' => $replay->visitor?->device_type,
                 'os_name' => $replay->visitor?->os_name,

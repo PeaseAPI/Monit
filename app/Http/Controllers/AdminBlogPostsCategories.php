@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BlogPostsCategory;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -62,6 +63,6 @@ class AdminBlogPostsCategories extends Controller
             'title' => ['required', 'string', 'max:64'],
             'url' => ['required', 'string', 'max:256', 'regex:/^[a-z0-9-]+$/'],
             'order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-        ]) + ['order' => (int) ($request->input('order') ?? 0)];
+        ]) + ['order' => Typed::int($request->input('order') ?? 0)];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\LicenseManager;
+use App\Support\Typed;
 use Illuminate\Console\Command;
 
 /**
@@ -32,7 +33,7 @@ class LicenseGenerateCommand extends Command
 
         // 1. 获取或生成密钥对
         if (is_file($keypairPath)) {
-            $keypair = json_decode((string) file_get_contents($keypairPath), true);
+            $keypair = Typed::arr(json_decode(Typed::string(file_get_contents($keypairPath)), true));
         } else {
             $seed = sodium_crypto_sign_keypair();
             $keypair = [
@@ -54,7 +55,7 @@ class LicenseGenerateCommand extends Command
         // 2. 组装 License 数据
         $domains = array_values(array_filter(array_map(
             'trim',
-            explode(',', (string) ($this->option('domains') ?: parse_url(config('app.url'), PHP_URL_HOST))),
+            explode(',', Typed::string($this->option('domains') ?: parse_url(Typed::string(config('app.url')), PHP_URL_HOST))),
         )));
 
         $license = [
@@ -68,7 +69,7 @@ class LicenseGenerateCommand extends Command
         ];
 
         // 3. Ed25519 签名（对规范 JSON detached 签名）
-        $secretKey = hex2bin($keypair['secret_key']);
+        $secretKey = hex2bin(Typed::string($keypair['secret_key']));
         if ($secretKey === false || $secretKey === '') {
             throw new \RuntimeException('密钥反序列化失败');
         }

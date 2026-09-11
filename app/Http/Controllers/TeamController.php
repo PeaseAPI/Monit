@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\TeamMemberAssociation;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -96,7 +97,7 @@ class TeamController extends Controller
         /** @var array<int, mixed> $websiteIdsRaw */
         $websiteIdsRaw = $validated['websites_ids'] ?? [];
         $websiteIds = collect($websiteIdsRaw)
-            ->map(fn ($id) => (int) $id)
+            ->map(fn ($id) => Typed::int($id))
             ->filter(fn ($id) => $this->user()->websites()->where('website_id', $id)->exists())
             ->unique()
             ->values()

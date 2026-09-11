@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PushNotificationSubscriber;
 use App\Support\PluginManager;
+use App\Support\Typed;
 use App\Support\WebhookSignature;
 
 /**
@@ -50,7 +51,7 @@ class WebPushService
         $suffixes = self::PUSH_ENDPOINT_SUFFIXES;
 
         foreach ((array) config('services.webpush.extra_endpoint_domains', []) as $extra) {
-            $extra = strtolower(trim((string) $extra));
+            $extra = strtolower(trim(Typed::string($extra)));
 
             if ($extra !== '') {
                 $suffixes[] = str_starts_with($extra, '.') ? $extra : '.'.$extra;
@@ -77,8 +78,8 @@ class WebPushService
             (string) $subscriber->keys_p256dh,
             (string) $subscriber->keys_auth,
             ['title' => $title, 'body' => $body, 'url' => $url],
-            (string) PluginManager::setting('push-notifications', 'vapid_public_key', ''),
-            (string) PluginManager::setting('push-notifications', 'vapid_private_key', ''),
+            Typed::string(PluginManager::setting('push-notifications', 'vapid_public_key', '')),
+            Typed::string(PluginManager::setting('push-notifications', 'vapid_private_key', '')),
         );
     }
 

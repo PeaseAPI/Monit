@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Typed;
 use Illuminate\Console\Command;
 
 /**
@@ -24,7 +25,7 @@ class GeoipUpdateCommand extends Command
             $path = storage_path('app/geoip/country.mmdb');
         }
 
-        $dir = dirname($path);
+        $dir = dirname(Typed::string($path));
 
         if ($dir === '.' || $dir === '/') {
             $this->error("解析出的目录路径无效：{$dir}，请检查 GEOIP_MMDB_PATH 环境变量或 storage_path() 配置。");
@@ -42,7 +43,7 @@ class GeoipUpdateCommand extends Command
         }
 
         // 本月文件已存在且非强制 → 跳过
-        if (! $this->option('force') && is_file($path) && filemtime($path) >= strtotime('first day of this month 00:00:00')) {
+        if (! $this->option('force') && is_file(Typed::string($path)) && filemtime(Typed::string($path)) >= strtotime('first day of this month 00:00:00')) {
             $this->info('GeoIP 数据库已是本月版本，跳过下载。使用 --force 强制更新。');
 
             return self::SUCCESS;
@@ -65,14 +66,14 @@ class GeoipUpdateCommand extends Command
             return self::FAILURE;
         }
 
-        if (file_put_contents($path, $data) === false) {
-            $this->error("写入失败：{$path}");
+        if (file_put_contents(Typed::string($path), $data) === false) {
+            $this->error('写入失败：'.Typed::string($path).'');
 
             return self::FAILURE;
         }
 
         $size = number_format(strlen($data) / 1024, 1);
-        $this->info("✓ GeoIP 数据库已更新：{$path} ({$size} KB)");
+        $this->info('✓ GeoIP 数据库已更新：'.Typed::string($path)." ({$size} KB)");
 
         return self::SUCCESS;
     }

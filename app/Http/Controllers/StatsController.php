@@ -13,6 +13,7 @@ use App\Support\CountryNames;
 use App\Support\Csv;
 use App\Support\LocaleNames;
 use App\Support\TimezoneNames;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -39,7 +40,7 @@ class StatsController extends Controller
             return response()->json(['error' => 'ai_disabled'], 403);
         }
 
-        $range = (int) ($request->input('range') ?: 7);
+        $range = Typed::int($request->input('range') ?: 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -59,11 +60,11 @@ class StatsController extends Controller
             $website->name,
             $website->host,
             $range,
-            (int) ($overview['pageviews'] ?? 0),
-            (int) ($overview['visitors'] ?? 0),
-            (int) ($overview['sessions'] ?? 0),
-            (string) ($overview['bounce_rate'] ?? 0),
-            (string) ($overview['avg_duration'] ?? 0),
+            Typed::int($overview['pageviews'] ?? 0),
+            Typed::int($overview['visitors'] ?? 0),
+            Typed::int($overview['sessions'] ?? 0),
+            Typed::string($overview['bounce_rate'] ?? 0),
+            Typed::string($overview['avg_duration'] ?? 0),
             $top('path') ?: '无数据',
             $top('referrer_host') ?: '直接访问为主',
             $top('country_code') ?: '无数据',
@@ -185,7 +186,7 @@ class StatsController extends Controller
     {
         $user = request()->user();
 
-        if (! $user || (int) ($user->getPlanSettings()['export'] ?? 1) === 0) {
+        if (! $user || Typed::int($user->getPlanSettings()['export'] ?? 1) === 0) {
             abort(403, __('stats.export_not_allowed'));
         }
 
@@ -216,7 +217,7 @@ class StatsController extends Controller
                     // 公式注入防护：visitor 字段（referrer、UA、国家等）来自
                     // 公开 pixel 上报，第三方网站可注入任意字符串
                     fputcsv($out, array_map(
-                        fn ($val) => is_string($val) ? Csv::sanitizeCell(mb_substr($val, 0, 2000)) : $val,
+                        fn ($val) => is_string($val) ? Csv::sanitizeCell(mb_substr($val, 0, 2000)) : (is_scalar($val) ? (string) $val : ''),
                         $v->getAttributes()
                     ));
                 }

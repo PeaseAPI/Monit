@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Typed;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -82,7 +83,7 @@ class User extends Authenticatable
     {
         static::saved(function (User $user): void {
             foreach ($user->websites()->pluck('pixel_key') as $pixelKey) {
-                Cache::forget('pixel.website.'.$pixelKey);
+                Cache::forget('pixel.website.'.Typed::string($pixelKey));
             }
         });
     }
@@ -121,7 +122,7 @@ class User extends Authenticatable
 
         if ($this->attributes['api_key_encrypted'] ?? null) {
             try {
-                return Crypt::decryptString((string) $this->attributes['api_key_encrypted']);
+                return Crypt::decryptString(Typed::string($this->attributes['api_key_encrypted']));
             } catch (Throwable) {
                 return null; // APP_KEY 变更等解密失败：视为无 key（fail-closed）
             }

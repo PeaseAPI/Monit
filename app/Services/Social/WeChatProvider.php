@@ -2,6 +2,7 @@
 
 namespace App\Services\Social;
 
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -38,7 +39,12 @@ class WeChatProvider implements ChineseSocialProvider
             'grant_type' => 'authorization_code',
         ]);
 
-        return $response->json();
+        $json = $response->json();
+
+        /** @var array<string, mixed> $json */
+        $json = is_array($json) ? $json : [];
+
+        return $json;
     }
 
     /**
@@ -48,20 +54,20 @@ class WeChatProvider implements ChineseSocialProvider
     {
         // 微信的 accessToken 参数需要从 getAccessToken 获取 openid
         // 这里假设 accessToken 实际上是包含 openid 的 JSON 编码字符串
-        $tokenData = json_decode($accessToken, true) ?? [];
-        $openid = $tokenData['openid'] ?? '';
+        $tokenData = Typed::arr(json_decode($accessToken, true));
+        $openid = Typed::string($tokenData['openid'] ?? '');
 
         $response = Http::get('https://api.weixin.qq.com/sns/userinfo', [
-            'access_token' => $tokenData['access_token'] ?? $accessToken,
+            'access_token' => Typed::string($tokenData['access_token'] ?? $accessToken),
             'openid' => $openid,
         ]);
 
-        $data = $response->json();
+        $data = Typed::arr($response->json());
 
         return [
-            'id' => $data['unionid'] ?? ($data['openid'] ?? $openid),
-            'name' => $data['nickname'] ?? '',
-            'avatar' => $data['headimgurl'] ?? '',
+            'id' => Typed::string($data['unionid'] ?? $data['openid'] ?? $openid),
+            'name' => Typed::string($data['nickname'] ?? ''),
+            'avatar' => Typed::string($data['headimgurl'] ?? ''),
             'email' => null, // 微信不提供邮箱
         ];
     }

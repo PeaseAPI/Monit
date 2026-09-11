@@ -4,6 +4,7 @@ namespace App\Services\Seo\Tests;
 
 use App\Services\Seo\AuditContext;
 use App\Services\Seo\AuditTestRegistry;
+use App\Support\Typed;
 
 /**
  * 可索引与元信息测试组（seo 类别）
@@ -49,8 +50,8 @@ class MetaTests
     {
         $title = trim((string) $c->dom()->getElementsByTagName('title')->item(0)?->textContent);
         $length = mb_strlen($title);
-        $min = (int) AuditTestRegistry::threshold('title_min', 10);
-        $max = (int) AuditTestRegistry::threshold('title_max', 60);
+        $min = Typed::int(AuditTestRegistry::threshold('title_min', 10));
+        $max = Typed::int(AuditTestRegistry::threshold('title_max', 60));
 
         $sub = [];
         if ($length === 0) {
@@ -76,8 +77,8 @@ class MetaTests
     {
         $desc = trim((string) ($c->meta('description') ?? ''));
         $length = mb_strlen($desc);
-        $min = (int) AuditTestRegistry::threshold('description_min', 50);
-        $max = (int) AuditTestRegistry::threshold('description_max', 160);
+        $min = Typed::int(AuditTestRegistry::threshold('description_min', 50));
+        $max = Typed::int(AuditTestRegistry::threshold('description_max', 160));
 
         $sub = [];
         if ($length === 0) {

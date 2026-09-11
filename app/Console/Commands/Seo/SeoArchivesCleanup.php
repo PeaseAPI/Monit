@@ -5,6 +5,7 @@ namespace App\Console\Commands\Seo;
 use App\Models\SeoAuditArchive;
 use App\Models\User;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Console\Command;
 
 /**
@@ -20,7 +21,7 @@ class SeoArchivesCleanup extends Command
     public function handle(): int
     {
         // 后台兜底保留天数（0 = 永久保留）
-        $defaultRetention = (int) Settings::get('seo.archives_retention_days', 30);
+        $defaultRetention = Typed::int(Settings::get('seo.archives_retention_days', 30));
 
         $deleted = 0;
 
@@ -28,21 +29,21 @@ class SeoArchivesCleanup extends Command
         $userIds = SeoAuditArchive::whereNotNull('user_id')->distinct()->pluck('user_id');
 
         foreach ($userIds as $userId) {
-            $user = User::query()->where('user_id', (int) $userId)->first();
+            $user = User::query()->where('user_id', Typed::int($userId))->first();
 
-            $retention = (int) ($user?->getPlanSettings()['seo_history_retention_days'] ?? $defaultRetention);
+            $retention = Typed::int($user?->getPlanSettings()['seo_history_retention_days'] ?? $defaultRetention);
 
             if ($retention > 0) {
-                $deleted += SeoAuditArchive::where('user_id', $userId)
+                $deleted += Typed::int(SeoAuditArchive::where('user_id', $userId)
                     ->where('created_at', '<', now()->subDays($retention))
-                    ->delete();
+                    ->delete());
             }
         }
 
         if ($defaultRetention > 0) {
-            $deleted += SeoAuditArchive::whereNull('user_id')
+            $deleted += Typed::int(SeoAuditArchive::whereNull('user_id')
                 ->where('created_at', '<', now()->subDays($defaultRetention))
-                ->delete();
+                ->delete());
         }
 
         $this->info("SEO 归档清理完成：删除 {$deleted} 条快照。");

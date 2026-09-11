@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SessionReplay;
 use App\Models\VisitorSession;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,7 +19,7 @@ class SpotlightController extends Controller
      */
     public function search(Request $request)
     {
-        $query = $request->input('q', '');
+        $query = Typed::string($request->input('q', ''));
         $user = $this->user();
 
         if (strlen($query) < 2) {
@@ -30,8 +31,8 @@ class SpotlightController extends Controller
         // 搜索网站（注意：User 主键是 user_id，->id 恒 null 会让搜索恒空）
         $websites = Website::where('user_id', $user->user_id)
             ->where(function ($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%")
-                    ->orWhere('host', 'like', "%{$query}%");
+                $q->where('name', 'like', '%'.Typed::string($query).'%')
+                    ->orWhere('host', 'like', '%'.Typed::string($query).'%');
             })
             ->limit(5)
             ->get();
@@ -49,7 +50,7 @@ class SpotlightController extends Controller
 
         // 搜索会话
         $sessions = VisitorSession::whereHas('website', fn ($q) => $q->where('user_id', $user->user_id))
-            ->whereHas('events', fn ($q) => $q->where('path', 'like', "%{$query}%"))
+            ->whereHas('events', fn ($q) => $q->where('path', 'like', '%'.Typed::string($query).'%'))
             ->with('website')
             ->limit(5)
             ->get();
@@ -83,7 +84,7 @@ class SpotlightController extends Controller
         ];
 
         foreach ($pages as $page) {
-            if (str_contains($page['title'], $query)) {
+            if (str_contains(Typed::string($page['title']), $query)) {
                 $results[] = $page;
             }
         }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Website;
+use App\Support\Typed;
 
 /**
  * 套餐限额检查服务
@@ -69,7 +70,7 @@ class PlanLimitService
             return 0; // 未启用
         }
 
-        return (int) max(0, $limit - $this->getCurrentUsage($user, $feature));
+        return (int) max(0, Typed::int($limit) - $this->getCurrentUsage($user, $feature));
     }
 
     /**
@@ -119,6 +120,6 @@ class PlanLimitService
      */
     protected function getWebsitesAggregate(User $user, string $relation): int
     {
-        return $user->websites()->withCount($relation)->get()->sum("{$relation}_count");
+        return Typed::int($user->websites()->withCount($relation)->get()->sum("{$relation}_count"));
     }
 }

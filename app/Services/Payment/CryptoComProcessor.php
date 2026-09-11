@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 
 /**
@@ -39,11 +40,11 @@ class CryptoComProcessor
             return null;
         }
 
-        $data = $request->input('data', []);
-        $metadata = $data['metadata'] ?? [];
+        $data = Typed::arr($request->input('data'));
+        $metadata = Typed::arr($data['metadata'] ?? []);
 
-        $user = User::query()->where('user_id', (int) ($metadata['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', (int) ($metadata['plan_id'] ?? 0))->first();
+        $user = User::query()->where('user_id', Typed::int($metadata['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', Typed::int($metadata['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -53,14 +54,14 @@ class CryptoComProcessor
             'user_id' => $user->user_id,
             'plan_id' => $plan->plan_id,
             'processor' => 'cryptocom',
-            'payment_id_external' => $data['payment_id'] ?? null,
-            'payment_frequency' => $metadata['frequency'] ?? 'one_time',
+            'payment_id_external' => Typed::stringOrNull($data['payment_id'] ?? null),
+            'payment_frequency' => Typed::string($metadata['frequency'] ?? 'one_time'),
             'payment_type' => 'one_time',
-            'base_amount' => $data['amount'] ?? 0,
+            'base_amount' => Typed::float($data['amount'] ?? 0),
             'discount_amount' => 0,
             'taxes_amount' => 0,
-            'total_amount' => $data['amount'] ?? 0,
-            'currency' => $data['currency'] ?? 'USD',
+            'total_amount' => Typed::float($data['amount'] ?? 0),
+            'currency' => Typed::string($data['currency'] ?? 'USD'),
             'email' => $user->email,
             'name' => $user->name,
             'datetime' => now(),

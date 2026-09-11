@@ -8,6 +8,7 @@ use App\Models\NotificationHandler;
 use App\Models\SeoAudit;
 use App\Models\User;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -72,7 +73,7 @@ class NotificationDispatcher
             $user,
             'sitemap_changed',
             "Sitemap 变更：{$website->host}",
-            sprintf('新增 %d 个 URL，移除 %d 个 URL。', count($diff['added'] ?? []), count($diff['removed'] ?? [])),
+            sprintf('新增 %d 个 URL，移除 %d 个 URL。', count(Typed::arr($diff['added'] ?? [])), count(Typed::arr($diff['removed'] ?? []))),
             route('websites.seo', $website->website_id)
         );
     }
@@ -125,14 +126,14 @@ class NotificationDispatcher
 
         return match ($handler->type) {
             'email' => $this->sendEmail($user, $title, $message, $link),
-            'webhook' => $this->postJson((string) ($settings['webhook_url'] ?? ''), [
+            'webhook' => $this->postJson(Typed::string($settings['webhook_url'] ?? ''), [
                 'event' => 'seo_notification',
                 'title' => $title,
                 'message' => $message,
                 'link' => $link,
             ]),
-            'slack' => $this->postJson((string) ($settings['webhook_url'] ?? ''), ['text' => $text]),
-            'discord' => $this->postJson((string) ($settings['webhook_url'] ?? ''), ['content' => $text]),
+            'slack' => $this->postJson(Typed::string($settings['webhook_url'] ?? ''), ['text' => $text]),
+            'discord' => $this->postJson(Typed::string($settings['webhook_url'] ?? ''), ['content' => $text]),
             'telegram' => $this->sendTelegram($settings, $title, $message, $link),
             'pushover' => $this->sendPushover($settings, $title, $message, $link),
             'ntfy' => $this->sendNtfy($settings, $title, $message, $link),
@@ -153,14 +154,14 @@ class NotificationDispatcher
      */
     protected function sendTelegram(array $settings, string $title, string $message, ?string $link): bool
     {
-        $token = (string) ($settings['bot_token'] ?? '');
+        $token = Typed::string($settings['bot_token'] ?? '');
 
         if ($token === '') {
             return false;
         }
 
         return $this->postJson("https://api.telegram.org/bot{$token}/sendMessage", [
-            'chat_id' => (string) ($settings['chat_id'] ?? ''),
+            'chat_id' => Typed::string($settings['chat_id'] ?? ''),
             'text' => "{$title}\n{$message}".($link ? "\n{$link}" : ''),
         ]);
     }
@@ -171,8 +172,8 @@ class NotificationDispatcher
     protected function sendPushover(array $settings, string $title, string $message, ?string $link): bool
     {
         return $this->postJson('https://api.pushover.net/1/messages.json', [
-            'token' => (string) ($settings['api_token'] ?? ''),
-            'user' => (string) ($settings['user_key'] ?? ''),
+            'token' => Typed::string($settings['api_token'] ?? ''),
+            'user' => Typed::string($settings['user_key'] ?? ''),
             'title' => $title,
             'message' => $message,
             'url' => $link,
@@ -184,8 +185,8 @@ class NotificationDispatcher
      */
     protected function sendNtfy(array $settings, string $title, string $message, ?string $link): bool
     {
-        $server = rtrim((string) ($settings['server'] ?? 'https://ntfy.sh'), '/');
-        $topic = (string) ($settings['topic'] ?? '');
+        $server = rtrim(Typed::string($settings['server'] ?? 'https://ntfy.sh'), '/');
+        $topic = Typed::string($settings['topic'] ?? '');
 
         if ($topic === '') {
             return false;
@@ -203,8 +204,8 @@ class NotificationDispatcher
      */
     protected function sendGotify(array $settings, string $title, string $message, ?string $link): bool
     {
-        $server = rtrim((string) ($settings['server'] ?? ''), '/');
-        $token = (string) ($settings['app_token'] ?? '');
+        $server = rtrim(Typed::string($settings['server'] ?? ''), '/');
+        $token = Typed::string($settings['app_token'] ?? '');
 
         if ($server === '' || $token === '') {
             return false;

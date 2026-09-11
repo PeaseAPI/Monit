@@ -4,6 +4,8 @@ namespace App\Services\Seo\Tools;
 
 use App\Services\Seo\AuditEngine;
 use App\Services\Seo\DomainMonitor;
+use App\Support\Typed;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -13,7 +15,7 @@ use Throwable;
 class NetworkTools
 {
     /**
-     * @return array<string, mixed>
+     * @return array{ok: bool, error?: string, response: Response, ms: int}|array{ok: false, error: string}
      */
     protected function fetch(string $url): array
     {
@@ -40,7 +42,7 @@ class NetworkTools
      */
     public function dnsLookup(array $in): array
     {
-        $domain = trim((string) ($in['domain'] ?? ''));
+        $domain = trim(Typed::string($in['domain'] ?? ''));
 
         if ($domain === '') {
             return ['ok' => false, 'error' => '请输入域名', 'data' => []];
@@ -65,7 +67,7 @@ class NetworkTools
      */
     public function ipLookup(array $in): array
     {
-        $ip = trim((string) ($in['ip'] ?? ''));
+        $ip = trim(Typed::string($in['ip'] ?? ''));
 
         if (! filter_var($ip, FILTER_VALIDATE_IP)) {
             return ['ok' => false, 'error' => 'IP 格式无效', 'data' => []];
@@ -83,7 +85,7 @@ class NetworkTools
      */
     public function sslLookup(array $in): array
     {
-        $host = (string) preg_replace('#^https?://#', '', trim((string) ($in['host'] ?? '')));
+        $host = Typed::string(preg_replace('#^https?://#', '', trim(Typed::string($in['host'] ?? ''))));
 
         if ($host === '') {
             return ['ok' => false, 'error' => '请输入主机名', 'data' => []];
@@ -100,18 +102,25 @@ class NetworkTools
         $params = stream_context_get_params($socket);
         fclose($socket);
 
-        $cert = $params['options']['ssl']['peer_certificate'] ?? null;
+        $certResource = data_get($params, 'options.ssl.peer_certificate');
 
-        if ($cert === null) {
+        if (! is_string($certResource)) {
             return ['ok' => false, 'error' => '未捕获到证书', 'data' => []];
         }
 
+        $parsed = openssl_x509_parse($certResource);
+        if ($parsed === false) {
+            return ['ok' => false, 'error' => '证书解析失败', 'data' => []];
+        }
+
+        $validTo = (int) ($parsed['validTo_time_t'] ?? 0);
+
         return ['ok' => true, 'data' => [
-            '颁发给' => $cert->subject['CN'] ?? '-',
-            '颁发者' => $cert->issuer['O'] ?? ($cert->issuer['CN'] ?? '-'),
-            '生效日期' => date('Y-m-d', (int) $cert->validFrom_time_t),
-            '失效日期' => date('Y-m-d', (int) $cert->validTo_time_t),
-            '剩余天数' => (string) max(0, (int) floor(($cert->validTo_time_t - time()) / 86400)),
+            '颁发给' => data_get($parsed, 'subject.CN') ?? '-',
+            '颁发者' => data_get($parsed, 'issuer.O') ?? (data_get($parsed, 'issuer.CN') ?? '-'),
+            '生效日期' => date('Y-m-d', (int) ($parsed['validFrom_time_t'] ?? 0)),
+            '失效日期' => date('Y-m-d', $validTo),
+            '剩余天数' => (string) max(0, (int) floor(($validTo - time()) / 86400)),
         ]];
     }
 
@@ -121,7 +130,7 @@ class NetworkTools
      */
     public function whoisLookup(array $in): array
     {
-        $domain = trim((string) ($in['domain'] ?? ''));
+        $domain = trim(Typed::string($in['domain'] ?? ''));
 
         if ($domain === '') {
             return ['ok' => false, 'error' => '请输入域名', 'data' => []];
@@ -146,7 +155,7 @@ class NetworkTools
      */
     public function ping(array $in): array
     {
-        $host = (string) preg_replace('#^https?://#', '', trim((string) ($in['host'] ?? '')));
+        $host = Typed::string(preg_replace('#^https?://#', '', trim(Typed::string($in['host'] ?? ''))));
 
         if ($host === '') {
             return ['ok' => false, 'error' => '请输入主机名', 'data' => []];
@@ -175,7 +184,7 @@ class NetworkTools
      */
     public function reverseIpLookup(array $in): array
     {
-        $ip = trim((string) ($in['ip'] ?? ''));
+        $ip = trim(Typed::string($in['ip'] ?? ''));
 
         if (! filter_var($ip, FILTER_VALIDATE_IP)) {
             return ['ok' => false, 'error' => 'IP 格式无效', 'data' => []];
@@ -192,7 +201,7 @@ class NetworkTools
      */
     public function domainIpLookup(array $in): array
     {
-        $domain = (string) preg_replace('#^https?://#', '', trim((string) ($in['domain'] ?? '')));
+        $domain = Typed::string(preg_replace('#^https?://#', '', trim(Typed::string($in['domain'] ?? ''))));
 
         if ($domain === '') {
             return ['ok' => false, 'error' => '请输入域名', 'data' => []];
@@ -213,10 +222,10 @@ class NetworkTools
      */
     public function statusChecker(array $in): array
     {
-        $result = $this->fetch((string) ($in['url'] ?? ''));
+        $result = $this->fetch(Typed::string($in['url'] ?? ''));
 
         if (! $result['ok']) {
-            return ['ok' => false, 'error' => $result['error'], 'data' => []];
+            return ['ok' => false, 'error' => $result['error'] ?? null, 'data' => []];
         }
 
         $response = $result['response'];
@@ -235,10 +244,10 @@ class NetworkTools
      */
     public function redirectChecker(array $in): array
     {
-        $result = $this->fetch((string) ($in['url'] ?? ''));
+        $result = $this->fetch(Typed::string($in['url'] ?? ''));
 
         if (! $result['ok']) {
-            return ['ok' => false, 'error' => $result['error'], 'data' => []];
+            return ['ok' => false, 'error' => $result['error'] ?? null, 'data' => []];
         }
 
         $response = $result['response'];
@@ -256,7 +265,7 @@ class NetworkTools
      */
     public function redirectTrace(array $in): array
     {
-        $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
+        $url = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
         $chain = [];
         $current = $url;
         $visited = 0;
@@ -295,10 +304,10 @@ class NetworkTools
      */
     public function ttfbChecker(array $in): array
     {
-        $result = $this->fetch((string) ($in['url'] ?? ''));
+        $result = $this->fetch(Typed::string($in['url'] ?? ''));
 
         if (! $result['ok']) {
-            return ['ok' => false, 'error' => $result['error'], 'data' => []];
+            return ['ok' => false, 'error' => $result['error'] ?? null, 'data' => []];
         }
 
         return ['ok' => true, 'data' => [
@@ -313,7 +322,7 @@ class NetworkTools
      */
     public function hostingChecker(array $in): array
     {
-        $host = (string) parse_url(AuditEngine::normalizeUrl((string) ($in['url'] ?? '')), PHP_URL_HOST);
+        $host = Typed::string(parse_url(AuditEngine::normalizeUrl(Typed::string($in['url'] ?? '')), PHP_URL_HOST));
         $ip = $host !== '' ? gethostbyname($host) : '';
 
         if ($ip === $host || $ip === '') {
@@ -335,10 +344,10 @@ class NetworkTools
      */
     public function headersLookup(array $in): array
     {
-        $result = $this->fetch((string) ($in['url'] ?? ''));
+        $result = $this->fetch(Typed::string($in['url'] ?? ''));
 
         if (! $result['ok']) {
-            return ['ok' => false, 'error' => $result['error'], 'data' => []];
+            return ['ok' => false, 'error' => $result['error'] ?? null, 'data' => []];
         }
 
         $data = [];
@@ -355,10 +364,10 @@ class NetworkTools
      */
     public function http2Checker(array $in): array
     {
-        $result = $this->fetch((string) ($in['url'] ?? ''));
+        $result = $this->fetch(Typed::string($in['url'] ?? ''));
 
         if (! $result['ok']) {
-            return ['ok' => false, 'error' => $result['error'], 'data' => []];
+            return ['ok' => false, 'error' => $result['error'] ?? null, 'data' => []];
         }
 
         return ['ok' => true, 'data' => [
@@ -373,7 +382,7 @@ class NetworkTools
     public function brotliChecker(array $in): array
     {
         // SSRF 防护：拦截内网/环回/云元数据目标
-        $blocked = AuditEngine::rejectUnsafeUrl(AuditEngine::normalizeUrl((string) ($in['url'] ?? '')));
+        $blocked = AuditEngine::rejectUnsafeUrl(AuditEngine::normalizeUrl(Typed::string($in['url'] ?? '')));
         if ($blocked !== null) {
             return ['ok' => false, 'error' => $blocked, 'data' => []];
         }
@@ -381,7 +390,7 @@ class NetworkTools
         try {
             $response = Http::timeout(20)
                 ->withHeaders(['Accept-Encoding' => 'gzip, br'])
-                ->get(AuditEngine::normalizeUrl((string) ($in['url'] ?? '')));
+                ->get(AuditEngine::normalizeUrl(Typed::string($in['url'] ?? '')));
         } catch (Throwable $e) {
             return ['ok' => false, 'error' => mb_substr($e->getMessage(), 0, 200), 'data' => []];
         }
@@ -401,7 +410,7 @@ class NetworkTools
      */
     public function googleCacheChecker(array $in): array
     {
-        $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
+        $url = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
 
         try {
             $response = Http::timeout(20)->get('https://webcache.googleusercontent.com/search?q=cache:'.urlencode($url));
@@ -421,7 +430,7 @@ class NetworkTools
      */
     public function idnConverter(array $in): array
     {
-        $domain = trim((string) ($in['domain'] ?? ''));
+        $domain = trim(Typed::string($in['domain'] ?? ''));
 
         if ($domain === '') {
             return ['ok' => false, 'error' => '请输入域名', 'data' => []];
@@ -439,10 +448,10 @@ class NetworkTools
      */
     public function textExtractor(array $in): array
     {
-        $result = $this->fetch((string) ($in['url'] ?? ''));
+        $result = $this->fetch(Typed::string($in['url'] ?? ''));
 
         if (! $result['ok']) {
-            return ['ok' => false, 'error' => $result['error'], 'data' => []];
+            return ['ok' => false, 'error' => $result['error'] ?? null, 'data' => []];
         }
 
         $html = (string) $result['response']->body();
@@ -458,10 +467,10 @@ class NetworkTools
      */
     public function pageSizeChecker(array $in): array
     {
-        $result = $this->fetch((string) ($in['url'] ?? ''));
+        $result = $this->fetch(Typed::string($in['url'] ?? ''));
 
         if (! $result['ok']) {
-            return ['ok' => false, 'error' => $result['error'], 'data' => []];
+            return ['ok' => false, 'error' => $result['error'] ?? null, 'data' => []];
         }
 
         $bytes = strlen((string) $result['response']->body());

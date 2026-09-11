@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ticket;
 use App\Models\TicketReply;
 use App\Support\TicketNotifications;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -57,7 +58,7 @@ class TicketController extends Controller
         });
 
         try {
-            TicketNotifications::notifyAdminsTicketCreated($ticket, $validated['message']);
+            TicketNotifications::notifyAdminsTicketCreated($ticket, Typed::string($validated['message']));
         } catch (\Throwable $e) {
             report($e);
         }

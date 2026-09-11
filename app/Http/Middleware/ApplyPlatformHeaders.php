@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Support\Settings;
+use App\Support\Typed;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -84,7 +85,7 @@ class ApplyPlatformHeaders
 
     protected function referrerPolicy(): ?string
     {
-        $policy = trim((string) Settings::get('main.referrer_policy', ''));
+        $policy = trim(Typed::string(Settings::get('main.referrer_policy', '')));
 
         if ($policy === '') {
             return null;

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SessionReplay;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -19,7 +20,7 @@ class AdminReplays extends Controller
     public function index(Request $request)
     {
         $replays = SessionReplay::with(['website', 'session'])
-            ->when($request->input('website_id'), fn ($q, $v) => $q->where('website_id', (int) $v))
+            ->when($request->input('website_id'), fn ($q, $v) => $q->where('website_id', Typed::int($v)))
             ->orderByDesc('replay_id')
             ->paginate(25);
 

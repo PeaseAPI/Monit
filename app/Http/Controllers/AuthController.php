@@ -13,6 +13,7 @@ use App\Services\UserAgentParser;
 use App\Services\WebhookService;
 use App\Support\Captcha;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -70,7 +71,7 @@ class AuthController extends Controller
         }
 
         // 手机号登录（M17 §12.5）：开关开启且输入为手机号时走手机号流程（密码或短信验证码）
-        $identifier = trim((string) $request->input('email', ''));
+        $identifier = trim(Typed::string($request->input('email', '')));
 
         if (SmsService::scenarioEnabled('phone_login') && SmsService::isPhone($identifier)) {
             return $this->loginByPhone($request, SmsService::normalizePhone($identifier));
@@ -107,7 +108,7 @@ class AuthController extends Controller
         // 登录短信二次校验（用户反馈 #16）：已绑手机号 + 后台开关开启时，
         // 密码正确也必须提供短信验证码（防"密码即可绕过短信"）
         if ($this->smsLoginVerifyRequired($user)) {
-            $code = (string) $request->input('sms_code', '');
+            $code = Typed::string($request->input('sms_code', ''));
 
             if ($code === '') {
                 return back()->withInput($request->only('email'))
@@ -149,7 +150,7 @@ class AuthController extends Controller
 
         // 短信验证码登录（免密码）
         if ($request->filled('sms_code')) {
-            if (! $user || ! SmsService::verify($phone, 'login', (string) $request->input('sms_code'))) {
+            if (! $user || ! SmsService::verify($phone, 'login', Typed::string($request->input('sms_code')))) {
                 return back()
                     ->withInput($request->only('email'))
                     ->withErrors(['sms_code' => __('auth.sms_code_invalid')]);
@@ -159,7 +160,7 @@ class AuthController extends Controller
                 ->withInput($request->only('email'))
                 ->withErrors(['sms_code' => __('auth.sms_code_required_for_login')]);
         } else {
-            if (! $user || ! $request->filled('password') || $user->password === null || ! Hash::check((string) $request->input('password'), $user->password)) {
+            if (! $user || ! $request->filled('password') || $user->password === null || ! Hash::check(Typed::string($request->input('password')), $user->password)) {
                 // 手机号登录失败同样计入锁定（与邮箱共用 login scope 计数语义）
                 LoginLockout::recordFailure('login', 'phone:'.$phone);
 
@@ -258,7 +259,7 @@ class AuthController extends Controller
             return redirect()->route('login')->withErrors(['email' => __('account.twofa_expired')]);
         }
 
-        $user = User::query()->where('user_id', (int) $userId)->first();
+        $user = User::query()->where('user_id', Typed::int($userId))->first();
 
         // 一次性消费：同一窗口的码登录后不可复用（RFC 6238 §5.2，防钓鱼重放）
         if (! $user || ! $user->twofa_is_enabled
@@ -273,7 +274,7 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         Auth::setRememberDuration(self::rememberLifetimeMinutes());
-        Auth::login($user, $request->session()->get('twofa_remember', false));
+        Auth::login($user, Typed::bool($request->session()->get('twofa_remember', false)));
 
         $user->forceFill([
             'last_activity' => now(),
@@ -356,7 +357,7 @@ class AuthController extends Controller
         // 注册黑名单（后台 设置→用户：域名 / IP，原版 blacklisted_*）
         $atSuffix = strrchr($validated['email'], '@');
         $emailDomain = strtolower($atSuffix === false ? '' : substr($atSuffix, 1));
-        $blacklistedDomains = array_filter(preg_split('/\r\n|\r|\n/', (string) Settings::get('users.blacklisted_domains', '')) ?: []);
+        $blacklistedDomains = array_filter(preg_split('/\r\n|\r|\n/', Typed::string(Settings::get('users.blacklisted_domains', ''))) ?: []);
         $blacklistedDomains = array_map(fn ($d) => strtolower(trim($d)), $blacklistedDomains);
 
         if ($emailDomain && in_array($emailDomain, $blacklistedDomains, true)) {
@@ -366,7 +367,7 @@ class AuthController extends Controller
         }
 
         $clientIp = $request->ip();
-        $blacklistedIps = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string) Settings::get('users.blacklisted_ips', '')) ?: []));
+        $blacklistedIps = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', Typed::string(Settings::get('users.blacklisted_ips', ''))) ?: []));
 
         if ($clientIp && in_array($clientIp, $blacklistedIps, true)) {
             return back()
@@ -537,7 +538,7 @@ class AuthController extends Controller
     /** 条款链接 main.terms_and_conditions_url（无外部链接时回退站内 /terms） */
     public static function termsUrl(): string
     {
-        $url = trim((string) Settings::get('main.terms_and_conditions_url', ''));
+        $url = trim(Typed::string(Settings::get('main.terms_and_conditions_url', '')));
 
         return $url !== '' ? $url : route('terms');
     }
@@ -545,7 +546,7 @@ class AuthController extends Controller
     /** 新用户默认语言 main.default_language（回退 zh_CN） */
     public static function defaultLanguage(): string
     {
-        $language = trim((string) Settings::get('main.default_language', ''));
+        $language = trim(Typed::string(Settings::get('main.default_language', '')));
 
         return array_key_exists($language, (array) config('monit.locales')) ? $language : 'zh_CN';
     }
@@ -553,7 +554,7 @@ class AuthController extends Controller
     /** 新用户默认时区 main.default_timezone（回退 Asia/Shanghai） */
     public static function defaultTimezone(): string
     {
-        $timezone = trim((string) Settings::get('main.default_timezone', ''));
+        $timezone = trim(Typed::string(Settings::get('main.default_timezone', '')));
 
         return in_array($timezone, timezone_identifiers_list(), true) ? $timezone : 'Asia/Shanghai';
     }
@@ -564,7 +565,7 @@ class AuthController extends Controller
      */
     public static function blacklistedCountries(): array
     {
-        $raw = (string) Settings::get('users.blacklisted_countries', '');
+        $raw = Typed::string(Settings::get('users.blacklisted_countries', ''));
 
         return array_values(array_filter(array_map(
             fn ($c) => strtoupper(trim($c)),
@@ -575,7 +576,7 @@ class AuthController extends Controller
     /** remember-me Cookie 有效期（users.login_rememberme_cookie_days，默认 30 天） */
     public static function rememberLifetimeMinutes(): int
     {
-        $days = (int) Settings::get('users.login_rememberme_cookie_days', 30);
+        $days = Typed::int(Settings::get('users.login_rememberme_cookie_days', 30));
 
         return max(1, $days) * 24 * 60;
     }

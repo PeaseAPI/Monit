@@ -18,7 +18,7 @@ class WebhookRazorpayController extends Controller
     {
         $webhookSecret = config('services.razorpay.webhook_secret');
 
-        if (empty($webhookSecret)) {
+        if (! is_string($webhookSecret) || $webhookSecret === '') {
             return response()->json(['error' => 'Not configured'], 400);
         }
 

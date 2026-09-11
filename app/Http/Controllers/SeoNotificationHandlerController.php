@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NotificationHandler;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -37,7 +38,7 @@ class SeoNotificationHandlerController extends Controller
             'events.*' => 'in:audit_refreshed,audit_failed,sitemap_changed,domain_expiring',
         ]);
 
-        $limit = (int) ($this->user()->getPlanSettings()['seo_notifications_limit'] ?? -1);
+        $limit = Typed::int($this->user()->getPlanSettings()['seo_notifications_limit'] ?? -1);
         $count = $this->user()->notificationHandlers()->count();
 
         if ($limit >= 0 && $count >= $limit) {
@@ -119,7 +120,7 @@ class SeoNotificationHandlerController extends Controller
             default => [],
         };
 
-        return collect($raw)->only($allowed)->map(fn ($v) => (string) $v)->all();
+        return collect($raw)->only($allowed)->map(fn ($v) => Typed::string($v))->all();
     }
 
     protected function authorizeOwner(Request $request, NotificationHandler $handler): void

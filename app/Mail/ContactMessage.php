@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Support\Typed;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -23,8 +24,8 @@ class ContactMessage extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '['.config('app.name').'] '.__('contact.title').' — '.$this->payload['name'],
-            replyTo: [$this->payload['email']],
+            subject: '['.Typed::string(config('app.name')).'] '.__('contact.title').' — '.Typed::string($this->payload['name'] ?? ''),
+            replyTo: [Typed::string($this->payload['email'] ?? '')],
         );
     }
 

@@ -3,6 +3,7 @@
 namespace App\Services\Sms;
 
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -25,10 +26,10 @@ final class AliyunSmsProvider
     public static function make(): static
     {
         return new self(
-            (string) (Settings::get('sms.sms_aliyun_access_key_id') ?: config('services.sms_aliyun.access_key_id', '')),
-            (string) (Settings::get('sms.sms_aliyun_access_key_secret') ?: config('services.sms_aliyun.access_key_secret', '')),
-            (string) (Settings::get('sms.sms_aliyun_sign_name') ?: config('services.sms_aliyun.sign_name', '')),
-            (string) (Settings::get('sms.sms_aliyun_template_code') ?: config('services.sms_aliyun.template_code', '')),
+            Typed::string(Settings::get('sms.sms_aliyun_access_key_id') ?: config('services.sms_aliyun.access_key_id', '')),
+            Typed::string(Settings::get('sms.sms_aliyun_access_key_secret') ?: config('services.sms_aliyun.access_key_secret', '')),
+            Typed::string(Settings::get('sms.sms_aliyun_sign_name') ?: config('services.sms_aliyun.sign_name', '')),
+            Typed::string(Settings::get('sms.sms_aliyun_template_code') ?: config('services.sms_aliyun.template_code', '')),
         );
     }
 
@@ -62,10 +63,10 @@ final class AliyunSmsProvider
         $params['Signature'] = $this->sign($params);
 
         $response = Http::asForm()->timeout(10)->post(static::ENDPOINT, $params);
-        $body = $response->json();
+        $body = Typed::arr($response->json());
 
         if ($response->failed() || (($body['Code'] ?? 'OK') !== 'OK')) {
-            return [false, (string) ($body['Message'] ?? $body['Code'] ?? 'aliyun_request_failed')];
+            return [false, Typed::string($body['Message'] ?? $body['Code'] ?? 'aliyun_request_failed')];
         }
 
         return [true, ''];
@@ -81,7 +82,7 @@ final class AliyunSmsProvider
         ksort($params);
 
         $canonicalized = implode('&', array_map(
-            fn (string $key, string $value) => static::percentEncode($key).'='.static::percentEncode($value),
+            fn (string $key, mixed $value) => static::percentEncode($key).'='.static::percentEncode(Typed::string($value)),
             array_keys($params),
             $params,
         ));

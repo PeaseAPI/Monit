@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Annotation;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -19,7 +20,7 @@ class AdminAnnotations extends Controller
     public function index(Request $request)
     {
         $annotations = Annotation::with('website')
-            ->when($request->input('search'), fn ($q, $v) => $q->where('name', 'like', "%{$v}%"))
+            ->when($request->input('search'), fn ($q, $v) => $q->where('name', 'like', '%'.Typed::string($v).'%'))
             ->orderByDesc('annotation_id')
             ->paginate(25);
 

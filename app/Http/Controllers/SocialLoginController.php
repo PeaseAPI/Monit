@@ -9,6 +9,7 @@ use App\Services\Social\GiteeProvider;
 use App\Services\Social\QQProvider;
 use App\Services\Social\WeChatProvider;
 use App\Services\Social\WeiboProvider;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +23,7 @@ use Illuminate\Support\Str;
 class SocialLoginController extends Controller
 {
     /**
-     * @var array<string, array<string, mixed>>
+     * @var array<string, array{authorize_url: string, token_url: string, userinfo_url: string, scope: string, userinfo_email_url?: string, userinfo_fields?: string}>
      */
     protected array $providers = [
         'google' => [
@@ -177,7 +178,7 @@ class SocialLoginController extends Controller
 
         // 验证 state 防止 CSRF（与国内提供商同标准：hash_equals 时序安全比较）
         $state = $request->input('state');
-        if (! $state || ! hash_equals((string) session("oauth_state_{$provider}"), (string) $state)) {
+        if (! $state || ! hash_equals(Typed::string(session("oauth_state_{$provider}")), Typed::string($state))) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_state_mismatch')]);
         }
         session()->forget("oauth_state_{$provider}");
@@ -191,12 +192,12 @@ class SocialLoginController extends Controller
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_no_code')]);
         }
 
-        $tokenData = $this->getAccessToken($provider, $code);
+        $tokenData = $this->getAccessToken($provider, Typed::string($code));
         if (! $tokenData || isset($tokenData['error'])) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_token_failed')]);
         }
 
-        $userInfo = $this->getUserInfo($provider, $tokenData['access_token']);
+        $userInfo = $this->getUserInfo($provider, Typed::string($tokenData['access_token']));
         if (! $userInfo || empty($userInfo['email'])) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_no_email')]);
         }
@@ -212,7 +213,7 @@ class SocialLoginController extends Controller
         // 验证 state 防止 CSRF（Login CSRF / code 注入）——与 callback() 同标准。
         // 此前国内 5 家完全缺失校验，攻击者可将自身 code 注入受害者浏览器完成登录。
         $state = $request->input('state');
-        if (! $state || ! hash_equals((string) session("oauth_state_{$provider}"), (string) $state)) {
+        if (! $state || ! hash_equals(Typed::string(session("oauth_state_{$provider}")), Typed::string($state))) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_state_mismatch')]);
         }
         session()->forget("oauth_state_{$provider}");
@@ -235,7 +236,7 @@ class SocialLoginController extends Controller
             ...array_values($config)
         );
 
-        $tokenData = $providerInstance->getAccessToken($code);
+        $tokenData = $providerInstance->getAccessToken(Typed::string($code));
         if (! $tokenData || isset($tokenData['error'])) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_token_failed')]);
         }
@@ -249,7 +250,7 @@ class SocialLoginController extends Controller
 
         // 如果没有邮箱，用 provider+id 构造一个虚拟邮箱
         if (empty($userInfo['email'])) {
-            $userInfo['email'] = $provider.'_'.$userInfo['id'].'@social.login';
+            $userInfo['email'] = $provider.'_'.Typed::string($userInfo['id']).'@social.login';
         }
 
         return $this->loginOrRegister($provider, $userInfo);
@@ -331,13 +332,17 @@ class SocialLoginController extends Controller
 
         // Apple 需要 client_secret 为 JWT
         if ($provider === 'apple') {
-            $params['client_secret'] = $this->generateAppleClientSecret($clientId);
+            $params['client_secret'] = $this->generateAppleClientSecret(Typed::string($clientId));
         }
 
         try {
             $response = Http::asForm()->post($config['token_url'], $params);
+            $json = $response->json();
 
-            return $response->json();
+            /** @var array<string, mixed>|null $json */
+            $json = is_array($json) ? $json : null;
+
+            return $json;
         } catch (\Throwable) {
             return null;
         }
@@ -371,14 +376,14 @@ class SocialLoginController extends Controller
             }
 
             $response = $request->get($config['userinfo_url'], $queryParams);
-            $data = $response->json();
+            $data = Typed::arr($response->json());
 
             // GitHub 需要单独获取邮箱——只接受 GitHub 已验证（verified）邮箱：
             // primary 可以是未验证邮箱（GitHub 允许设未验证邮箱为 primary），
             // 未验证 email 直接用于匹配本地账号 = 账号接管
             if ($provider === 'github' && empty($data['email'])) {
                 $emailResponse = Http::withToken($accessToken)
-                    ->get($config['userinfo_email_url']);
+                    ->get($config['userinfo_email_url'] ?? '');
                 /** @var array<int, array<string, mixed>> $emailsRaw */
                 $emailsRaw = $emailResponse->json() ?? [];
                 $emails = collect($emailsRaw);
@@ -392,44 +397,46 @@ class SocialLoginController extends Controller
             // Discord 用户信息——email 仅在 Discord 标记 verified 时可用（防未验证
             // email 匹配本地账号）
             if ($provider === 'discord') {
+                $discordId = Typed::string($data['id']);
+
                 return [
-                    'id' => (string) $data['id'],
-                    'email' => (($data['verified'] ?? false) === true) ? ($data['email'] ?? null) : null,
-                    'name' => $data['global_name'] ?? ($data['username'] ?? ''),
+                    'id' => $discordId,
+                    'email' => (($data['verified'] ?? false) === true) ? Typed::stringOrNull($data['email'] ?? null) : null,
+                    'name' => Typed::string($data['global_name'] ?? $data['username'] ?? ''),
                     'avatar' => isset($data['avatar'])
-                        ? "https://cdn.discordapp.com/avatars/{$data['id']}/{$data['avatar']}.png"
+                        ? 'https://cdn.discordapp.com/avatars/'.$discordId.'/'.Typed::string($data['avatar']).'.png'
                         : null,
                 ];
             }
 
             // Twitter 用户信息（嵌套 data 对象）
             if ($provider === 'twitter') {
-                $userData = $data['data'] ?? $data;
+                $userData = Typed::arr($data['data'] ?? $data);
 
                 return [
-                    'id' => (string) ($userData['id'] ?? ''),
+                    'id' => Typed::string($userData['id'] ?? ''),
                     'email' => null, // Twitter v2 不提供邮箱
-                    'name' => $userData['name'] ?? '',
-                    'avatar' => $userData['profile_image_url'] ?? null,
+                    'name' => Typed::string($userData['name'] ?? ''),
+                    'avatar' => Typed::stringOrNull($userData['profile_image_url'] ?? null),
                 ];
             }
 
             // Facebook 用户信息
             if ($provider === 'facebook') {
                 return [
-                    'id' => (string) $data['id'],
-                    'email' => $data['email'] ?? null,
-                    'name' => $data['name'] ?? '',
-                    'avatar' => $data['picture']['data']['url'] ?? null,
+                    'id' => Typed::string($data['id']),
+                    'email' => Typed::stringOrNull($data['email'] ?? null),
+                    'name' => Typed::string($data['name'] ?? ''),
+                    'avatar' => Typed::stringOrNull(data_get($data, 'picture.data.url')),
                 ];
             }
 
             // LinkedIn / Microsoft / Google 通用格式
             return [
-                'id' => (string) ($data['sub'] ?? $data['id']),
-                'email' => $data['email'] ?? null,
-                'name' => $data['name'] ?? ($data['login'] ?? ''),
-                'avatar' => $data['picture'] ?? ($data['avatar_url'] ?? null),
+                'id' => Typed::string($data['sub'] ?? $data['id']),
+                'email' => Typed::stringOrNull($data['email'] ?? null),
+                'name' => Typed::string($data['name'] ?? $data['login'] ?? ''),
+                'avatar' => Typed::stringOrNull($data['picture'] ?? $data['avatar_url'] ?? null),
             ];
         } catch (\Throwable) {
             return null;
@@ -448,7 +455,11 @@ class SocialLoginController extends Controller
             if (count($parts) !== 3) {
                 return null;
             }
-            $payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
+            $decoded = base64_decode(strtr($parts[1], '-_', '+/'), true);
+            if ($decoded === false) {
+                return null;
+            }
+            $payload = Typed::arr(json_decode($decoded, true));
 
             // 校验 aud：只接受签给本应用 client_id 的 id_token，防止其他 Apple
             // 应用的令牌跨应用重放（纵深防御，state 校验已挡主要注入路径）
@@ -488,7 +499,7 @@ class SocialLoginController extends Controller
 
         // 简化实现：使用 openssl_sign
         $signature = '';
-        if ($privateKey) {
+        if (is_string($privateKey) && $privateKey !== '') {
             openssl_sign("$header.$payload", $signature, $privateKey, OPENSSL_ALGO_SHA256);
         }
 
@@ -502,7 +513,7 @@ class SocialLoginController extends Controller
      */
     protected function loginOrRegister(string $provider, array $userInfo): RedirectResponse
     {
-        $email = strtolower($userInfo['email']);
+        $email = strtolower(Typed::string($userInfo['email']));
         $user = User::where('email', $email)->first();
 
         if ($user) {
@@ -537,7 +548,7 @@ class SocialLoginController extends Controller
 
         $user = User::create([
             'type' => 0,
-            'name' => $userInfo['name'] ?: 'User',
+            'name' => Typed::string($userInfo['name'] ?? '') ?: 'User',
             'email' => $email,
             'password' => bcrypt(Str::random(32)),
             'plan_id' => 'free',
@@ -548,7 +559,7 @@ class SocialLoginController extends Controller
             'status' => 1,
             'ip' => request()->ip(),
             'source' => $provider,
-            'avatar' => $userInfo['avatar'],
+            'avatar' => Typed::stringOrNull($userInfo['avatar'] ?? null),
             'referred_by' => $referredBy,
             // 登录计数合并进创建（fillable 已含这两列），消除「注册后再
             // 单独 save」的第二写窗口

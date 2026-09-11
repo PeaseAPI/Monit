@@ -3,6 +3,7 @@
 namespace App\Services\Sms;
 
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -44,10 +45,10 @@ class SmsService
     /** 当前短信服务商 */
     public static function provider(): string
     {
-        $provider = (string) Settings::get('sms.sms_provider', '');
+        $provider = Typed::string(Settings::get('sms.sms_provider', ''));
 
         if ($provider === '') {
-            $provider = (string) config('services.sms.provider', 'log');
+            $provider = Typed::string(config('services.sms.provider', 'log'));
         }
 
         return in_array($provider, static::PROVIDERS, true) ? $provider : 'log';
@@ -92,8 +93,8 @@ class SmsService
             return [false, 'invalid_phone'];
         }
 
-        $ttl = max(1, (int) (Settings::get('sms.sms_code_ttl_minutes', 10) ?: 10));
-        $interval = max(10, (int) (Settings::get('sms.sms_resend_interval_seconds', 60) ?: 60));
+        $ttl = max(1, Typed::int(Settings::get('sms.sms_code_ttl_minutes', 10) ?: 10));
+        $interval = max(10, Typed::int(Settings::get('sms.sms_resend_interval_seconds', 60) ?: 60));
 
         // 发送节流
         if (! Cache::add("monit.sms.throttle.{$phone}", 1, $interval)) {
@@ -123,9 +124,9 @@ class SmsService
         $cacheKey = "monit.sms.{$purpose}.{$phone}";
         $expected = Cache::get($cacheKey);
 
-        if (! $expected || ! hash_equals((string) $expected, trim($code))) {
+        if (! $expected || ! hash_equals(Typed::string($expected), trim($code))) {
             $attemptsKey = "monit.sms.attempts.{$purpose}.{$phone}";
-            $attempts = (int) Cache::get($attemptsKey, 0) + 1;
+            $attempts = Typed::int(Cache::get($attemptsKey, 0)) + 1;
 
             if ($attempts >= 5) {
                 Cache::forget($cacheKey);
@@ -170,7 +171,7 @@ class SmsService
      */
     protected static function logSend(string $phone, string $code, string $purpose): array
     {
-        Log::channel(config('logging.default'))->info("[SMS:{$purpose}] {$phone} => {$code}");
+        Log::channel(Typed::string(config('logging.default')))->info("[SMS:{$purpose}] {$phone} => {$code}");
 
         return [true, ''];
     }

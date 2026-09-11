@@ -71,7 +71,7 @@ class TencentCosClient
     {
         $url = $this->urlFor($key);
         $host = $this->bucket.'.cos.'.$this->region.'.myqcloud.com';
-        $contentType = (string) ($headers['Content-Type'] ?? '');
+        $contentType = Typed::string($headers['Content-Type'] ?? '');
 
         $startTime = (int) now()->timestamp - 60;
         $endTime = (int) now()->timestamp + 600;

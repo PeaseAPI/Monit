@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\VisitorSession;
 use App\Services\WebhookService;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -25,7 +26,7 @@ class CronController extends Controller
      */
     protected function authorized(Request $request): bool
     {
-        $expected = trim((string) Settings::get('cron.cron_key', '')) ?: (string) config('app.cron_key');
+        $expected = trim(Typed::string(Settings::get('cron.cron_key', ''))) ?: Typed::string(config('app.cron_key'));
 
         if ($expected === '') {
             return false;
@@ -137,7 +138,7 @@ class CronController extends Controller
      */
     protected function autoDeleteUnconfirmedUsers(): int
     {
-        $days = (int) config('app.auto_delete_unconfirmed_days', 3);
+        $days = Typed::int(config('app.auto_delete_unconfirmed_days', 3));
         $count = 0;
         User::where('status', 0)
             ->where('created_at', '<', now()->subDays($days))
@@ -155,7 +156,7 @@ class CronController extends Controller
      */
     protected function websitesReplaysCleanup(): int
     {
-        $retentionDays = (int) config('app.replays_retention_days', 30);
+        $retentionDays = Typed::int(config('app.replays_retention_days', 30));
         $count = 0;
         // sessions_replays 无 created_at（timestamps=false），过期判定用 datetime 列
         SessionReplay::where('datetime', '<', now()->subDays($retentionDays))
@@ -173,10 +174,10 @@ class CronController extends Controller
      */
     protected function analyticsCleanup(): int
     {
-        $retentionDays = (int) config('app.analytics_retention_days', 365);
+        $retentionDays = Typed::int(config('app.analytics_retention_days', 365));
         $count = 0;
         // 清理过期会话事件
-        $count += VisitorSession::where('date', '<', now()->subDays($retentionDays))->limit(500)->delete();
+        $count += Typed::int(VisitorSession::where('date', '<', now()->subDays($retentionDays))->limit(500)->delete());
 
         return $count;
     }

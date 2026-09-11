@@ -2,6 +2,7 @@
 
 namespace App\Services\Social;
 
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -63,7 +64,7 @@ class QQProvider implements ChineseSocialProvider
         $meBody = $meResponse->body();
         // QQ 返回 callback( {"client_id":"...","openid":"..."} ); 格式
         preg_match('/\((.+)\)/', $meBody, $matches);
-        $meData = json_decode($matches[1] ?? '{}', true);
+        $meData = Typed::arr(json_decode($matches[1] ?? '{}', true));
 
         $openid = $meData['openid'] ?? '';
 
@@ -74,12 +75,12 @@ class QQProvider implements ChineseSocialProvider
             'openid' => $openid,
         ]);
 
-        $data = $infoResponse->json();
+        $data = Typed::arr($infoResponse->json());
 
         return [
             'id' => $openid,
-            'name' => $data['nickname'] ?? '',
-            'avatar' => $data['figureurl_qq_2'] ?? ($data['figureurl_qq_1'] ?? ''),
+            'name' => Typed::string($data['nickname'] ?? ''),
+            'avatar' => Typed::string($data['figureurl_qq_2'] ?? $data['figureurl_qq_1'] ?? ''),
             'email' => null, // QQ 不提供邮箱
         ];
     }

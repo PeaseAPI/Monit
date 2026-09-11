@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 
 /**
@@ -55,7 +56,7 @@ class IyzicoProcessor
             return null;
         }
 
-        $conversationId = $request->input('conversationId', '');
+        $conversationId = Typed::string($request->input('conversationId', ''));
         $parts = explode('-', $conversationId);
         $userId = $parts[1] ?? 0;
 

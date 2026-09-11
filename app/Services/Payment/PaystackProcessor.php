@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -20,7 +21,7 @@ class PaystackProcessor
      */
     public function createOrder(Payment $payment, string $successUrl, string $cancelUrl): array
     {
-        $secretKey = config('services.paystack.secret_key');
+        $secretKey = Typed::string(config('services.paystack.secret_key'));
 
         try {
             $response = Http::withToken($secretKey)
@@ -35,16 +36,16 @@ class PaystackProcessor
                     ],
                 ]);
 
-            $data = $response->json();
+            $data = Typed::arr($response->json());
 
             if (($data['status'] ?? false) === true) {
                 return [
-                    'authorization_url' => $data['data']['authorization_url'],
-                    'reference' => $data['data']['reference'],
+                    'authorization_url' => Typed::string(data_get($data, 'data.authorization_url')),
+                    'reference' => Typed::string(data_get($data, 'data.reference')),
                 ];
             }
 
-            return ['error' => $data['message'] ?? 'Unknown error'];
+            return ['error' => Typed::string($data['message'] ?? 'Unknown error')];
         } catch (\Throwable $e) {
             return ['error' => $e->getMessage()];
         }

@@ -5,6 +5,7 @@ namespace App\Services\Seo;
 use App\Models\SeoKeyword;
 use App\Models\SeoKeywordRank;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -47,7 +48,7 @@ class RankTracker
         $urlFound = null;
 
         foreach ($results as $index => $row) {
-            $link = (string) ($row['link'] ?? '');
+            $link = Typed::string($row['link'] ?? '');
 
             if ($link !== '' && static::sameRegistrableHost($link, $host)) {
                 $position = $index + 1;
@@ -107,7 +108,7 @@ class RankTracker
         };
 
         $response = Http::timeout(30)->asJson()->get('https://serpapi.com/search.json', [
-            'api_key' => trim((string) Settings::get('seo.serpapi_api_key')),
+            'api_key' => trim(Typed::string(Settings::get('seo.serpapi_api_key'))),
             'engine' => $engine,
             'q' => $keyword->keyword,
             'device' => $keyword->device ?: 'desktop',
@@ -120,7 +121,10 @@ class RankTracker
             throw new \RuntimeException('serpapi_request_failed: '.$response->status());
         }
 
-        return array_values((array) ($response->json('organic_results') ?? []));
+        /** @var array<int, array<string, mixed>> $organic */
+        $organic = (array) ($response->json('organic_results') ?? []);
+
+        return array_values($organic);
     }
 
     protected static function hostOfTarget(?string $url): string

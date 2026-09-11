@@ -2,6 +2,7 @@
 
 namespace App\Services\Social;
 
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -36,8 +37,8 @@ class FeishuProvider implements ChineseSocialProvider
             'app_secret' => $this->appSecret,
         ]);
 
-        $tokenData = $tokenResponse->json();
-        $appAccessToken = $tokenData['app_access_token'] ?? '';
+        $tokenData = Typed::arr($tokenResponse->json());
+        $appAccessToken = Typed::string($tokenData['app_access_token'] ?? '');
 
         // 用 app_access_token + code 获取 user_access_token
         $response = Http::withToken($appAccessToken)
@@ -47,7 +48,12 @@ class FeishuProvider implements ChineseSocialProvider
                 'code' => $code,
             ]);
 
-        return $response->json('data', []);
+        $json = $response->json('data', []);
+
+        /** @var array<string, mixed> $json */
+        $json = is_array($json) ? $json : [];
+
+        return $json;
     }
 
     /**
@@ -55,19 +61,19 @@ class FeishuProvider implements ChineseSocialProvider
      */
     public function getUserInfo(string $accessToken): array
     {
-        $tokenData = json_decode($accessToken, true) ?? [];
-        $userAccessToken = $tokenData['access_token'] ?? $accessToken;
+        $tokenData = Typed::arr(json_decode($accessToken, true));
+        $userAccessToken = Typed::string($tokenData['access_token'] ?? $accessToken);
 
         $response = Http::withToken($userAccessToken)
             ->get('https://open.feishu.cn/open-apis/authen/v1/user_info');
 
-        $data = $response->json('data', []);
+        $data = Typed::arr($response->json('data', []));
 
         return [
-            'id' => $data['user_id'] ?? ($data['open_id'] ?? ''),
-            'name' => $data['name'] ?? '',
-            'avatar' => $data['avatar_url'] ?? '',
-            'email' => $data['email'] ?? ($data['mobile'] ?? null),
+            'id' => Typed::string($data['user_id'] ?? $data['open_id'] ?? ''),
+            'name' => Typed::string($data['name'] ?? ''),
+            'avatar' => Typed::string($data['avatar_url'] ?? ''),
+            'email' => Typed::stringOrNull($data['email'] ?? $data['mobile'] ?? null),
         ];
     }
 }

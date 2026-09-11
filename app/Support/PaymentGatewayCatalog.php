@@ -17,7 +17,7 @@ class PaymentGatewayCatalog
      * 网关 => ['keys' => [ENV键 => 类型], 'webhook_keys' => [...]]
      * 类型：password（密钥，掩码显示）/ text / bool（true/false 下拉）
      *
-     * @return array<string, mixed>
+     * @return array<string, array{keys: array<string, string>, webhook_keys: list<string>}>
      */
     public static function gateways(): array
     {
@@ -119,7 +119,7 @@ class PaymentGatewayCatalog
         $keys = [];
 
         foreach (self::gateways() as $meta) {
-            foreach (array_keys($meta['keys']) as $key) {
+            foreach (array_keys(Typed::arr($meta['keys'])) as $key) {
                 $keys[] = (string) $key;
             }
         }
@@ -137,9 +137,9 @@ class PaymentGatewayCatalog
         $bools = [];
 
         foreach (self::gateways() as $meta) {
-            foreach ($meta['keys'] as $key => $type) {
+            foreach (Typed::arr($meta['keys']) as $key => $type) {
                 if ($type === 'bool') {
-                    $bools[] = $key;
+                    $bools[] = Typed::string($key);
                 }
             }
         }
@@ -160,9 +160,9 @@ class PaymentGatewayCatalog
         $secrets = [];
 
         foreach (self::gateways() as $meta) {
-            foreach ($meta['keys'] as $key => $type) {
+            foreach (Typed::arr($meta['keys']) as $key => $type) {
                 if ($type === 'password') {
-                    $secrets[] = $key;
+                    $secrets[] = Typed::string($key);
                 }
             }
         }

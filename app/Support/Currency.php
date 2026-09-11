@@ -18,10 +18,10 @@ class Currency
     /** 默认（基准）货币代码 */
     public static function default(): string
     {
-        $code = strtoupper(trim((string) Settings::get('payment.currency', '')));
+        $code = strtoupper(trim(Typed::string(Settings::get('payment.currency', ''))));
 
         if ($code === '') {
-            $code = strtoupper((string) config('monit.payment.default_currency', 'CNY'));
+            $code = strtoupper(Typed::string(config('monit.payment.default_currency', 'CNY')));
         }
 
         return preg_match('/^[A-Z]{3}$/', $code) ? $code : 'CNY';
@@ -38,7 +38,7 @@ class Currency
         /** @var array<string, mixed> $configRows */
         $configRows = config('monit.payment.currencies', []);
         $currencies = collect($configRows)
-            ->map(fn ($row) => static::normalizeRow((array) $row))
+            ->map(fn ($row) => static::normalizeRow(Typed::arr($row)))
             ->all();
 
         // settings payment.currencies 覆盖/扩展
@@ -82,11 +82,11 @@ class Currency
      */
     protected static function normalizeRow(array $row): array
     {
-        $rate = (float) ($row['rate'] ?? 1);
+        $rate = Typed::float($row['rate'] ?? 1);
 
         return [
-            'name' => (string) ($row['name'] ?? ''),
-            'symbol' => (string) ($row['symbol'] ?? ''),
+            'name' => Typed::string($row['name'] ?? ''),
+            'symbol' => Typed::string($row['symbol'] ?? ''),
             'rate' => $rate > 0 ? $rate : 1,
         ];
     }
@@ -106,7 +106,7 @@ class Currency
 
     public static function symbol(string $code): string
     {
-        return (string) (static::all()[strtoupper(trim($code))]['symbol'] ?? '');
+        return Typed::string(data_get(static::all(), strtoupper(trim($code)).'.symbol') ?? '');
     }
 
     /**
@@ -130,7 +130,7 @@ class Currency
     /** 汇率：1 默认货币 = rate 该货币 */
     public static function rate(string $code): float
     {
-        return (float) (static::all()[strtoupper(trim($code))]['rate'] ?? 1);
+        return Typed::float(data_get(static::all(), strtoupper(trim($code)).'.rate') ?? 1);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BlogPost;
 use App\Models\Page;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Http\Response;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\Format;
@@ -40,7 +41,7 @@ class DynamicOgImageService
             default => config('app.name'),
         };
 
-        return $this->render('#4f46e5', $title, $fontPath);
+        return $this->render('#4f46e5', Typed::stringOrNull($title), $fontPath);
     }
 
     /**
@@ -76,20 +77,20 @@ class DynamicOgImageService
     {
         $post = BlogPost::find($id);
 
-        return $post?->title ?? config('app.name');
+        return Typed::string($post?->title ?? config('app.name'));
     }
 
     private function getPageTitle(int $id): string
     {
         $page = Page::find($id);
 
-        return $page?->title ?? config('app.name');
+        return Typed::string($page?->title ?? config('app.name'));
     }
 
     private function getWebsiteTitle(int $id): string
     {
         $website = Website::find($id);
 
-        return $website?->name ?? config('app.name');
+        return Typed::string($website?->name ?? config('app.name'));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Typed;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -114,7 +115,8 @@ class SeoAudit extends Model
         $grouped = [];
 
         foreach ((array) ($this->results ?? []) as $key => $row) {
-            $grouped[$row['category'] ?? 'misc'][$key] = $row;
+            $category = Typed::string($row['category'] ?? 'misc');
+            $grouped[$category][Typed::string($key)] = $row;
         }
 
         return $grouped;

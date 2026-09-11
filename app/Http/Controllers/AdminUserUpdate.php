@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Models\Website;
 use App\Services\UserAgentParser;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -107,7 +108,7 @@ class AdminUserUpdate extends Controller
         // 导出格式权限（CSV/JSON/PDF 多选）
         $request->merge(['plan_settings' => array_merge(
             (array) $request->input('plan_settings', []),
-            ['export' => array_values(array_intersect(['csv', 'json', 'pdf'], (array) $request->input('plan_settings.export', [])))],
+            ['export' => array_values(array_intersect(['csv', 'json', 'pdf'], array_filter(Typed::arr($request->input('plan_settings.export', [])), 'is_string')))],
         )]);
 
         // plan_settings 组装：白名单键 → 用户级覆盖保存进 users.plan_settings JSON
@@ -141,7 +142,7 @@ class AdminUserUpdate extends Controller
             unset($validated['password']);
         }
 
-        $wasType = (int) $user->getOriginal('type');
+        $wasType = Typed::int($user->getOriginal('type'));
 
         $user->update([
             'name' => $validated['name'],

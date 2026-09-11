@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use App\Support\Typed;
 use Illuminate\Http\Response;
 
 /**
@@ -51,7 +52,7 @@ class AlipayProcessor
 
             $fields = '';
             foreach ($params as $key => $value) {
-                $fields .= '<input type="hidden" name="'.e($key).'" value="'.e($value).'">';
+                $fields .= '<input type="hidden" name="'.e($key).'" value="'.e(Typed::string($value)).'">';
             }
 
             return [
@@ -74,7 +75,7 @@ class AlipayProcessor
             return false;
         }
 
-        $sign = (string) $data['sign'];
+        $sign = Typed::string($data['sign']);
         unset($data['sign'], $data['sign_type']);
 
         ksort($data);
@@ -82,12 +83,12 @@ class AlipayProcessor
         $parts = [];
         foreach ($data as $key => $value) {
             if ($value !== '' && $value !== null) {
-                $parts[] = $key.'='.$value;
+                $parts[] = $key.'='.Typed::string($value);
             }
         }
         $content = implode('&', $parts);
 
-        $publicKey = $this->normalizePublicKey((string) config('services.alipay.alipay_public_key'));
+        $publicKey = $this->normalizePublicKey(Typed::string(config('services.alipay.alipay_public_key')));
 
         return (bool) openssl_verify($content, base64_decode($sign), $publicKey, OPENSSL_ALGO_SHA256);
     }
@@ -112,12 +113,12 @@ class AlipayProcessor
         $parts = [];
         foreach ($params as $key => $value) {
             if ($value !== '' && $value !== null) {
-                $parts[] = $key.'='.$value;
+                $parts[] = $key.'='.Typed::string($value);
             }
         }
         $content = implode('&', $parts);
 
-        $privateKey = $this->normalizePrivateKey((string) config('services.alipay.private_key'));
+        $privateKey = $this->normalizePrivateKey(Typed::string(config('services.alipay.private_key')));
 
         openssl_sign($content, $signature, $privateKey, OPENSSL_ALGO_SHA256);
 

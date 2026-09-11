@@ -6,6 +6,7 @@ use App\Models\SeoKeyword;
 use App\Models\Website;
 use App\Services\PlanLimitService;
 use App\Services\Seo\RankTracker;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -181,7 +182,7 @@ class SeoKeywordController extends Controller
 
         $owned = Website::where('user_id', $this->user()->user_id)->where('website_id', $websiteId)->value('website_id');
 
-        return $owned ? (int) $owned : null;
+        return $owned ? Typed::int($owned) : null;
     }
 
     protected function authorizeOwn(Request $request, SeoKeyword $keyword): void

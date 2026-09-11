@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 
 /**
@@ -41,9 +42,9 @@ class MercadoPagoProcessor
             return null;
         }
 
-        $externalRef = json_decode($data['data']['external_reference'] ?? '{}', true);
-        $user = User::query()->where('user_id', (int) ($externalRef['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', (int) ($externalRef['plan_id'] ?? 0))->first();
+        $externalRef = Typed::arr(json_decode(Typed::string(data_get($data, 'data.external_reference') ?? '{}'), true));
+        $user = User::query()->where('user_id', Typed::int($externalRef['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', Typed::int($externalRef['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -53,10 +54,10 @@ class MercadoPagoProcessor
             'user_id' => $user->user_id,
             'plan_id' => $plan->plan_id,
             'processor' => 'mercadopago',
-            'payment_id_external' => $data['data']['id'] ?? null,
-            'payment_frequency' => $externalRef['frequency'] ?? 'one_time',
+            'payment_id_external' => Typed::stringOrNull(data_get($data, 'data.id') ?? null),
+            'payment_frequency' => Typed::string($externalRef['frequency'] ?? 'one_time'),
             'payment_type' => 'one_time',
-            'base_amount' => $data['data']['transaction_amount'] ?? 0,
+            'base_amount' => Typed::float(data_get($data, 'data.transaction_amount') ?? 0),
             'discount_amount' => 0,
             'taxes_amount' => 0,
             'total_amount' => $data['data']['transaction_amount'] ?? 0,

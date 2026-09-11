@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\HelpArticle;
 use App\Models\HelpCategory;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Database\Seeder;
 
 /**
@@ -34,15 +35,15 @@ class HelpCenterSeeder extends Seeder
                 ]
             );
 
-            foreach ($cat['articles'] as $i => $article) {
+            foreach (Typed::arr($cat['articles']) as $i => $article) {
                 HelpArticle::updateOrCreate(
-                    ['url' => $article['url']],
+                    ['url' => Typed::string(data_get($article, 'url'))],
                     [
                         'user_id' => $adminId,
                         'category_id' => $category->category_id,
-                        'title' => $article['title'],
-                        'content' => $article['content'],
-                        'description' => $article['desc'],
+                        'title' => Typed::string(data_get($article, 'title')),
+                        'content' => Typed::string(data_get($article, 'content')),
+                        'description' => Typed::string(data_get($article, 'desc')),
                         'is_published' => true,
                         'order' => $i,
                         'datetime' => now(),

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Support\Settings;
+use App\Support\Typed;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,7 +27,7 @@ class SetLocale
     public function handle(Request $request, Closure $next): Response
     {
         $locales = (array) config('monit.locales');
-        $locale = (string) $request->session()->get('locale', '');
+        $locale = Typed::string($request->session()->get('locale', ''));
 
         // 浏览器语言自动检测（main.auto_language_detection_is_enabled，默认开启）
         if ($locale === '' && $this->autoDetectEnabled()) {
@@ -36,7 +37,7 @@ class SetLocale
 
         // 后台默认语言（main.default_language）
         if ($locale === '') {
-            $locale = trim((string) Settings::get('main.default_language', ''));
+            $locale = trim(Typed::string(Settings::get('main.default_language', '')));
         }
 
         if ($locale !== '' && array_key_exists($locale, $locales)) {

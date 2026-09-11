@@ -3,6 +3,7 @@
 namespace App\Services\Seo;
 
 use App\Support\Settings;
+use App\Support\Typed;
 
 /**
  * 审计测试注册表：读取 config/seo.php，跳过未配置外部凭据的条件项
@@ -44,7 +45,7 @@ class AuditTestRegistry
      */
     public static function categories(): array
     {
-        return array_map('strval', array_keys(config('seo.categories', [])));
+        return array_map('strval', array_keys(Typed::arr(config('seo.categories', []))));
     }
 
     /**
@@ -56,7 +57,7 @@ class AuditTestRegistry
             return true;
         }
 
-        $value = Settings::get($meta['requires']);
+        $value = Settings::get(Typed::string($meta['requires']));
 
         // 布尔开关须为 true；密钥类须为非空字符串
         return $value === true || $value === 'true' || (is_string($value) && trim($value) !== '');

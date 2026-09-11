@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -24,6 +25,10 @@ class RazorpayProcessor
         $apiSecret = config('services.razorpay.key_secret');
 
         try {
+            if (! is_string($apiKey) || ! is_string($apiSecret) || $apiKey === '' || $apiSecret === '') {
+                return ['error' => 'razorpay_not_configured'];
+            }
+
             $response = Http::withBasicAuth($apiKey, $apiSecret)
                 ->post('https://api.razorpay.com/v1/orders', [
                     'amount' => (int) ((float) ($payment->total_amount ?? 0) * 100),
@@ -32,7 +37,7 @@ class RazorpayProcessor
                     'notes' => ['payment_id' => $payment->payment_id],
                 ]);
 
-            $data = $response->json();
+            $data = Typed::arr($response->json());
 
             return [
                 'order_id' => $data['id'] ?? null,

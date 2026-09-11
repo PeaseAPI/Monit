@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use App\Support\Typed;
 use Mollie\Api\MollieApiClient;
 
 /**
@@ -22,14 +23,14 @@ class MollieProcessor
     {
         try {
             $mollie = new MollieApiClient;
-            $mollie->setApiKey(config('services.mollie.key'));
+            $mollie->setApiKey(Typed::string(config('services.mollie.key')));
 
             $order = $mollie->payments->create([
                 'amount' => [
                     'currency' => $payment->currency,
                     'value' => number_format((float) $payment->total_amount, 2, '.', ''),
                 ],
-                'description' => config('app.name').' - '.$payment->frequency,
+                'description' => Typed::string(config('app.name')).' - '.$payment->frequency,
                 'redirectUrl' => $successUrl,
                 'cancelUrl' => $cancelUrl,
                 'metadata' => ['payment_id' => $payment->payment_id],

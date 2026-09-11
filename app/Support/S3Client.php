@@ -83,7 +83,7 @@ class S3Client
 
         $canonicalHeaders = '';
         foreach ($allHeaders as $h => $v) {
-            $canonicalHeaders .= strtolower($h).':'.trim((string) $v)."\n";
+            $canonicalHeaders .= strtolower($h).':'.trim(Typed::string($v))."\n";
         }
         $signedHeaders = implode(';', array_keys($allHeaders));
 
@@ -116,7 +116,7 @@ class S3Client
         $curlHeaders = ['Authorization: '.$auth];
         foreach ($allHeaders as $h => $v) {
             if ($h !== 'host') {
-                $curlHeaders[] = ucwords($h, '-').': '.$v;
+                $curlHeaders[] = ucwords($h, '-').': '.Typed::string($v);
             }
         }
 

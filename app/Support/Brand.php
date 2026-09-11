@@ -23,15 +23,15 @@ class Brand
      */
     public static function name(): string
     {
-        $name = self::trimOrNull((string) Settings::get('branding.site_name', ''));
+        $name = self::trimOrNull(Typed::string(Settings::get('branding.site_name', '')));
 
         if ($name !== null) {
             return $name;
         }
 
-        $title = self::trimOrNull((string) Settings::get('main.site_title', ''));
+        $title = self::trimOrNull(Typed::string(Settings::get('main.site_title', '')));
 
-        return $title ?? config('app.name', 'Monit');
+        return $title ?? Typed::string(config('app.name', 'Monit'));
     }
 
     /**
@@ -42,13 +42,13 @@ class Brand
     public static function logoUrl(bool $dark = false): ?string
     {
         if ($dark) {
-            $url = self::trimOrNull((string) Settings::get('branding.logo_dark_url', ''));
+            $url = self::trimOrNull(Typed::string(Settings::get('branding.logo_dark_url', '')));
         } else {
             $url = null;
         }
 
-        $url ??= self::trimOrNull((string) Settings::get('branding.logo_url', ''));
-        $url ??= self::trimOrNull((string) Settings::get('custom_images.logo', ''));
+        $url ??= self::trimOrNull(Typed::string(Settings::get('branding.logo_url', '')));
+        $url ??= self::trimOrNull(Typed::string(Settings::get('custom_images.logo', '')));
 
         return $url ?? (file_exists(public_path('logo.png')) ? '/logo.png' : null);
     }
@@ -58,8 +58,8 @@ class Brand
      */
     public static function faviconUrl(): ?string
     {
-        return self::trimOrNull((string) Settings::get('branding.favicon_url', ''))
-            ?? self::trimOrNull((string) Settings::get('custom_images.favicon', ''))
+        return self::trimOrNull(Typed::string(Settings::get('branding.favicon_url', '')))
+            ?? self::trimOrNull(Typed::string(Settings::get('custom_images.favicon', '')))
             ?? (file_exists(public_path('favicon.ico')) ? '/favicon.ico' : null);
     }
 
@@ -68,7 +68,7 @@ class Brand
      */
     public static function primaryColor(): string
     {
-        $color = self::trimOrNull((string) Settings::get('branding.primary_color', ''));
+        $color = self::trimOrNull(Typed::string(Settings::get('branding.primary_color', '')));
 
         return ($color && preg_match('/^#[0-9a-fA-F]{6}$/', $color)) ? $color : self::DEFAULT_PRIMARY;
     }
@@ -101,7 +101,7 @@ class Brand
      */
     public static function titleSeparator(): string
     {
-        $separator = trim((string) Settings::get('main.title_separator', ''));
+        $separator = trim(Typed::string(Settings::get('main.title_separator', '')));
 
         return $separator !== '' ? mb_substr($separator, 0, 8) : '·';
     }
@@ -111,7 +111,7 @@ class Brand
      */
     public static function icp(): ?string
     {
-        return self::trimOrNull((string) Settings::get('branding.footer_icp', ''));
+        return self::trimOrNull(Typed::string(Settings::get('branding.footer_icp', '')));
     }
 
     /**
@@ -119,7 +119,7 @@ class Brand
      */
     public static function footerHtml(): ?string
     {
-        return self::trimOrNull((string) Settings::get('branding.footer_custom_html', ''));
+        return self::trimOrNull(Typed::string(Settings::get('branding.footer_custom_html', '')));
     }
 
     /**
@@ -127,7 +127,7 @@ class Brand
      */
     public static function landingTheme(): string
     {
-        $theme = self::trimOrNull((string) Settings::get('branding.landing_theme', ''));
+        $theme = self::trimOrNull(Typed::string(Settings::get('branding.landing_theme', '')));
 
         return ($theme && preg_match('/^[a-zA-Z0-9_-]+$/', $theme)) ? $theme : 'default';
     }
@@ -145,12 +145,12 @@ class Brand
      */
     public static function heroTitle(): ?string
     {
-        return self::trimOrNull((string) Settings::get('branding.landing_hero_title', ''));
+        return self::trimOrNull(Typed::string(Settings::get('branding.landing_hero_title', '')));
     }
 
     public static function heroSubtitle(): ?string
     {
-        return self::trimOrNull((string) Settings::get('branding.landing_hero_subtitle', ''));
+        return self::trimOrNull(Typed::string(Settings::get('branding.landing_hero_subtitle', '')));
     }
 
     /* ------------------------------------------------------------------ */

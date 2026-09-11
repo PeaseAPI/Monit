@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Plan;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -119,13 +120,15 @@ class AdminPlans extends Controller
         $settings = [];
 
         foreach ($features as $key => $meta) {
+            if (! is_array($meta)) {
+                continue;
+            }
             $raw = $input[$key] ?? null;
 
             if (($meta['type'] ?? 'bool') === 'int') {
                 // 空串 / null 均回退到默认值
                 $settings[$key] = ($raw === null || $raw === '')
-                    ? (int) ($meta['default'] ?? 0)
-                    : (int) $raw;
+                    ? Typed::int($meta['default'] ?? 0) : Typed::int($raw);
             } else {
                 $settings[$key] = $raw !== null;
             }

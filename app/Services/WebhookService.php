@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Support\Settings;
+use App\Support\Typed;
 use App\Support\WebhookSignature;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -35,7 +36,7 @@ class WebhookService
             return;
         }
 
-        $url = trim((string) Settings::get("webhooks.webhook_{$event}_url", ''));
+        $url = trim(Typed::string(Settings::get("webhooks.webhook_{$event}_url", '')));
 
         // 仅允许 http/https（拒绝 file://、ftp:// 等 SSRF 向量）
         if ($url === '' || ! WebhookSignature::isSafeHttpUrl($url)) {
@@ -51,7 +52,7 @@ class WebhookService
         $headers = ['X-Monit-Event' => $event];
 
         // 签名（webhooks.webhooks_secret_key）：HMAC-SHA256(body)
-        if ($secret = trim((string) Settings::get('webhooks.webhooks_secret_key', ''))) {
+        if ($secret = trim(Typed::string(Settings::get('webhooks.webhooks_secret_key', '')))) {
             $headers['X-Monit-Signature'] = WebhookSignature::sign($body, $secret);
         }
 
@@ -128,7 +129,7 @@ class WebhookService
             return;
         }
 
-        $url = trim((string) Settings::get("webhooks.webhook_{$event}_url", ''));
+        $url = trim(Typed::string(Settings::get("webhooks.webhook_{$event}_url", '')));
 
         if ($url === '') {
             return;
@@ -142,7 +143,7 @@ class WebhookService
     {
         $this->dispatchToggleable('cron_start', ['started_at' => now()->toIso8601String()]);
 
-        if ($url = trim((string) Settings::get('webhooks.start_url', ''))) {
+        if ($url = trim(Typed::string(Settings::get('webhooks.start_url', '')))) {
             $this->postJson($url, 'cron_start', ['started_at' => now()->toIso8601String()]);
         }
     }
@@ -155,7 +156,7 @@ class WebhookService
     {
         $this->dispatchToggleable('cron_end', $results);
 
-        if ($url = trim((string) Settings::get('webhooks.end_url', ''))) {
+        if ($url = trim(Typed::string(Settings::get('webhooks.end_url', '')))) {
             $this->postJson($url, 'cron_end', $results);
         }
     }
@@ -224,7 +225,7 @@ class WebhookService
 
         $headers = ['X-Monit-Event' => $event];
 
-        if ($secret = trim((string) Settings::get('webhooks.webhooks_secret_key', ''))) {
+        if ($secret = trim(Typed::string(Settings::get('webhooks.webhooks_secret_key', '')))) {
             $headers['X-Monit-Signature'] = WebhookSignature::sign($body, $secret);
         }
 

@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 
 /**
@@ -49,14 +50,14 @@ class PayUProcessor
 
     public function handleWebhook(Request $request): ?Payment
     {
-        $order = $request->input('order', []);
-        $status = $order['status'] ?? '';
+        $order = Typed::arr($request->input('order'));
+        $status = Typed::string($order['status'] ?? '');
 
         if ($status !== 'COMPLETED') {
             return null;
         }
 
-        $extOrderId = $order['extOrderId'] ?? '';
+        $extOrderId = Typed::string($order['extOrderId'] ?? '');
         $parts = explode('-', $extOrderId);
         $userId = $parts[1] ?? 0;
 
@@ -66,22 +67,22 @@ class PayUProcessor
         }
 
         $plan = Plan::query()->where('plan_id', (int) ($user->plan_id))->first();
-        $totalAmount = ($order['totalAmount'] ?? 0) / 100;
+        $totalAmount = Typed::float($order['totalAmount'] ?? 0) / 100;
 
         return Payment::create([
             'user_id' => $user->user_id,
             'plan_id' => $plan ? $plan->plan_id : 'free',
             'processor' => 'payu',
-            'payment_id_external' => $order['orderId'] ?? null,
+            'payment_id_external' => Typed::stringOrNull($order['orderId'] ?? null),
             'payment_frequency' => 'one_time',
             'payment_type' => 'one_time',
             'base_amount' => $totalAmount,
             'discount_amount' => 0,
             'taxes_amount' => 0,
             'total_amount' => $totalAmount,
-            'currency' => $order['currencyCode'] ?? 'PLN',
-            'email' => $order['buyer']['email'] ?? $user->email,
-            'name' => $order['buyer']['firstName'] ?? $user->name,
+            'currency' => Typed::string($order['currencyCode'] ?? 'PLN'),
+            'email' => Typed::stringOrNull(data_get($order, 'buyer.email')) ?? $user->email,
+            'name' => Typed::stringOrNull(data_get($order, 'buyer.firstName')) ?? $user->name,
             'datetime' => now(),
         ]);
     }

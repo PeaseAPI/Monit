@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -41,10 +42,10 @@ class AccountPreferencesController extends Controller
         $preferences = $user->preferences ?? [];
 
         if ($request->filled('language')) {
-            $user->language = $request->input('language');
+            $user->language = Typed::stringOrNull($request->input('language'));
         }
         if ($request->filled('timezone')) {
-            $user->timezone = $request->input('timezone');
+            $user->timezone = Typed::stringOrNull($request->input('timezone'));
         }
 
         $preferences['theme'] = $request->input('theme', 'auto');

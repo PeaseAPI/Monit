@@ -29,6 +29,7 @@ use App\Services\Payment\StripeProcessor;
 use App\Services\Payment\WeChatPayProcessor;
 use App\Services\Payment\YooKassaProcessor;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -98,10 +99,10 @@ class PaymentController extends Controller
 
         // 结账页默认周期（payment.default_payment_frequency：monthly/annual/lifetime）
         $defaultFrequency = in_array(
-            trim((string) Settings::get('payment.default_payment_frequency', '')),
+            trim(Typed::string(Settings::get('payment.default_payment_frequency', ''))),
             ['monthly', 'annual', 'lifetime'],
             true
-        ) ? trim((string) Settings::get('payment.default_payment_frequency')) : 'monthly';
+        ) ? trim(Typed::string(Settings::get('payment.default_payment_frequency'))) : 'monthly';
 
         return view('payments.index', compact('plans', 'user', 'currentPlan', 'recentPayments', 'defaultFrequency', 'enabledProcessors'));
     }
@@ -144,7 +145,7 @@ class PaymentController extends Controller
 
             throw $e;
         }
-        $payment = Payment::query()->where('payment_id', (int) $order['payment_id'])->firstOrFail();
+        $payment = Payment::query()->where('payment_id', Typed::int($order['payment_id']))->firstOrFail();
 
         return match ($processor) {
             'stripe' => $this->redirectToStripe($payment),
@@ -241,24 +242,24 @@ class PaymentController extends Controller
             // 金额防篡改（安全审计周期 #19）：验签只证明通知来自 Stripe，
             // 结算金额仍须与本地订单一致（amount_total 最小单位 → 主单位换算）
             if ($this->paymentService->verifyGatewayAmount(
-                (int) $event['payment_id'],
-                PaymentService::majorUnits($event['amount_total'] ?? null, (string) ($event['currency'] ?? '')),
-                (string) ($event['currency'] ?? ''),
+                Typed::int($event['payment_id']),
+                PaymentService::majorUnits(Typed::intOrNull($event['amount_total'] ?? null), Typed::string($event['currency'] ?? '')),
+                Typed::string($event['currency'] ?? ''),
                 'stripe',
             )) {
                 $this->paymentService->handlePaymentSuccess(
-                    (int) $event['payment_id'],
-                    $event['external_id'],
-                    $event['subscription_id'] ?? null
+                    Typed::int($event['payment_id']),
+                    Typed::string($event['external_id']),
+                    Typed::stringOrNull($event['subscription_id'] ?? null)
                 );
             }
         }
 
         if ($event['event'] === 'payment_failure' && isset($event['payment_id'])) {
             $this->paymentService->handlePaymentFailure(
-                (int) $event['payment_id'],
-                $event['external_id'] ?? '',
-                $event['reason'] ?? ''
+                Typed::int($event['payment_id']),
+                Typed::string($event['external_id'] ?? ''),
+                Typed::string($event['reason'] ?? '')
             );
         }
 
@@ -281,7 +282,7 @@ class PaymentController extends Controller
         $eventType = $request->input('event_type', '');
 
         if ($eventType === 'PAYMENT.CAPTURE.COMPLETED') {
-            $resource = $request->input('resource', []);
+            $resource = Typed::arr($request->input('resource'));
             $paymentId = $resource['custom_id'] ?? null;
             $externalId = $resource['id'] ?? null;
 
@@ -289,26 +290,25 @@ class PaymentController extends Controller
             // 须与本地订单一致方可入账（缺失/不符 fail-closed 拒绝）
             if ($paymentId
                 && $this->paymentService->verifyGatewayAmount(
-                    (int) $paymentId,
-                    is_numeric($resource['amount']['total'] ?? null) ? (float) $resource['amount']['total'] : null,
-                    (string) ($resource['amount']['currency'] ?? ''),
+                    Typed::int($paymentId),
+                    is_numeric(data_get($resource, 'amount.total')) ? (float) data_get($resource, 'amount.total') : null,
+                    Typed::string(data_get($resource, 'amount.currency') ?? ''),
                     'paypal',
                 )) {
-                $this->paymentService->handlePaymentSuccess((int) $paymentId, $externalId);
+                $this->paymentService->handlePaymentSuccess(Typed::int($paymentId), Typed::string($externalId));
             }
         }
 
         // 规格 §6.3.1：支付失败事件派发 webhook_payment_failure_url
         if ($eventType === 'PAYMENT.CAPTURE.DENIED') {
-            $resource = $request->input('resource', []);
+            $resource = Typed::arr($request->input('resource'));
             $paymentId = $resource['custom_id'] ?? null;
 
             if ($paymentId) {
                 $this->paymentService->handlePaymentFailure(
-                    (int) $paymentId,
-                    (string) ($resource['id'] ?? ''),
-                    (string) ($resource['status_details']['reason'] ?? '')
-                );
+                    Typed::int($paymentId),
+                    Typed::string($resource['id'] ?? ''),
+                    Typed::string(data_get($resource, 'status_details.reason') ?? ''));
             }
         }
 
@@ -375,7 +375,7 @@ class PaymentController extends Controller
         }
 
         if ($result['approve_url'] ?? null) {
-            return redirect($result['approve_url']);
+            return redirect(Typed::string($result['approve_url']));
         }
 
         return back()->withErrors(['processor' => __('payment.paypal_order_failed')]);
@@ -394,7 +394,7 @@ class PaymentController extends Controller
 
         return view('payments.offline-instructions', [
             'payment' => $payment,
-            'instructions' => (string) ($result['instructions'] ?? ''),
+            'instructions' => Typed::string($result['instructions'] ?? ''),
         ])->with('success', __('payment.offline_order_created'));
     }
 
@@ -429,7 +429,7 @@ class PaymentController extends Controller
             return back()->withErrors(['processor' => $result['error']]);
         }
         if ($result['checkout_url'] ?? null) {
-            return redirect($result['checkout_url']);
+            return redirect(Typed::string($result['checkout_url']));
         }
 
         return back()->withErrors(['processor' => __('payment.mollie_order_failed')]);
@@ -449,7 +449,7 @@ class PaymentController extends Controller
             return back()->withErrors(['processor' => $result['error']]);
         }
         if ($result['authorization_url'] ?? null) {
-            return redirect($result['authorization_url']);
+            return redirect(Typed::string($result['authorization_url']));
         }
 
         return back()->withErrors(['processor' => __('payment.paystack_order_failed')]);
@@ -498,7 +498,7 @@ class PaymentController extends Controller
             return back()->withErrors(['processor' => $result['error']]);
         }
 
-        return response($result['redirect_html']);
+        return response(Typed::string($result['redirect_html']));
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 
 /**
@@ -49,11 +50,11 @@ class FlutterwaveProcessor
             return null;
         }
 
-        $data = $request->input('data', []);
-        $meta = $data['meta'] ?? [];
+        $data = Typed::arr($request->input('data'));
+        $meta = Typed::arr($data['meta'] ?? []);
 
-        $user = User::query()->where('user_id', (int) ($meta['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', (int) ($meta['plan_id'] ?? 0))->first();
+        $user = User::query()->where('user_id', Typed::int($meta['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', Typed::int($meta['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -63,16 +64,16 @@ class FlutterwaveProcessor
             'user_id' => $user->user_id,
             'plan_id' => $plan->plan_id,
             'processor' => 'flutterwave',
-            'payment_id_external' => $data['id'] ?? null,
-            'payment_frequency' => $meta['frequency'] ?? 'one_time',
+            'payment_id_external' => Typed::stringOrNull($data['id'] ?? null),
+            'payment_frequency' => Typed::string($meta['frequency'] ?? 'one_time'),
             'payment_type' => 'one_time',
-            'base_amount' => $data['amount'] ?? 0,
+            'base_amount' => Typed::float($data['amount'] ?? 0),
             'discount_amount' => 0,
             'taxes_amount' => 0,
-            'total_amount' => $data['amount'] ?? 0,
-            'currency' => $data['currency'] ?? 'USD',
-            'email' => $data['customer']['email'] ?? $user->email,
-            'name' => $data['customer']['name'] ?? $user->name,
+            'total_amount' => Typed::float($data['amount'] ?? 0),
+            'currency' => Typed::string($data['currency'] ?? 'USD'),
+            'email' => Typed::stringOrNull(data_get($data, 'customer.email')) ?? $user->email,
+            'name' => Typed::stringOrNull(data_get($data, 'customer.name')) ?? $user->name,
             'datetime' => now(),
         ]);
     }

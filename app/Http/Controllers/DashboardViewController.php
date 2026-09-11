@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DashboardView;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -60,7 +61,7 @@ class DashboardViewController extends Controller
             $attributes['settings'] = $this->normalizeSettings($validated['settings']);
         }
         if ($request->filled('order')) {
-            $attributes['order'] = (int) $request->input('order');
+            $attributes['order'] = Typed::int($request->input('order'));
         }
 
         $view->update($attributes);

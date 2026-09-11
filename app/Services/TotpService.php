@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Support\Typed;
+
 /**
  * TOTP 两步验证服务（规格书 §12.4）
  * 纯 PHP 实现 RFC 6238（Time-based One-time Password）+ RFC 4648 Base32，
@@ -92,7 +94,7 @@ class TotpService
         }
 
         $cacheKey = 'twofa.last_counter.'.$consumerKey;
-        $lastUsed = (int) cache()->get($cacheKey, 0);
+        $lastUsed = Typed::int(cache()->get($cacheKey, 0));
 
         if ($matched <= $lastUsed) {
             return false;

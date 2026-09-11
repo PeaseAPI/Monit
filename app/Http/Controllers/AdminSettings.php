@@ -8,6 +8,7 @@ use App\Services\LicenseManager;
 use App\Support\EnvWriter;
 use App\Support\PaymentGatewayCatalog;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -87,7 +88,7 @@ class AdminSettings extends Controller
         $validated = $request->validate($rules);
 
         // 未勾选的复选框不会提交，显式置为 false 以支持"取消勾选后保存"
-        foreach (array_keys(array_filter($rules, fn ($rule) => str_contains($rule, 'boolean'))) as $field) {
+        foreach (array_keys(array_filter($rules, fn ($rule) => str_contains(Typed::string($rule), 'boolean'))) as $field) {
             $validated[$field] = $request->boolean($field);
         }
 
@@ -100,7 +101,7 @@ class AdminSettings extends Controller
         }
 
         // 工单入站 token：首次保存时自动生成（A4 邮件入站 webhook 鉴权）
-        if ($group === 'tickets' && trim((string) Settings::get('tickets.inbound_webhook_token', '')) === '') {
+        if ($group === 'tickets' && trim(Typed::string(Settings::get('tickets.inbound_webhook_token', ''))) === '') {
             $validated['inbound_webhook_token'] = bin2hex(random_bytes(20));
         }
 
@@ -130,21 +131,24 @@ class AdminSettings extends Controller
         $clean = [];
 
         foreach ($currencies as $code => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
             $code = strtoupper(trim((string) $code));
 
             if (! preg_match('/^[A-Z]{3}$/', $code) || $code === strtoupper($default)) {
                 continue;
             }
 
-            $rate = (float) ($row['rate'] ?? 0);
+            $rate = Typed::float($row['rate'] ?? 0);
 
             if ($rate <= 0) {
                 continue;
             }
 
             $clean[$code] = [
-                'name' => trim((string) ($row['name'] ?? '')),
-                'symbol' => trim((string) ($row['symbol'] ?? '')),
+                'name' => trim(Typed::string($row['name'] ?? '')),
+                'symbol' => trim(Typed::string($row['symbol'] ?? '')),
                 'rate' => $rate,
             ];
         }
@@ -246,7 +250,7 @@ class AdminSettings extends Controller
     protected function cachePanel(): array
     {
         return [
-            'driver' => (string) config('cache.default'),
+            'driver' => Typed::string(config('cache.default')),
             'settings_cached' => Cache::has('monit.settings'),
             'settings_ttl_hours' => 12,
         ];
@@ -274,18 +278,18 @@ class AdminSettings extends Controller
         return [
             'php' => PHP_VERSION,
             'laravel' => app()->version(),
-            'database_driver' => (string) config('database.default'),
+            'database_driver' => Typed::string(config('database.default')),
             'mysql_version' => $mysqlVersion,
-            'cache_driver' => (string) config('cache.default'),
-            'queue_driver' => (string) config('queue.default'),
+            'cache_driver' => Typed::string(config('cache.default')),
+            'queue_driver' => Typed::string(config('queue.default')),
             'disk_free' => $diskFree === false ? null : $diskFree,
             'disk_total' => $diskTotal === false ? null : $diskTotal,
-            'timezone' => (string) config('app.timezone'),
+            'timezone' => Typed::string(config('app.timezone')),
             'settings_count' => Setting::count(),
             // GeoIP 库状态（用户反馈 #2：国家/大洲显示"未知"的排查入口——
             // 未放置 mmdb 库文件时地理维度全部为空，页面提示一键修复命令）
             'geoip_available' => app(GeoIp::class)->isAvailable(),
-            'geoip_path' => (string) config('services.geoip.mmdb_path'),
+            'geoip_path' => Typed::string(config('services.geoip.mmdb_path')),
         ];
     }
 
@@ -299,7 +303,7 @@ class AdminSettings extends Controller
         $status = app(LicenseManager::class)->status();
 
         return [
-            'version' => (string) config('monit.version'),
+            'version' => Typed::string(config('monit.version')),
             'license_valid' => (bool) $status['valid'],
             'license_reason' => (string) $status['reason'],
             'license_data' => $status['data'],
@@ -936,7 +940,7 @@ class AdminSettings extends Controller
             $filename = Str::random(16).'.'.$ext;
 
             // 删除旧文件（如有）
-            $oldUrl = $validated[$urlField] ?? Settings::get("branding.{$urlField}", '');
+            $oldUrl = Typed::string($validated[$urlField] ?? Settings::get("branding.{$urlField}", ''));
             if ($oldUrl && str_starts_with($oldUrl, '/storage/branding/')) {
                 $oldPath = str_replace('/storage/', '', $oldUrl);
                 // 路径穿越防护：settings 里的 URL 理论上可含 ../（磁盘相对根解析）

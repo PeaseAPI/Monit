@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use App\Support\Typed;
 use App\Support\WebhookSignature;
 use Illuminate\Http\Request;
 
@@ -20,9 +21,9 @@ class StripeProcessor
 
     public function __construct()
     {
-        $this->secretKey = config('services.stripe.secret');
-        $this->publishableKey = config('services.stripe.key');
-        $this->webhookSecret = config('services.stripe.webhook_secret');
+        $this->secretKey = Typed::stringOrNull(config('services.stripe.secret'));
+        $this->publishableKey = Typed::stringOrNull(config('services.stripe.key'));
+        $this->webhookSecret = Typed::stringOrNull(config('services.stripe.webhook_secret'));
     }
 
     /**
@@ -99,29 +100,29 @@ class StripeProcessor
      */
     public function parseWebhookEvent(Request $request): array
     {
-        $payload = $request->input();
+        $payload = Typed::arr($request->input());
         $type = $payload['type'] ?? '';
 
         return match ($type) {
             'checkout.session.completed' => [
                 'event' => 'payment_success',
-                'external_id' => $payload['data']['object']['payment_intent'] ?? $payload['data']['object']['id'] ?? null,
-                'subscription_id' => $payload['data']['object']['subscription'] ?? null,
-                'payment_id' => $payload['data']['object']['metadata']['payment_id'] ?? null,
+                'external_id' => data_get($payload, 'data.object.payment_intent') ?? data_get($payload, 'data.object.id'),
+                'subscription_id' => data_get($payload, 'data.object.subscription'),
+                'payment_id' => data_get($payload, 'data.object.metadata.payment_id'),
                 // 金额防篡改（安全审计周期 #19）：amount_total 为最小单位（分），
                 // 由 PaymentController 换算主单位后与本地订单比对
-                'amount_total' => $payload['data']['object']['amount_total'] ?? null,
-                'currency' => strtoupper((string) ($payload['data']['object']['currency'] ?? '')),
+                'amount_total' => data_get($payload, 'data.object.amount_total'),
+                'currency' => strtoupper(Typed::string(data_get($payload, 'data.object.currency'))),
             ],
             'customer.subscription.deleted' => [
                 'event' => 'subscription_cancelled',
-                'subscription_id' => $payload['data']['object']['id'] ?? null,
+                'subscription_id' => data_get($payload, 'data.object.id'),
             ],
             'payment_intent.payment_failed' => [
                 'event' => 'payment_failure',
-                'external_id' => $payload['data']['object']['id'] ?? null,
-                'payment_id' => $payload['data']['object']['metadata']['payment_id'] ?? null,
-                'reason' => $payload['data']['object']['last_payment_error']['message'] ?? null,
+                'external_id' => data_get($payload, 'data.object.id'),
+                'payment_id' => data_get($payload, 'data.object.metadata.payment_id'),
+                'reason' => data_get($payload, 'data.object.last_payment_error.message'),
             ],
             default => [
                 'event' => 'unknown',

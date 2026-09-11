@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Heatmap;
 use App\Models\Website;
 use App\Services\PixelTracker;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
@@ -38,7 +39,7 @@ class PixelTrackController extends Controller
 
         // M23 性能优化：pixel_key → Website 查询走缓存（默认 60s，TTL 由 config/monit.php 控制），
         // 高频采集下将每次请求的 DB 查询降为缓存命中；写入侧 Website::saved 钩子主动失效。
-        $cacheTtl = (int) config('monit.pixel.website_cache_ttl', 60);
+        $cacheTtl = Typed::int(config('monit.pixel.website_cache_ttl', 60));
         $cacheKey = 'pixel.website.'.$pixel_key;
         $fetchWebsite = fn (): ?Website => Website::where('pixel_key', $pixel_key)->with('user')->first();
 
@@ -59,7 +60,7 @@ class PixelTrackController extends Controller
                 // 负向限流：每 IP 未命中回源次数限流（config: website_miss_rate_limit / 分钟）。
                 // 命中缓存的正常流量零开销；随机 pixel_key 扫描因每请求必 miss 被快速熔断，
                 // 避免攻击者持续回源 DB / 向缓存灌入垃圾条目。超限后静默按无站点处理。
-                $missLimit = (int) config('monit.pixel.website_miss_rate_limit', 60);
+                $missLimit = Typed::int(config('monit.pixel.website_miss_rate_limit', 60));
                 $missKey = 'pixel.miss:'.$request->ip();
 
                 if ($missLimit > 0 && RateLimiter::tooManyAttempts($missKey, $missLimit)) {
@@ -123,7 +124,7 @@ class PixelTrackController extends Controller
 
     protected function doHeatmapCheck(string $pixel_key, Request $request): Response
     {
-        $cacheTtl = (int) config('monit.pixel.website_cache_ttl', 60);
+        $cacheTtl = Typed::int(config('monit.pixel.website_cache_ttl', 60));
         $cacheKey = 'pixel.website.'.$pixel_key;
         $website = $cacheTtl > 0 ? Cache::get($cacheKey) : null;
 

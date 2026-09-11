@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Payment\PaymentService;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,7 +18,7 @@ class WebhookPaystackController extends Controller
         $signature = (string) $request->header('x-paystack-signature', '');
 
         // fail-closed：密钥未配置或签名缺失/不符一律拒绝（原实现未配置时放行）
-        if (empty($secretKey) || $signature === '') {
+        if (! is_string($secretKey) || $secretKey === '' || $signature === '') {
             return response()->json(['error' => 'Not configured'], 400);
         }
 
@@ -28,47 +29,42 @@ class WebhookPaystackController extends Controller
         }
 
         $event = $request->input('event', '');
-        $data = $request->input('data', []);
+        $data = Typed::arr($request->input('data'));
 
         if ($event === 'charge.success') {
-            $metadata = $data['metadata'] ?? [];
-            $paymentId = $metadata['payment_id'] ?? null;
+            $paymentId = data_get($data, 'metadata.payment_id');
             $externalId = $data['id'] ?? null;
 
             // 金额/币种防篡改：amount 为分/派萨（最小单位），须与本地订单一致方可入账
             if ($paymentId
                 && $paymentService->verifyGatewayAmount(
-                    (int) $paymentId,
+                    Typed::int($paymentId),
                     PaymentService::majorUnits(
-                        $data['amount'] ?? null,
-                        (string) ($data['currency'] ?? '')
-                    ),
-                    (string) ($data['currency'] ?? ''),
+                        Typed::intOrNull($data['amount'] ?? null),
+                        Typed::string($data['currency'] ?? '')),
+                    Typed::string($data['currency'] ?? ''),
                     'paystack',
                 )) {
-                $paymentService->handlePaymentSuccess((int) $paymentId, (string) $externalId);
+                $paymentService->handlePaymentSuccess(Typed::int($paymentId), Typed::string($externalId));
             }
         }
 
         // 规格 §6.3.1：支付失败事件派发 webhook_payment_failure_url
         if ($event === 'charge.failed') {
-            $metadata = $data['metadata'] ?? [];
-            $paymentId = $metadata['payment_id'] ?? null;
+            $paymentId = data_get($data, 'metadata.payment_id');
 
             if ($paymentId) {
-                $gatewayResponse = $data['gateway_response'] ?? [];
                 $paymentService->handlePaymentFailure(
-                    (int) $paymentId,
-                    (string) ($data['id'] ?? ''),
-                    (string) ($gatewayResponse['message'] ?? '')
-                );
+                    Typed::int($paymentId),
+                    Typed::string($data['id'] ?? ''),
+                    Typed::string(data_get($data, 'gateway_response.message')));
             }
         }
 
         if ($event === 'subscription.disable') {
             $subscriptionCode = $data['subscription_code'] ?? null;
             if ($subscriptionCode) {
-                $paymentService->handleSubscriptionCancelled($subscriptionCode, 'paystack');
+                $paymentService->handleSubscriptionCancelled(Typed::string($subscriptionCode), 'paystack');
             }
         }
 

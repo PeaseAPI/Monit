@@ -103,7 +103,7 @@ class WebhookSignature
      */
     public static function verifyPaddleClassic(array $payload, string $publicKey): bool
     {
-        $signature = base64_decode((string) ($payload['p_signature'] ?? ''), true);
+        $signature = base64_decode(Typed::string($payload['p_signature'] ?? ''), true);
         unset($payload['p_signature']);
 
         if ($signature === false || $signature === '') {
@@ -166,7 +166,12 @@ class WebhookSignature
                 ->get("https://api.yookassa.ru/v3/payments/{$paymentId}");
 
             if ($response->ok() && ($response->json('status') === 'succeeded')) {
-                return $response->json();
+                $json = $response->json();
+
+                /** @var array<string, mixed>|null $json */
+                $json = is_array($json) ? $json : null;
+
+                return $json;
             }
 
             return null;

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\LicenseManager;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -23,7 +24,7 @@ class AdminLicense extends Controller
             'status' => $status,
             'license' => $status['data'],
             'licensePath' => LicenseManager::licensePath(),
-            'currentHost' => strtolower((string) (parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost')),
+            'currentHost' => strtolower((string) (parse_url(Typed::string(config('app.url')), PHP_URL_HOST) ?: 'localhost')),
         ])->with('adminNav', 'license');
     }
 

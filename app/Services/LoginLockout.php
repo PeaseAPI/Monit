@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Support\Settings;
+use App\Support\Typed;
 
 /**
  * 登录/找回密码失败锁定（规格书后台 users.login_lockout_* /
@@ -52,7 +53,7 @@ class LoginLockout
         $minutes = max(1, (int) ($minutes ?: 30));
 
         $failsKey = self::key($scope, $identifier, 'fails');
-        $fails = (int) cache()->get($failsKey, 0) + 1;
+        $fails = Typed::int(cache()->get($failsKey, 0)) + 1;
 
         if ($fails >= $retries) {
             // 触发锁定：写锁定标记并清零计数（解锁后重新累计）
@@ -82,8 +83,8 @@ class LoginLockout
 
         return [
             $enabled,
-            (int) (Settings::get($retriesKey) ?: $defaultRetries),
-            (int) (Settings::get($minutesKey) ?: 30),
+            Typed::int(Settings::get($retriesKey) ?: $defaultRetries),
+            Typed::int(Settings::get($minutesKey) ?: 30),
         ];
     }
 

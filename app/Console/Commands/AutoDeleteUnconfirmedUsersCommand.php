@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -30,7 +31,7 @@ class AutoDeleteUnconfirmedUsersCommand extends Command
             return self::SUCCESS;
         }
 
-        $days = (int) $settingsValue;
+        $days = Typed::int($settingsValue);
         if ($days < 1) {
             $days = 3;
         }

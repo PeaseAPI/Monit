@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\View\View;
 
 /**
@@ -26,7 +27,7 @@ class AdminInvoice extends Controller
         return view('admin.payments.invoice', [
             'payment' => $payment,
             'mode' => 'invoice',
-            'documentNo' => Settings::get('business.invoice_nr_prefix', 'INV-').str_pad((string) $payment->payment_id, 6, '0', STR_PAD_LEFT),
+            'documentNo' => Typed::string(Settings::get('business.invoice_nr_prefix', 'INV-')).str_pad((string) $payment->payment_id, 6, '0', STR_PAD_LEFT),
             'company' => $this->companyInfo(),
         ]);
     }
@@ -71,7 +72,7 @@ class AdminInvoice extends Controller
             'phone' => Settings::get('business.phone'),
             'address' => implode(' ', $addressParts),
             'taxType' => $taxType,
-            'taxId' => $taxType && $taxId ? $taxType.': '.$taxId : $taxId,
+            'taxId' => $taxType && $taxId ? Typed::string($taxType).': '.Typed::string($taxId) : Typed::string($taxId),
             'url' => config('app.url'),
         ];
     }

@@ -2,6 +2,8 @@
 
 namespace App\Services\Seo\Tools;
 
+use App\Support\Typed;
+
 /**
  * 文本与内容工具组
  */
@@ -13,7 +15,7 @@ class TextTools
      */
     public function wordCounter(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
+        $text = Typed::string($in['text'] ?? '');
 
         // charlist 中的 "-" 置于末尾避免被解析为范围；勿写 ".."（空范围会抛 ValueError）
         $latin = str_word_count($text, 0, '0123456789-');
@@ -34,7 +36,7 @@ class TextTools
      */
     public function charCounter(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
+        $text = Typed::string($in['text'] ?? '');
 
         return ['ok' => true, 'data' => [
             '字符数' => mb_strlen($text),
@@ -50,8 +52,8 @@ class TextTools
      */
     public function caseConverter(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
-        $mode = (string) ($in['mode'] ?? 'upper');
+        $text = Typed::string($in['text'] ?? '');
+        $mode = Typed::string($in['mode'] ?? 'upper');
 
         $converted = match ($mode) {
             'upper' => mb_strtoupper($text),
@@ -73,7 +75,7 @@ class TextTools
      */
     public function slugConverter(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
+        $text = Typed::string($in['text'] ?? '');
         $separator = ($in['separator'] ?? '-') === '_' ? '_' : '-';
 
         $slug = mb_strtolower(trim($text));
@@ -89,9 +91,9 @@ class TextTools
      */
     public function textReplacer(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
-        $search = (string) ($in['search'] ?? '');
-        $replace = (string) ($in['replace'] ?? '');
+        $text = Typed::string($in['text'] ?? '');
+        $search = Typed::string($in['search'] ?? '');
+        $replace = Typed::string($in['replace'] ?? '');
 
         if ($search === '') {
             return ['ok' => false, 'error' => '请输入查找内容', 'data' => []];
@@ -108,7 +110,7 @@ class TextTools
      */
     public function textReverser(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
+        $text = Typed::string($in['text'] ?? '');
 
         return ['ok' => true, 'data' => [], 'text' => implode('', array_reverse(mb_str_split($text)))];
     }
@@ -119,7 +121,7 @@ class TextTools
      */
     public function loremGenerator(array $in): array
     {
-        $paragraphs = min(10, max(1, (int) ($in['paragraphs'] ?? 3)));
+        $paragraphs = min(10, max(1, Typed::int($in['paragraphs'] ?? 3)));
 
         $words = ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do', 'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna', 'aliqua', 'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco', 'laboris', 'nisi', 'aliquip', 'ex', 'ea', 'commodo', 'consequat'];
 
@@ -149,8 +151,8 @@ class TextTools
      */
     public function readingTime(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
-        $wpm = max(50, min(1000, (int) ($in['wpm'] ?? 225)));
+        $text = Typed::string($in['text'] ?? '');
+        $wpm = max(50, min(1000, Typed::int($in['wpm'] ?? 225)));
 
         $latin = str_word_count($text, 0, '0123456789..-');
         $cjk = (int) preg_match_all('/[\x{4e00}-\x{9fff}]/u', $text);
@@ -171,7 +173,7 @@ class TextTools
      */
     public function timestampConverter(array $in): array
     {
-        $value = trim((string) ($in['value'] ?? ''));
+        $value = trim(Typed::string($in['value'] ?? ''));
 
         if ($value === '') {
             return ['ok' => false, 'error' => '请输入时间戳或日期', 'data' => []];
@@ -206,8 +208,8 @@ class TextTools
      */
     public function keywordDensityText(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
-        $keyword = mb_strtolower(trim((string) ($in['keyword'] ?? '')));
+        $text = Typed::string($in['text'] ?? '');
+        $keyword = mb_strtolower(trim(Typed::string($in['keyword'] ?? '')));
 
         if (trim($text) === '' || $keyword === '') {
             return ['ok' => false, 'error' => '请输入文本与关键词', 'data' => []];

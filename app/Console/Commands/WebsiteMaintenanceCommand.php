@@ -7,6 +7,7 @@ use App\Models\HeatmapSnapshotScroll;
 use App\Models\LightweightEvent;
 use App\Models\SessionReplay;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Console\Command;
 
 /**
@@ -35,7 +36,7 @@ class WebsiteMaintenanceCommand extends Command
 
         // 2. 清理过期的会话回放（sessions_replays 无 expiration_date，用 datetime + 留存期判定，
         //    与 AnalyticsCleanupCommand 口径一致；规格 §13.1）
-        $replaysRetentionDays = (int) config('app.replays_retention_days', 30);
+        $replaysRetentionDays = Typed::int(config('app.replays_retention_days', 30));
         SessionReplay::where('datetime', '<', $now->copy()->subDays($replaysRetentionDays))->delete();
 
         // 3. 清理过期的轻事件

@@ -16,6 +16,8 @@ use App\Support\Brand;
 use App\Support\Captcha;
 use App\Support\Currency;
 use App\Support\Settings;
+use App\Support\Typed;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,7 +48,7 @@ class IndexController extends Controller
         if ($currency !== '' && isset($currencies[$currency])) {
             session(['landing_currency' => $currency]);
         }
-        $currency = Currency::normalize((string) session('landing_currency', ''));
+        $currency = Currency::normalize(Typed::string(session('landing_currency', '')));
 
         // 定价卡：优先 prices 直配价，无则按默认货币价 × 汇率换算（规格书 §10.4）
         // 定价卡：优先 prices 直配价，无则按默认货币价 × 汇率换算（规格书 §10.4）
@@ -202,9 +204,9 @@ class IndexController extends Controller
         }
 
         return view('affiliate', [
-            'commission' => (float) Settings::get('affiliate.affiliate_commission_percentage', 20),
-            'cookieDays' => (int) Settings::get('affiliate.affiliate_cookie_duration_days', 30),
-            'minWithdrawal' => (float) Settings::get('affiliate.affiliate_minimum_withdrawal_amount', 50),
+            'commission' => Typed::float(Settings::get('affiliate.affiliate_commission_percentage', 20)),
+            'cookieDays' => Typed::int(Settings::get('affiliate.affiliate_cookie_duration_days', 30)),
+            'minWithdrawal' => Typed::float(Settings::get('affiliate.affiliate_minimum_withdrawal_amount', 50)),
         ]);
     }
 
@@ -273,8 +275,8 @@ class IndexController extends Controller
         // 抓到 500（关联线上事故：生产 /sitemap.xml 500）
         try {
             foreach (BlogPost::where('is_published', true)->orderByDesc('datetime')->limit(500)->get() as $post) {
-                $urls[] = ['loc' => route('blog.post', $post->url), 'priority' => '0.7',
-                    'lastmod' => optional($post->updated_at ?? $post->datetime)->toAtomString()];
+                $lastmod = $post->datetime !== '' ? Carbon::parse($post->datetime)->toAtomString() : '';
+                $urls[] = ['loc' => route('blog.post', $post->url), 'priority' => '0.7', 'lastmod' => $lastmod];
             }
         } catch (\Throwable) {
             // blog_posts 表缺失/异常：跳过文章条目
@@ -283,7 +285,7 @@ class IndexController extends Controller
         try {
             foreach (Page::where('is_published', true)->limit(200)->get() as $page) {
                 $urls[] = ['loc' => route('page', $page->url), 'priority' => '0.5',
-                    'lastmod' => optional($page->updated_at)->toAtomString()];
+                    'lastmod' => $page->updated_at?->toAtomString() ?? ''];
             }
         } catch (\Throwable) {
             // pages 表缺失/异常：跳过 CMS 页条目
@@ -324,7 +326,7 @@ class IndexController extends Controller
         $email = (string) $request->query('email');
         $signature = (string) $request->query('sig');
 
-        $expected = hash_hmac('sha256', $email, config('app.key'));
+        $expected = hash_hmac('sha256', $email, Typed::string(config('app.key')));
 
         if (! $email || ! hash_equals($expected, $signature)) {
             return redirect()->route('index')->with('error', __('msg.invalid_unsubscribe_link'));
@@ -352,7 +354,7 @@ class IndexController extends Controller
             'sig' => ['required', 'string'],
         ]);
 
-        $expected = hash_hmac('sha256', $validated['email'], config('app.key'));
+        $expected = hash_hmac('sha256', $validated['email'], Typed::string(config('app.key')));
 
         if (! hash_equals($expected, $validated['sig'])) {
             return redirect()->route('index')->with('error', __('msg.invalid_unsubscribe_link'));
@@ -403,7 +405,7 @@ class IndexController extends Controller
     public function terms()
     {
         return view('legal.terms', [
-            'html' => (string) Settings::get('content.terms_html', ''),
+            'html' => Typed::string(Settings::get('content.terms_html', '')),
         ]);
     }
 
@@ -415,7 +417,7 @@ class IndexController extends Controller
     public function privacy()
     {
         return view('legal.privacy', [
-            'html' => (string) Settings::get('content.privacy_html', ''),
+            'html' => Typed::string(Settings::get('content.privacy_html', '')),
         ]);
     }
 

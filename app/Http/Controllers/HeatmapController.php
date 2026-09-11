@@ -102,11 +102,12 @@ class HeatmapController extends Controller
                 'SELECT data FROM heatmaps_snapshots WHERE snapshot_id = ?',
                 [$snapshotId],
             );
-            if (! $row || ! $row->data || strlen($row->data) <= 10) {
+            $stored = data_get($row, 'data');
+            if (! is_string($stored) || strlen($stored) <= 10) {
                 continue;
             }
             // 解压检查数据格式：rrweb 事件格式含 events 键；旧格式只有 dom/viewport
-            $decompressed = @gzdecode($row->data);
+            $decompressed = @gzdecode($stored);
             if ($decompressed === false) {
                 continue;
             }
@@ -234,8 +235,10 @@ class HeatmapController extends Controller
                 [$snapshotId],
             );
 
-            if ($row && $row->data) {
-                $decompressed = @gzdecode($row->data);
+            $stored = data_get($row, 'data');
+
+            if (is_string($stored) && $stored !== '') {
+                $decompressed = @gzdecode($stored);
                 if ($decompressed !== false) {
                     return response($decompressed, 200, ['Content-Type' => 'application/json']);
                 }

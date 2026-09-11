@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Payment\PaymentService;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Mollie\Api\MollieApiClient;
@@ -18,11 +19,11 @@ class WebhookMollieController extends Controller
 
         if ($paymentId) {
             $apiKey = config('services.mollie.key');
-            if ($apiKey) {
+            if (is_string($apiKey) && $apiKey !== '') {
                 try {
                     $mollie = new MollieApiClient;
                     $mollie->setApiKey($apiKey);
-                    $payment = $mollie->payments->get($paymentId);
+                    $payment = $mollie->payments->get(Typed::string($paymentId));
 
                     if ($payment->isPaid()) {
                         $internalPaymentId = $payment->metadata->payment_id ?? null;
@@ -36,7 +37,7 @@ class WebhookMollieController extends Controller
                                 (string) ($payment->amount->currency ?? ''),
                                 'mollie',
                             )) {
-                            $paymentService->handlePaymentSuccess((int) $internalPaymentId, $paymentId);
+                            $paymentService->handlePaymentSuccess((int) $internalPaymentId, Typed::string($paymentId));
                         }
                     }
 
@@ -44,7 +45,7 @@ class WebhookMollieController extends Controller
                     if ($payment->isFailed()) {
                         $internalPaymentId = $payment->metadata->payment_id ?? null;
                         if ($internalPaymentId) {
-                            $paymentService->handlePaymentFailure((int) $internalPaymentId, $paymentId);
+                            $paymentService->handlePaymentFailure((int) $internalPaymentId, Typed::string($paymentId));
                         }
                     }
                 } catch (\Throwable) {

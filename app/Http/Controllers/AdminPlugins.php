@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\PluginManager;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -21,7 +22,7 @@ class AdminPlugins extends Controller
 
         return view('admin.plugins.index', [
             'plugins' => $plugins,
-            'totalActive' => count(array_filter($plugins, fn ($p) => $p['active'])),
+            'totalActive' => count(array_filter(array_filter($plugins, 'is_array'), fn (array $p) => (bool) ($p['active'] ?? false))),
         ])->with('adminNav', 'plugins');
     }
 
@@ -56,15 +57,21 @@ class AdminPlugins extends Controller
             return back()->with('error', __('admin.plugins_not_found'));
         }
 
+        $settingsMeta = is_array($meta['settings'] ?? null) ? $meta['settings'] : [];
         $values = [];
 
-        foreach ($meta['settings'] as $key => $definition) {
+        foreach ($settingsMeta as $key => $definition) {
+            if (! is_array($definition)) {
+                continue;
+            }
+
+            $name = Typed::string($key);
             $type = $definition['type'] ?? 'text';
 
             if ($type === 'bool') {
-                $values[$key] = $request->boolean($key);
+                $values[$name] = $request->boolean($name);
             } else {
-                $values[$key] = $request->input($key, $definition['default'] ?? '');
+                $values[$name] = $request->input($name, $definition['default'] ?? '');
             }
         }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Website;
 use App\Services\StatisticsService;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -80,7 +81,7 @@ class PublicStatisticsController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $publicPassword = (string) ($website->settings['public_statistics_password'] ?? '');
+        $publicPassword = Typed::string($website->settings['public_statistics_password'] ?? '');
 
         // 恒时比较防时序侧信道；配合路由层 throttle 防爆破
         if ($publicPassword !== '' && hash_equals($publicPassword, (string) $validated['password'])) {

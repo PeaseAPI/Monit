@@ -171,6 +171,9 @@ class AdminStatistics extends Controller
     {
         $s = 0;
         foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path)) as $f) {
+            if (! $f instanceof \SplFileInfo) {
+                continue;
+            }
             $s += $f->getSize();
         }
 
@@ -181,6 +184,9 @@ class AdminStatistics extends Controller
     {
         $c = 0;
         foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path)) as $f) {
+            if (! $f instanceof \SplFileInfo) {
+                continue;
+            }
             if ($f->isFile()) {
                 $c++;
             }

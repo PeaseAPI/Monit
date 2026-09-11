@@ -9,6 +9,7 @@ use App\Services\Seo\Tools\SearchPreviewTools;
 use App\Services\Seo\Tools\SeoCheckTools;
 use App\Services\Seo\Tools\TextTools;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
@@ -60,7 +61,7 @@ class ToolRunner
                     return true;
                 }
 
-                $value = Settings::get($meta['requires']);
+                $value = Settings::get(Typed::string($meta['requires']));
 
                 return $value === true || $value === 'true' || (is_string($value) && trim($value) !== '');
             })
@@ -92,9 +93,9 @@ class ToolRunner
         }
 
         $meta = $catalog[$slug];
-        $class = self::HANDLER_MAP[$meta['category']] ?? null;
+        $class = self::HANDLER_MAP[Typed::string($meta['category'])] ?? null;
 
-        if ($class === null || ! method_exists($this->instance($class), $meta['handler'])) {
+        if ($class === null || ! method_exists($this->instance($class), Typed::string($meta['handler']))) {
             return ['ok' => false, 'error' => __('seo.tool_not_available'), 'data' => []];
         }
 

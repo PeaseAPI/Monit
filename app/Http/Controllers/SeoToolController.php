@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SeoToolUse;
 use App\Services\Seo\ToolRunner;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -23,7 +24,7 @@ class SeoToolController extends Controller
         // preserveKeys=true：保留 slug 作为键（groupBy 默认重排为数字索引，会把卡片链接渲染成 /tools/0 导致 404）
         $catalog = $this->runner->catalog();
         $categories = collect($catalog)
-            ->groupBy(fn (array $meta) => (string) ($meta['category'] ?? 'dev'), true);
+            ->groupBy(fn (array $meta) => Typed::string($meta['category'] ?? 'dev'), true);
 
         return view('seo.tools', ['categories' => $categories]);
     }
@@ -49,7 +50,7 @@ class SeoToolController extends Controller
         abort_unless(array_key_exists($slug, $catalog), 404);
 
         $input = $request->input('input', []);
-        $input = is_array($input) ? $input : ['text' => (string) $input];
+        $input = is_array($input) ? $input : ['text' => Typed::string($input)];
 
         $quotaError = $this->checkQuota($request);
 
@@ -74,7 +75,7 @@ class SeoToolController extends Controller
     protected function checkQuota(Request $request): ?string
     {
         if ($request->user() !== null) {
-            $limit = (int) ($request->user()->getPlanSettings()['seo_tools_limit'] ?? -1);
+            $limit = Typed::int($request->user()->getPlanSettings()['seo_tools_limit'] ?? -1);
 
             if ($limit >= 0 && SeoToolUse::monthlyCount($request->user()->user_id) >= $limit) {
                 return __('seo.quota_exceeded');
@@ -83,7 +84,7 @@ class SeoToolController extends Controller
             return null;
         }
 
-        $cap = (int) Settings::get('seo.tools_guest_monthly_limit', 20);
+        $cap = Typed::int(Settings::get('seo.tools_guest_monthly_limit', 20));
         $key = md5($request->session()->getId());
 
         if ($cap >= 0 && SeoToolUse::monthlyCount(null, $key) >= $cap) {

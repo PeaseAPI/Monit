@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Website;
 use App\Support\PluginManager;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
@@ -30,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
         // 必须在 provider boot 阶段设置——此时 .env/config 已加载、TrustProxies
         // 中间件尚未执行；bootstrap/app.php 的 withMiddleware 闭包过早（kernel
         // 构造期）只能拿到 env() 默认值
-        $proxies = strtolower(trim((string) config('monit.trusted_proxies', 'private')));
+        $proxies = strtolower(trim(Typed::string(config('monit.trusted_proxies', 'private'))));
         TrustProxies::at(match (true) {
             $proxies === '*' => '*',
             $proxies === 'none' => [],
@@ -47,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
         //   2. 路由参数直接传入整数 ID（此时自动查询）
         Gate::define('own', function (User $user, mixed $website): bool {
             if (! $website instanceof Website) {
-                $website = Website::findOrFail((int) $website);
+                $website = Website::findOrFail(Typed::int($website));
             }
 
             return (int) $user->user_id === (int) $website->user_id || $user->isAdmin();
@@ -79,16 +80,16 @@ class AppServiceProvider extends ServiceProvider
     protected function applySmtpSettings(): void
     {
         try {
-            $host = trim((string) Settings::get('smtp.smtp_host', ''));
+            $host = trim(Typed::string(Settings::get('smtp.smtp_host', '')));
 
             if ($host === '') {
                 return;
             }
 
-            $port = (int) (Settings::get('smtp.smtp_port') ?: 587);
-            $encryption = strtolower(trim((string) Settings::get('smtp.smtp_encryption', 'tls')));
-            $username = trim((string) Settings::get('smtp.smtp_username', ''));
-            $password = (string) Settings::get('smtp.smtp_password', '');
+            $port = Typed::int(Settings::get('smtp.smtp_port') ?: 587);
+            $encryption = strtolower(trim(Typed::string(Settings::get('smtp.smtp_encryption', 'tls'))));
+            $username = trim(Typed::string(Settings::get('smtp.smtp_username', '')));
+            $password = Typed::string(Settings::get('smtp.smtp_password', ''));
             $auth = Settings::get('smtp.smtp_auth');
 
             config([
@@ -102,26 +103,26 @@ class AppServiceProvider extends ServiceProvider
                 ]),
             ]);
 
-            $fromEmail = trim((string) Settings::get('smtp.smtp_from_email', ''));
+            $fromEmail = trim(Typed::string(Settings::get('smtp.smtp_from_email', '')));
 
             if ($fromEmail !== '') {
                 config(['mail.from' => [
                     'address' => $fromEmail,
-                    'name' => trim((string) Settings::get('smtp.smtp_from_name', '')) ?: config('app.name'),
+                    'name' => trim(Typed::string(Settings::get('smtp.smtp_from_name', ''))) ?: config('app.name'),
                 ]]);
             }
 
-            $replyTo = trim((string) Settings::get('smtp.smtp_reply_to', ''));
+            $replyTo = trim(Typed::string(Settings::get('smtp.smtp_reply_to', '')));
 
             if ($replyTo !== '') {
                 config(['mail.reply_to' => [
                     'address' => $replyTo,
-                    'name' => trim((string) Settings::get('smtp.smtp_reply_to_name', '')),
+                    'name' => trim(Typed::string(Settings::get('smtp.smtp_reply_to_name', ''))),
                 ]]);
             }
 
             foreach (['cc' => 'smtp_cc', 'bcc' => 'smtp_bcc'] as $key => $setting) {
-                $value = trim((string) Settings::get('smtp.'.$setting, ''));
+                $value = trim(Typed::string(Settings::get('smtp.'.$setting, '')));
 
                 if ($value !== '') {
                     config(['mail.'.$key => array_filter(array_map('trim', explode(',', $value)))]);

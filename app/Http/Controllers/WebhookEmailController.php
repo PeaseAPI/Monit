@@ -7,6 +7,7 @@ use App\Models\TicketReply;
 use App\Models\User;
 use App\Support\Settings;
 use App\Support\TicketNotifications;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,7 @@ class WebhookEmailController extends Controller
 {
     public function __invoke(Request $request): Response
     {
-        $expected = trim((string) Settings::get('tickets.inbound_webhook_token', ''));
+        $expected = trim(Typed::string(Settings::get('tickets.inbound_webhook_token', '')));
 
         if ($expected === '') {
             abort(404);
@@ -117,6 +118,8 @@ class WebhookEmailController extends Controller
 
     protected function resolveUserId(string $email): ?int
     {
-        return User::query()->where('email', $email)->value('user_id');
+        $userId = User::query()->where('email', $email)->value('user_id');
+
+        return $userId === null ? null : Typed::int($userId);
     }
 }

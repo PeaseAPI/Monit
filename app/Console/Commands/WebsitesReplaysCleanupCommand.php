@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\SessionReplay;
+use App\Support\Typed;
 use Illuminate\Console\Command;
 
 /**
@@ -17,7 +18,7 @@ class WebsitesReplaysCleanupCommand extends Command
 
     public function handle(): int
     {
-        $retentionDays = (int) config('app.replays_retention_days', 30);
+        $retentionDays = Typed::int(config('app.replays_retention_days', 30));
 
         $deleted = 0;
 

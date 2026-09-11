@@ -3,6 +3,7 @@
 namespace App\Services\Seo\Tools;
 
 use App\Services\Seo\AuditEngine;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Throwable;
@@ -18,7 +19,7 @@ class DevTools
      */
     public function passwordGenerator(array $in): array
     {
-        $length = max(6, min(64, (int) ($in['length'] ?? 16)));
+        $length = max(6, min(64, Typed::int($in['length'] ?? 16)));
 
         $sets = ['abcdefghjkmnpqrstuvwxyz', 'ABCDEFGHJKLMNPQRSTUVWXYZ', '23456789', '!@#$%^&*()-_=+'];
         $all = implode('', $sets);
@@ -42,13 +43,13 @@ class DevTools
      */
     public function qrGenerator(array $in): array
     {
-        $text = trim((string) ($in['text'] ?? ''));
+        $text = trim(Typed::string($in['text'] ?? ''));
 
         if ($text === '') {
             return ['ok' => false, 'error' => '请输入内容', 'data' => []];
         }
 
-        $size = max(100, min(1000, (int) ($in['size'] ?? 300)));
+        $size = max(100, min(1000, Typed::int($in['size'] ?? 300)));
 
         $url = 'https://api.qrserver.com/v1/create-qr-code/?size='.$size.'x'.$size.'&data='.urlencode($text);
 
@@ -61,7 +62,7 @@ class DevTools
      */
     public function userAgentParser(array $in): array
     {
-        $ua = trim((string) ($in['ua'] ?? ''));
+        $ua = trim(Typed::string($in['ua'] ?? ''));
 
         if ($ua === '') {
             return ['ok' => false, 'error' => '请输入 User-Agent', 'data' => []];
@@ -100,7 +101,7 @@ class DevTools
      */
     public function md5Generator(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
+        $text = Typed::string($in['text'] ?? '');
 
         if ($text === '') {
             return ['ok' => false, 'error' => '请输入内容', 'data' => []];
@@ -120,7 +121,7 @@ class DevTools
      */
     public function colorConverter(array $in): array
     {
-        $color = trim((string) ($in['color'] ?? ''));
+        $color = trim(Typed::string($in['color'] ?? ''));
 
         if (! preg_match('/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i', $color, $m)) {
             return ['ok' => false, 'error' => '请输入 HEX 颜色值（如 #4f46e5）', 'data' => []];
@@ -172,18 +173,18 @@ class DevTools
      */
     public function utmBuilder(array $in): array
     {
-        $url = trim((string) ($in['url'] ?? ''));
+        $url = trim(Typed::string($in['url'] ?? ''));
 
         if ($url === '' || ! filter_var($url, FILTER_VALIDATE_URL)) {
             return ['ok' => false, 'error' => '请输入有效 URL', 'data' => []];
         }
 
         $params = array_filter([
-            'utm_source' => trim((string) ($in['source'] ?? '')),
-            'utm_medium' => trim((string) ($in['medium'] ?? '')),
-            'utm_campaign' => trim((string) ($in['campaign'] ?? '')),
-            'utm_term' => trim((string) ($in['term'] ?? '')),
-            'utm_content' => trim((string) ($in['content'] ?? '')),
+            'utm_source' => trim(Typed::string($in['source'] ?? '')),
+            'utm_medium' => trim(Typed::string($in['medium'] ?? '')),
+            'utm_campaign' => trim(Typed::string($in['campaign'] ?? '')),
+            'utm_term' => trim(Typed::string($in['term'] ?? '')),
+            'utm_content' => trim(Typed::string($in['content'] ?? '')),
         ], fn ($v) => $v !== '');
 
         if ($params === []) {
@@ -199,7 +200,7 @@ class DevTools
      */
     public function urlParser(array $in): array
     {
-        $url = trim((string) ($in['url'] ?? ''));
+        $url = trim(Typed::string($in['url'] ?? ''));
         $parts = parse_url($url);
 
         if ($parts === false || ! isset($parts['host'])) {
@@ -222,8 +223,8 @@ class DevTools
      */
     public function urlConverter(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
-        $mode = (string) ($in['mode'] ?? 'encode');
+        $text = Typed::string($in['text'] ?? '');
+        $mode = Typed::string($in['mode'] ?? 'encode');
 
         if ($text === '') {
             return ['ok' => false, 'error' => '请输入内容', 'data' => []];
@@ -250,9 +251,9 @@ class DevTools
      */
     public function numberGenerator(array $in): array
     {
-        $min = (int) ($in['min'] ?? 1);
-        $max = (int) ($in['max'] ?? 100);
-        $count = max(1, min(100, (int) ($in['count'] ?? 1)));
+        $min = Typed::int($in['min'] ?? 1);
+        $max = Typed::int($in['max'] ?? 100);
+        $count = max(1, min(100, Typed::int($in['count'] ?? 1)));
 
         [$min, $max] = $min <= $max ? [$min, $max] : [$max, $min];
 
@@ -270,8 +271,8 @@ class DevTools
      */
     public function base64Converter(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
-        $mode = (string) ($in['mode'] ?? 'encode');
+        $text = Typed::string($in['text'] ?? '');
+        $mode = Typed::string($in['mode'] ?? 'encode');
 
         if ($text === '') {
             return ['ok' => false, 'error' => '请输入内容', 'data' => []];
@@ -292,8 +293,8 @@ class DevTools
      */
     public function binaryConverter(array $in): array
     {
-        $text = trim((string) ($in['text'] ?? ''));
-        $mode = (string) ($in['mode'] ?? 'encode');
+        $text = trim(Typed::string($in['text'] ?? ''));
+        $mode = Typed::string($in['mode'] ?? 'encode');
 
         if ($text === '') {
             return ['ok' => false, 'error' => '请输入内容', 'data' => []];
@@ -330,7 +331,7 @@ class DevTools
      */
     public function plaintextEmail(array $in): array
     {
-        $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
+        $url = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
 
         // SSRF 防护：拦截内网/环回/云元数据目标
         $blocked = AuditEngine::rejectUnsafeUrl($url);

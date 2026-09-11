@@ -15,6 +15,7 @@ use App\Services\Seo\Tests\MiscTests;
 use App\Services\Seo\Tests\PerformanceTests;
 use App\Services\Seo\Tests\SecurityTests;
 use App\Support\Settings;
+use App\Support\Typed;
 use App\Support\WebhookSignature;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Client\Response;
@@ -72,15 +73,15 @@ class AuditEngine
 
         // 匹配用户网站（同 host 自动挂接，流量与 SEO 数据同源）
         if ($user && ! isset($options['website_id'])) {
-            $audit->website_id = $user->websites()->where('host', $audit->host)->value('website_id');
+            $audit->website_id = Typed::int($user->websites()->where('host', $audit->host)->value('website_id'));
         } else {
-            $audit->website_id = $options['website_id'] ?? null;
+            $audit->website_id = Typed::int($options['website_id'] ?? 0);
         }
 
         try {
             // HTML 离线审计：使用用户粘贴的 HTML，不发起 HTTP 请求
-            if ($type === 'html' && isset($options['html']) && trim($options['html']) !== '') {
-                $html = $options['html'];
+            if ($type === 'html' && isset($options['html']) && trim(Typed::string($options['html'])) !== '') {
+                $html = Typed::string($options['html']);
                 $scheme = strtolower((string) (parse_url($url, PHP_URL_SCHEME) ?: 'https'));
                 $context = new AuditContext(
                     url: $url,
@@ -99,6 +100,7 @@ class AuditEngine
                 $context = $this->fetchContext($url);
             }
             $results = $this->executeTests($context);
+            /** @var array<string, array{passed: bool, importance: string, category: string}> $results */
             $score = AuditScore::calculate($results);
 
             $audit->fill([
@@ -151,8 +153,8 @@ class AuditEngine
      */
     protected function fetchContext(string $url): AuditContext
     {
-        $timeout = (int) Settings::get('seo.seo_request_timeout', 20);
-        $ua = (string) Settings::get('seo.seo_request_user_agent', 'Mozilla/5.0 (compatible; MonitBot/1.0)');
+        $timeout = Typed::int(Settings::get('seo.seo_request_timeout', 20));
+        $ua = Typed::string(Settings::get('seo.seo_request_user_agent', 'Mozilla/5.0 (compatible; MonitBot/1.0)'));
 
         $started = microtime(true);
         $response = $this->request($url, $timeout, $ua);
@@ -235,7 +237,7 @@ class AuditEngine
         $doubleCheck = in_array(Settings::get('seo.seo_double_check'), [true, 'true', null], true);
 
         if ($attempt === 0 && in_array($response->status(), [0, 500, 502, 503, 504]) && $doubleCheck) {
-            usleep(((int) Settings::get('seo.seo_double_check_wait', 2)) * 1000000);
+            usleep((Typed::int(Settings::get('seo.seo_double_check_wait', 2))) * 1000000);
 
             return $this->request($url, $timeout, $ua, 1);
         }
@@ -263,13 +265,17 @@ class AuditEngine
         $params = stream_context_get_params($socket);
         fclose($socket);
 
-        $cert = $params['options']['ssl']['peer_certificate'] ?? null;
+        $cert = data_get($params, 'options.ssl.peer_certificate');
 
-        if ($cert === null) {
+        if (! is_string($cert)) {
             return ['valid' => false];
         }
 
         $parsed = openssl_x509_parse($cert);
+
+        if ($parsed === false) {
+            return ['valid' => false];
+        }
 
         return [
             'valid' => ($parsed['validTo_time_t'] ?? 0) > time(),

@@ -6,6 +6,7 @@ use App\Models\EventChild;
 use App\Models\SessionReplay;
 use App\Support\ObjectStorage;
 use App\Support\PluginManager;
+use App\Support\Typed;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +40,7 @@ class WebsitesReplaysOffloadCommand extends Command
 
         $storage = ObjectStorage::make();
 
-        $batchSize = max(1, (int) PluginManager::setting('offload', 'batch_size', 25));
+        $batchSize = max(1, Typed::int(PluginManager::setting('offload', 'batch_size', 25)));
         $deleteAfterUpload = (bool) PluginManager::setting('offload', 'delete_after_upload', true);
 
         // 24h 前未 offload 的回放
@@ -67,14 +68,17 @@ class WebsitesReplaysOffloadCommand extends Command
                 'SELECT data FROM sessions_replays WHERE replay_id = ?',
                 [$replay->replay_id],
             );
-            if ($row && $row->data) {
-                $decompressed = @gzdecode($row->data);
-                if ($decompressed !== false) {
-                    $data = json_decode($decompressed, true);
-                    if (is_array($data) && isset($data['events']) && is_array($data['events'])) {
-                        $events = $data['events'];
-                    } elseif (is_array($data) && array_is_list($data)) {
-                        $events = $data;
+            if ($row !== null) {
+                $stored = data_get($row, 'data');
+                if (is_string($stored) && $stored !== '') {
+                    $decompressed = @gzdecode($stored);
+                    if ($decompressed !== false) {
+                        $data = Typed::arr(json_decode($decompressed, true));
+                        if (isset($data['events']) && is_array($data['events'])) {
+                            $events = $data['events'];
+                        } elseif (array_is_list($data)) {
+                            $events = $data;
+                        }
                     }
                 }
             }
@@ -83,10 +87,10 @@ class WebsitesReplaysOffloadCommand extends Command
             if (empty($events)) {
                 if ($session) {
                     $cacheKey = "session_replay_keys_{$session->session_id}";
-                    $keys = Cache::get($cacheKey, []);
+                    $keys = Typed::arr(Cache::get($cacheKey));
 
                     foreach ($keys as $chunkKey) {
-                        $chunk = Cache::get($chunkKey);
+                        $chunk = Cache::get(Typed::string($chunkKey));
                         if (is_array($chunk)) {
                             $events = array_merge($events, $chunk);
                         }
@@ -112,9 +116,9 @@ class WebsitesReplaysOffloadCommand extends Command
                 // offload 后清理缓存 chunk
                 if ($session && $deleteAfterUpload) {
                     $cacheKey = "session_replay_keys_{$session->session_id}";
-                    $keys = Cache::get($cacheKey, []);
+                    $keys = Typed::arr(Cache::get($cacheKey));
                     foreach ($keys as $chunkKey) {
-                        Cache::forget($chunkKey);
+                        Cache::forget(Typed::string($chunkKey));
                     }
                     Cache::forget($cacheKey);
 

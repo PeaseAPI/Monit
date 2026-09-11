@@ -34,7 +34,7 @@ class TicketNotifications
      */
     protected static function toAdmins($mailable): void
     {
-        $custom = trim((string) Settings::get('tickets.notification_email', ''));
+        $custom = trim(Typed::string(Settings::get('tickets.notification_email', '')));
 
         if ($custom !== '') {
             Mail::to($custom)->send($mailable);

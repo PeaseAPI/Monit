@@ -63,7 +63,7 @@ class Captcha
      */
     public static function provider(): ?string
     {
-        $type = strtolower(trim((string) Settings::get('captcha.captcha_type', '')));
+        $type = strtolower(trim(Typed::string(Settings::get('captcha.captcha_type', ''))));
 
         if (! isset(self::PROVIDERS[$type])) {
             return null;
@@ -164,9 +164,9 @@ class Captcha
 
         if ($provider === 'geetest') {
             $payload = [
-                'geetest_challenge' => trim((string) ($input['geetest_challenge'] ?? '')),
-                'geetest_validate' => trim((string) ($input['geetest_validate'] ?? '')),
-                'geetest_seccode' => trim((string) ($input['geetest_seccode'] ?? '')),
+                'geetest_challenge' => trim(Typed::string($input['geetest_challenge'] ?? '')),
+                'geetest_validate' => trim(Typed::string($input['geetest_validate'] ?? '')),
+                'geetest_seccode' => trim(Typed::string($input['geetest_seccode'] ?? '')),
             ];
 
             return $payload['geetest_validate'] !== '' ? (string) json_encode($payload) : null;
@@ -174,7 +174,7 @@ class Captcha
 
         $field = self::PROVIDERS[$provider]['field'];
 
-        return isset($input[$field]) ? trim((string) $input[$field]) : null;
+        return isset($input[$field]) ? trim(Typed::string($input[$field])) : null;
     }
 
     /**
@@ -201,7 +201,7 @@ class Captcha
                 'client_type' => 'web',
             ]);
 
-            $challenge = (string) ($response->json('challenge') ?? '');
+            $challenge = Typed::string($response->json('challenge') ?? '');
 
             if ($response->failed() || ! preg_match('/^[a-f0-9]{32}$/', $challenge)) {
                 throw new \RuntimeException('geetest register failed');
@@ -230,9 +230,9 @@ class Captcha
             return false;
         }
 
-        $challenge = (string) ($payload['geetest_challenge'] ?? '');
-        $validate = (string) ($payload['geetest_validate'] ?? '');
-        $seccode = (string) ($payload['geetest_seccode'] ?? '');
+        $challenge = Typed::string($payload['geetest_challenge'] ?? '');
+        $validate = Typed::string($payload['geetest_validate'] ?? '');
+        $seccode = Typed::string($payload['geetest_seccode'] ?? '');
 
         if ($challenge === '' || $validate === '' || $seccode === '') {
             return false;
@@ -333,7 +333,7 @@ HTML;
 
     protected static function nonEmpty(mixed $value): ?string
     {
-        $value = trim((string) ($value ?? ''));
+        $value = trim(Typed::string($value ?? ''));
 
         return $value !== '' ? $value : null;
     }

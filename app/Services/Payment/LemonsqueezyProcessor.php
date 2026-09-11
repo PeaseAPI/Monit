@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 
 /**
@@ -40,32 +41,32 @@ class LemonsqueezyProcessor
             return null;
         }
 
-        $data = $request->input('data', []);
-        $customData = $data['attributes']['custom_data'] ?? [];
+        $data = Typed::arr($request->input('data'));
+        $customData = Typed::arr(data_get($data, 'attributes.custom_data'));
 
-        $user = User::query()->where('user_id', (int) ($customData['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', (int) ($customData['plan_id'] ?? 0))->first();
+        $user = User::query()->where('user_id', Typed::int($customData['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', Typed::int($customData['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
         }
 
-        $attrs = $data['attributes'] ?? [];
+        $attrs = Typed::arr($data['attributes'] ?? []);
 
         return Payment::create([
             'user_id' => $user->user_id,
             'plan_id' => $plan->plan_id,
             'processor' => 'lemonsqueezy',
             'payment_id_external' => $data['id'] ?? null,
-            'payment_frequency' => $customData['frequency'] ?? 'one_time',
+            'payment_frequency' => Typed::string($customData['frequency'] ?? 'one_time'),
             'payment_type' => $eventName === 'subscription_created' ? 'recurring' : 'one_time',
-            'base_amount' => ($attrs['subtotal'] ?? 0) / 100,
-            'discount_amount' => ($attrs['discount_total'] ?? 0) / 100,
-            'taxes_amount' => ($attrs['tax'] ?? 0) / 100,
-            'total_amount' => ($attrs['total'] ?? 0) / 100,
-            'currency' => strtoupper($attrs['currency'] ?? 'USD'),
-            'email' => $attrs['user_email'] ?? $user->email,
-            'name' => $attrs['user_name'] ?? $user->name,
+            'base_amount' => Typed::float($attrs['subtotal'] ?? 0) / 100,
+            'discount_amount' => Typed::float($attrs['discount_total'] ?? 0) / 100,
+            'taxes_amount' => Typed::float($attrs['tax'] ?? 0) / 100,
+            'total_amount' => Typed::float($attrs['total'] ?? 0) / 100,
+            'currency' => strtoupper(Typed::string($attrs['currency'] ?? 'USD')),
+            'email' => Typed::stringOrNull($attrs['user_email'] ?? null) ?? $user->email,
+            'name' => Typed::stringOrNull($attrs['user_name'] ?? null) ?? $user->name,
             'datetime' => now(),
         ]);
     }

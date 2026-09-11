@@ -20,7 +20,7 @@ class InstallState
 {
     public static function lockPath(): string
     {
-        return (string) config('monit.install_lock');
+        return Typed::string(config('monit.install_lock'));
     }
 
     public static function installed(): bool

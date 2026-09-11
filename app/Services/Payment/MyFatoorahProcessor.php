@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 
 /**
@@ -38,20 +39,20 @@ class MyFatoorahProcessor
 
     public function handleWebhook(Request $request): ?Payment
     {
-        $data = $request->input('Data', []);
-        $status = $data['TransactionStatus'] ?? '';
+        $data = Typed::arr($request->input('Data'));
+        $status = Typed::string($data['TransactionStatus'] ?? '');
 
         if ($status !== 'SUCCESS') {
             return null;
         }
 
-        $metadata = $data['UserDefinedField'] ?? '{}';
-        if (is_string($metadata)) {
-            $metadata = json_decode($metadata, true) ?? [];
-        }
+        $metadataRaw = $data['UserDefinedField'] ?? '{}';
+        $metadata = is_string($metadataRaw)
+            ? Typed::arr(json_decode($metadataRaw, true))
+            : Typed::arr($metadataRaw);
 
-        $user = User::query()->where('user_id', (int) ($metadata['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', (int) ($metadata['plan_id'] ?? 0))->first();
+        $user = User::query()->where('user_id', Typed::int($metadata['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', Typed::int($metadata['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -61,16 +62,16 @@ class MyFatoorahProcessor
             'user_id' => $user->user_id,
             'plan_id' => $plan->plan_id,
             'processor' => 'myfatoorah',
-            'payment_id_external' => $data['InvoiceId'] ?? null,
-            'payment_frequency' => $metadata['frequency'] ?? 'one_time',
+            'payment_id_external' => Typed::stringOrNull($data['InvoiceId'] ?? null),
+            'payment_frequency' => Typed::string($metadata['frequency'] ?? 'one_time'),
             'payment_type' => 'one_time',
-            'base_amount' => $data['InvoiceValue'] ?? 0,
+            'base_amount' => Typed::float($data['InvoiceValue'] ?? 0),
             'discount_amount' => 0,
             'taxes_amount' => 0,
-            'total_amount' => $data['InvoiceValue'] ?? 0,
-            'currency' => $data['Currency'] ?? 'KWD',
+            'total_amount' => Typed::float($data['InvoiceValue'] ?? 0),
+            'currency' => Typed::string($data['Currency'] ?? 'KWD'),
             'email' => $user->email,
-            'name' => $data['CustomerName'] ?? $user->name,
+            'name' => Typed::stringOrNull($data['CustomerName'] ?? null) ?? $user->name,
             'datetime' => now(),
         ]);
     }

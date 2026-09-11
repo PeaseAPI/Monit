@@ -6,6 +6,7 @@ use App\Models\PushNotificationCampaign;
 use App\Models\PushNotificationSubscriber;
 use App\Services\WebPushService;
 use App\Support\PluginManager;
+use App\Support\Typed;
 use Illuminate\Console\Command;
 
 /**
@@ -33,10 +34,10 @@ class PushNotificationsCampaignsCommand extends Command
             return self::SUCCESS;
         }
 
-        $publicKey = (string) PluginManager::setting('push-notifications', 'vapid_public_key', '');
-        $privateKey = (string) PluginManager::setting('push-notifications', 'vapid_private_key', '');
-        $subject = (string) PluginManager::setting('push-notifications', 'subject', 'mailto:admin@example.com');
-        $batchSize = max(1, (int) PluginManager::setting('push-notifications', 'batch_size', 100));
+        $publicKey = Typed::string(PluginManager::setting('push-notifications', 'vapid_public_key', ''));
+        $privateKey = Typed::string(PluginManager::setting('push-notifications', 'vapid_private_key', ''));
+        $subject = Typed::string(PluginManager::setting('push-notifications', 'subject', 'mailto:admin@example.com'));
+        $batchSize = max(1, Typed::int(PluginManager::setting('push-notifications', 'batch_size', 100)));
 
         if ($publicKey === '' || $privateKey === '') {
             $this->error('VAPID 密钥未配置（插件设置中生成）');

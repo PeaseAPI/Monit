@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Typed;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -120,7 +121,7 @@ class AdminLanguages extends Controller
             $locales[] = basename($file, '.json');
         }
 
-        return $locales ?: [config('app.locale')];
+        return array_map(static fn ($locale) => Typed::string($locale), $locales) ?: [Typed::string(config('app.locale'))];
     }
 
     /**

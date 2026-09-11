@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\Typed;
 use MaxMind\Db\Reader;
 
 /**
@@ -45,14 +46,15 @@ class GeoIp
         $record = $this->lookupRecord($ip);
 
         if ($record !== null) {
-            $result['country_code'] = $record['country']['iso_code'] ?? null;
-            $result['continent_code'] = $record['continent']['code']
+            $result['country_code'] = Typed::stringOrNull(data_get($record, 'country.iso_code'));
+            $result['continent_code'] = Typed::stringOrNull(data_get($record, 'continent.code'))
                 ?? static::continentFromCountry($result['country_code']);
-            $result['city_name'] = $record['city']['names']['zh-CN']
-                ?? $record['city']['names']['en']
-                ?? null;
-            $result['latitude'] = isset($record['location']['latitude']) ? (float) $record['location']['latitude'] : null;
-            $result['longitude'] = isset($record['location']['longitude']) ? (float) $record['location']['longitude'] : null;
+            $result['city_name'] = Typed::stringOrNull(data_get($record, 'city.names.zh-CN')
+                ?? data_get($record, 'city.names.en'));
+            $latitude = data_get($record, 'location.latitude');
+            $longitude = data_get($record, 'location.longitude');
+            $result['latitude'] = $latitude === null ? null : Typed::float($latitude);
+            $result['longitude'] = $longitude === null ? null : Typed::float($longitude);
         }
 
         return $result;
@@ -70,7 +72,7 @@ class GeoIp
         }
 
         if ($this->reader === null) {
-            $path = (string) config('services.geoip.mmdb_path');
+            $path = Typed::string(config('services.geoip.mmdb_path'));
 
             if ($path === '' || ! is_file($path)) {
                 $this->readerFailed = true;
@@ -93,7 +95,10 @@ class GeoIp
             return null;
         }
 
-        return is_array($record) ? $record : null;
+        /** @var array<string, mixed>|null $record */
+        $record = is_array($record) ? $record : null;
+
+        return $record;
     }
 
     /**
@@ -101,7 +106,7 @@ class GeoIp
      */
     public function isAvailable(): bool
     {
-        $path = (string) config('services.geoip.mmdb_path');
+        $path = Typed::string(config('services.geoip.mmdb_path'));
 
         return $path !== '' && is_file($path);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Social;
 
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -39,7 +40,12 @@ class GiteeProvider implements ChineseSocialProvider
             'client_secret' => $this->clientSecret,
         ]);
 
-        return $response->json();
+        $json = $response->json();
+
+        /** @var array<string, mixed> $json */
+        $json = is_array($json) ? $json : [];
+
+        return $json;
     }
 
     /**
@@ -47,26 +53,26 @@ class GiteeProvider implements ChineseSocialProvider
      */
     public function getUserInfo(string $accessToken): array
     {
-        $tokenData = json_decode($accessToken, true) ?? [];
-        $token = $tokenData['access_token'] ?? $accessToken;
+        $tokenData = Typed::arr(json_decode($accessToken, true));
+        $token = Typed::string($tokenData['access_token'] ?? $accessToken);
 
         $response = Http::withToken($token)->get('https://gitee.com/api/v5/user');
-        $data = $response->json();
+        $data = Typed::arr($response->json());
 
-        $email = $data['email'] ?? null;
+        $email = Typed::stringOrNull($data['email'] ?? null);
         if (empty($email)) {
             $emailResponse = Http::withToken($token)->get('https://gitee.com/api/v5/emails');
             $emails = $emailResponse->json();
             if (is_array($emails) && count($emails) > 0) {
                 $primary = collect($emails)->firstWhere('state', 'confirmed');
-                $email = $primary['email'] ?? ($emails[0]['email'] ?? null);
+                $email = data_get($primary, 'email') ?? data_get($emails, '0.email');
             }
         }
 
         return [
-            'id' => (string) ($data['id'] ?? ''),
-            'name' => $data['name'] ?? ($data['login'] ?? ''),
-            'avatar' => $data['avatar_url'] ?? '',
+            'id' => Typed::string($data['id'] ?? ''),
+            'name' => Typed::string($data['name'] ?? $data['login'] ?? ''),
+            'avatar' => Typed::string($data['avatar_url'] ?? ''),
             'email' => $email,
         ];
     }

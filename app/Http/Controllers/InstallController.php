@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Support\EnvWriter;
 use App\Support\InstallState;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -422,18 +423,18 @@ class InstallController extends Controller
         // 1) .env 写入（MySQL 唯一驱动）
         $this->env->write('DB_CONNECTION', 'mysql');
         foreach (['DB_HOST' => 'host', 'DB_PORT' => 'port', 'DB_DATABASE' => 'database', 'DB_USERNAME' => 'username'] as $envKey => $field) {
-            $this->env->write($envKey, (string) ($data[$field] ?? ''));
+            $this->env->write($envKey, Typed::string($data[$field] ?? ''));
         }
-        $this->env->write('DB_PASSWORD', (string) ($data['password'] ?? ''));
+        $this->env->write('DB_PASSWORD', Typed::string($data['password'] ?? ''));
 
         // 2) 当前进程立即生效（覆盖缓存的旧连接参数）
         config(['database.default' => 'mysql']);
-        config(['database.connections.mysql' => array_merge(config('database.connections.mysql') ?? [], [
+        config(['database.connections.mysql' => array_merge(Typed::arr(config('database.connections.mysql')), [
             'host' => $data['host'],
-            'port' => (int) $data['port'],
+            'port' => Typed::int($data['port']),
             'database' => $data['database'],
             'username' => $data['username'],
-            'password' => (string) ($data['password'] ?? ''),
+            'password' => Typed::string($data['password'] ?? ''),
         ])]);
 
         DB::purge();
@@ -454,12 +455,12 @@ class InstallController extends Controller
      */
     protected function ensureMysqlDatabase(): void
     {
-        $cfg = config('database.connections.mysql');
-        $host = (string) ($cfg['host'] ?? '127.0.0.1');
-        $port = (int) ($cfg['port'] ?? 3306);
-        $database = (string) ($cfg['database'] ?? '');
-        $username = (string) ($cfg['username'] ?? '');
-        $password = (string) ($cfg['password'] ?? '');
+        $cfg = Typed::arr(config('database.connections.mysql'));
+        $host = Typed::string($cfg['host'] ?? '127.0.0.1');
+        $port = Typed::int($cfg['port'] ?? 3306);
+        $database = Typed::string($cfg['database'] ?? '');
+        $username = Typed::string($cfg['username'] ?? '');
+        $password = Typed::string($cfg['password'] ?? '');
 
         // connectMysql 内部已把连接异常翻译为中文 RuntimeException
         $pdo = $this->connectMysql($host, $port, $username, $password);
@@ -511,7 +512,7 @@ class InstallController extends Controller
 
         // 站点 URL 默认取当前访问地址
         $host = (string) $request->getHost();
-        $defaultUrl = $host !== '' ? $request->getScheme().'://'.$host : (string) config('app.url');
+        $defaultUrl = $host !== '' ? $request->getScheme().'://'.$host : Typed::string(config('app.url'));
 
         return view('install', [
             'step' => 'admin',
@@ -659,9 +660,9 @@ class InstallController extends Controller
         return view('install', [
             'step' => 'finish',
             'adminEmail' => $admin?->email ?? '',
-            'siteName' => (string) (Settings::get('site_name') ?? config('app.name')),
-            'siteUrl' => (string) (Settings::get('site_url') ?? config('app.url')),
-            'dbDatabase' => (string) config('database.connections.mysql.database'),
+            'siteName' => Typed::string(Settings::get('site_name') ?? config('app.name')),
+            'siteUrl' => Typed::string(Settings::get('site_url') ?? config('app.url')),
+            'dbDatabase' => Typed::string(config('database.connections.mysql.database')),
         ]);
     }
 
@@ -734,7 +735,7 @@ class InstallController extends Controller
     protected function backToAdmin(Request $request, array $errors): View
     {
         $host = (string) $request->getHost();
-        $defaultUrl = (string) ($request->input('site_url')
+        $defaultUrl = Typed::string($request->input('site_url')
             ?: ($host !== '' ? $request->getScheme().'://'.$host : config('app.url')));
 
         return view('install', [
@@ -742,7 +743,7 @@ class InstallController extends Controller
             'old' => $request->only(['site_name', 'site_url', 'name', 'email']),
             'errors' => $errors,
             'defaultUrl' => $defaultUrl,
-            'defaultName' => (string) ($request->input('site_name') ?: 'Monit 网站分析'),
+            'defaultName' => Typed::string($request->input('site_name') ?: 'Monit 网站分析'),
         ]);
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Payment;
 use App\Services\Payment\AlipayProcessor;
 use App\Services\Payment\PaymentService;
 use App\Services\Payment\WeChatPayProcessor;
+use App\Support\Typed;
 use App\Support\WebhookSignature;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,21 +33,21 @@ class WebhookPaymentController extends Controller
      */
     public function paddle(Request $request): JsonResponse
     {
-        if (! WebhookSignature::verifyPaddleClassic($request->all(), (string) config('services.paddle.public_key'))) {
+        if (! WebhookSignature::verifyPaddleClassic($request->all(), Typed::string(config('services.paddle.public_key')))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         if ($request->input('alert_name') === 'payment_succeeded') {
-            $data = json_decode($request->input('passthrough', ''), true) ?? [];
+            $data = Typed::arr(json_decode(Typed::string($request->input('passthrough', '')), true));
             $paymentId = $data['payment_id'] ?? null;
             if ($paymentId
                 && $this->paymentService->verifyGatewayAmount(
-                    (int) $paymentId,
+                    Typed::int($paymentId),
                     is_numeric($request->input('sale_gross')) ? (float) $request->input('sale_gross') : null,
-                    (string) $request->input('currency', ''),
+                    Typed::string($request->input('currency', '')),
                     'paddle',
                 )) {
-                $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('order_id'));
+                $this->paymentService->handlePaymentSuccess(Typed::int($paymentId), Typed::string($request->input('order_id')));
             }
         }
 
@@ -58,7 +59,7 @@ class WebhookPaymentController extends Controller
      */
     public function paddleBilling(Request $request): JsonResponse
     {
-        if (! WebhookSignature::verifyHmacHeader($request, config('services.paddle.webhook_secret'), 'Signature')) {
+        if (! WebhookSignature::verifyHmacHeader($request, Typed::stringOrNull(config('services.paddle.webhook_secret')), 'Signature')) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
@@ -66,15 +67,14 @@ class WebhookPaymentController extends Controller
             $paymentId = $request->input('data.custom_data.payment_id');
             if ($paymentId
                 && $this->paymentService->verifyGatewayAmount(
-                    (int) $paymentId,
+                    Typed::int($paymentId),
                     PaymentService::majorUnits(
-                        $request->input('data.attributes.totals.total'),
-                        (string) $request->input('data.attributes.currency_code', '')
-                    ),
-                    (string) $request->input('data.attributes.currency_code', ''),
+                        Typed::intOrNull($request->input('data.attributes.totals.total')),
+                        Typed::string($request->input('data.attributes.currency_code', ''))),
+                    Typed::string($request->input('data.attributes.currency_code', '')),
                     'paddle_billing',
                 )) {
-                $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('data.id'));
+                $this->paymentService->handlePaymentSuccess(Typed::int($paymentId), Typed::string($request->input('data.id')));
             }
         }
 
@@ -92,7 +92,7 @@ class WebhookPaymentController extends Controller
 
         $action = $request->input('action', '');
         if (in_array($action, ['payment.created', 'payment.updated'])) {
-            $this->paymentService->handleExternalPaymentNotification('mercadopago', (string) $request->input('data.id'));
+            $this->paymentService->handleExternalPaymentNotification('mercadopago', Typed::string($request->input('data.id')));
         }
 
         return response()->json(['received' => true]);
@@ -105,18 +105,18 @@ class WebhookPaymentController extends Controller
     {
         $serverKey = config('services.midtrans.server_key');
 
-        if (empty($serverKey)) {
+        if (! is_string($serverKey) || $serverKey === '') {
             return response()->json(['error' => 'Not configured'], 400);
         }
 
-        $expected = hash('sha512', $serverKey.$request->input('order_id', '').$request->input('status_code', '').$request->input('gross_amount', ''));
+        $expected = hash('sha512', $serverKey.Typed::string($request->input('order_id', '')).Typed::string($request->input('status_code', '')).Typed::string($request->input('gross_amount', '')));
 
-        if (! hash_equals($expected, (string) $request->input('signature_key', ''))) {
+        if (! hash_equals($expected, Typed::string($request->input('signature_key', '')))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         if (in_array($request->input('transaction_status'), ['capture', 'settlement'])) {
-            $this->paymentService->handleExternalPaymentNotification('midtrans', $request->input('order_id', ''));
+            $this->paymentService->handleExternalPaymentNotification('midtrans', Typed::string($request->input('order_id', '')));
         }
 
         return response()->json(['received' => true]);
@@ -127,12 +127,12 @@ class WebhookPaymentController extends Controller
         $secretHash = config('services.flutterwave.secret_hash');
 
         // fail-closed：未配置 secret 一律拒绝（原实现未配置时放行）
-        if (empty($secretHash) || ! hash_equals((string) $secretHash, (string) $request->header('verif-hash'))) {
+        if (empty($secretHash) || ! hash_equals(Typed::string($secretHash), (string) $request->header('verif-hash'))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         if ($request->input('event.type') === 'CARD_TRANSACTION.COMPLETED') {
-            $this->paymentService->handleExternalPaymentNotification('flutterwave', $request->input('data.tx_ref', ''));
+            $this->paymentService->handleExternalPaymentNotification('flutterwave', Typed::string($request->input('data.tx_ref', '')));
         }
 
         return response()->json(['received' => true]);
@@ -143,7 +143,7 @@ class WebhookPaymentController extends Controller
         $secret = config('services.lemonsqueezy.webhook_secret');
 
         // fail-closed：未配置 secret 一律拒绝（原实现未配置时放行）
-        if (! WebhookSignature::verifyHmacHeader($request, $secret, 'X-Signature')) {
+        if (! WebhookSignature::verifyHmacHeader($request, Typed::stringOrNull($secret), 'X-Signature')) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
@@ -151,15 +151,14 @@ class WebhookPaymentController extends Controller
             $paymentId = $request->input('data.attributes.custom_data.payment_id');
             if ($paymentId
                 && $this->paymentService->verifyGatewayAmount(
-                    (int) $paymentId,
+                    Typed::int($paymentId),
                     PaymentService::majorUnits(
-                        $request->input('data.attributes.total'),
-                        (string) $request->input('data.attributes.currency', '')
-                    ),
-                    (string) $request->input('data.attributes.currency', ''),
+                        Typed::intOrNull($request->input('data.attributes.total')),
+                        Typed::string($request->input('data.attributes.currency', ''))),
+                    Typed::string($request->input('data.attributes.currency', '')),
                     'lemonsqueezy',
                 )) {
-                $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('data.id'));
+                $this->paymentService->handlePaymentSuccess(Typed::int($paymentId), Typed::string($request->input('data.id')));
             }
         }
 
@@ -177,27 +176,27 @@ class WebhookPaymentController extends Controller
         }
 
         $paymentId = $request->input('object.metadata.payment_id');
-        $externalId = (string) $request->input('object.id');
+        $externalId = Typed::string($request->input('object.id'));
 
         $verified = WebhookSignature::fetchYooKassaPayment(
             $externalId,
-            config('services.yookassa.shop_id'),
-            config('services.yookassa.secret_key')
+            Typed::stringOrNull(config('services.yookassa.shop_id')),
+            Typed::stringOrNull(config('services.yookassa.secret_key'))
         );
 
-        if ($verified === null || (string) ($verified['metadata']['payment_id'] ?? '') !== (string) $paymentId) {
+        if ($verified === null || Typed::stringPath($verified, 'metadata.payment_id') !== Typed::string($paymentId)) {
             return response()->json(['error' => 'Verification failed'], 400);
         }
 
         if ($paymentId
             && $this->paymentService->verifyGatewayAmount(
-                (int) $paymentId,
-                isset($verified['amount']['value']) && is_numeric($verified['amount']['value'])
-                    ? (float) $verified['amount']['value'] : null,
-                (string) ($verified['amount']['currency'] ?? ''),
+                Typed::int($paymentId),
+                is_numeric(data_get($verified, 'amount.value'))
+                    ? (float) data_get($verified, 'amount.value') : null,
+                Typed::stringPath($verified, 'amount.currency'),
                 'yookassa',
             )) {
-            $this->paymentService->handlePaymentSuccess((int) $paymentId, $externalId);
+            $this->paymentService->handlePaymentSuccess(Typed::int($paymentId), $externalId);
         }
 
         return response()->json(['received' => true]);
@@ -210,7 +209,7 @@ class WebhookPaymentController extends Controller
     {
         $secondKey = config('services.payu.second_key');
 
-        if (empty($secondKey)) {
+        if (! is_string($secondKey) || $secondKey === '') {
             return response()->json(['error' => 'Not configured'], 400);
         }
 
@@ -226,7 +225,7 @@ class WebhookPaymentController extends Controller
         }
 
         if ($request->input('order.status') === 'COMPLETED') {
-            $this->paymentService->handleExternalPaymentNotification('payu', $request->input('order.extOrderId', ''));
+            $this->paymentService->handleExternalPaymentNotification('payu', Typed::string($request->input('order.extOrderId', '')));
         }
 
         return response()->json(['received' => true]);
@@ -238,12 +237,12 @@ class WebhookPaymentController extends Controller
      */
     public function iyzico(Request $request): JsonResponse
     {
-        if (! WebhookSignature::verifyHmacHeader($request, config('services.iyzico.webhook_secret'))) {
+        if (! WebhookSignature::verifyHmacHeader($request, Typed::stringOrNull(config('services.iyzico.webhook_secret')))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         if ($request->input('status') === 'SUCCESS') {
-            $this->paymentService->handleExternalPaymentNotification('iyzico', $request->input('conversationId', ''));
+            $this->paymentService->handleExternalPaymentNotification('iyzico', Typed::string($request->input('conversationId', '')));
         }
 
         return response()->json(['received' => true]);
@@ -254,21 +253,21 @@ class WebhookPaymentController extends Controller
      */
     public function crypto(Request $request): JsonResponse
     {
-        if (! WebhookSignature::verifyHmacHeader($request, config('services.cryptocom.webhook_secret'))) {
+        if (! WebhookSignature::verifyHmacHeader($request, Typed::stringOrNull(config('services.cryptocom.webhook_secret')))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
-        $data = $request->input('object', []);
+        $data = Typed::arr($request->input('object'));
         if ($request->input('type') === 'payment.created' && ($data['status'] ?? '') === 'completed') {
-            $paymentId = $data['metadata']['payment_id'] ?? null;
+            $paymentId = data_get($data, 'metadata.payment_id');
             if ($paymentId
                 && $this->paymentService->verifyGatewayAmount(
-                    (int) $paymentId,
-                    PaymentService::majorUnits($data['amount'] ?? null, (string) ($data['currency'] ?? '')),
-                    (string) ($data['currency'] ?? ''),
+                    Typed::int($paymentId),
+                    PaymentService::majorUnits(Typed::intOrNull($data['amount'] ?? null), Typed::string($data['currency'] ?? '')),
+                    Typed::string($data['currency'] ?? ''),
                     'cryptocom',
                 )) {
-                $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) ($data['id'] ?? ''));
+                $this->paymentService->handlePaymentSuccess(Typed::int($paymentId), Typed::string($data['id'] ?? ''));
             }
         }
 
@@ -280,12 +279,12 @@ class WebhookPaymentController extends Controller
      */
     public function myfatoorah(Request $request): JsonResponse
     {
-        if (! WebhookSignature::verifyHmacHeader($request, config('services.myfatoorah.webhook_secret'))) {
+        if (! WebhookSignature::verifyHmacHeader($request, Typed::stringOrNull(config('services.myfatoorah.webhook_secret')))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         if ($request->input('EventType') === 'TransactionStatusChanged') {
-            $this->paymentService->handleExternalPaymentNotification('myfatoorah', (string) $request->input('Data.InvoiceId'));
+            $this->paymentService->handleExternalPaymentNotification('myfatoorah', Typed::string($request->input('Data.InvoiceId')));
         }
 
         return response()->json(['received' => true]);
@@ -296,12 +295,12 @@ class WebhookPaymentController extends Controller
      */
     public function klarna(Request $request): JsonResponse
     {
-        if (! WebhookSignature::verifyHmacHeader($request, config('services.klarna.webhook_secret'))) {
+        if (! WebhookSignature::verifyHmacHeader($request, Typed::stringOrNull(config('services.klarna.webhook_secret')))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         if ($request->input('event_type') === 'ORDER_COMPLETED') {
-            $this->paymentService->handleExternalPaymentNotification('klarna', $request->input('order_id', ''));
+            $this->paymentService->handleExternalPaymentNotification('klarna', Typed::string($request->input('order_id', '')));
         }
 
         return response()->json(['received' => true]);
@@ -312,12 +311,12 @@ class WebhookPaymentController extends Controller
      */
     public function plisio(Request $request): JsonResponse
     {
-        if (! WebhookSignature::verifyHmacHeader($request, config('services.plisio.webhook_secret'))) {
+        if (! WebhookSignature::verifyHmacHeader($request, Typed::stringOrNull(config('services.plisio.webhook_secret')))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         if (in_array($request->input('status'), ['completed', 'mismatched'])) {
-            $this->paymentService->handleExternalPaymentNotification('plisio', $request->input('order_number', ''));
+            $this->paymentService->handleExternalPaymentNotification('plisio', Typed::string($request->input('order_number', '')));
         }
 
         return response()->json(['received' => true]);
@@ -328,7 +327,7 @@ class WebhookPaymentController extends Controller
      */
     public function revolut(Request $request): JsonResponse
     {
-        if (! WebhookSignature::verifyHmacHeader($request, config('services.revolut.webhook_secret'))) {
+        if (! WebhookSignature::verifyHmacHeader($request, Typed::stringOrNull(config('services.revolut.webhook_secret')))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
@@ -336,15 +335,14 @@ class WebhookPaymentController extends Controller
             $paymentId = $request->input('data.metadata.payment_id');
             if ($paymentId
                 && $this->paymentService->verifyGatewayAmount(
-                    (int) $paymentId,
+                    Typed::int($paymentId),
                     PaymentService::majorUnits(
-                        $request->input('data.total_amount'),
-                        (string) $request->input('data.currency', '')
-                    ),
-                    (string) $request->input('data.currency', ''),
+                        Typed::intOrNull($request->input('data.total_amount')),
+                        Typed::string($request->input('data.currency', ''))),
+                    Typed::string($request->input('data.currency', '')),
                     'revolut',
                 )) {
-                $this->paymentService->handlePaymentSuccess((int) $paymentId, (string) $request->input('data.id'));
+                $this->paymentService->handlePaymentSuccess(Typed::int($paymentId), Typed::string($request->input('data.id')));
             }
         }
 
@@ -357,13 +355,13 @@ class WebhookPaymentController extends Controller
      */
     public function onepay(Request $request): JsonResponse
     {
-        if (! WebhookSignature::verifyHmacHeader($request, config('services.onepay.webhook_secret'))) {
+        if (! WebhookSignature::verifyHmacHeader($request, Typed::stringOrNull(config('services.onepay.webhook_secret')))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
-        $status = $request->input('vnp_ResponseCode', $request->input('status', ''));
+        $status = Typed::string($request->input('vnp_ResponseCode', $request->input('status', '')));
         if ($status === '00' || $status === 'completed') {
-            $orderId = $request->input('vnp_TxnRef', $request->input('order_id', ''));
+            $orderId = Typed::string($request->input('vnp_TxnRef', $request->input('order_id', '')));
             $this->paymentService->handleExternalPaymentNotification('onepay', $orderId);
         }
 
@@ -393,8 +391,8 @@ class WebhookPaymentController extends Controller
             && ($data['result_code'] ?? '') === 'SUCCESS'
             && $processor->verifyCallback($data)) {
 
-            $attach = json_decode((string) ($data['attach'] ?? '{}'), true);
-            $paymentId = (int) ($attach['payment_id'] ?? 0);
+            $attach = Typed::arr(json_decode(Typed::string($data['attach'] ?? '{}'), true));
+            $paymentId = Typed::int($attach['payment_id'] ?? 0);
             $payment = $paymentId ? Payment::find($paymentId) : null;
 
             // 金额防篡改：total_fee 虽被签名覆盖（网关可信），但仍须与订单金额
@@ -434,8 +432,8 @@ class WebhookPaymentController extends Controller
             && $processor->verifyNotify($data)) {
 
             $outTradeNo = (string) ($data['out_trade_no'] ?? '');
-            $passback = json_decode(urldecode((string) ($data['passback_params'] ?? '{}')), true);
-            $paymentId = (int) ($passback['payment_id'] ?? 0);
+            $passback = Typed::arr(json_decode(urldecode(Typed::string($data['passback_params'] ?? '{}')), true));
+            $paymentId = Typed::int($passback['payment_id'] ?? 0);
             $payment = $paymentId ? Payment::find($paymentId) : null;
 
             // 金额防篡改：total_amount 虽被 RSA 签名覆盖（网关可信），但仍须与
@@ -464,7 +462,7 @@ class WebhookPaymentController extends Controller
     {
         $secret = config('services.mercadopago.webhook_secret');
 
-        if (empty($secret)) {
+        if (! is_string($secret) || $secret === '') {
             return false;
         }
 
@@ -492,7 +490,7 @@ class WebhookPaymentController extends Controller
             return false;
         }
 
-        $dataId = (string) $request->input('data.id', '');
+        $dataId = Typed::string($request->input('data.id', ''));
         $requestId = (string) $request->header('x-request-id', '');
 
         $manifests = ["id:{$dataId};request-id:{$requestId};"];

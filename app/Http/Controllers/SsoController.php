@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,7 +41,7 @@ class SsoController extends Controller
         ]);
 
         // 验证时间戳（5分钟内有效）
-        if (abs(time() - $request->input('timestamp')) > 300) {
+        if (abs(time() - Typed::int($request->input('timestamp'))) > 300) {
             return redirect()->route('login')->withErrors(['sso' => __('auth.sso_expired')]);
         }
 
@@ -48,13 +49,13 @@ class SsoController extends Controller
         // （旧格式 '45'.'5victim@x.com' ≡ '455'.'victim@x.com' 可跨用户冒充，
         //  修复后格式 'user_id:email:timestamp' 一一对应，无重解释空间）
         $payload = implode(':', [
-            (string) $request->input('user_id', ''),
-            (string) $request->input('email', ''),
-            (string) $request->input('timestamp'),
+            Typed::string($request->input('user_id', '')),
+            Typed::string($request->input('email', '')),
+            Typed::string($request->input('timestamp')),
         ]);
-        $expectedToken = hash_hmac('sha256', $payload, trim($ssoSecret, '"'));
+        $expectedToken = hash_hmac('sha256', $payload, trim(Typed::string($ssoSecret), '"'));
 
-        if (! hash_equals($expectedToken, $request->input('token'))) {
+        if (! hash_equals($expectedToken, Typed::string($request->input('token')))) {
             return redirect()->route('login')->withErrors(['sso' => __('auth.sso_invalid_token')]);
         }
 
@@ -62,7 +63,7 @@ class SsoController extends Controller
         // 浏览器历史可泄露），5 分钟时间窗内重复提交即可冒用登录——
         // 同一 token 仅消费一次，Cache::add 原子占位（含并发双击），
         // TTL 310s > 时间戳容差 300s，覆盖全部有效窗口
-        $tokenCacheKey = 'sso_token_used_'.hash('sha256', (string) $request->input('token'));
+        $tokenCacheKey = 'sso_token_used_'.hash('sha256', Typed::string($request->input('token')));
         if (! Cache::add($tokenCacheKey, 1, 310)) {
             return redirect()->route('login')->withErrors(['sso' => __('auth.sso_invalid_token')]);
         }
@@ -70,7 +71,7 @@ class SsoController extends Controller
         // 查找用户
         $user = null;
         if ($request->filled('user_id')) {
-            $user = User::query()->where('user_id', (int) $request->input('user_id'))->first();
+            $user = User::query()->where('user_id', Typed::int($request->input('user_id')))->first();
         } elseif ($request->filled('email')) {
             $user = User::where('email', $request->input('email'))->first();
         }

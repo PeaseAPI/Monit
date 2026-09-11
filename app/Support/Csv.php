@@ -12,10 +12,13 @@ namespace App\Support;
  */
 class Csv
 {
-    public static function sanitizeCell(mixed $value): mixed
+    /**
+     * 返回类型可安全传给 fputcsv（scalar 或 null）
+     */
+    public static function sanitizeCell(mixed $value): bool|float|int|string|null
     {
         if (! is_string($value) || $value === '') {
-            return $value;
+            return is_scalar($value) || $value === null ? $value : '';
         }
 
         if (str_starts_with($value, '=') || str_starts_with($value, '+')

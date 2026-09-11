@@ -74,19 +74,19 @@ class AliyunOssClient
         $url = $this->urlFor($key);
         $host = (string) parse_url($url, PHP_URL_HOST);
         $date = now()->setTimezone('UTC')->format('D, d M Y H:i:s \G\M\T');
-        $contentType = (string) ($headers['Content-Type'] ?? '');
+        $contentType = Typed::string($headers['Content-Type'] ?? '');
 
         // CanonicalizedOSSHeaders：x-oss-* 头小写排序，每项以 \n 结尾
         $ossHeaders = [];
         foreach ($headers as $name => $value) {
             if (stripos((string) $name, 'x-oss-') === 0) {
-                $ossHeaders[strtolower((string) $name)] = trim((string) $value);
+                $ossHeaders[strtolower(Typed::string($name))] = trim(Typed::string($value));
             }
         }
         ksort($ossHeaders);
         $canonicalOssHeaders = '';
         foreach ($ossHeaders as $h => $v) {
-            $canonicalOssHeaders .= $h.':'.$v."\n";
+            $canonicalOssHeaders .= $h.':'.Typed::string($v)."\n";
         }
 
         // CanonicalizedResource：/{bucket}/{key}
@@ -94,7 +94,7 @@ class AliyunOssClient
 
         $stringToSign = implode("\n", [
             $method,
-            $headers['Content-MD5'] ?? '',
+            Typed::string($headers['Content-MD5'] ?? ''),
             $contentType,
             $date,
             $canonicalOssHeaders.$resource,
@@ -108,7 +108,7 @@ class AliyunOssClient
         ];
         foreach ($headers as $h => $v) {
             if (strcasecmp((string) $h, 'host') !== 0) {
-                $curlHeaders[] = ucwords((string) $h, '-').': '.$v;
+                $curlHeaders[] = ucwords((string) $h, '-').': '.Typed::string($v);
             }
         }
 

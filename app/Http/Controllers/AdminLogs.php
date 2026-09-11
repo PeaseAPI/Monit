@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AccountLog;
 use App\Support\Csv;
+use App\Support\Typed;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -46,10 +47,10 @@ class AdminLogs extends Controller
     private function buildQuery(Request $request)
     {
         return AccountLog::with('user')
-            ->when($request->input('user_id'), fn ($q, $v) => $q->where('user_id', (int) $v))
+            ->when($request->input('user_id'), fn ($q, $v) => $q->where('user_id', Typed::int($v)))
             ->when($request->filled('type'), fn ($q, $v) => $q->where('type', $v))
             ->when($request->filled('email'), function ($q) use ($request): void {
-                $q->whereHas('user', fn ($u) => $u->where('email', 'like', '%'.$request->input('email').'%'));
+                $q->whereHas('user', fn ($u) => $u->where('email', 'like', '%'.Typed::string($request->input('email')).'%'));
             })
             ->orderByDesc('log_id');
     }
@@ -69,7 +70,7 @@ class AdminLogs extends Controller
             fputcsv($out, ['log_id', 'user_id', 'email', 'type', 'ip', 'device_type', 'os_name', 'browser_name', 'country_code', 'city_name', 'datetime']);
             foreach ($logs as $log) {
                 fputcsv($out, [
-                    $log->log_id, $log->user_id,
+                    Typed::string($log->log_id), Typed::string($log->user_id),
                     $this->sanitizeCsvCell($log->user?->email),
                     $this->sanitizeCsvCell($log->type),
                     $this->sanitizeCsvCell($log->ip),
@@ -78,7 +79,7 @@ class AdminLogs extends Controller
                     $this->sanitizeCsvCell($log->browser_name),
                     $this->sanitizeCsvCell($log->country_code),
                     $this->sanitizeCsvCell($log->city_name),
-                    $log->datetime?->format('Y-m-d H:i:s'),
+                    Typed::string($log->datetime?->format('Y-m-d H:i:s') ?? ''),
                 ]);
             }
             fclose($out);
@@ -89,7 +90,7 @@ class AdminLogs extends Controller
      * CSV 公式注入防御：以 = + - @ 制表符/回车开头的单元格前置单引号，
      * 防止导出文件在 Excel/WPS 中被解释为公式执行
      */
-    private function sanitizeCsvCell(mixed $value): mixed
+    private function sanitizeCsvCell(mixed $value): bool|float|int|string|null
     {
         return Csv::sanitizeCell($value);
     }

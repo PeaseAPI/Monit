@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SessionReplay;
 use App\Models\Website;
 use App\Support\ObjectStorage;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -62,15 +63,18 @@ class ReplayController extends Controller
             'SELECT data FROM sessions_replays WHERE replay_id = ?',
             [$replay->replay_id],
         );
-        if ($row && $row->data) {
-            $decompressed = @gzdecode($row->data);
-            if ($decompressed !== false) {
-                $data = json_decode($decompressed, true);
-                if (is_array($data) && isset($data['events']) && is_array($data['events'])) {
-                    $events = $data['events'];
-                } elseif (is_array($data) && array_is_list($data)) {
-                    // 兼容直接存事件数组的情况
-                    $events = $data;
+        if ($row !== null) {
+            $stored = data_get($row, 'data');
+            if (is_string($stored) && $stored !== '') {
+                $decompressed = @gzdecode($stored);
+                if ($decompressed !== false) {
+                    $data = Typed::arr(json_decode($decompressed, true));
+                    if (isset($data['events']) && is_array($data['events'])) {
+                        $events = $data['events'];
+                    } elseif (array_is_list($data)) {
+                        // 兼容直接存事件数组的情况
+                        $events = $data;
+                    }
                 }
             }
         }
@@ -80,10 +84,10 @@ class ReplayController extends Controller
             $session = $replay->session;
             if ($session) {
                 $cacheKey = "session_replay_keys_{$session->session_id}";
-                $keys = Cache::get($cacheKey, []);
+                $keys = Typed::arr(Cache::get($cacheKey));
 
                 foreach ($keys as $chunkKey) {
-                    $chunk = Cache::get($chunkKey);
+                    $chunk = Cache::get(Typed::string($chunkKey));
                     if (is_array($chunk)) {
                         $events = array_merge($events, $chunk);
                     }

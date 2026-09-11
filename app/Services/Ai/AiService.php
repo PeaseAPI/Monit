@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -40,10 +41,10 @@ class AiService
     /** 当前服务商（非法值回退 log） */
     public static function provider(): string
     {
-        $provider = (string) Settings::get('ai.ai_provider', '');
+        $provider = Typed::string(Settings::get('ai.ai_provider', ''));
 
         if ($provider === '') {
-            $provider = (string) config('monit.ai.default_provider', 'log');
+            $provider = Typed::string(config('monit.ai.default_provider', 'log'));
         }
 
         return in_array($provider, self::PROVIDERS, true) ? $provider : 'log';
@@ -55,23 +56,39 @@ class AiService
      */
     public static function providers(): array
     {
-        return (array) config('monit.ai.providers', []);
+        /** @var array<string, mixed> $providers */
+        $providers = (array) config('monit.ai.providers', []);
+
+        return $providers;
+    }
+
+    /**
+     * 预设 provider 配置（当前 provider 的 providers() 项）
+     *
+     * @return array<string, mixed>
+     */
+    protected static function providerPreset(): array
+    {
+        $presets = Typed::arr(self::providers());
+        $preset = $presets[static::provider()] ?? null;
+
+        return is_array($preset) ? $preset : [];
     }
 
     /** 端点：预设 base_url 之上允许 settings 覆盖（openai_compatible 必填） */
     public static function baseUrl(): string
     {
-        $preset = (string) (self::providers()[static::provider()]['base_url'] ?? '');
-        $override = rtrim(trim((string) Settings::get('ai.ai_base_url', '')), '/');
+        $preset = Typed::string(self::providerPreset()['base_url'] ?? '');
+        $override = rtrim(trim(Typed::string(Settings::get('ai.ai_base_url', ''))), '/');
 
         return $override !== '' ? $override : rtrim($preset, '/');
     }
 
     public static function model(): string
     {
-        $model = trim((string) Settings::get('ai.ai_model', ''));
+        $model = trim(Typed::string(Settings::get('ai.ai_model', '')));
 
-        return $model !== '' ? $model : (string) (self::providers()[static::provider()]['default_model'] ?? '');
+        return $model !== '' ? $model : Typed::string(self::providerPreset()['default_model'] ?? '');
     }
 
     public static function isConfigured(): bool
@@ -81,10 +98,10 @@ class AiService
         }
 
         if (static::provider() === 'openai_compatible') {
-            return static::baseUrl() !== '' && trim((string) Settings::get('ai.ai_api_key', '')) !== '';
+            return static::baseUrl() !== '' && trim(Typed::string(Settings::get('ai.ai_api_key', ''))) !== '';
         }
 
-        return trim((string) Settings::get('ai.ai_api_key', '')) !== '';
+        return trim(Typed::string(Settings::get('ai.ai_api_key', ''))) !== '';
     }
 
     /**
@@ -130,14 +147,14 @@ class AiService
         $messages[] = ['role' => 'user', 'content' => $prompt];
 
         try {
-            $response = Http::withToken((string) Settings::get('ai.ai_api_key', ''))
-                ->timeout((int) Settings::get('ai.ai_timeout', 60))
+            $response = Http::withToken(Typed::string(Settings::get('ai.ai_api_key', '')))
+                ->timeout(Typed::int(Settings::get('ai.ai_timeout', 60)))
                 ->acceptJson()
                 ->post(static::baseUrl().'/chat/completions', [
                     'model' => $model,
                     'messages' => $messages,
-                    'temperature' => (float) ($options['temperature'] ?? Settings::get('ai.ai_temperature', 0.7)),
-                    'max_tokens' => (int) ($options['max_tokens'] ?? Settings::get('ai.ai_max_tokens', 1024)),
+                    'temperature' => Typed::float($options['temperature'] ?? Settings::get('ai.ai_temperature', 0.7)),
+                    'max_tokens' => Typed::int($options['max_tokens'] ?? Settings::get('ai.ai_max_tokens', 1024)),
                 ]);
 
             if (! $response->successful()) {
@@ -146,7 +163,7 @@ class AiService
                 return $result;
             }
 
-            $content = (string) ($response->json('choices.0.message.content') ?? '');
+            $content = Typed::string($response->json('choices.0.message.content') ?? '');
 
             if ($content === '') {
                 $result['error'] = 'ai_empty_response';
@@ -154,11 +171,15 @@ class AiService
                 return $result;
             }
 
+            $usage = $response->json('usage');
+            assert(is_array($usage));
+            /** @var array<string, mixed> $usage */
+
             return [
                 ...$result,
                 'ok' => true,
                 'content' => $content,
-                'usage' => (array) ($response->json('usage') ?? []),
+                'usage' => $usage,
             ];
         } catch (Throwable $e) {
             report($e);

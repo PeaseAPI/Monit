@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 
 /**
@@ -41,10 +42,10 @@ class OnePayProcessor
             return null;
         }
 
-        $metadata = json_decode($request->input('metadata', '{}'), true);
+        $metadata = Typed::arr(json_decode(Typed::string($request->input('metadata', '{}')), true));
 
-        $user = User::query()->where('user_id', (int) ($metadata['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', (int) ($metadata['plan_id'] ?? 0))->first();
+        $user = User::query()->where('user_id', Typed::int($metadata['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', Typed::int($metadata['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -54,10 +55,10 @@ class OnePayProcessor
             'user_id' => $user->user_id,
             'plan_id' => $plan->plan_id,
             'processor' => 'onepay',
-            'payment_id_external' => $request->input('transaction_id'),
-            'payment_frequency' => $metadata['frequency'] ?? 'one_time',
+            'payment_id_external' => Typed::string($request->input('transaction_id')),
+            'payment_frequency' => Typed::string($metadata['frequency'] ?? 'one_time'),
             'payment_type' => 'one_time',
-            'base_amount' => $request->input('amount', 0),
+            'base_amount' => Typed::float($request->input('amount', 0)),
             'discount_amount' => 0,
             'taxes_amount' => 0,
             'total_amount' => $request->input('amount', 0),

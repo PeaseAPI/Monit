@@ -2,6 +2,7 @@
 
 namespace App\Services\Social;
 
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -39,7 +40,12 @@ class WeiboProvider implements ChineseSocialProvider
             'redirect_uri' => $this->redirectUri,
         ]);
 
-        return $response->json();
+        $json = $response->json();
+
+        /** @var array<string, mixed> $json */
+        $json = is_array($json) ? $json : [];
+
+        return $json;
     }
 
     /**
@@ -47,21 +53,21 @@ class WeiboProvider implements ChineseSocialProvider
      */
     public function getUserInfo(string $accessToken): array
     {
-        $tokenData = json_decode($accessToken, true) ?? [];
-        $uid = $tokenData['uid'] ?? '';
+        $tokenData = Typed::arr(json_decode($accessToken, true));
+        $uid = Typed::string($tokenData['uid'] ?? '');
 
         $response = Http::get('https://api.weibo.com/2/users/show.json', [
-            'access_token' => $tokenData['access_token'] ?? $accessToken,
+            'access_token' => Typed::string($tokenData['access_token'] ?? $accessToken),
             'uid' => $uid,
         ]);
 
-        $data = $response->json();
+        $data = Typed::arr($response->json());
 
         return [
-            'id' => (string) ($data['id'] ?? $uid),
-            'name' => $data['screen_name'] ?? ($data['name'] ?? ''),
-            'avatar' => $data['avatar_large'] ?? ($data['profile_image_url'] ?? ''),
-            'email' => $data['email'] ?? null,
+            'id' => Typed::string($data['id'] ?? $uid),
+            'name' => Typed::string($data['screen_name'] ?? $data['name'] ?? ''),
+            'avatar' => Typed::string($data['avatar_large'] ?? $data['profile_image_url'] ?? ''),
+            'email' => Typed::stringOrNull($data['email'] ?? null),
         ];
     }
 }

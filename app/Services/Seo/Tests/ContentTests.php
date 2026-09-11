@@ -4,6 +4,7 @@ namespace App\Services\Seo\Tests;
 
 use App\Services\Seo\AuditContext;
 use App\Services\Seo\AuditTestRegistry;
+use App\Support\Typed;
 
 /**
  * 内容质量测试组（content 类别）
@@ -36,7 +37,7 @@ class ContentTests
         $latin = str_word_count($text, 0, '0123456789..-');
         $cjk = preg_match_all('/[\x{4e00}-\x{9fff}]/u', $text) ?: 0;
         $total = $latin + (int) $cjk;
-        $min = (int) AuditTestRegistry::threshold('words_count_min', 300);
+        $min = Typed::int(AuditTestRegistry::threshold('words_count_min', 300));
 
         return [
             'passed' => $total >= $min,
@@ -72,7 +73,7 @@ class ContentTests
     public function textToHtmlRatio(AuditContext $c): array
     {
         $ratio = $c->textRatio();
-        $min = (float) AuditTestRegistry::threshold('text_html_ratio_min', 10);
+        $min = Typed::float(AuditTestRegistry::threshold('text_html_ratio_min', 10));
 
         return [
             'passed' => $ratio >= $min,

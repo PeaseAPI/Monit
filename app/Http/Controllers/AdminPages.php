@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Page;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -93,7 +94,7 @@ class AdminPages extends Controller
             'is_published' => ['boolean'],
         ]);
 
-        $validated['url'] = $validated['url'] ?: Str::slug($request->input('title') ?? '').'-'.Str::lower(Str::random(6));
+        $validated['url'] = $validated['url'] ?: Str::slug(Typed::string($request->input('title') ?? '')).'-'.Str::lower(Str::random(6));
         $validated['is_published'] = $request->boolean('is_published', false);
         $validated['position'] = $validated['position'] ?? 'none';
 

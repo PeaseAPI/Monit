@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Heatmap;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ class AdminHeatmaps extends Controller
     {
         $heatmaps = Heatmap::with('website')
             ->withCount('snapshots')
-            ->when($request->input('search'), fn ($q, $v) => $q->where('name', 'like', "%{$v}%"))
+            ->when($request->input('search'), fn ($q, $v) => $q->where('name', 'like', '%'.Typed::string($v).'%'))
             ->orderByDesc('heatmap_id')
             ->paginate(25);
 

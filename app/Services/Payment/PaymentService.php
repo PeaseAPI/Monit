@@ -10,6 +10,7 @@ use App\Models\Tax;
 use App\Models\User;
 use App\Services\WebhookService;
 use App\Support\Currency;
+use App\Support\Typed;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -121,7 +122,7 @@ class PaymentService
         // value_type=percentage 按比例 / fixed 固定额；countries 空 = 全球适用
         $taxesAmount = 0;
 
-        if (PaymentController::taxesEnabled() && $billingCountry = strtoupper(trim((string) ($user->billing['country'] ?? '')))) {
+        if (PaymentController::taxesEnabled() && $billingCountry = strtoupper(trim(Typed::string($user->billing['country'] ?? '')))) {
             foreach (Tax::all() as $tax) {
                 $countries = array_map(
                     fn ($c) => strtoupper(trim((string) $c)),

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BlogPost;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -102,7 +103,7 @@ class AdminBlogPosts extends Controller
             'description' => ['nullable', 'string', 'max:1024'],
             'is_published' => ['boolean'],
         ]) + [
-            'url' => Str::slug($request->input('title') ?? '').'-'.Str::lower(Str::random(6)),
+            'url' => Str::slug(Typed::string($request->input('title') ?? '')).'-'.Str::lower(Str::random(6)),
             'is_published' => $request->boolean('is_published', false),
         ];
     }

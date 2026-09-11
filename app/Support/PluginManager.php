@@ -45,7 +45,7 @@ class PluginManager
                 continue;
             }
 
-            $row = $rows->get($meta['id']);
+            $row = $rows->get(Typed::string($meta['id']));
 
             $plugins[] = [
                 'id' => $meta['id'],
@@ -108,8 +108,11 @@ class PluginManager
         $meta = static::requireMeta($id);
 
         $defaults = [];
-        foreach ($meta['settings'] ?? [] as $key => $definition) {
-            $defaults[$key] = $definition['default'] ?? null;
+        foreach (Typed::arr($meta['settings'] ?? []) as $key => $definition) {
+            if (! is_string($key)) {
+                continue;
+            }
+            $defaults[$key] = data_get($definition, 'default');
         }
 
         Plugin::query()->updateOrCreate(
@@ -164,14 +167,14 @@ class PluginManager
     {
         $meta = static::requireMeta($id);
 
-        $allowed = $meta['settings'] ?? [];
+        $allowed = Typed::arr($meta['settings'] ?? []);
         $row = Plugin::query()->findOrFail($id);
 
         $settings = $row->settings ?? [];
 
         foreach ($values as $key => $value) {
             if (array_key_exists($key, $allowed)) {
-                $settings[$key] = ($allowed[$key]['type'] ?? 'text') === 'bool'
+                $settings[$key] = (data_get($allowed, "$key.type") ?? 'text') === 'bool'
                     ? (bool) $value
                     : $value;
             }
@@ -198,6 +201,7 @@ class PluginManager
         $activeIds = Plugin::query()->where('is_active', true)->pluck('plugin_id');
 
         foreach ($activeIds as $id) {
+            $id = Typed::string($id);
             if (in_array($id, static::$booted, true)) {
                 continue;
             }

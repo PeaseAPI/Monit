@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\Typed;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -74,7 +75,7 @@ class LicenseManager
         }
 
         // 1. Ed25519 验签（对除 signature 外字段的规范 JSON 串）
-        if (! self::verifySignature($license)) {
+        if (! self::verifySignature(Typed::arr($license))) {
             return ['valid' => false, 'reason' => 'bad_signature', 'data' => null];
         }
 
@@ -84,12 +85,12 @@ class LicenseManager
         }
 
         // 3. 域名匹配（当前 APP_URL host ∈ domains，支持 *.example.com 通配）
-        if (! self::domainMatches((array) ($license['domains'] ?? []))) {
+        if (! self::domainMatches(Typed::arr($license['domains'] ?? []))) {
             return ['valid' => false, 'reason' => 'domain_mismatch', 'data' => $license];
         }
 
         // 4. 有效期
-        if (! self::notExpired((string) ($license['expires'] ?? ''))) {
+        if (! self::notExpired(Typed::string($license['expires'] ?? ''))) {
             return ['valid' => false, 'reason' => 'expired', 'data' => $license];
         }
 
@@ -103,7 +104,7 @@ class LicenseManager
      */
     public static function verifySignature(array $license): bool
     {
-        $signature = (string) ($license['signature'] ?? '');
+        $signature = Typed::string($license['signature'] ?? '');
 
         if (strlen($signature) !== SODIUM_CRYPTO_SIGN_BYTES * 2
             || ! ctype_xdigit($signature)) {
@@ -166,10 +167,10 @@ class LicenseManager
      */
     public static function domainMatches(array $domains): bool
     {
-        $host = strtolower(parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost');
+        $host = strtolower(parse_url(Typed::string(config('app.url')), PHP_URL_HOST) ?: 'localhost');
 
         foreach ($domains as $domain) {
-            $domain = strtolower(trim((string) $domain));
+            $domain = strtolower(trim(Typed::string($domain)));
 
             if ($domain === '' || $domain === $host || $domain === '*') {
                 return true;
@@ -207,7 +208,7 @@ class LicenseManager
      */
     public static function licensePath(): string
     {
-        return config('monit.license.path', storage_path('app/license.json'));
+        return Typed::string(config('monit.license.path', storage_path('app/license.json')));
     }
 
     /**
@@ -216,6 +217,6 @@ class LicenseManager
      */
     public static function publicKey(): string
     {
-        return trim((string) config('monit.license.public_key', ''));
+        return trim(Typed::string(config('monit.license.public_key', '')));
     }
 }

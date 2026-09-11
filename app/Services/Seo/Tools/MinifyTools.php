@@ -2,6 +2,8 @@
 
 namespace App\Services\Seo\Tools;
 
+use App\Support\Typed;
+
 /**
  * 压缩与格式化工具组
  */
@@ -13,7 +15,7 @@ class MinifyTools
      */
     public function htmlMinifier(array $in): array
     {
-        $code = (string) ($in['code'] ?? '');
+        $code = Typed::string($in['code'] ?? '');
 
         if (trim($code) === '') {
             return ['ok' => false, 'error' => '请输入 HTML', 'data' => []];
@@ -34,7 +36,7 @@ class MinifyTools
      */
     public function cssMinifier(array $in): array
     {
-        $code = (string) ($in['code'] ?? '');
+        $code = Typed::string($in['code'] ?? '');
 
         if (trim($code) === '') {
             return ['ok' => false, 'error' => '请输入 CSS', 'data' => []];
@@ -55,7 +57,7 @@ class MinifyTools
      */
     public function jsMinifier(array $in): array
     {
-        $code = (string) ($in['code'] ?? '');
+        $code = Typed::string($in['code'] ?? '');
 
         if (trim($code) === '') {
             return ['ok' => false, 'error' => '请输入 JS', 'data' => []];
@@ -89,7 +91,7 @@ class MinifyTools
      */
     public function jsonValidator(array $in): array
     {
-        $code = trim((string) ($in['code'] ?? ''));
+        $code = trim(Typed::string($in['code'] ?? ''));
 
         if ($code === '') {
             return ['ok' => false, 'error' => '请输入 JSON', 'data' => []];
@@ -126,7 +128,7 @@ class MinifyTools
      */
     public function textCleaner(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
+        $text = Typed::string($in['text'] ?? '');
 
         // 去控制字符、行尾空白、连续空行
         $cleaned = preg_replace(['/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '/[ \t]+$/m', "/\n{3,}/"], ['', '', "\n\n"], $text) ?? $text;
@@ -140,7 +142,7 @@ class MinifyTools
      */
     public function duplicateLineRemover(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
+        $text = Typed::string($in['text'] ?? '');
 
         $lines = array_map('trim', explode("\n", $text));
         $unique = array_values(array_unique(array_filter($lines, fn ($l) => $l !== '')));

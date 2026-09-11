@@ -93,6 +93,7 @@ use App\Models\Setting;
 use App\Services\DynamicOgImageService;
 use App\Services\WebPushService;
 use App\Support\Settings;
+use App\Support\Typed;
 use App\Support\WebhookSignature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -822,11 +823,11 @@ Route::post('/push-notifications/subscribe', function (Request $request) {
         // 内网目标，广播发送时平台向其 POST。复用 WebhookSignature 的
         // 私网/保留地址判定（字面 IP 直接判定，域名 DNS 解析后判定）
         'endpoint' => ['required', 'url:https', 'max:2048', function (string $attribute, mixed $value, Closure $fail) {
-            if (! WebhookSignature::isSafeHttpUrl((string) $value)) {
+            if (! WebhookSignature::isSafeHttpUrl(Typed::string($value))) {
                 $fail(__('validation.url', ['attribute' => $attribute]));
             }
             // 域名白名单（安全审计周期 #19）：仅接受浏览器厂商官方推送服务
-            if (! app(WebPushService::class)->isEndpointAllowed((string) $value)) {
+            if (! app(WebPushService::class)->isEndpointAllowed(Typed::string($value))) {
                 $fail(__('validation.push_endpoint_not_allowed'));
             }
         }],
@@ -871,7 +872,7 @@ Route::get('/dynamic-og-images/{type}/{id}', function (string $type, int $id) {
 
 // 404 兜底路由（规格书 §6.1：/not-found；main.not_found_url 配置时跳转外部页面）
 Route::fallback(function () {
-    if ($url = trim((string) Settings::get('main.not_found_url', ''))) {
+    if ($url = trim(Typed::string(Settings::get('main.not_found_url', '')))) {
         return redirect()->away($url, 302);
     }
 
@@ -897,7 +898,7 @@ Route::get('/robots.txt', function () {
 
     // Sitemap 声明：后台 main.sitemap_url 优先；未配置时默认指向自身 /sitemap.xml
     // （平台内置 XML sitemap 总是存在，robots 不声明会让搜索引擎漏发现）
-    $sitemap = trim((string) Settings::get('main.sitemap_url', ''));
+    $sitemap = trim(Typed::string(Settings::get('main.sitemap_url', '')));
     $lines[] = '';
     $lines[] = 'Sitemap: '.($sitemap !== '' ? $sitemap : url('/sitemap.xml'));
 

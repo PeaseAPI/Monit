@@ -8,6 +8,7 @@ use App\Models\OutboundClick;
 use App\Models\SessionEvent;
 use App\Models\VisitorSession;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -68,7 +69,7 @@ final class StatisticsService
     {
         foreach ($filters as $dimension => $value) {
             if (in_array($dimension, static::FILTER_DIMENSIONS, true) && $value !== null && $value !== '') {
-                $this->filters[$dimension] = (string) $value;
+                $this->filters[$dimension] = Typed::string($value);
             }
         }
 
@@ -203,7 +204,7 @@ final class StatisticsService
             'visitors' => $visitors,
             'sessions' => $sessionCount,
             'bounce_rate' => $bounceRate,
-            'avg_duration' => $avgDuration ? (int) $avgDuration : 0,
+            'avg_duration' => $avgDuration ? Typed::int($avgDuration) : 0,
         ];
     }
 
@@ -860,7 +861,7 @@ final class StatisticsService
             }
 
             if ($last = ($lastBySession[$session->session_id] ?? null)) {
-                $seconds = max(0, strtotime((string) $last) - strtotime((string) $session->date));
+                $seconds = max(0, strtotime(Typed::string($last)) - strtotime((string) $session->date));
 
                 if ($seconds <= 10) {
                     $durationBuckets['0-10s']++;

@@ -7,6 +7,7 @@ use App\Services\Sms\SmsService;
 use App\Services\TotpService;
 use App\Services\WebhookService;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,7 @@ class AccountController extends Controller
         $socialProviders = [];
         foreach (['qq', 'wechat', 'weibo', 'gitee', 'feishu', 'google', 'github', 'facebook', 'discord', 'linkedin', 'microsoft', 'apple', 'twitter'] as $provider) {
             $raw = Settings::get('socials.'.$provider);
-            $config = is_string($raw) ? (json_decode($raw, true) ?? []) : (array) $raw;
+            $config = is_string($raw) ? Typed::arr(json_decode($raw, true)) : Typed::arr($raw);
 
             if (! empty($config['is_enabled'])) {
                 $socialProviders[$provider] = ucfirst($provider);
@@ -66,10 +67,10 @@ class AccountController extends Controller
      */
     public function update(Request $request)
     {
-        $avatarMax = (int) (Settings::get('main.avatar_size_limit') ?: 512);
+        $avatarMax = Typed::int(Settings::get('main.avatar_size_limit') ?: 512);
 
         $user = $this->user();
-        $emailChanged = strtolower((string) $request->input('email')) !== strtolower((string) $user->email);
+        $emailChanged = strtolower(Typed::string($request->input('email'))) !== strtolower((string) $user->email);
 
         $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
@@ -296,7 +297,7 @@ class AccountController extends Controller
 
         $secret = session('twofa_pending_secret');
 
-        if (! $secret || ! TotpService::verify($secret, $validated['code'])) {
+        if (! $secret || ! TotpService::verify(Typed::string($secret), $validated['code'])) {
             return back()->withErrors(['code' => __('account.twofa_code_invalid')]);
         }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Support\Brand;
+use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 
@@ -46,7 +47,7 @@ class FaviconController extends Controller
             }
         }
 
-        $siteTitle = Setting::where('key', 'main.site_title')->value('value') ?? 'M';
+        $siteTitle = Typed::string(Setting::where('key', 'main.site_title')->value('value') ?? 'M');
         $letter = mb_strtoupper(mb_substr(trim($siteTitle, '"'), 0, 1));
 
         $svg = <<<SVG

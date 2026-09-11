@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Http\Request;
 
 /**
@@ -53,7 +54,7 @@ class KlarnaProcessor
 
     public function handleWebhook(Request $request): ?Payment
     {
-        $orderId = $request->input('order_id');
+        $orderId = Typed::string($request->input('order_id'));
         $event = $request->input('event_type');
 
         if (! in_array($event, ['ORDER_COMPLETED', 'FRAUD_CHECK_ACCEPTED'])) {
@@ -61,10 +62,10 @@ class KlarnaProcessor
         }
 
         // 从 session 或缓存获取 metadata
-        $metadata = cache()->get("klarna_order_{$orderId}", []);
+        $metadata = Typed::arr(cache()->get("klarna_order_{$orderId}"));
 
-        $user = User::query()->where('user_id', (int) ($metadata['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', (int) ($metadata['plan_id'] ?? 0))->first();
+        $user = User::query()->where('user_id', Typed::int($metadata['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', Typed::int($metadata['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -75,13 +76,13 @@ class KlarnaProcessor
             'plan_id' => $plan->plan_id,
             'processor' => 'klarna',
             'payment_id_external' => $orderId,
-            'payment_frequency' => $metadata['frequency'] ?? 'one_time',
+            'payment_frequency' => Typed::string($metadata['frequency'] ?? 'one_time'),
             'payment_type' => 'one_time',
-            'base_amount' => $metadata['amount'] ?? 0,
+            'base_amount' => Typed::float($metadata['amount'] ?? 0),
             'discount_amount' => 0,
             'taxes_amount' => 0,
-            'total_amount' => $metadata['amount'] ?? 0,
-            'currency' => $metadata['currency'] ?? 'EUR',
+            'total_amount' => Typed::float($metadata['amount'] ?? 0),
+            'currency' => Typed::string($metadata['currency'] ?? 'EUR'),
             'email' => $user->email,
             'name' => $user->name,
             'datetime' => now(),

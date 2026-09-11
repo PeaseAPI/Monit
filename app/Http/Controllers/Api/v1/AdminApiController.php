@@ -9,6 +9,7 @@ use App\Models\Plugin;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -22,7 +23,7 @@ class AdminApiController extends Controller
     {
         $query = User::query();
         if ($s = $request->input('search')) {
-            $query->where(fn ($q) => $q->where('name', 'like', "%{$s}%")->orWhere('email', 'like', "%{$s}%"));
+            $query->where(fn ($q) => $q->where('name', 'like', '%'.Typed::string($s).'%')->orWhere('email', 'like', '%'.Typed::string($s).'%'));
         }
 
         return response()->json($query->orderByDesc('created_at')->paginate(25));

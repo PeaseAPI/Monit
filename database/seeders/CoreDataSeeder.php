@@ -18,6 +18,7 @@ class CoreDataSeeder extends Seeder
 {
     public function run(): void
     {
+        /** @var array<array-key, mixed> $defaults */
         $defaults = config('monit.plan_defaults');
 
         // ---------- 套餐 ----------

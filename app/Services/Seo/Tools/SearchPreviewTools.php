@@ -2,6 +2,8 @@
 
 namespace App\Services\Seo\Tools;
 
+use App\Support\Typed;
+
 /**
  * 搜索结果预览工具组：按各引擎截断规则生成标题/描述展示效果
  */
@@ -13,9 +15,9 @@ class SearchPreviewTools
      */
     protected function preview(array $in, int $titleMax, int $descMax, string $engine): array
     {
-        $title = trim((string) ($in['title'] ?? ''));
-        $url = trim((string) ($in['url'] ?? ''));
-        $description = trim((string) ($in['description'] ?? ''));
+        $title = trim(Typed::string($in['title'] ?? ''));
+        $url = trim(Typed::string($in['url'] ?? ''));
+        $description = trim(Typed::string($in['description'] ?? ''));
 
         return ['ok' => true, 'data' => [
             '引擎' => $engine,

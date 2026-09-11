@@ -6,6 +6,7 @@ use App\Services\Seo\AuditEngine;
 use App\Services\Seo\SitemapMonitor;
 use App\Services\Seo\Tests\ContentTests;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -28,7 +29,7 @@ class SeoCheckTools
      */
     protected function fetchPage(array $in): array
     {
-        $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
+        $url = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
 
         // SSRF 防护：拦截内网/环回/云元数据目标
         $blocked = AuditEngine::rejectUnsafeUrl($url);
@@ -105,7 +106,7 @@ class SeoCheckTools
 
         $text = trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($page['html']), ENT_QUOTES, 'UTF-8')) ?? '');
 
-        return $this->density($text, (int) ($in['min_length'] ?? 3));
+        return $this->density($text, Typed::int($in['min_length'] ?? 3));
     }
 
     /**
@@ -191,7 +192,7 @@ class SeoCheckTools
      */
     public function robotsTxt(array $in): array
     {
-        $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
+        $url = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
         $host = (string) parse_url($url, PHP_URL_HOST);
         $scheme = (string) (parse_url($url, PHP_URL_SCHEME) ?: 'https');
 
@@ -226,7 +227,7 @@ class SeoCheckTools
      */
     public function sitemapChecker(array $in): array
     {
-        $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
+        $url = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
         $host = (string) parse_url($url, PHP_URL_HOST);
         $scheme = (string) (parse_url($url, PHP_URL_SCHEME) ?: 'https');
 
@@ -268,7 +269,7 @@ class SeoCheckTools
      */
     public function safeUrl(array $in): array
     {
-        $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
+        $url = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
         $parts = parse_url($url);
 
         $issues = [];
@@ -377,7 +378,7 @@ class SeoCheckTools
             return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
-        $origin = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
+        $origin = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
         $base = (string) (parse_url($origin, PHP_URL_SCHEME) ?: 'https').'://'.(string) parse_url($origin, PHP_URL_HOST);
 
         $links = [];
@@ -428,7 +429,7 @@ class SeoCheckTools
      */
     public function urlSeo(array $in): array
     {
-        $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
+        $url = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
         $path = (string) parse_url($url, PHP_URL_PATH);
         $segments = array_filter(explode('/', $path));
 
@@ -581,14 +582,17 @@ class SeoCheckTools
         return ['ok' => true, 'data' => ['字符集' => $charset !== '' ? $charset : '未声明']];
     }
 
-    /**
-     * @param  array<string, mixed>  $headers
-     */
-    protected function headerOf(array $headers, string $name): ?string
+    protected function headerOf(mixed $headers, string $name): ?string
     {
+        if (! is_array($headers)) {
+            return null;
+        }
+
         foreach ($headers as $key => $value) {
             if (strcasecmp((string) $key, $name) === 0) {
-                return is_array($value) ? implode(', ', $value) : (string) $value;
+                return is_array($value)
+                    ? implode(', ', array_map(static fn ($v) => Typed::string($v), $value))
+                    : Typed::string($value);
             }
         }
 
@@ -674,7 +678,7 @@ class SeoCheckTools
      */
     public function emailExtractor(array $in): array
     {
-        preg_match_all('/[\w.+-]+@[\w-]+\.[\w.]+/', (string) ($in['text'] ?? ''), $matches);
+        preg_match_all('/[\w.+-]+@[\w-]+\.[\w.]+/', Typed::string($in['text'] ?? ''), $matches);
 
         $emails = array_unique($matches[0]);
 
@@ -687,7 +691,7 @@ class SeoCheckTools
      */
     public function linkExtractor(array $in): array
     {
-        preg_match_all('/<a[^>]+href=["\']([^"\']+)["\'][^>]*>/i', (string) ($in['text'] ?? ''), $matches);
+        preg_match_all('/<a[^>]+href=["\']([^"\']+)["\'][^>]*>/i', Typed::string($in['text'] ?? ''), $matches);
 
         $links = array_unique($matches[1]);
 
@@ -700,7 +704,7 @@ class SeoCheckTools
      */
     public function imageExtractor(array $in): array
     {
-        preg_match_all('/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', (string) ($in['text'] ?? ''), $matches);
+        preg_match_all('/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', Typed::string($in['text'] ?? ''), $matches);
 
         $images = array_unique($matches[1]);
 
@@ -713,7 +717,7 @@ class SeoCheckTools
      */
     public function headingExtractor(array $in): array
     {
-        preg_match_all('/<h([1-6])[^>]*>(.*?)<\/h\1>/is', (string) ($in['text'] ?? ''), $matches, PREG_SET_ORDER);
+        preg_match_all('/<h([1-6])[^>]*>(.*?)<\/h\1>/is', Typed::string($in['text'] ?? ''), $matches, PREG_SET_ORDER);
 
         $lines = [];
         foreach ($matches as $m) {
@@ -729,7 +733,7 @@ class SeoCheckTools
      */
     public function keywordExtractor(array $in): array
     {
-        $top = ContentTests::topKeywords((string) ($in['text'] ?? ''), 20);
+        $top = ContentTests::topKeywords(Typed::string($in['text'] ?? ''), 20);
 
         return ['ok' => true, 'data' => ['关键词' => $top ? implode('、', $top) : '无']];
     }
@@ -740,8 +744,8 @@ class SeoCheckTools
      */
     public function uptimeCalculator(array $in): array
     {
-        $downtime = max(0, (int) ($in['downtime_minutes'] ?? 0));
-        $days = max(1, (int) ($in['period_days'] ?? 30));
+        $downtime = max(0, Typed::int($in['downtime_minutes'] ?? 0));
+        $days = max(1, Typed::int($in['period_days'] ?? 30));
 
         $totalMinutes = $days * 1440;
         $uptime = round(($totalMinutes - $downtime) / $totalMinutes * 100, 4);
@@ -761,7 +765,7 @@ class SeoCheckTools
      */
     public function readability(array $in): array
     {
-        $text = (string) ($in['text'] ?? '');
+        $text = Typed::string($in['text'] ?? '');
 
         if (trim($text) === '') {
             return ['ok' => false, 'error' => '请输入文本', 'data' => []];
@@ -793,8 +797,8 @@ class SeoCheckTools
      */
     public function metaLength(array $in): array
     {
-        $title = (string) ($in['title'] ?? '');
-        $description = (string) ($in['description'] ?? '');
+        $title = Typed::string($in['title'] ?? '');
+        $description = Typed::string($in['description'] ?? '');
 
         return ['ok' => true, 'data' => [
             '标题长度' => mb_strlen($title).' 字符（建议 10-60）',
@@ -812,7 +816,7 @@ class SeoCheckTools
      */
     public function seoScore(array $in): array
     {
-        $audit = app(AuditEngine::class)->run((string) ($in['url'] ?? ''));
+        $audit = app(AuditEngine::class)->run(Typed::string($in['url'] ?? ''));
 
         if ($audit->status !== 'completed') {
             return ['ok' => false, 'error' => '页面抓取失败：'.($audit->error ?: '未知'), 'data' => []];
@@ -837,15 +841,15 @@ class SeoCheckTools
     {
         // SSRF 防护：两个对比 URL 均为用户输入
         foreach (['url_a', 'url_b'] as $field) {
-            $blocked = AuditEngine::rejectUnsafeUrl(AuditEngine::normalizeUrl((string) ($in[$field] ?? '')));
+            $blocked = AuditEngine::rejectUnsafeUrl(AuditEngine::normalizeUrl(Typed::string($in[$field] ?? '')));
             if ($blocked !== null) {
                 return ['ok' => false, 'error' => $blocked, 'data' => []];
             }
         }
 
         try {
-            $a = (string) Http::timeout(20)->get(AuditEngine::normalizeUrl((string) ($in['url_a'] ?? '')))->body();
-            $b = (string) Http::timeout(20)->get(AuditEngine::normalizeUrl((string) ($in['url_b'] ?? '')))->body();
+            $a = Typed::string(Http::timeout(20)->get(AuditEngine::normalizeUrl(Typed::string($in['url_a'] ?? '')))->body());
+            $b = Typed::string(Http::timeout(20)->get(AuditEngine::normalizeUrl(Typed::string($in['url_b'] ?? '')))->body());
         } catch (Throwable $e) {
             return ['ok' => false, 'error' => mb_substr($e->getMessage(), 0, 200), 'data' => []];
         }
@@ -884,7 +888,7 @@ class SeoCheckTools
      */
     public function emailProtector(array $in): array
     {
-        $email = trim((string) ($in['email'] ?? ''));
+        $email = trim(Typed::string($in['email'] ?? ''));
 
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return ['ok' => false, 'error' => '邮箱格式无效', 'data' => []];
@@ -906,7 +910,7 @@ class SeoCheckTools
      */
     public function ahrefsDomainRating(array $in): array
     {
-        $apiKey = (string) Settings::get('seo.ahrefs_api_key', '');
+        $apiKey = Typed::string(Settings::get('seo.ahrefs_api_key', ''));
 
         if ($apiKey === '') {
             return ['ok' => false, 'error' => 'Ahrefs API Key 尚未配置', 'data' => []];
@@ -916,7 +920,7 @@ class SeoCheckTools
             $response = Http::withToken($apiKey)
                 ->timeout(20)
                 ->get('https://api.ahrefs.com/v3/site-explorer/domain-rating', [
-                    'target' => preg_replace('#^https?://#', '', trim((string) ($in['domain'] ?? ''))),
+                    'target' => preg_replace('#^https?://#', '', trim(Typed::string($in['domain'] ?? ''))),
                     'date' => now()->toDateString(),
                 ]);
         } catch (Throwable $e) {
@@ -928,7 +932,7 @@ class SeoCheckTools
         }
 
         return ['ok' => true, 'data' => [
-            'Domain Rating' => (string) ($response->json('domain_rating') ?? '-'),
+            'Domain Rating' => Typed::string($response->json('domain_rating') ?? '-'),
         ]];
     }
 }

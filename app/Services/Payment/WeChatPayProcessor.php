@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Payment;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -66,7 +67,7 @@ class WeChatPayProcessor
      */
     public function verifyCallback(array $data): bool
     {
-        $apiKey = (string) config('services.wechat_pay.api_key');
+        $apiKey = Typed::string(config('services.wechat_pay.api_key'));
 
         // fail-closed：密钥未配置时空 key MD5 签名可被任何人复现（算法公开），
         // 伪造回调即可免费激活任意订单，必须显式拒绝
@@ -77,7 +78,7 @@ class WeChatPayProcessor
         $sign = $data['sign'];
         unset($data['sign']);
 
-        return hash_equals(strtoupper($this->sign($data)), strtoupper((string) $sign));
+        return hash_equals(strtoupper($this->sign($data)), strtoupper(Typed::string($sign)));
     }
 
     /**
@@ -119,7 +120,7 @@ class WeChatPayProcessor
     {
         $xml = '<xml>';
         foreach ($params as $key => $value) {
-            $escaped = is_numeric($value) ? (string) $value : '<![CDATA['.str_replace(']]>', ']]&gt;', (string) $value).']]>';
+            $escaped = is_numeric($value) ? Typed::string($value) : '<![CDATA['.str_replace(']]>', ']]&gt;', Typed::string($value)).']]>';
             $xml .= '<'.$key.'>'.$escaped.'</'.$key.'>';
         }
 
@@ -136,11 +137,11 @@ class WeChatPayProcessor
         $parts = [];
         foreach ($params as $key => $value) {
             if ($key !== 'sign' && $value !== '' && $value !== null) {
-                $parts[] = $key.'='.$value;
+                $parts[] = $key.'='.Typed::string($value);
             }
         }
 
-        $string = implode('&', $parts).'&key='.config('services.wechat_pay.api_key');
+        $string = implode('&', $parts).'&key='.Typed::string(config('services.wechat_pay.api_key'));
 
         return strtoupper(md5($string));
     }

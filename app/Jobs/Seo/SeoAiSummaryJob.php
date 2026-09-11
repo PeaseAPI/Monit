@@ -4,6 +4,7 @@ namespace App\Jobs\Seo;
 
 use App\Models\SeoAudit;
 use App\Services\Ai\AiService;
+use App\Support\Typed;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -28,9 +29,9 @@ class SeoAiSummaryJob implements ShouldQueue
             return;
         }
 
-        $failed = collect((array) $this->audit->results)
-            ->reject(fn (array $row) => $row['passed'] ?? false)
-            ->map(fn (array $row, string $key) => "{$key}（{$row['importance']}）：{$row['value']}")
+        $failed = collect(Typed::arr($this->audit->results ?? []))
+            ->reject(fn ($row) => ! is_array($row) || (bool) ($row['passed'] ?? false))
+            ->map(fn ($row, $key) => Typed::string($key).'（'.Typed::string($row['importance'] ?? '').'）：'.Typed::string($row['value'] ?? ''))
             ->take(20)
             ->implode("\n");
 

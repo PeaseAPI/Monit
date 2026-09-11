@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -47,12 +48,12 @@ class WebsiteController extends Controller
         $planSettings = $user->getPlanSettings();
         $limit = $planSettings['websites_limit'] ?? -1;
         if ($limit !== -1 && $user->websites()->count() >= $limit) {
-            return back()->withErrors(['url' => __('msg.website_limit_reached', ['limit' => $limit])]);
+            return back()->withErrors(['url' => __('msg.website_limit_reached', ['limit' => Typed::string($limit)])]);
         }
 
         $validated = $this->validateWebsite($request);
 
-        $data = $this->parseWebsiteUrl($validated['url']);
+        $data = $this->parseWebsiteUrl(Typed::string($validated['url']));
 
         $website = Website::create([
             ...$data,
@@ -82,7 +83,7 @@ class WebsiteController extends Controller
     {
         $validated = $this->validateWebsite($request);
 
-        $data = $this->parseWebsiteUrl($validated['url']);
+        $data = $this->parseWebsiteUrl(Typed::string($validated['url']));
 
         $website->update([
             ...$data,

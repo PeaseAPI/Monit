@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Mail\PlanLimitNotice;
 use App\Models\User;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -69,7 +70,7 @@ class WebsitesLimitNoticeCommand extends Command
                 // 缺键 ?? -1 = 不限（custom 套餐 plan_settings 不与 plan_defaults 合并，
                 // 对齐采集侧 insertEventChild / persistReplayChunk 的缺键语义）；
                 // 原 ?? 0 会把缺键用户判成「限额 0」→ 任何用量都误发超限邮件
-                $limit = (int) ($owner->getPlanSettings()[$meta['feature']] ?? -1);
+                $limit = Typed::int($owner->getPlanSettings()[$meta['feature']] ?? -1);
 
                 // -1 = 不限；0 = 功能禁用（与采集侧 0 不标记一致——用户没有此功能，
                 // 发「配额超限」邮件反而误导其升级；生产 Plus 套餐 sessions_replays_limit=0）；

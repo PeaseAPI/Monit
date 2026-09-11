@@ -6,6 +6,7 @@ use App\Models\Domain;
 use App\Services\Seo\DomainMonitor;
 use App\Services\Seo\NotificationDispatcher;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Console\Command;
 
 /**
@@ -27,7 +28,7 @@ class SeoDomainsMonitor extends Command
         }
 
         // 预警档位：逗号分隔天数（seo.domain_monitor_alert_days，默认 30,7,1）
-        $alertDays = array_map('intval', array_filter(array_map('trim', explode(',', (string) Settings::get('seo.domain_monitor_alert_days', '30,7,1')))));
+        $alertDays = array_map('intval', array_filter(array_map('trim', explode(',', Typed::string(Settings::get('seo.domain_monitor_alert_days', '30,7,1'))))));
 
         $domains = Domain::where('monitor_is_enabled', true)->get();
 
