@@ -24,7 +24,7 @@ class NotificationDispatcher
 {
     public function dispatchForAudit(SeoAudit $audit, ?Website $website): void
     {
-        $user = $audit->user_id ? User::find($audit->user_id) : null;
+        $user = ($audit->user_id !== 0 && $audit->user_id !== null) ? User::find($audit->user_id) : null;
 
         if ($user === null) {
             return;
@@ -33,7 +33,7 @@ class NotificationDispatcher
         $event = $audit->status === 'completed' ? 'audit_refreshed' : 'audit_failed';
 
         // changes 去噪：结果与上次一致则跳过
-        if ($event === 'audit_refreshed' && $website && $website->seo_notifications_mode === 'changes') {
+        if ($event === 'audit_refreshed' && $website !== null && $website->seo_notifications_mode === 'changes') {
             $current = md5((string) json_encode($audit->results));
 
             $previous = $website->seoAudits()
@@ -42,7 +42,7 @@ class NotificationDispatcher
                 ->orderByDesc('seo_audit_id')
                 ->first();
 
-            if ($previous && md5((string) json_encode($previous->results)) === $current) {
+            if ($previous !== null && md5((string) json_encode($previous->results)) === $current) {
                 return;
             }
         }
@@ -53,7 +53,7 @@ class NotificationDispatcher
 
         $message = $audit->status === 'completed'
             ? "得分 {$audit->score}/100，重大问题 {$audit->major_issues} 项、中等 {$audit->moderate_issues} 项、轻微 {$audit->minor_issues} 项。"
-            : ('失败原因：'.($audit->error ?: '未知'));
+            : ('失败原因：'.($audit->error ?? '未知'));
 
         $this->dispatch($user, $event, $title, $message, route('seo.audits.show', $audit->seo_audit_id));
     }
@@ -120,9 +120,9 @@ class NotificationDispatcher
 
     protected function send(NotificationHandler $handler, User $user, string $title, string $message, ?string $link): bool
     {
-        $settings = (array) $handler->settings;
+        $settings = $handler->settings;
 
-        $text = "{$title}\n{$message}".($link ? "\n{$link}" : '');
+        $text = "{$title}\n{$message}".($link !== null && $link !== '' ? "\n{$link}" : '');
 
         return match ($handler->type) {
             'email' => $this->sendEmail($user, $title, $message, $link),
@@ -162,7 +162,7 @@ class NotificationDispatcher
 
         return $this->postJson("https://api.telegram.org/bot{$token}/sendMessage", [
             'chat_id' => Typed::string($settings['chat_id'] ?? ''),
-            'text' => "{$title}\n{$message}".($link ? "\n{$link}" : ''),
+            'text' => "{$title}\n{$message}".(($link !== '' && $link !== null) ? "\n{$link}" : ''),
         ]);
     }
 
@@ -193,7 +193,7 @@ class NotificationDispatcher
         }
 
         $response = Http::timeout(10)->withHeaders(['Title' => $title])
-            ->withBody($message.($link ? "\n{$link}" : ''), 'text/plain')
+            ->withBody($message.(($link !== '' && $link !== null) ? "\n{$link}" : ''), 'text/plain')
             ->post("{$server}/{$topic}");
 
         return $response->successful();
@@ -213,7 +213,7 @@ class NotificationDispatcher
 
         return $this->postJson("{$server}/message?token={$token}", [
             'title' => $title,
-            'message' => $message.($link ? "\n{$link}" : ''),
+            'message' => $message.(($link !== '' && $link !== null) ? "\n{$link}" : ''),
             'priority' => 5,
         ]);
     }

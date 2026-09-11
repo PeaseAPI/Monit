@@ -16,7 +16,7 @@ class BlogPostsCategory extends Model
     protected $fillable = ['user_id', 'title', 'url', 'order', 'datetime'];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {

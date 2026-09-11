@@ -49,7 +49,7 @@ class InternalNotification extends Notification
             ->subject($this->title)
             ->line($this->message);
 
-        if ($this->url) {
+        if ($this->url !== '' && $this->url !== null) {
             $mail->action(__('msg.view'), $this->url);
         }
 

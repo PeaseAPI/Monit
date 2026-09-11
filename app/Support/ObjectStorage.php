@@ -37,23 +37,23 @@ class ObjectStorage
     {
         return match (static::driver()) {
             'aliyun_oss' => new AliyunOssClient(
-                Typed::string(Settings::get('offload.offload_oss_access_key_id') ?: config('services.oss.access_key_id', '')),
-                Typed::string(Settings::get('offload.offload_oss_access_key_secret') ?: config('services.oss.access_key_secret', '')),
-                Typed::string(Settings::get('offload.offload_oss_bucket') ?: config('services.oss.bucket', '')),
-                Typed::string(Settings::get('offload.offload_oss_endpoint') ?: config('services.oss.endpoint', 'https://oss-cn-hangzhou.aliyuncs.com')),
+                Typed::string(Settings::get('offload.offload_oss_access_key_id') ?? config('services.oss.access_key_id', '')),
+                Typed::string(Settings::get('offload.offload_oss_access_key_secret') ?? config('services.oss.access_key_secret', '')),
+                Typed::string(Settings::get('offload.offload_oss_bucket') ?? config('services.oss.bucket', '')),
+                Typed::string(Settings::get('offload.offload_oss_endpoint') ?? config('services.oss.endpoint', 'https://oss-cn-hangzhou.aliyuncs.com')),
             ),
             'tencent_cos' => new TencentCosClient(
-                Typed::string(Settings::get('offload.offload_cos_secret_id') ?: config('services.cos.secret_id', '')),
-                Typed::string(Settings::get('offload.offload_cos_secret_key') ?: config('services.cos.secret_key', '')),
-                Typed::string(Settings::get('offload.offload_cos_bucket') ?: config('services.cos.bucket', '')),
-                Typed::string(Settings::get('offload.offload_cos_region') ?: config('services.cos.region', 'ap-guangzhou')),
+                Typed::string(Settings::get('offload.offload_cos_secret_id') ?? config('services.cos.secret_id', '')),
+                Typed::string(Settings::get('offload.offload_cos_secret_key') ?? config('services.cos.secret_key', '')),
+                Typed::string(Settings::get('offload.offload_cos_bucket') ?? config('services.cos.bucket', '')),
+                Typed::string(Settings::get('offload.offload_cos_region') ?? config('services.cos.region', 'ap-guangzhou')),
             ),
             default => new S3Client(
-                Typed::string(Settings::get('offload.offload_s3_key') ?: PluginManager::setting('offload', 's3_access_key', '')),
-                Typed::string(Settings::get('offload.offload_s3_secret') ?: PluginManager::setting('offload', 's3_secret_key', '')),
-                Typed::string(Settings::get('offload.offload_s3_bucket') ?: PluginManager::setting('offload', 's3_bucket', 'monit-replays')),
-                Typed::string(Settings::get('offload.offload_s3_region') ?: PluginManager::setting('offload', 's3_region', 'us-east-1')),
-                Typed::string(Settings::get('offload.offload_s3_endpoint') ?: PluginManager::setting('offload', 's3_endpoint', '')),
+                Typed::string(Settings::get('offload.offload_s3_key') ?? PluginManager::setting('offload', 's3_access_key', '')),
+                Typed::string(Settings::get('offload.offload_s3_secret') ?? PluginManager::setting('offload', 's3_secret_key', '')),
+                Typed::string(Settings::get('offload.offload_s3_bucket') ?? PluginManager::setting('offload', 's3_bucket', 'monit-replays')),
+                Typed::string(Settings::get('offload.offload_s3_region') ?? PluginManager::setting('offload', 's3_region', 'us-east-1')),
+                Typed::string(Settings::get('offload.offload_s3_endpoint') ?? PluginManager::setting('offload', 's3_endpoint', '')),
             ),
         };
     }
@@ -63,16 +63,16 @@ class ObjectStorage
     {
         [$id, $secret] = match (static::driver()) {
             'aliyun_oss' => [
-                Settings::get('offload.offload_oss_access_key_id') ?: config('services.oss.access_key_id'),
-                Settings::get('offload.offload_oss_access_key_secret') ?: config('services.oss.access_key_secret'),
+                Settings::get('offload.offload_oss_access_key_id') ?? config('services.oss.access_key_id'),
+                Settings::get('offload.offload_oss_access_key_secret') ?? config('services.oss.access_key_secret'),
             ],
             'tencent_cos' => [
-                Settings::get('offload.offload_cos_secret_id') ?: config('services.cos.secret_id'),
-                Settings::get('offload.offload_cos_secret_key') ?: config('services.cos.secret_key'),
+                Settings::get('offload.offload_cos_secret_id') ?? config('services.cos.secret_id'),
+                Settings::get('offload.offload_cos_secret_key') ?? config('services.cos.secret_key'),
             ],
             default => [
-                Settings::get('offload.offload_s3_key') ?: PluginManager::setting('offload', 's3_access_key', ''),
-                Settings::get('offload.offload_s3_secret') ?: PluginManager::setting('offload', 's3_secret_key', ''),
+                Settings::get('offload.offload_s3_key') ?? PluginManager::setting('offload', 's3_access_key', ''),
+                Settings::get('offload.offload_s3_secret') ?? PluginManager::setting('offload', 's3_secret_key', ''),
             ],
         };
 

@@ -40,7 +40,7 @@ class AdminBlogPosts extends Controller
         BlogPost::create([
             ...$validated,
             'user_id' => $this->user()->user_id,
-            'type' => $validated['is_published'] ? 'blog' : 'draft',
+            'type' => ((bool) $validated['is_published']) ? 'blog' : 'draft',
             'datetime' => now(),
         ]);
 
@@ -65,7 +65,7 @@ class AdminBlogPosts extends Controller
 
         $post->update([
             ...$validated,
-            'type' => $validated['is_published'] ? 'blog' : 'draft',
+            'type' => ((bool) $validated['is_published']) ? 'blog' : 'draft',
         ]);
 
         return redirect()->route('admin.blog-posts.index')

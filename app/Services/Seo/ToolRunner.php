@@ -48,7 +48,7 @@ class ToolRunner
         $disabled = Settings::get('seo.seo_disabled_tools', []);
         // 兼容后台 textarea（每行/逗号分隔 slug）与数组两种存储
         $disabled = is_string($disabled)
-            ? array_filter(array_map('trim', preg_split('/[\r\n,]+/', $disabled) ?: []))
+            ? array_filter(array_map('trim', Typed::strList(preg_split('/[\r\n,]+/', $disabled))), fn (string $slug): bool => $slug !== '')
             : (array) $disabled;
 
         /** @var array<string, array<string, mixed>> $tools */
@@ -57,7 +57,7 @@ class ToolRunner
         return collect($tools)
             ->reject(fn (array $meta, string $slug) => in_array($slug, $disabled, true))
             ->filter(function (array $meta) {
-                if (empty($meta['requires'])) {
+                if (($meta['requires'] ?? []) === []) {
                     return true;
                 }
 
@@ -100,7 +100,10 @@ class ToolRunner
         }
 
         try {
-            $result = $this->instance($class)->{$meta['handler']}($input);
+            $tool = $this->instance($class);
+            $handler = Typed::string($meta['handler']);
+            // 目录驱动派发：handler 名来自 config('seo.tools') 注册表（非用户输入），已用 method_exists 校验
+            $result = $tool->{$handler}($input); // @phpstan-ignore method.dynamicName (注册表动态派发为刻意设计)
             if (! is_array($result)) {
                 return ['ok' => false, 'error' => 'invalid tool result', 'data' => []];
             }

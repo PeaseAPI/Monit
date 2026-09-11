@@ -182,12 +182,12 @@ class SeoKeywordController extends Controller
 
         $owned = Website::where('user_id', $this->user()->user_id)->where('website_id', $websiteId)->value('website_id');
 
-        return $owned ? Typed::int($owned) : null;
+        return ((bool) $owned) ? Typed::int($owned) : null;
     }
 
     protected function authorizeOwn(Request $request, SeoKeyword $keyword): void
     {
-        if ((int) $keyword->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
+        if ($keyword->user_id !== $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
     }

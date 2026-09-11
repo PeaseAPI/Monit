@@ -43,7 +43,7 @@ class SeoCheckTools
             return ['ok' => false, 'html' => '', 'headers' => [], 'dom' => null, 'status' => 0, 'error' => mb_substr($e->getMessage(), 0, 200)];
         }
 
-        $html = (string) $response->body();
+        $html = $response->body();
 
         $dom = new \DOMDocument;
         $previous = libxml_use_internal_errors(true);
@@ -58,8 +58,8 @@ class SeoCheckTools
     {
         foreach (['name', 'property', 'http-equiv'] as $attr) {
             foreach ($dom->getElementsByTagName('meta') as $node) {
-                if (strcasecmp((string) $node->getAttribute($attr), $name) === 0) {
-                    return $node->getAttribute('content') ?: null;
+                if (strcasecmp($node->getAttribute($attr), $name) === 0) {
+                    return $node->getAttribute('content');
                 }
             }
         }
@@ -81,14 +81,14 @@ class SeoCheckTools
 
         return ['ok' => true, 'data' => [
             'title' => (string) $page['dom']->getElementsByTagName('title')->item(0)?->textContent,
-            'description' => (string) ($this->metaOf($page['dom'], 'description') ?? ''),
-            'keywords' => (string) ($this->metaOf($page['dom'], 'keywords') ?? ''),
-            'viewport' => (string) ($this->metaOf($page['dom'], 'viewport') ?? ''),
-            'charset' => (string) ($this->metaOf($page['dom'], 'charset') ?? ''),
-            'robots' => (string) ($this->metaOf($page['dom'], 'robots') ?? ''),
-            'og:title' => (string) ($this->metaOf($page['dom'], 'og:title') ?? ''),
-            'og:description' => (string) ($this->metaOf($page['dom'], 'og:description') ?? ''),
-            'og:image' => (string) ($this->metaOf($page['dom'], 'og:image') ?? ''),
+            'description' => ($this->metaOf($page['dom'], 'description') ?? ''),
+            'keywords' => ($this->metaOf($page['dom'], 'keywords') ?? ''),
+            'viewport' => ($this->metaOf($page['dom'], 'viewport') ?? ''),
+            'charset' => ($this->metaOf($page['dom'], 'charset') ?? ''),
+            'robots' => ($this->metaOf($page['dom'], 'robots') ?? ''),
+            'og:title' => ($this->metaOf($page['dom'], 'og:title') ?? ''),
+            'og:description' => ($this->metaOf($page['dom'], 'og:description') ?? ''),
+            'og:image' => ($this->metaOf($page['dom'], 'og:image') ?? ''),
         ]];
     }
 
@@ -116,7 +116,7 @@ class SeoCheckTools
      */
     protected function density(string $text, int $minLength = 3): array
     {
-        $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($text)) ?: [];
+        $words = Typed::strList(preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($text)));
         $words = array_values(array_filter($words, fn ($w) => mb_strlen($w) >= $minLength));
 
         if ($words === []) {
@@ -151,10 +151,10 @@ class SeoCheckTools
         $data = [];
         $count = 0;
         foreach ($page['dom']->getElementsByTagName('meta') as $meta) {
-            $property = (string) $meta->getAttribute('property');
+            $property = $meta->getAttribute('property');
 
             if (str_starts_with($property, 'og:')) {
-                $data[$property] = mb_substr((string) $meta->getAttribute('content'), 0, 200);
+                $data[$property] = mb_substr($meta->getAttribute('content'), 0, 200);
                 $count++;
             }
         }
@@ -176,10 +176,10 @@ class SeoCheckTools
 
         $data = [];
         foreach ($page['dom']->getElementsByTagName('meta') as $meta) {
-            $name = (string) $meta->getAttribute('name');
+            $name = $meta->getAttribute('name');
 
             if (str_starts_with($name, 'twitter:')) {
-                $data[$name] = mb_substr((string) $meta->getAttribute('content'), 0, 200);
+                $data[$name] = mb_substr($meta->getAttribute('content'), 0, 200);
             }
         }
 
@@ -194,7 +194,7 @@ class SeoCheckTools
     {
         $url = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
         $host = (string) parse_url($url, PHP_URL_HOST);
-        $scheme = (string) (parse_url($url, PHP_URL_SCHEME) ?: 'https');
+        $scheme = (parse_url($url, PHP_URL_SCHEME) ?? 'https');
 
         // SSRF 防护：拦截内网/环回/云元数据目标
         $blocked = AuditEngine::rejectUnsafeUrl($url);
@@ -212,12 +212,12 @@ class SeoCheckTools
             return ['ok' => true, 'data' => ['状态' => 'robots.txt 不存在（HTTP '.$response->status().'）']];
         }
 
-        $body = (string) $response->body();
+        $body = $response->body();
         preg_match_all('/Sitemap:\s*(\S+)/i', $body, $sitemaps);
 
         return ['ok' => true, 'data' => [
             '大小' => strlen($body).' 字节',
-            '声明 Sitemap' => implode(', ', $sitemaps[1]) ?: '未声明',
+            '声明 Sitemap' => Typed::nonEmpty(implode(', ', $sitemaps[1]), '未声明'),
         ], 'text' => mb_substr($body, 0, 3000)];
     }
 
@@ -229,7 +229,7 @@ class SeoCheckTools
     {
         $url = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
         $host = (string) parse_url($url, PHP_URL_HOST);
-        $scheme = (string) (parse_url($url, PHP_URL_SCHEME) ?: 'https');
+        $scheme = (parse_url($url, PHP_URL_SCHEME) ?? 'https');
 
         $result = app(SitemapMonitor::class)->fetch("{$scheme}://{$host}/sitemap.xml");
 
@@ -260,7 +260,7 @@ class SeoCheckTools
 
         return ['ok' => true, 'data' => [
             'HTTP 不安全资源' => count($matches[0]),
-        ], 'text' => $urls ? implode("\n", $urls) : null];
+        ], 'text' => ($urls !== []) ? implode("\n", $urls) : null];
     }
 
     /**
@@ -278,9 +278,9 @@ class SeoCheckTools
             $issues[] = '未使用 HTTPS';
         }
 
-        $path = (string) ($parts['path'] ?? '');
+        $path = ($parts['path'] ?? '');
 
-        if (preg_match('/[A-Z]/', $path)) {
+        if (preg_match('/[A-Z]/', $path) !== 0 && preg_match('/[A-Z]/', $path) !== false) {
             $issues[] = '路径包含大写字母';
         }
 
@@ -308,7 +308,7 @@ class SeoCheckTools
 
         $found = [];
         foreach ($page['dom']->getElementsByTagName('link') as $link) {
-            if (str_contains(strtolower((string) $link->getAttribute('rel')), 'icon')) {
+            if (str_contains(strtolower($link->getAttribute('rel')), 'icon')) {
                 $found[] = $link->getAttribute('rel').': '.mb_substr($link->getAttribute('href'), 0, 150);
             }
         }
@@ -336,7 +336,7 @@ class SeoCheckTools
         return ['ok' => true, 'data' => [
             'H1 数量' => count($h1s),
             '建议' => count($h1s) === 1 ? '符合规范（唯一 H1）' : '页面应有且仅有一个 H1',
-        ], 'text' => $h1s ? implode("\n", $h1s) : null];
+        ], 'text' => ($h1s !== []) ? implode("\n", $h1s) : null];
     }
 
     /**
@@ -361,7 +361,7 @@ class SeoCheckTools
         return ['ok' => true, 'data' => [
             '图片总数' => $page['dom']->getElementsByTagName('img')->length,
             '缺失 alt' => count($missing),
-        ], 'text' => $missing ? implode("\n", array_slice($missing, 0, 50)) : null];
+        ], 'text' => ($missing !== []) ? implode("\n", array_slice($missing, 0, 50)) : null];
     }
 
     /**
@@ -379,7 +379,7 @@ class SeoCheckTools
         }
 
         $origin = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
-        $base = (string) (parse_url($origin, PHP_URL_SCHEME) ?: 'https').'://'.(string) parse_url($origin, PHP_URL_HOST);
+        $base = (parse_url($origin, PHP_URL_SCHEME) ?? 'https').'://'.(string) parse_url($origin, PHP_URL_HOST);
 
         $links = [];
         foreach ($page['dom']->getElementsByTagName('a') as $a) {
@@ -389,7 +389,7 @@ class SeoCheckTools
                 continue;
             }
 
-            if (! preg_match('#^https?://#i', $href)) {
+            if (preg_match('#^https?://#i', $href) !== 1) {
                 $href = $base.'/'.ltrim($href, '/');
             }
 
@@ -420,7 +420,7 @@ class SeoCheckTools
         return ['ok' => true, 'data' => [
             '检查链接数' => count($links),
             '失效链接' => count($broken),
-        ], 'text' => $broken ? implode("\n", $broken) : null];
+        ], 'text' => ($broken !== []) ? implode("\n", $broken) : null];
     }
 
     /**
@@ -431,10 +431,10 @@ class SeoCheckTools
     {
         $url = AuditEngine::normalizeUrl(Typed::string($in['url'] ?? ''));
         $path = (string) parse_url($url, PHP_URL_PATH);
-        $segments = array_filter(explode('/', $path));
+        $segments = array_filter(explode('/', $path), fn (string $v): bool => $v !== '');
 
         $issues = [];
-        if (preg_match('/[A-Z]/', $path)) {
+        if (preg_match('/[A-Z]/', $path) !== 0 && preg_match('/[A-Z]/', $path) !== false) {
             $issues[] = '包含大写字母';
         }
         if (str_contains($path, '_')) {
@@ -465,7 +465,7 @@ class SeoCheckTools
 
         $canonical = '';
         foreach ($page['dom']->getElementsByTagName('link') as $link) {
-            if (strtolower((string) $link->getAttribute('rel')) === 'canonical') {
+            if (strtolower($link->getAttribute('rel')) === 'canonical') {
                 $canonical = $link->getAttribute('href');
 
                 break;
@@ -489,7 +489,7 @@ class SeoCheckTools
 
         $data = [];
         foreach ($page['dom']->getElementsByTagName('link') as $link) {
-            if (strtolower((string) $link->getAttribute('rel')) === 'alternate' && $link->hasAttribute('hreflang')) {
+            if (strtolower($link->getAttribute('rel')) === 'alternate' && $link->hasAttribute('hreflang')) {
                 $data[$link->getAttribute('hreflang')] = mb_substr($link->getAttribute('href'), 0, 150);
             }
         }
@@ -538,7 +538,7 @@ class SeoCheckTools
         }
 
         return ['ok' => true, 'data' => [
-            'viewport' => (string) ($this->metaOf($page['dom'], 'viewport') ?: '未声明（移动端适配缺失）'),
+            'viewport' => ($this->metaOf($page['dom'], 'viewport') ?? '未声明（移动端适配缺失）'),
         ]];
     }
 
@@ -555,8 +555,8 @@ class SeoCheckTools
         }
 
         return ['ok' => true, 'data' => [
-            'html lang' => (string) ($page['dom']->documentElement?->getAttribute('lang') ?: '未声明'),
-            'Content-Language 头' => (string) ($this->headerOf($page['headers'], 'content-language') ?? '未设置'),
+            'html lang' => ($page['dom']->documentElement?->getAttribute('lang') ?? '未声明'),
+            'Content-Language 头' => ($this->headerOf($page['headers'], 'content-language') ?? '未设置'),
         ]];
     }
 
@@ -572,10 +572,10 @@ class SeoCheckTools
             return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
-        $charset = (string) ($this->metaOf($page['dom'], 'charset') ?? '');
+        $charset = ($this->metaOf($page['dom'], 'charset') ?? '');
 
         if ($charset === '') {
-            $contentType = (string) ($this->headerOf($page['headers'], 'content-type') ?? '');
+            $contentType = ($this->headerOf($page['headers'], 'content-type') ?? '');
             $charset = str_contains($contentType, 'charset=') ? trim((string) preg_replace('/.*charset=([^\s;]+).*/i', '$1', $contentType)) : '';
         }
 
@@ -633,10 +633,10 @@ class SeoCheckTools
         }
 
         return ['ok' => true, 'data' => [
-            'Cache-Control' => (string) ($this->headerOf($page['headers'], 'cache-control') ?? '未设置'),
-            'ETag' => (string) ($this->headerOf($page['headers'], 'etag') ?? '未设置'),
-            'Last-Modified' => (string) ($this->headerOf($page['headers'], 'last-modified') ?? '未设置'),
-            'Expires' => (string) ($this->headerOf($page['headers'], 'expires') ?? '未设置'),
+            'Cache-Control' => ($this->headerOf($page['headers'], 'cache-control') ?? '未设置'),
+            'ETag' => ($this->headerOf($page['headers'], 'etag') ?? '未设置'),
+            'Last-Modified' => ($this->headerOf($page['headers'], 'last-modified') ?? '未设置'),
+            'Expires' => ($this->headerOf($page['headers'], 'expires') ?? '未设置'),
         ]];
     }
 
@@ -682,7 +682,7 @@ class SeoCheckTools
 
         $emails = array_unique($matches[0]);
 
-        return ['ok' => true, 'data' => ['数量' => count($emails)], 'text' => $emails ? implode("\n", $emails) : null];
+        return ['ok' => true, 'data' => ['数量' => count($emails)], 'text' => ($emails !== []) ? implode("\n", $emails) : null];
     }
 
     /**
@@ -695,7 +695,7 @@ class SeoCheckTools
 
         $links = array_unique($matches[1]);
 
-        return ['ok' => true, 'data' => ['数量' => count($links)], 'text' => $links ? implode("\n", $links) : null];
+        return ['ok' => true, 'data' => ['数量' => count($links)], 'text' => ($links !== []) ? implode("\n", $links) : null];
     }
 
     /**
@@ -708,7 +708,7 @@ class SeoCheckTools
 
         $images = array_unique($matches[1]);
 
-        return ['ok' => true, 'data' => ['数量' => count($images)], 'text' => $images ? implode("\n", $images) : null];
+        return ['ok' => true, 'data' => ['数量' => count($images)], 'text' => ($images !== []) ? implode("\n", $images) : null];
     }
 
     /**
@@ -724,7 +724,7 @@ class SeoCheckTools
             $lines[] = str_repeat('#', (int) $m[1]).' '.trim(strip_tags($m[2]));
         }
 
-        return ['ok' => true, 'data' => ['数量' => count($lines)], 'text' => $lines ? implode("\n", $lines) : null];
+        return ['ok' => true, 'data' => ['数量' => count($lines)], 'text' => ($lines !== []) ? implode("\n", $lines) : null];
     }
 
     /**
@@ -735,7 +735,7 @@ class SeoCheckTools
     {
         $top = ContentTests::topKeywords(Typed::string($in['text'] ?? ''), 20);
 
-        return ['ok' => true, 'data' => ['关键词' => $top ? implode('、', $top) : '无']];
+        return ['ok' => true, 'data' => ['关键词' => ($top !== []) ? implode('、', $top) : '无']];
     }
 
     /**
@@ -772,7 +772,7 @@ class SeoCheckTools
         }
 
         $sentences = max(1, (int) preg_match_all('/[.!?。！？]+/u', $text));
-        $words = preg_split('/\s+/u', trim((string) preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text)), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $words = Typed::strList(preg_split('/\s+/u', trim((string) preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text)), -1, PREG_SPLIT_NO_EMPTY));
         $wordCount = max(1, count($words));
         $cjk = (int) preg_match_all('/[\x{4e00}-\x{9fff}]/u', $text);
 
@@ -819,7 +819,7 @@ class SeoCheckTools
         $audit = app(AuditEngine::class)->run(Typed::string($in['url'] ?? ''));
 
         if ($audit->status !== 'completed') {
-            return ['ok' => false, 'error' => '页面抓取失败：'.($audit->error ?: '未知'), 'data' => []];
+            return ['ok' => false, 'error' => '页面抓取失败：'.($audit->error ?? '未知'), 'data' => []];
         }
 
         return ['ok' => true, 'data' => [
@@ -855,7 +855,7 @@ class SeoCheckTools
         }
 
         $shingles = static function (string $html): array {
-            $words = array_values(array_filter(preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower(strip_tags($html))) ?: []));
+            $words = array_values(array_filter(Typed::strList(preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower(strip_tags($html)))), fn (string $w): bool => $w !== ''));
             $set = [];
             for ($i = 0; $i + 3 <= count($words); $i++) {
                 $set[implode(' ', array_slice($words, $i, 3))] = true;
@@ -890,7 +890,7 @@ class SeoCheckTools
     {
         $email = trim(Typed::string($in['email'] ?? ''));
 
-        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             return ['ok' => false, 'error' => '邮箱格式无效', 'data' => []];
         }
 

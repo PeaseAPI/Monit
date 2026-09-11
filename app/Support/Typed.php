@@ -120,6 +120,53 @@ final class Typed
         return $default;
     }
 
+    /**
+     * 非空字符串窄化（等价旧 `?: 默认值` 语义）：null / false / 非字符串 / 空串均回退默认值。
+     * 用于 trim()、mb_substr()、implode() 等恒非 null 但可能为空的函数结果。
+     */
+    public static function nonEmpty(mixed $value, string $default): string
+    {
+        return is_string($value) && $value !== '' ? $value : $default;
+    }
+
+    /**
+     * 窄化为字符串列表（glob / preg_split 等返回 list<string>|false 的函数专用）。
+     * false / null / 非 list 输入一律返回空列表；元素中的非字符串被过滤。
+     *
+     * @return list<string>
+     */
+    public static function strList(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($value as $item) {
+            if (is_string($item)) {
+                $out[] = $item;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * 窄化 DNS 记录列表（dns_get_record 返回 list<array<string, mixed>>|false）。
+     * false / null / 非数组一律返回空列表，保留每条记录的键值形状。
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function dnsRecords(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        /** @var list<array<string, mixed>> $value */
+        return $value;
+    }
+
     /** 点路径取值并窄化为 string（data_get 语义，取不到/类型不符返回默认值） */
     public static function stringPath(mixed $value, string $path, string $default = ''): string
     {

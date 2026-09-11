@@ -20,7 +20,7 @@ class Code extends Model
     ];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {
@@ -57,20 +57,20 @@ class Code extends Model
 
         $now = now();
 
-        if ($this->date_start && $now->lt($this->date_start)) {
+        if (($this->date_start !== '' && $this->date_start !== null) && $now->lt($this->date_start)) {
             return 'account.code_not_yet_active';
         }
 
-        if ($this->date_end && $now->gt($this->date_end)) {
+        if (($this->date_end !== '' && $this->date_end !== null) && $now->gt($this->date_end)) {
             return 'account.code_expired';
         }
 
         // max_redemptions：null/0 = 不限
-        if ($this->max_redemptions && $this->redeemed >= $this->max_redemptions) {
+        if (($this->max_redemptions ?? 0) !== 0 && $this->redeemed >= $this->max_redemptions) {
             return 'account.code_fully_redeemed';
         }
 
-        if ($user && $this->redeemedCodes()->where('user_id', $user->user_id)->exists()) {
+        if ($user !== null && $this->redeemedCodes()->where('user_id', $user->user_id)->exists()) {
             return 'account.code_already_redeemed';
         }
 
@@ -89,11 +89,11 @@ class Code extends Model
         return DB::transaction(function () use ($user): bool {
             $locked = self::where('code_id', $this->code_id)->lockForUpdate()->first();
 
-            if (! $locked) {
+            if ($locked === null) {
                 return false;
             }
 
-            if ($this->max_redemptions && $locked->redeemed >= $this->max_redemptions) {
+            if (($this->max_redemptions ?? 0) !== 0 && $locked->redeemed >= $this->max_redemptions) {
                 return false;
             }
 
@@ -115,9 +115,9 @@ class Code extends Model
      */
     public function applyToUser(User $user): void
     {
-        if ($this->type === 'plan' && $this->plan_id) {
+        if ($this->type === 'plan' && ($this->plan_id !== '' && $this->plan_id !== null)) {
             $expiry = $user->plan_expiration_date;
-            $stackable = $expiry && $expiry->isFuture() && $user->plan_id === $this->plan_id;
+            $stackable = $expiry !== null && $expiry->isFuture() && $user->plan_id === $this->plan_id;
 
             $user->forceFill([
                 'plan_id' => $this->plan_id,

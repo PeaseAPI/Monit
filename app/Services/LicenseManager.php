@@ -70,7 +70,7 @@ class LicenseManager
 
         $license = json_decode($json, true);
 
-        if (! is_array($license) || empty($license['signature'])) {
+        if (! is_array($license) || ($license['signature'] ?? '') === '') {
             return ['valid' => false, 'reason' => 'malformed', 'data' => null];
         }
 
@@ -167,7 +167,7 @@ class LicenseManager
      */
     public static function domainMatches(array $domains): bool
     {
-        $host = strtolower(parse_url(Typed::string(config('app.url')), PHP_URL_HOST) ?: 'localhost');
+        $host = strtolower(Typed::nonEmpty(parse_url(Typed::string(config('app.url')), PHP_URL_HOST) ?? 'localhost', 'localhost'));
 
         foreach ($domains as $domain) {
             $domain = strtolower(trim(Typed::string($domain)));

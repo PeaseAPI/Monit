@@ -15,7 +15,7 @@ class SeoToolUse extends Model
     protected $fillable = ['user_id', 'uploader_key', 'tool', 'created_at'];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {

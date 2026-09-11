@@ -26,18 +26,12 @@ class Settings
         }
 
         // 缓存以数组存储（反序列化安全），读取后重建为对象，坏条目自动重建
-        /** @var mixed $cached */
-        $cached = Cache::remember(
-            'monit.settings',
-            now()->addHours(12),
-            function () {
-                return static::buildArray();
-            }
-        );
+        $cached = Cache::get('monit.settings');
 
         if (! is_array($cached)) {
             Cache::forget('monit.settings');
             $cached = static::buildArray();
+            Cache::put('monit.settings', $cached, now()->addHours(12));
         }
 
         return static::$cached = static::arrayToObject(Typed::arr($cached));

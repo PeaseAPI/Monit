@@ -20,8 +20,7 @@ class BacklinkChecker
      */
     public function verify(SeoBacklink $backlink): string
     {
-        $targetHost = $backlink->target_url
-            ? SeoBacklink::normalizeHost($backlink->target_url)
+        $targetHost = ($backlink->target_url !== '') ? SeoBacklink::normalizeHost($backlink->target_url)
             : strtolower((string) $backlink->website?->host);
 
         try {
@@ -40,7 +39,7 @@ class BacklinkChecker
             return $backlink->status;
         }
 
-        $html = (string) $response->body();
+        $html = $response->body();
 
         $match = $targetHost !== '' ? $this->findLinkTo($html, $targetHost) : null;
 
@@ -56,7 +55,7 @@ class BacklinkChecker
 
         $backlink->update([
             'status' => 'active',
-            'anchor_text' => $backlink->anchor_text ?: mb_substr(trim($match['anchor']), 0, 512),
+            'anchor_text' => $backlink->anchor_text ?? mb_substr(trim($match['anchor']), 0, 512),
             'rel' => $match['rel'],
             'last_checked_at' => now(),
         ]);
@@ -71,7 +70,11 @@ class BacklinkChecker
      */
     protected function findLinkTo(string $html, string $targetHost): ?array
     {
-        if (trim($html) === '' || ! preg_match_all('/<a\b[^>]*href\s*=\s*(["\'])(.*?)\1[^>]*>(.*?)<\/a>/is', $html, $matches, PREG_SET_ORDER)) {
+        if (trim($html) === '') {
+            return null;
+        }
+
+        if (preg_match_all('/<a\b[^>]*href\s*=\s*(["\'])(.*?)\1[^>]*>(.*?)<\/a>/is', $html, $matches, PREG_SET_ORDER) < 1) {
             return null;
         }
 
@@ -83,7 +86,7 @@ class BacklinkChecker
             if ($hrefHost === $targetHost || str_ends_with($hrefHost, '.'.$targetHost)) {
                 $relRaw = '';
 
-                if (preg_match('/rel\s*=\s*(["\'])(.*?)\1/i', $m[0], $relMatch)) {
+                if (preg_match('/rel\s*=\s*(["\'])(.*?)\1/i', $m[0], $relMatch) > 0) {
                     $relRaw = strtolower($relMatch[2]);
                 }
 

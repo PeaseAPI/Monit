@@ -97,7 +97,7 @@ class HeatmapController extends Controller
             $heatmap->snapshot_id_desktop,
             $heatmap->snapshot_id_tablet,
             $heatmap->snapshot_id_mobile,
-        ]);
+        ], fn ($v): bool => (bool) $v);
         foreach ($snapshotIds as $snapshotId) {
             $row = DB::selectOne(
                 'SELECT data FROM heatmaps_snapshots WHERE snapshot_id = ?',
@@ -226,7 +226,7 @@ class HeatmapController extends Controller
 
         foreach ($devices as $d) {
             $snapshotId = $heatmap->{"snapshot_id_{$d}"};
-            if (! $snapshotId) {
+            if (($snapshotId === null || $snapshotId === 0)) {
                 continue;
             }
 

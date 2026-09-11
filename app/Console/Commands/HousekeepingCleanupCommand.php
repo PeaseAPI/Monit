@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Typed;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -36,8 +37,8 @@ class HousekeepingCleanupCommand extends Command
 
         if (is_dir($logPath)) {
             clearstatcache();
-            foreach (glob($logPath.'/*.log') ?: [] as $file) {
-                $mtime = (int) (@filemtime($file) ?: 0);
+            foreach (Typed::strList(glob($logPath.'/*.log')) as $file) {
+                $mtime = Typed::int(@filemtime($file));
                 if ($mtime > 0 && date('Y-m', $mtime) !== $currentMonth) {
                     @unlink($file);
                     $filesDeleted++;

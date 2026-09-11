@@ -1,10 +1,17 @@
 includes:
     - vendor/larastan/larastan/extension.neon
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
     - phpstan-baseline.neon
     - phpstan-include.php
 
 parameters:
     level: 10
+    strictRules:
+        # larastan 把 Eloquent 静态 Builder 调用（Model::where()/limit() 等）与
+        # $request->validate()（__call 宏）解析为“动态调用静态方法”，这是 Laravel
+        # 官方惯用法而非真实问题；框架层面无法改写，故仅关闭该规则。
+        # 真实的 $service::static() 动态调用已在代码中修复（LicenseManager/AiService）。
+        dynamicCallOnStaticMethod: false
     paths:
         - app
         - routes
@@ -13,6 +20,11 @@ parameters:
     bootstrapFiles:
         - phpstan-bootstrap.php
     ignoreErrors:
+        -
+            # Settings 的点分路径（settings_get('main.title')）以 stdClass 动态属性
+            # 逐级寻址为核心实现，动态属性名来自用户键名分段，无法静态化。
+            path: app/Support/Settings.php
+            identifier: property.dynamicName
         -
             # nullsafe.neverNull 是 phpstan 2.1 的风格规则：对 `?->prop ?? $default` 模式，
             # 官方建议改写为 `->prop ?? $default`（依赖 PHP 对 null 属性读取返回 null 的语义），

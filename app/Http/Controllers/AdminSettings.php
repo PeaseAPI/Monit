@@ -83,7 +83,7 @@ class AdminSettings extends Controller
 
         $rules = $this->getValidationRules($group);
 
-        if (empty($rules)) {
+        if ($rules === []) {
             return back()->withErrors(['error' => __('msg.invalid_settings_group')]);
         }
 
@@ -136,9 +136,9 @@ class AdminSettings extends Controller
             if (! is_array($row)) {
                 continue;
             }
-            $code = strtoupper(trim((string) $code));
+            $code = strtoupper(trim($code));
 
-            if (! preg_match('/^[A-Z]{3}$/', $code) || $code === strtoupper($default)) {
+            if (preg_match('/^[A-Z]{3}$/', $code) !== 1 || $code === strtoupper($default)) {
                 continue;
             }
 
@@ -303,12 +303,12 @@ class AdminSettings extends Controller
      */
     protected function supportPanel(): array
     {
-        $status = app(LicenseManager::class)->status();
+        $status = LicenseManager::status();
 
         return [
             'version' => Typed::string(config('monit.version')),
-            'license_valid' => (bool) $status['valid'],
-            'license_reason' => (string) $status['reason'],
+            'license_valid' => $status['valid'],
+            'license_reason' => $status['reason'],
             'license_data' => $status['data'],
         ];
     }
@@ -944,7 +944,7 @@ class AdminSettings extends Controller
 
             // 删除旧文件（如有）
             $oldUrl = Typed::string($validated[$urlField] ?? Settings::get("branding.{$urlField}", ''));
-            if ($oldUrl && str_starts_with($oldUrl, '/storage/branding/')) {
+            if ($oldUrl !== '' && str_starts_with($oldUrl, '/storage/branding/')) {
                 $oldPath = str_replace('/storage/', '', $oldUrl);
                 // 路径穿越防护：settings 里的 URL 理论上可含 ../（磁盘相对根解析）
                 if (str_contains($oldPath, '..')) {

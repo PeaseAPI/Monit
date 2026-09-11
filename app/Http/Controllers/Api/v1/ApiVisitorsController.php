@@ -20,16 +20,16 @@ class ApiVisitorsController extends Controller
 
         $query = WebsiteVisitor::where('website_id', $website->website_id);
 
-        if ($startDate = $request->query('start_date')) {
+        if ((bool) $startDate = $request->query('start_date')) {
             $query->where('date', '>=', $startDate);
         }
-        if ($endDate = $request->query('end_date')) {
+        if ((bool) $endDate = $request->query('end_date')) {
             $query->where('last_date', '<=', $endDate);
         }
-        if ($country = $request->query('country_code')) {
+        if ((bool) $country = $request->query('country_code')) {
             $query->where('country_code', $country);
         }
-        if ($device = $request->query('device_type')) {
+        if ((bool) $device = $request->query('device_type')) {
             $query->where('device_type', $device);
         }
 
@@ -50,7 +50,7 @@ class ApiVisitorsController extends Controller
 
     protected function authorizeWebsite(Website $website): void
     {
-        if ((int) $website->user_id !== (int) Auth::id() && ! $this->user()->isAdmin()) {
+        if ($website->user_id !== (int) Auth::id() && ! $this->user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

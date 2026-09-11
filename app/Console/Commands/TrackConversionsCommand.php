@@ -37,7 +37,7 @@ class TrackConversionsCommand extends Command
 
         foreach ($events as $event) {
             $website = $event->website;
-            if (! $website || ! $website->is_enabled) {
+            if ($website === null || ! $website->is_enabled) {
                 continue;
             }
 
@@ -52,7 +52,7 @@ class TrackConversionsCommand extends Command
             foreach ($goals as $goal) {
                 $matched = false;
 
-                if ($goal->type === 'pageview' && $goal->path) {
+                if ($goal->type === 'pageview' && ($goal->path !== '' && $goal->path !== null)) {
                     // 精确路径匹配
                     if ($path === $goal->path) {
                         $matched = true;

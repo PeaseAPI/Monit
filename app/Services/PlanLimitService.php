@@ -70,7 +70,7 @@ class PlanLimitService
             return 0; // 未启用
         }
 
-        return (int) max(0, Typed::int($limit) - $this->getCurrentUsage($user, $feature));
+        return max(0, Typed::int($limit) - $this->getCurrentUsage($user, $feature));
     }
 
     /**

@@ -114,7 +114,7 @@ class SeoAuditController extends Controller
         }
 
         if ($type === 'bulk') {
-            $urls = collect(preg_split('/\R/', Typed::string($validated['urls'])) ?: [])
+            $urls = collect(Typed::strList(preg_split('/\R/', Typed::string($validated['urls']))))
                 ->map(fn (string $u) => static::ensureScheme(trim($u)))
                 ->filter(fn (string $u) => filter_var($u, FILTER_VALIDATE_URL) !== false)
                 ->take($bulkLimit);
@@ -204,7 +204,7 @@ class SeoAuditController extends Controller
     {
         $validated = Typed::arr($request->validate(['password' => 'required|string|max:64']));
 
-        if (! $seoAudit->password || ! password_verify(Typed::string($validated['password']), $seoAudit->password)) {
+        if ($seoAudit->password === null || $seoAudit->password === '' || ! password_verify(Typed::string($validated['password']), $seoAudit->password)) {
             return back()->withErrors(['password' => __('seo.wrong_password')]);
         }
 
@@ -297,7 +297,7 @@ class SeoAuditController extends Controller
      */
     public function share(Request $request, SeoAudit $seoAudit)
     {
-        if ((int) $seoAudit->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
+        if ($seoAudit->user_id !== $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
 
@@ -309,7 +309,7 @@ class SeoAuditController extends Controller
 
         $seoAudit->update([
             'privacy' => $validated['privacy'],
-            'password' => ($validated['privacy'] === 'password' && ! empty($validated['password']))
+            'password' => ($validated['privacy'] === 'password' && ($validated['password'] ?? '') !== '')
                 ? bcrypt(Typed::string($validated['password']))
                 : $seoAudit->password,
             'is_public_directory' => (bool) ($validated['is_public_directory'] ?? false),
@@ -323,7 +323,7 @@ class SeoAuditController extends Controller
      */
     public function destroy(Request $request, SeoAudit $seoAudit)
     {
-        if ((int) $seoAudit->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
+        if ($seoAudit->user_id !== $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
 
@@ -339,7 +339,7 @@ class SeoAuditController extends Controller
      */
     public function aiSummary(Request $request, SeoAudit $seoAudit)
     {
-        if ((int) $seoAudit->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
+        if ($seoAudit->user_id !== $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
 
@@ -359,7 +359,7 @@ class SeoAuditController extends Controller
      */
     public function refresh(Request $request, SeoAudit $seoAudit)
     {
-        if ((int) $seoAudit->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
+        if ($seoAudit->user_id !== $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
 
@@ -470,7 +470,7 @@ class SeoAuditController extends Controller
     {
         $user = auth()->user();
         $isOwner = $user !== null
-            && ((int) $audit->user_id === (int) $user->user_id || $user->isAdmin());
+            && ($audit->user_id === $user->user_id || $user->isAdmin());
 
         // 访客自建报告：uploader_key 与当前会话匹配即可查看
         if (! $isOwner
@@ -485,7 +485,7 @@ class SeoAuditController extends Controller
         }
 
         if ($audit->privacy === 'password') {
-            return $request->session()->get("seo.unlock.{$audit->seo_audit_id}") ? 'granted' : 'password';
+            return ((bool) $request->session()->get("seo.unlock.{$audit->seo_audit_id}")) ? 'granted' : 'password';
         }
 
         return 'denied';
@@ -530,7 +530,7 @@ class SeoAuditController extends Controller
             return '';
         }
 
-        if (! preg_match('#^https?://#i', $url)) {
+        if (preg_match('#^https?://#i', $url) !== 1) {
             $url = 'https://'.$url;
         }
 

@@ -46,7 +46,7 @@ class CryptoComProcessor
         $user = User::query()->where('user_id', Typed::int($metadata['user_id'] ?? 0))->first();
         $plan = Plan::query()->where('plan_id', Typed::int($metadata['plan_id'] ?? 0))->first();
 
-        if (! $user || ! $plan) {
+        if ($user === null || $plan === null) {
             return null;
         }
 

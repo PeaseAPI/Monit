@@ -65,14 +65,14 @@ class AuditEngine
         $audit = new SeoAudit([
             'user_id' => $user?->user_id,
             'url' => $url,
-            'host' => strtolower(preg_replace('/^www\./', '', $host) ?: $host),
+            'host' => strtolower(preg_replace('/^www\./', '', $host) ?? $host),
             'type' => $type,
             'share_token' => Str::lower(Str::random(32)),
             'uploader_key' => $options['uploader_key'] ?? null,
         ]);
 
         // 匹配用户网站（同 host 自动挂接，流量与 SEO 数据同源）
-        if ($user && ! isset($options['website_id'])) {
+        if ($user !== null && ! isset($options['website_id'])) {
             $audit->website_id = Typed::int($user->websites()->where('host', $audit->host)->value('website_id'));
         } else {
             $audit->website_id = Typed::int($options['website_id'] ?? 0);
@@ -82,7 +82,7 @@ class AuditEngine
             // HTML 离线审计：使用用户粘贴的 HTML，不发起 HTTP 请求
             if ($type === 'html' && isset($options['html']) && trim(Typed::string($options['html'])) !== '') {
                 $html = Typed::string($options['html']);
-                $scheme = strtolower((string) (parse_url($url, PHP_URL_SCHEME) ?: 'https'));
+                $scheme = strtolower(Typed::nonEmpty(parse_url($url, PHP_URL_SCHEME) ?? 'https', 'https'));
                 $context = new AuditContext(
                     url: $url,
                     scheme: $scheme,
@@ -121,7 +121,7 @@ class AuditEngine
 
             $audit->fill([
                 'status' => 'failed',
-                'error' => mb_substr($e->getMessage(), 0, 500) ?: '请求失败',
+                'error' => Typed::nonEmpty(mb_substr($e->getMessage(), 0, 500), '请求失败'),
             ]);
         }
 
@@ -131,17 +131,17 @@ class AuditEngine
             $this->archive($audit);
         }
 
-        $website = $audit->website_id ? Website::find($audit->website_id) : null;
+        $website = ($audit->website_id !== 0) ? Website::find($audit->website_id) : null;
 
-        if ($website) {
+        if ($website !== null) {
             $this->refreshWebsiteAggregates($website);
         }
 
         // 定时复审触发通知；AI 摘要按需（with_ai）或定时任务
-        if (($options['scheduled'] ?? false) && $user) {
+        if ((bool) ($options['scheduled'] ?? false) && $user !== null) {
             app(NotificationDispatcher::class)->dispatchForAudit($audit, $website);
             $this->maybeDispatchAi($audit, $user);
-        } elseif ($user && ($options['with_ai'] ?? false)) {
+        } elseif ($user !== null && (bool) ($options['with_ai'] ?? false)) {
             $this->maybeDispatchAi($audit, $user);
         }
 
@@ -160,8 +160,8 @@ class AuditEngine
         $response = $this->request($url, $timeout, $ua);
         $elapsed = (int) round((microtime(true) - $started) * 1000);
 
-        $html = (string) $response->body();
-        $scheme = strtolower((string) (parse_url($url, PHP_URL_SCHEME) ?: 'https'));
+        $html = $response->body();
+        $scheme = strtolower(Typed::nonEmpty(parse_url($url, PHP_URL_SCHEME) ?? 'https', 'https'));
         $host = (string) parse_url($url, PHP_URL_HOST);
 
         if (trim($html) === '' && $response->status() === 0) {
@@ -171,7 +171,7 @@ class AuditEngine
         $context = new AuditContext(
             url: $url,
             scheme: $scheme,
-            host: strtolower(preg_replace('/^www\./', '', $host) ?: $host),
+            host: strtolower(preg_replace('/^www\./', '', $host) ?? $host),
             html: $html,
             headers: Typed::arr($response->headers()),
             statusCode: $response->status() === 0 ? 503 : $response->status(),
@@ -202,7 +202,7 @@ class AuditEngine
         try {
             return $response instanceof Response
                 && $response->successful()
-                && strlen((string) $response->body()) > 0;
+                && strlen($response->body()) > 0;
         } catch (Throwable) {
             return false;
         }
@@ -236,7 +236,7 @@ class AuditEngine
 
         $doubleCheck = in_array(Settings::get('seo.seo_double_check'), [true, 'true', null], true);
 
-        if ($attempt === 0 && in_array($response->status(), [0, 500, 502, 503, 504]) && $doubleCheck) {
+        if ($attempt === 0 && in_array($response->status(), [0, 500, 502, 503, 504], true) && $doubleCheck) {
             usleep((Typed::int(Settings::get('seo.seo_double_check_wait', 2))) * 1000000);
 
             return $this->request($url, $timeout, $ua, 1);
@@ -389,7 +389,7 @@ class AuditEngine
     {
         $url = trim($url);
 
-        if (! preg_match('#^https?://#i', $url)) {
+        if (preg_match('#^https?://#i', $url) !== 1) {
             $url = 'https://'.$url;
         }
 

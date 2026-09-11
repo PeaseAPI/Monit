@@ -120,7 +120,7 @@ class User extends Authenticatable
             return $value; // 迁移前的遗留行 / 回滚后的行：明文直读
         }
 
-        if ($this->attributes['api_key_encrypted'] ?? null) {
+        if ((bool) ($this->attributes['api_key_encrypted'] ?? null)) {
             try {
                 return Crypt::decryptString(Typed::string($this->attributes['api_key_encrypted']));
             } catch (Throwable) {
@@ -147,7 +147,7 @@ class User extends Authenticatable
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {
@@ -327,10 +327,10 @@ class User extends Authenticatable
      */
     public function getPlanSettings(): array
     {
-        /** @var array<string, mixed> $userSettings */
-        $userSettings = $this->plan_settings;
+        // cast 'array' 对 null 列值返回 null：显式放宽为可空再窄化（§ Eloquent cast 语义）
+        $userSettings = $this->plan_settings ?? null;
 
-        if ($this->plan_id === 'custom' && $userSettings) {
+        if ($this->plan_id === 'custom' && $userSettings !== null && $userSettings !== []) {
             return $userSettings;
         }
 
@@ -338,7 +338,7 @@ class User extends Authenticatable
         /** @var array<string, mixed> $base */
         $base = $plan?->settings ?? config('monit.plan_defaults');
 
-        if ($userSettings) {
+        if ($userSettings !== null && $userSettings !== []) {
             return array_merge($base, $userSettings);
         }
 
@@ -362,6 +362,6 @@ class User extends Authenticatable
      */
     public function validateApiToken(string $token): bool
     {
-        return $this->api_key !== null && hash_equals((string) $this->api_key, $token);
+        return $this->api_key !== null && hash_equals($this->api_key, $token);
     }
 }

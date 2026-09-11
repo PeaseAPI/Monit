@@ -49,7 +49,7 @@ class WebsitesLimitNoticeCommand extends Command
     {
         $enabled = DB::table('settings')->where('key', 'email_notices_is_enabled')->value('value');
 
-        if (! $enabled || $enabled === 'false') {
+        if (! (bool) $enabled || $enabled === 'false') {
             $this->info('配额通知邮件功能未启用');
 
             return self::SUCCESS;
@@ -68,7 +68,7 @@ class WebsitesLimitNoticeCommand extends Command
             foreach ($websites as $website) {
                 /** @var User|null $owner */
                 $owner = User::find($website->user_id);
-                if (! $owner || $owner->status !== 1) {
+                if ($owner === null || $owner->status !== 1) {
                     continue;
                 }
 
@@ -80,7 +80,7 @@ class WebsitesLimitNoticeCommand extends Command
                 // -1 = 不限；0 = 功能禁用（与采集侧 0 不标记一致——用户没有此功能，
                 // 发「配额超限」邮件反而误导其升级；生产 Plus 套餐 sessions_replays_limit=0）；
                 // 未超限跳过
-                if ($limit === -1 || $limit === 0 || $website->{$counter} < $limit) {
+                if ($limit === -1 || $limit === 0 || Typed::int($website->getAttribute($counter)) < $limit) {
                     continue;
                 }
 
@@ -90,7 +90,7 @@ class WebsitesLimitNoticeCommand extends Command
                         $website,
                         Typed::string($meta['scene']),
                         $limit,
-                        Typed::int($website->{$counter})
+                        Typed::int($website->getAttribute($counter))
                     ));
 
                     // 标志必须在邮件成功入队后才置位：queue 抛异常（队列连接故障等）

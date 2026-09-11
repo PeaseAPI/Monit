@@ -38,7 +38,7 @@ class SendEmailReportsCommand extends Command
 
         foreach ($websites as $website) {
             $user = $website->user;
-            if (! $user || ! $user->isActive()) {
+            if ($user === null || ! $user->isActive()) {
                 continue;
             }
 

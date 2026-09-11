@@ -83,7 +83,7 @@ class SeoNotificationHandlerController extends Controller
 
         $handler->update(array_filter([
             'name' => $validated['name'] ?? null,
-            'settings' => $settings ?: null,
+            'settings' => $settings,
             'is_enabled' => array_key_exists('is_enabled', $validated)
                 ? (bool) $validated['is_enabled']
                 : null,
@@ -125,7 +125,7 @@ class SeoNotificationHandlerController extends Controller
 
     protected function authorizeOwner(Request $request, NotificationHandler $handler): void
     {
-        if ((int) $handler->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
+        if ($handler->user_id !== $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
     }

@@ -48,7 +48,7 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            ], fn ($v): bool => (bool) $v) : [],
         ],
         // 说明：MariaDB 可直接复用上方 mysql 连接（DB_CONNECTION=mysql）；SQLite/PostgreSQL/SQL Server 不受支持。
 

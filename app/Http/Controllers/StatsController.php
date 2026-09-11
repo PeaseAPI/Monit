@@ -36,13 +36,11 @@ class StatsController extends Controller
      */
     public function aiInsight(Request $request, Website $website)
     {
-        $ai = app(AiService::class);
-
-        if (! $ai->insightsEnabled()) {
+        if (! AiService::insightsEnabled()) {
             return response()->json(['error' => 'ai_disabled'], 403);
         }
 
-        $range = Typed::int($request->input('range') ?: 7);
+        $range = Typed::int($request->input('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -67,12 +65,12 @@ class StatsController extends Controller
             Typed::int($overview['sessions'] ?? 0),
             Typed::string($overview['bounce_rate'] ?? 0),
             Typed::string($overview['avg_duration'] ?? 0),
-            $top('path') ?: '无数据',
-            $top('referrer_host') ?: '直接访问为主',
-            $top('country_code') ?: '无数据',
+            Typed::nonEmpty($top('path'), '无数据'),
+            Typed::nonEmpty($top('referrer_host'), '直接访问为主'),
+            Typed::nonEmpty($top('country_code'), '无数据'),
         );
 
-        $result = $ai->chat(
+        $result = AiService::chat(
             $prompt,
             '你是一名网站数据分析顾问。基于给定统计数据输出简明中文洞察：流量趋势判断、来源/地域结构亮点、2-3 条可执行的优化建议。不超过 300 字，不要使用 Markdown 标题。',
             ['max_tokens' => 800],
@@ -96,7 +94,7 @@ class StatsController extends Controller
      */
     public function index(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -159,7 +157,7 @@ class StatsController extends Controller
      */
     public function visitors(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -188,7 +186,7 @@ class StatsController extends Controller
     {
         $user = request()->user();
 
-        if (! $user || Typed::int($user->getPlanSettings()['export'] ?? 1) === 0) {
+        if ($user === null || Typed::int($user->getPlanSettings()['export'] ?? 1) === 0) {
             abort(403, __('stats.export_not_allowed'));
         }
 
@@ -249,7 +247,7 @@ class StatsController extends Controller
      */
     public function referrers(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -280,7 +278,7 @@ class StatsController extends Controller
      */
     public function events(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -308,7 +306,7 @@ class StatsController extends Controller
      */
     public function topPages(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -340,7 +338,7 @@ class StatsController extends Controller
      */
     public function topCountries(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -367,7 +365,7 @@ class StatsController extends Controller
      */
     public function topBrowsers(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -389,7 +387,7 @@ class StatsController extends Controller
      */
     public function topDevices(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -411,7 +409,7 @@ class StatsController extends Controller
      */
     public function topOperatingSystems(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -433,7 +431,7 @@ class StatsController extends Controller
      */
     public function behavior(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -460,7 +458,7 @@ class StatsController extends Controller
      */
     public function topCities(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -481,7 +479,7 @@ class StatsController extends Controller
      */
     public function topLanguages(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -508,7 +506,7 @@ class StatsController extends Controller
      */
     public function topResolutions(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -529,7 +527,7 @@ class StatsController extends Controller
      */
     public function topTimezones(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -556,7 +554,7 @@ class StatsController extends Controller
      */
     public function topContinents(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -583,7 +581,7 @@ class StatsController extends Controller
      */
     public function topThemes(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -604,7 +602,7 @@ class StatsController extends Controller
      */
     public function referralCategories(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -624,7 +622,7 @@ class StatsController extends Controller
      */
     public function referrerPaths(Request $request, Website $website, string $host)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -646,7 +644,7 @@ class StatsController extends Controller
      */
     public function utmDrilldown(Request $request, Website $website, string $source)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -668,7 +666,7 @@ class StatsController extends Controller
      */
     public function outboundClickPaths(Request $request, Website $website, string $host)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30, 90], true)) {
             $range = 7;
         }
@@ -691,7 +689,7 @@ class StatsController extends Controller
     public function visitorDetail(Request $request, Website $website, string $visitorId)
     {
         // Lightweight：32 位 uuid hex → 轻量事件时间线（访客明细与旅程）
-        if (preg_match('/^[0-9a-fA-F]{32}$/', $visitorId)) {
+        if (preg_match('/^[0-9a-fA-F]{32}$/', $visitorId) !== 0 && preg_match('/^[0-9a-fA-F]{32}$/', $visitorId) !== false) {
             try {
                 $binary = Uuid::fromString(strtolower($visitorId))->getBytes();
             } catch (\Throwable) {

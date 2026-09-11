@@ -49,7 +49,7 @@ class PushNotificationsCampaignsCommand extends Command
             ->where('is_sent', false)
             ->orderBy('campaign_id');
 
-        if ($campaignId = $this->argument('campaignId')) {
+        if ($campaignId = $this->argument('campaignId') !== '' && $campaignId = $this->argument('campaignId') !== null) {
             $query->where('campaign_id', (int) $campaignId);
         }
 

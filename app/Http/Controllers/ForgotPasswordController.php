@@ -68,7 +68,7 @@ class ForgotPasswordController extends Controller
 
             $user = User::where('phone', $phone)->first();
 
-            if (! $user || $user->status !== 1) {
+            if ($user === null || $user->status !== 1) {
                 // 不暴露手机号是否注册
                 return back()->with('status', __('auth.reset_link_sent'));
             }
@@ -95,7 +95,7 @@ class ForgotPasswordController extends Controller
 
         $user = User::where('email', $validated['email'])->first();
 
-        if (! $user) {
+        if ($user === null) {
             // 不暴露邮箱是否存在，统一提示
             return back()->with('status', __('auth.reset_link_sent'));
         }
@@ -158,7 +158,7 @@ class ForgotPasswordController extends Controller
 
         $user = User::where('phone', $phone)->first();
 
-        if (! $user) {
+        if ($user === null) {
             return back()->withErrors(['phone' => __('auth.phone_not_found')]);
         }
 
@@ -185,7 +185,7 @@ class ForgotPasswordController extends Controller
     {
         $user = User::where('lost_password_code', $code)->first();
 
-        if (! $user || $this->resetCodeExpired($user)) {
+        if ($user === null || $this->resetCodeExpired($user)) {
             return redirect()->route('password.request')
                 ->withErrors(['email' => __('auth.reset_token_invalid')]);
         }
@@ -199,7 +199,7 @@ class ForgotPasswordController extends Controller
      */
     protected function resetCodeExpired(User $user): bool
     {
-        return ! $user->lost_password_sent_at
+        return $user->lost_password_sent_at === null
             || $user->lost_password_sent_at->lt(now()->subMinutes(60));
     }
 
@@ -224,7 +224,7 @@ class ForgotPasswordController extends Controller
             ->where('lost_password_code', $validated['code'])
             ->first();
 
-        if (! $user || $this->resetCodeExpired($user)) {
+        if ($user === null || $this->resetCodeExpired($user)) {
             return back()->withErrors(['email' => __('auth.reset_token_invalid')]);
         }
 

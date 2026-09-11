@@ -44,7 +44,7 @@ class SmsController extends Controller
         }
 
         // 绑定手机号需要登录态
-        if ($purpose === 'phone_bind' && ! $request->user()) {
+        if ($purpose === 'phone_bind' && $request->user() === null) {
             abort(403);
         }
 

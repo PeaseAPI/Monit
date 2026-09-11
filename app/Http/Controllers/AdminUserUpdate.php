@@ -132,11 +132,11 @@ class AdminUserUpdate extends Controller
         // 修复前整列替换：表单未包含的既有键（如手工配置的 M26 SEO 配额）会在
         // 每次保存用户资料时被静默抹掉。现先合并既有键、再剔除显式提交的
         // null/空串（视同清除该键、回归套餐默认）——两种语义并存
-        $merged = array_merge((array) $user->plan_settings, $planSettings);
+        $merged = array_merge($user->plan_settings ?? [], $planSettings);
         $planSettings = array_filter($merged, fn ($v) => $v !== null && $v !== '');
 
         // 密码（独立处理，空则不改）
-        if (! empty($validated['password'])) {
+        if (($validated['password'] ?? '') !== '') {
             $validated['password'] = bcrypt(Typed::string($validated['password']));
         } else {
             unset($validated['password']);

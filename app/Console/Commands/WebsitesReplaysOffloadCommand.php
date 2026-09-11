@@ -85,8 +85,8 @@ class WebsitesReplaysOffloadCommand extends Command
             }
 
             // 回退1：如果 DB 无数据，尝试从缓存取回放事件
-            if (empty($events)) {
-                if ($session) {
+            if ($events === []) {
+                if ($session !== null) {
                     $cacheKey = "session_replay_keys_{$session->session_id}";
                     $keys = Typed::arr(Cache::get($cacheKey));
 
@@ -115,7 +115,7 @@ class WebsitesReplaysOffloadCommand extends Command
                 $replay->update(['is_offloaded' => true]);
 
                 // offload 后清理缓存 chunk
-                if ($session && $deleteAfterUpload) {
+                if ($session !== null && $deleteAfterUpload) {
                     $cacheKey = "session_replay_keys_{$session->session_id}";
                     $keys = Typed::arr(Cache::get($cacheKey));
                     foreach ($keys as $chunkKey) {

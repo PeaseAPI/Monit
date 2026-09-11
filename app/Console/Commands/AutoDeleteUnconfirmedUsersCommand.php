@@ -25,7 +25,7 @@ class AutoDeleteUnconfirmedUsersCommand extends Command
             ->where('key', 'main.auto_delete_unconfirmed_users')
             ->value('value');
 
-        if (! $settingsValue) {
+        if (! (bool) $settingsValue) {
             $this->info('自动删除未确认用户功能未启用');
 
             return self::SUCCESS;

@@ -16,7 +16,7 @@ class WeChatPayProcessor
 
     public function isConfigured(): bool
     {
-        return (bool) (config('services.wechat_pay.mch_id') && config('services.wechat_pay.app_id') && config('services.wechat_pay.api_key'));
+        return (bool) config('services.wechat_pay.mch_id') && (bool) config('services.wechat_pay.app_id') && (bool) config('services.wechat_pay.api_key');
     }
 
     /**
@@ -34,7 +34,7 @@ class WeChatPayProcessor
                 'body' => mb_substr('Monit Plan '.$payment->payment_id, 0, 127),
                 'out_trade_no' => 'monit_'.$payment->payment_id.'_'.now()->format('His'),
                 'total_fee' => (int) round(((float) $payment->total_amount) * 100), // 单位：分
-                'spbill_create_ip' => request()->ip() ?: '127.0.0.1',
+                'spbill_create_ip' => request()->ip() ?? '127.0.0.1',
                 'notify_url' => route('webhooks.wechatpay'),
                 'trade_type' => 'NATIVE',
                 'product_id' => (string) $payment->payment_id,
@@ -44,7 +44,7 @@ class WeChatPayProcessor
             $params['sign'] = $this->sign($params);
 
             $response = Http::withBody($this->toXml($params), 'application/xml')->post(Typed::string(static::UNIFIED_ORDER_URL));
-            $xml = simplexml_load_string((string) $response->body());
+            $xml = simplexml_load_string($response->body());
 
             if ($xml !== false && (string) $xml->return_code === 'SUCCESS' && (string) $xml->result_code === 'SUCCESS') {
                 return [
@@ -71,7 +71,7 @@ class WeChatPayProcessor
 
         // fail-closed：密钥未配置时空 key MD5 签名可被任何人复现（算法公开），
         // 伪造回调即可免费激活任意订单，必须显式拒绝
-        if ($apiKey === '' || empty($data['sign'])) {
+        if ($apiKey === '' || ($data['sign'] ?? '') === '') {
             return false;
         }
 
@@ -98,7 +98,7 @@ class WeChatPayProcessor
             $params['sign'] = $this->sign($params);
 
             $response = Http::withBody($this->toXml($params), 'application/xml')->post('https://api.mch.weixin.qq.com/pay/orderquery');
-            $xml = simplexml_load_string((string) $response->body());
+            $xml = simplexml_load_string($response->body());
 
             if ($xml !== false && (string) $xml->return_code === 'SUCCESS' && (string) $xml->trade_state === 'SUCCESS') {
                 return [

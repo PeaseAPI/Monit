@@ -22,7 +22,7 @@ class AdminDomains extends Controller
     {
         $query = Domain::with('user');
 
-        if ($search = $request->query('search')) {
+        if ((bool) $search = $request->query('search')) {
             $query->where('host', 'like', "%{$search}%")
                 ->orWhereHas('user', fn ($q) => $q->where('email', 'like', "%{$search}%"));
         }

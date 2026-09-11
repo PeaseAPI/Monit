@@ -133,7 +133,7 @@ class S3Client
             curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
         }
         $response = curl_exec($ch);
-        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         curl_close($ch);
 

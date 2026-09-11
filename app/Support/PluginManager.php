@@ -38,10 +38,10 @@ class PluginManager
         $rows = Plugin::query()->get()->keyBy('plugin_id');
         $plugins = [];
 
-        foreach (glob(static::path('*'.DIRECTORY_SEPARATOR.'config.php')) ?: [] as $file) {
+        foreach (Typed::strList(glob(static::path('*'.DIRECTORY_SEPARATOR.'config.php'))) as $file) {
             $meta = include $file;
 
-            if (! is_array($meta) || empty($meta['id'])) {
+            if (! is_array($meta) || ($meta['id'] ?? '') === '') {
                 continue;
             }
 
@@ -55,8 +55,8 @@ class PluginManager
                 'author' => $meta['author'] ?? 'Monit',
                 'url' => $meta['url'] ?? '',
                 'settings' => $meta['settings'] ?? [],
-                'installed' => (bool) ($row?->is_installed ?? false),
-                'active' => (bool) ($row?->is_active ?? false),
+                'installed' => ($row?->is_installed ?? false),
+                'active' => ($row?->is_active ?? false),
                 'row_settings' => $row?->settings ?? [],
             ];
         }

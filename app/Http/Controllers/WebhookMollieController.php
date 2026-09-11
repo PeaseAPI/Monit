@@ -17,7 +17,7 @@ class WebhookMollieController extends Controller
     {
         $paymentId = $request->input('id');
 
-        if ($paymentId) {
+        if ((bool) $paymentId) {
             $apiKey = config('services.mollie.key');
             if (is_string($apiKey) && $apiKey !== '') {
                 try {
@@ -30,7 +30,7 @@ class WebhookMollieController extends Controller
 
                         // 金额防篡改（安全审计周期 #19）：金额来自 Mollie API 服务端回查
                         // （可信），但仍须与本地订单一致方可入账（错单/改价 fail-closed）
-                        if ($internalPaymentId
+                        if (($internalPaymentId !== 0 && $internalPaymentId !== null)
                             && $paymentService->verifyGatewayAmount(
                                 $internalPaymentId,
                                 Typed::float($payment->amount->value ?? 0),
@@ -44,7 +44,7 @@ class WebhookMollieController extends Controller
                     // 规格 §6.3.1：支付失败事件派发 webhook_payment_failure_url
                     if ($payment->isFailed()) {
                         $internalPaymentId = Typed::intOrNull($payment->metadata->payment_id ?? null);
-                        if ($internalPaymentId) {
+                        if ($internalPaymentId !== 0 && $internalPaymentId !== null) {
                             $paymentService->handlePaymentFailure($internalPaymentId, Typed::string($paymentId));
                         }
                     }

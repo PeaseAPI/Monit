@@ -75,7 +75,7 @@ class MetaTests
      */
     public function metaDescription(AuditContext $c): array
     {
-        $desc = trim((string) ($c->meta('description') ?? ''));
+        $desc = trim(($c->meta('description') ?? ''));
         $length = mb_strlen($desc);
         $min = Typed::int(AuditTestRegistry::threshold('description_min', 50));
         $max = Typed::int(AuditTestRegistry::threshold('description_max', 160));
@@ -113,7 +113,7 @@ class MetaTests
 
         $firstH1 = '';
         $h1Node = $c->dom()->getElementsByTagName('h1')->item(0);
-        if ($h1Node) {
+        if ($h1Node !== null) {
             $firstH1 = trim($h1Node->textContent);
         }
 
@@ -130,7 +130,7 @@ class MetaTests
      */
     public function metaKeywords(AuditContext $c): array
     {
-        $keywords = trim((string) ($c->meta('keywords') ?? ''));
+        $keywords = trim(($c->meta('keywords') ?? ''));
 
         $sub = [];
         if (mb_strlen($keywords) === 0) {
@@ -164,7 +164,7 @@ class MetaTests
      */
     public function language(AuditContext $c): array
     {
-        $lang = (string) ($c->dom()?->documentElement?->getAttribute('lang') ?? '');
+        $lang = ($c->dom()?->documentElement?->getAttribute('lang') ?? '');
 
         return [
             'passed' => $lang !== '',
@@ -177,11 +177,11 @@ class MetaTests
      */
     public function metaCharset(AuditContext $c): array
     {
-        $charset = (string) ($c->meta('charset') ?? '');
+        $charset = ($c->meta('charset') ?? '');
 
         if ($charset === '') {
             // HTTP Content-Type 头声明亦可
-            $contentType = (string) ($c->header('content-type') ?? '');
+            $contentType = ($c->header('content-type') ?? '');
             $charset = str_contains($contentType, 'charset=')
                 ? trim((string) preg_replace('/.*charset=([^\s;]+).*/i', '$1', $contentType))
                 : '';
@@ -198,7 +198,7 @@ class MetaTests
      */
     public function metaViewport(AuditContext $c): array
     {
-        $viewport = (string) ($c->meta('viewport') ?? '');
+        $viewport = ($c->meta('viewport') ?? '');
 
         return [
             'passed' => $viewport !== '',
@@ -211,7 +211,7 @@ class MetaTests
      */
     public function metaRefresh(AuditContext $c): array
     {
-        $refresh = (string) ($c->meta('refresh') ?? '');
+        $refresh = ($c->meta('refresh') ?? '');
 
         // meta refresh 存在即视为对搜索引擎不友好
         return [
@@ -227,7 +227,7 @@ class MetaTests
     {
         $canonical = '';
         foreach ($c->dom()->getElementsByTagName('link') as $link) {
-            if (strtolower((string) $link->getAttribute('rel')) === 'canonical') {
+            if (strtolower($link->getAttribute('rel')) === 'canonical') {
                 $canonical = $link->getAttribute('href');
 
                 break;
@@ -247,7 +247,7 @@ class MetaTests
     {
         $count = 0;
         foreach ($c->dom()->getElementsByTagName('meta') as $meta) {
-            if (str_starts_with((string) $meta->getAttribute('property'), 'og:')) {
+            if (str_starts_with($meta->getAttribute('property'), 'og:')) {
                 $count++;
             }
         }
@@ -278,7 +278,7 @@ class MetaTests
     {
         $found = false;
         foreach ($c->dom()->getElementsByTagName('link') as $link) {
-            if (str_contains(strtolower((string) $link->getAttribute('rel')), 'icon')) {
+            if (str_contains(strtolower($link->getAttribute('rel')), 'icon')) {
                 $found = true;
 
                 break;
@@ -326,7 +326,7 @@ class MetaTests
      */
     public function metaRobots(AuditContext $c): array
     {
-        $robots = strtolower((string) ($c->meta('robots') ?? ''));
+        $robots = strtolower(($c->meta('robots') ?? ''));
         $blocked = str_contains($robots, 'noindex') || str_contains($robots, 'none');
 
         return [
@@ -341,7 +341,7 @@ class MetaTests
      */
     public function headerRobots(AuditContext $c): array
     {
-        $robots = strtolower((string) ($c->header('x-robots-tag') ?? ''));
+        $robots = strtolower(($c->header('x-robots-tag') ?? ''));
 
         return [
             'passed' => ! str_contains($robots, 'noindex'),
@@ -357,7 +357,7 @@ class MetaTests
     {
         $path = (string) parse_url($c->url, PHP_URL_PATH);
 
-        $friendly = ! preg_match('/[A-Z]/', $path)
+        $friendly = preg_match('/[A-Z]/', $path) !== 1
             && ! str_contains($path, '_')
             && mb_strlen($path) <= 115
             && substr_count($path, '/') <= 5;
@@ -375,7 +375,7 @@ class MetaTests
      */
     public function noindexImages(AuditContext $c): array
     {
-        $ogImage = (string) ($c->meta('og:image') ?? '');
+        $ogImage = ($c->meta('og:image') ?? '');
 
         return [
             'passed' => $ogImage !== '',

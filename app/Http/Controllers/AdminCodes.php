@@ -39,7 +39,7 @@ class AdminCodes extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validated($request);
-        $validated['code'] = $validated['code'] ?: Str::upper(Str::random(16));
+        $validated['code'] = $validated['code'] ?? Str::upper(Str::random(16));
 
         Code::create([...$validated, 'datetime' => now()]);
 

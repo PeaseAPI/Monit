@@ -123,7 +123,7 @@ class DevTools
     {
         $color = trim(Typed::string($in['color'] ?? ''));
 
-        if (! preg_match('/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i', $color, $m)) {
+        if (preg_match('/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i', $color, $m) !== 1) {
             return ['ok' => false, 'error' => '请输入 HEX 颜色值（如 #4f46e5）', 'data' => []];
         }
 
@@ -175,7 +175,7 @@ class DevTools
     {
         $url = trim(Typed::string($in['url'] ?? ''));
 
-        if ($url === '' || ! filter_var($url, FILTER_VALIDATE_URL)) {
+        if ($url === '' || filter_var($url, FILTER_VALIDATE_URL) === false) {
             return ['ok' => false, 'error' => '请输入有效 URL', 'data' => []];
         }
 
@@ -311,7 +311,7 @@ class DevTools
 
         $bits = str_replace(' ', '', $text);
 
-        if (! preg_match('/^[01]+$/', $bits)) {
+        if (preg_match('/^[01]+$/', $bits) !== 1) {
             return ['ok' => false, 'error' => '仅包含 0/1 的二进制字符串可解码', 'data' => []];
         }
 
@@ -340,7 +340,7 @@ class DevTools
         }
 
         try {
-            $html = (string) Http::timeout(20)->get($url)->body();
+            $html = Http::timeout(20)->get($url)->body();
         } catch (Throwable $e) {
             return ['ok' => false, 'error' => mb_substr($e->getMessage(), 0, 200), 'data' => []];
         }
@@ -351,7 +351,7 @@ class DevTools
 
         return ['ok' => true, 'data' => [
             '明文邮箱数' => count($emails),
-            '风险' => $emails ? '存在被爬虫收割风险' : '安全',
-        ], 'text' => $emails ? implode("\n", $emails) : null];
+            '风险' => ($emails !== []) ? '存在被爬虫收割风险' : '安全',
+        ], 'text' => ($emails !== []) ? implode("\n", $emails) : null];
     }
 }

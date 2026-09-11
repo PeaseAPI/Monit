@@ -46,7 +46,7 @@ class MercadoPagoProcessor
         $user = User::query()->where('user_id', Typed::int($externalRef['user_id'] ?? 0))->first();
         $plan = Plan::query()->where('plan_id', Typed::int($externalRef['plan_id'] ?? 0))->first();
 
-        if (! $user || ! $plan) {
+        if ($user === null || $plan === null) {
             return null;
         }
 

@@ -46,7 +46,7 @@ class LicenseGenerateCommand extends Command
             $this->warn('Set config license.public_key = '.$keypair['public_key']);
         }
 
-        if (empty($keypair['secret_key'])) {
+        if (($keypair['secret_key'] ?? '') === '') {
             $this->error('Invalid keypair file.');
 
             return self::FAILURE;
@@ -55,15 +55,15 @@ class LicenseGenerateCommand extends Command
         // 2. 组装 License 数据
         $domains = array_values(array_filter(array_map(
             'trim',
-            explode(',', Typed::string($this->option('domains') ?: parse_url(Typed::string(config('app.url')), PHP_URL_HOST))),
-        )));
+            explode(',', Typed::string($this->option('domains') ?? parse_url(Typed::string(config('app.url')), PHP_URL_HOST))),
+        ), fn (string $v): bool => $v !== ''));
 
         $license = [
-            'license_id' => (string) ($this->option('id') ?: 'LIC-'.strtoupper(bin2hex(random_bytes(4)))),
+            'license_id' => ($this->option('id') ?? 'LIC-'.strtoupper(bin2hex(random_bytes(4)))),
             'product' => LicenseManager::PRODUCT,
             'domains' => $domains,
             'max_domains' => max(1, count($domains)),
-            'expires' => (string) ($this->option('expires') ?: now()->addYear()->format('Y-m-d')),
+            'expires' => ($this->option('expires') ?? now()->addYear()->format('Y-m-d')),
             'features' => $this->parseFeatures(),
             'issued_at' => now()->format('Y-m-d\TH:i:s\Z'),
         ];
@@ -80,7 +80,7 @@ class LicenseGenerateCommand extends Command
         $license['signature'] = bin2hex($signature);
 
         // 4. 写出
-        $out = (string) ($this->option('out') ?: LicenseManager::licensePath());
+        $out = ($this->option('out') ?? LicenseManager::licensePath());
         file_put_contents($out, json_encode($license, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n");
 
         $this->info('License written: '.$out);

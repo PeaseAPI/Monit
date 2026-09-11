@@ -27,7 +27,7 @@ class Ticket extends Model
     protected $fillable = ['user_id', 'email', 'subject', 'category', 'priority', 'status', 'last_reply_at', 'datetime'];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {

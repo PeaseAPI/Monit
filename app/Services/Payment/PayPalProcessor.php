@@ -24,7 +24,7 @@ class PayPalProcessor
     {
         $this->clientId = Typed::stringOrNull(config('services.paypal.client_id'));
         $this->clientSecret = Typed::stringOrNull(config('services.paypal.client_secret'));
-        $this->baseUrl = config('services.paypal.sandbox', true)
+        $this->baseUrl = (bool) config('services.paypal.sandbox', true)
             ? 'https://api-m.sandbox.paypal.com'
             : 'https://api-m.paypal.com';
     }
@@ -34,7 +34,7 @@ class PayPalProcessor
      */
     public function isConfigured(): bool
     {
-        return ! empty($this->clientId) && ! empty($this->clientSecret);
+        return ($this->clientId ?? '') !== '' && ($this->clientSecret ?? '') !== '';
     }
 
     /**
@@ -70,7 +70,7 @@ class PayPalProcessor
     public function createOrder(Payment $payment, string $returnUrl, string $cancelUrl): array
     {
         $accessToken = $this->getAccessToken();
-        if (! $accessToken) {
+        if ($accessToken === null || $accessToken === '') {
             return ['error' => 'PayPal not configured or auth failed'];
         }
 
@@ -118,7 +118,7 @@ class PayPalProcessor
     public function captureOrder(string $orderId): array
     {
         $accessToken = $this->getAccessToken();
-        if (! $accessToken) {
+        if ($accessToken === null || $accessToken === '') {
             return ['error' => 'PayPal auth failed'];
         }
 

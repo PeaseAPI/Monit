@@ -30,7 +30,7 @@ class AuditScore
             $category = $row['category'];
             $categoryWeight[$category] = ($categoryWeight[$category] ?? 0) + $weight;
 
-            if (! empty($row['passed'])) {
+            if ($row['passed']) {
                 $passedWeight += $weight;
                 $categoryPassed[$category] = ($categoryPassed[$category] ?? 0) + $weight;
                 $passed++;

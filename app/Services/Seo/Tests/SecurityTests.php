@@ -67,7 +67,7 @@ class SecurityTests
      */
     public function hsts(AuditContext $c): array
     {
-        $hsts = (string) ($c->header('strict-transport-security') ?? '');
+        $hsts = ($c->header('strict-transport-security') ?? '');
 
         return [
             'passed' => $hsts !== '',
@@ -80,7 +80,7 @@ class SecurityTests
      */
     public function csp(AuditContext $c): array
     {
-        $csp = (string) ($c->header('content-security-policy') ?? '');
+        $csp = ($c->header('content-security-policy') ?? '');
 
         return [
             'passed' => $csp !== '',
@@ -149,11 +149,11 @@ class SecurityTests
      */
     public function headerServer(AuditContext $c): array
     {
-        $server = (string) ($c->header('server') ?? '');
+        $server = ($c->header('server') ?? '');
 
         // 暴露服务器版本细节视为轻微风险
         return [
-            'passed' => $server === '' || ! preg_match('/\d+\.\d+/', $server),
+            'passed' => $server === '' || preg_match('/\d+\.\d+/', $server) !== 1,
             'value' => $server === '' ? 'Hidden' : mb_substr($server, 0, 60),
         ];
     }
@@ -163,10 +163,10 @@ class SecurityTests
      */
     public function spf(AuditContext $c): array
     {
-        $records = @dns_get_record($c->host, DNS_TXT) ?: [];
+        $records = Typed::dnsRecords(@dns_get_record($c->host, DNS_TXT));
 
         $has = false;
-        foreach ((array) $records as $record) {
+        foreach ($records as $record) {
             if (str_contains(strtolower(Typed::string($record['txt'] ?? '')), 'v=spf1')) {
                 $has = true;
 
@@ -186,8 +186,8 @@ class SecurityTests
     public function referrerPolicy(AuditContext $c): array
     {
         // meta referrer 或 Referrer-Policy 头任一即可
-        $meta = (string) ($c->meta('referrer') ?? '');
-        $header = (string) ($c->header('referrer-policy') ?? '');
+        $meta = ($c->meta('referrer') ?? '');
+        $header = ($c->header('referrer-policy') ?? '');
 
         return [
             'passed' => $meta !== '' || $header !== '',

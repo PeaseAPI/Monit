@@ -15,7 +15,7 @@ class AdminRedeemedCodes extends Controller
     {
         $query = RedeemedCode::with(['user', 'code'])->orderByDesc('datetime');
 
-        if ($userId = $request->query('user_id')) {
+        if ((bool) $userId = $request->query('user_id')) {
             $query->where('user_id', $userId);
         }
 

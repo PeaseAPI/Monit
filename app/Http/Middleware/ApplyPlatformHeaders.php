@@ -95,7 +95,7 @@ class ApplyPlatformHeaders
         }
 
         // 白名单防头注入（仅允许标准策略 token）
-        return preg_match('/^[a-zA-Z0-9-]+$/', $policy) ? $policy : null;
+        return (preg_match('/^[a-zA-Z0-9-]+$/', $policy) !== 0 && preg_match('/^[a-zA-Z0-9-]+$/', $policy) !== false) ? $policy : null;
     }
 
     protected function isLocalLike(Request $request): bool

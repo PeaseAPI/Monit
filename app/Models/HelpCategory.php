@@ -17,7 +17,7 @@ class HelpCategory extends Model
     protected $fillable = ['user_id', 'title', 'url', 'icon', 'order', 'datetime'];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {

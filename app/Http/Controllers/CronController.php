@@ -26,7 +26,7 @@ class CronController extends Controller
      */
     protected function authorized(Request $request): bool
     {
-        $expected = trim(Typed::string(Settings::get('cron.cron_key', ''))) ?: Typed::string(config('app.cron_key'));
+        $expected = Typed::nonEmpty(trim(Typed::string(Settings::get('cron.cron_key', ''))), Typed::string(config('app.cron_key')));
 
         if ($expected === '') {
             return false;
@@ -187,7 +187,7 @@ class CronController extends Controller
      */
     protected function usersPlanExpiryReminder(): int
     {
-        return (int) Artisan::call('monit:users-plan-expiry-reminder');
+        return Artisan::call('monit:users-plan-expiry-reminder');
     }
 
     /**
@@ -195,7 +195,7 @@ class CronController extends Controller
      */
     protected function broadcasts(): int
     {
-        return (int) Artisan::call('monit:process-broadcasts');
+        return Artisan::call('monit:process-broadcasts');
     }
 
     /**
@@ -203,6 +203,6 @@ class CronController extends Controller
      */
     protected function emailReports(): int
     {
-        return (int) Artisan::call('monit:send-email-reports');
+        return Artisan::call('monit:send-email-reports');
     }
 }

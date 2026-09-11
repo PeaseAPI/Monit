@@ -54,7 +54,7 @@ class PaymentService
         }
 
         if ($gatewayCurrency !== null
-            && strcasecmp(trim($gatewayCurrency), (string) $payment->currency) !== 0) {
+            && strcasecmp(trim($gatewayCurrency), $payment->currency) !== 0) {
             return false;
         }
 
@@ -69,7 +69,7 @@ class PaymentService
     {
         $payment = Payment::find($paymentId);
 
-        if (! $payment || ! $this->assertAmountMatches($payment, $gatewayAmount, $gatewayCurrency)) {
+        if ($payment === null || ! $this->assertAmountMatches($payment, $gatewayAmount, $gatewayCurrency)) {
             Log::warning('webhook.amount_mismatch', [
                 'gateway' => $gateway,
                 'payment_id' => $paymentId,
@@ -107,10 +107,11 @@ class PaymentService
         // 与结账页兑换口径一致，防止过期或超兑折扣码绕过）
         $discountAmount = 0;
         $codeId = null;
-        if ($code) {
+        if ($code !== '' && $code !== null) {
             $codeModel = Code::where('code', $code)->first();
 
-            if ($codeModel && $codeModel->type === 'discount' && ! $codeModel->redemptionIssue($user)) {
+            $issue = $codeModel !== null ? $codeModel->redemptionIssue($user) : null;
+            if ($codeModel !== null && $codeModel->type === 'discount' && ($issue === null || $issue === '')) {
                 $discountAmount = $amount * ((float) $codeModel->discount / 100);
                 $codeId = $codeModel->code_id;
             }
@@ -122,20 +123,20 @@ class PaymentService
         // value_type=percentage 按比例 / fixed 固定额；countries 空 = 全球适用
         $taxesAmount = 0;
 
-        if (PaymentController::taxesEnabled() && $billingCountry = strtoupper(trim(Typed::string($user->billing['country'] ?? '')))) {
+        if (PaymentController::taxesEnabled() && ($billingCountry = strtoupper(trim(Typed::string($user->billing['country'] ?? '')))) !== '') {
             foreach (Tax::all() as $tax) {
                 $countries = array_map(
-                    fn ($c) => strtoupper(trim((string) $c)),
+                    fn ($c) => strtoupper(trim($c)),
                     (array) ($tax->countries ?? [])
                 );
 
-                if (! empty($countries) && ! in_array($billingCountry, $countries, true)) {
+                if ($countries !== [] && ! in_array($billingCountry, $countries, true)) {
                     continue;
                 }
 
                 $taxesAmount += $tax->value_type === 'percentage'
-                    ? $totalAmount * ((float) $tax->value / 100)
-                    : (float) $tax->value;
+                    ? $totalAmount * ($tax->value / 100)
+                    : $tax->value;
             }
 
             $taxesAmount = round($taxesAmount, 2);
@@ -206,7 +207,7 @@ class PaymentService
 
             $user = $payment->user;
 
-            if ($user) {
+            if ($user !== null) {
                 // 更新用户支付信息（记账口径与直接入账路径一致）
                 $user->update([
                     'payment_subscription_id' => $subscriptionId,
@@ -243,15 +244,15 @@ class PaymentService
     {
         $payment = Payment::find($paymentId);
 
-        if (! $payment || $payment->status === 1) {
+        if ($payment === null || $payment->status === 1) {
             return $payment;
         }
 
-        $payment->update(array_filter([
-            'external_id' => $externalId ?: null,
+        $payment->update([
+            'external_id' => $externalId,
             'status' => 2, // failed
             'last_datetime' => now(),
-        ], fn ($value) => $value !== null));
+        ]);
 
         // 平台 Webhook 派发（规格 §6.3.1：webhooks.webhook_payment_failure_url）
         app(WebhookService::class)->paymentFailure([
@@ -273,8 +274,8 @@ class PaymentService
      */
     public function activatePlan(User $user, Payment $payment): void
     {
-        $plan = Plan::query()->where('plan_id', (int) ($payment->plan_id ?: $user->plan_id))->first();
-        if (! $plan) {
+        $plan = Plan::query()->where('plan_id', (int) ($payment->plan_id ?? $user->plan_id))->first();
+        if ($plan === null) {
             return;
         }
 
@@ -302,11 +303,11 @@ class PaymentService
     {
         $codeModel = Code::where('code', $code)->first();
 
-        if (! $codeModel) {
+        if ($codeModel === null) {
             return ['success' => false, 'message' => __('msg.code_not_found')];
         }
 
-        if ($issue = $codeModel->redemptionIssue($user)) {
+        if (($issue = $codeModel->redemptionIssue($user)) !== '' && $issue !== null) {
             // 映射到 msg.* 语言键（payments/redeem-code 端点约定）
             $key = str_replace('account.', 'msg.', $issue);
 
@@ -329,7 +330,7 @@ class PaymentService
      */
     public function cancelSubscription(User $user, string $processor): void
     {
-        if ($user->payment_subscription_id && $user->payment_processor === $processor) {
+        if (($user->payment_subscription_id !== '' && $user->payment_subscription_id !== null) && $user->payment_processor === $processor) {
             $user->update([
                 'payment_subscription_id' => null,
                 'payment_processor' => null,
@@ -346,7 +347,7 @@ class PaymentService
             ->where('payment_processor', $processor)
             ->first();
 
-        if ($user) {
+        if ($user !== null) {
             $user->update([
                 'payment_subscription_id' => null,
                 'payment_processor' => null,
@@ -364,7 +365,7 @@ class PaymentService
             ->where('external_id', $externalId)
             ->first();
 
-        if ($payment && $payment->status !== 1) {
+        if ($payment !== null && $payment->status !== 1) {
             // 记账口径与直接入账路径统一（周期 #14：此前不累计
             // payment_total_amount、不派发平台 webhook）
             $this->settlePayment($payment, $externalId);

@@ -40,7 +40,7 @@ class WebhookPaymentController extends Controller
         if ($request->input('alert_name') === 'payment_succeeded') {
             $data = Typed::arr(json_decode(Typed::string($request->input('passthrough', '')), true));
             $paymentId = $data['payment_id'] ?? null;
-            if ($paymentId
+            if ((bool) $paymentId
                 && $this->paymentService->verifyGatewayAmount(
                     Typed::int($paymentId),
                     is_numeric($request->input('sale_gross')) ? (float) $request->input('sale_gross') : null,
@@ -65,7 +65,7 @@ class WebhookPaymentController extends Controller
 
         if ($request->input('event_type') === 'transaction.completed') {
             $paymentId = $request->input('data.custom_data.payment_id');
-            if ($paymentId
+            if ((bool) $paymentId
                 && $this->paymentService->verifyGatewayAmount(
                     Typed::int($paymentId),
                     PaymentService::majorUnits(
@@ -91,7 +91,7 @@ class WebhookPaymentController extends Controller
         }
 
         $action = $request->input('action', '');
-        if (in_array($action, ['payment.created', 'payment.updated'])) {
+        if (in_array($action, ['payment.created', 'payment.updated'], true)) {
             $this->paymentService->handleExternalPaymentNotification('mercadopago', Typed::string($request->input('data.id')));
         }
 
@@ -115,7 +115,7 @@ class WebhookPaymentController extends Controller
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
-        if (in_array($request->input('transaction_status'), ['capture', 'settlement'])) {
+        if (in_array($request->input('transaction_status'), ['capture', 'settlement'], true)) {
             $this->paymentService->handleExternalPaymentNotification('midtrans', Typed::string($request->input('order_id', '')));
         }
 
@@ -127,7 +127,7 @@ class WebhookPaymentController extends Controller
         $secretHash = config('services.flutterwave.secret_hash');
 
         // fail-closed：未配置 secret 一律拒绝（原实现未配置时放行）
-        if (empty($secretHash) || ! hash_equals(Typed::string($secretHash), (string) $request->header('verif-hash'))) {
+        if ($secretHash === null || $secretHash === '' || ! hash_equals(Typed::string($secretHash), (string) $request->header('verif-hash'))) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
@@ -149,7 +149,7 @@ class WebhookPaymentController extends Controller
 
         if ($request->input('meta.event_name') === 'order_created') {
             $paymentId = $request->input('data.attributes.custom_data.payment_id');
-            if ($paymentId
+            if ((bool) $paymentId
                 && $this->paymentService->verifyGatewayAmount(
                     Typed::int($paymentId),
                     PaymentService::majorUnits(
@@ -188,7 +188,7 @@ class WebhookPaymentController extends Controller
             return response()->json(['error' => 'Verification failed'], 400);
         }
 
-        if ($paymentId
+        if ((bool) $paymentId
             && $this->paymentService->verifyGatewayAmount(
                 Typed::int($paymentId),
                 is_numeric(data_get($verified, 'amount.value'))
@@ -214,7 +214,7 @@ class WebhookPaymentController extends Controller
         }
 
         // 头格式：sender=...;signature=<md5>;content-type=...
-        $signatureHeader = (string) $request->header('openpayu-signature', '');
+        $signatureHeader = $request->header('openpayu-signature', '');
         preg_match('/signature=([^;]+)/i', $signatureHeader, $matches);
         $provided = $matches[1] ?? '';
 
@@ -260,7 +260,7 @@ class WebhookPaymentController extends Controller
         $data = Typed::arr($request->input('object'));
         if ($request->input('type') === 'payment.created' && ($data['status'] ?? '') === 'completed') {
             $paymentId = data_get($data, 'metadata.payment_id');
-            if ($paymentId
+            if ((bool) $paymentId
                 && $this->paymentService->verifyGatewayAmount(
                     Typed::int($paymentId),
                     PaymentService::majorUnits(Typed::intOrNull($data['amount'] ?? null), Typed::string($data['currency'] ?? '')),
@@ -315,7 +315,7 @@ class WebhookPaymentController extends Controller
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
-        if (in_array($request->input('status'), ['completed', 'mismatched'])) {
+        if (in_array($request->input('status'), ['completed', 'mismatched'], true)) {
             $this->paymentService->handleExternalPaymentNotification('plisio', Typed::string($request->input('order_number', '')));
         }
 
@@ -333,7 +333,7 @@ class WebhookPaymentController extends Controller
 
         if ($request->input('event') === 'ORDER_COMPLETED') {
             $paymentId = $request->input('data.metadata.payment_id');
-            if ($paymentId
+            if ((bool) $paymentId
                 && $this->paymentService->verifyGatewayAmount(
                     Typed::int($paymentId),
                     PaymentService::majorUnits(
@@ -380,12 +380,12 @@ class WebhookPaymentController extends Controller
 
         // fail-closed：api_key 未配置时空 key MD5 签名可被任何人伪造，
         // 直接 400 拒绝（verifyCallback 另有空 key 守卫双层防御）
-        if (empty(config('services.wechat_pay.api_key'))) {
+        if (Typed::string(config('services.wechat_pay.api_key')) === '') {
             return response()->json(['error' => 'Not configured'], 400);
         }
 
-        $xml = simplexml_load_string((string) $request->getContent(), null, LIBXML_NONET);
-        $data = $xml ? (array) $xml : [];
+        $xml = simplexml_load_string($request->getContent(), null, LIBXML_NONET);
+        $data = ($xml !== false) ? (array) $xml : [];
         $dataArr = Typed::arr($data);
 
         if (($dataArr['return_code'] ?? '') === 'SUCCESS'
@@ -394,11 +394,11 @@ class WebhookPaymentController extends Controller
 
             $attach = Typed::arr(json_decode(Typed::string($dataArr['attach'] ?? '{}'), true));
             $paymentId = Typed::int($attach['payment_id'] ?? 0);
-            $payment = $paymentId ? Payment::find($paymentId) : null;
+            $payment = ($paymentId !== 0) ? Payment::find($paymentId) : null;
 
             // 金额防篡改：total_fee 虽被签名覆盖（网关可信），但仍须与订单金额
             // 完全一致方可入账（分），防止同商户低额订单嫁接 / 记账错误
-            if ($payment
+            if ($payment !== null
                 && Typed::int($dataArr['total_fee'] ?? 0) === (int) round(((float) $payment->total_amount) * 100)) {
                 $this->paymentService->handlePaymentSuccess($paymentId, Typed::string($dataArr['transaction_id'] ?? ''));
 
@@ -423,7 +423,7 @@ class WebhookPaymentController extends Controller
 
         // fail-closed：验签依赖支付宝公钥，未配置显式拒绝
         // （不再依赖 openssl 无效 key 副作用返回 false）
-        if (empty(config('services.alipay.alipay_public_key'))) {
+        if (Typed::string(config('services.alipay.alipay_public_key')) === '') {
             return response()->json(['error' => 'Not configured'], 400);
         }
 
@@ -435,11 +435,11 @@ class WebhookPaymentController extends Controller
             $outTradeNo = Typed::string($data['out_trade_no'] ?? '');
             $passback = Typed::arr(json_decode(urldecode(Typed::string($data['passback_params'] ?? '{}')), true));
             $paymentId = Typed::int($passback['payment_id'] ?? 0);
-            $payment = $paymentId ? Payment::find($paymentId) : null;
+            $payment = ($paymentId !== 0) ? Payment::find($paymentId) : null;
 
             // 金额防篡改：total_amount 虽被 RSA 签名覆盖（网关可信），但仍须与
             // 订单金额一致方可入账（容差 0.001 元），防止低额订单嫁接 / 记账错误
-            if ($payment
+            if ($payment !== null
                 && abs(Typed::float($data['total_amount'] ?? 0) - (float) $payment->total_amount) < 0.001) {
                 $this->paymentService->handlePaymentSuccess($paymentId, Typed::string($data['trade_no'] ?? $outTradeNo));
 
@@ -467,7 +467,7 @@ class WebhookPaymentController extends Controller
             return false;
         }
 
-        $header = (string) $request->header('x-signature', '');
+        $header = $request->header('x-signature', '');
         if ($header === '') {
             return false;
         }
@@ -492,7 +492,7 @@ class WebhookPaymentController extends Controller
         }
 
         $dataId = Typed::string($request->input('data.id', ''));
-        $requestId = (string) $request->header('x-request-id', '');
+        $requestId = $request->header('x-request-id', '');
 
         $manifests = ["id:{$dataId};request-id:{$requestId};"];
 

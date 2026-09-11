@@ -69,7 +69,7 @@ class Captcha
             return null;
         }
 
-        return self::siteKey($type) && self::secretKey($type) ? $type : null;
+        return self::siteKey($type) !== null && self::secretKey($type) !== null ? $type : null;
     }
 
     /**
@@ -94,7 +94,7 @@ class Captcha
     {
         $provider = self::provider();
 
-        if ($provider === null || empty($token)) {
+        if ($provider === null || $token === null || $token === '') {
             return false;
         }
 
@@ -206,7 +206,7 @@ class Captcha
 
             $challenge = Typed::string($response->json('challenge') ?? '');
 
-            if ($response->failed() || ! preg_match('/^[a-f0-9]{32}$/', $challenge)) {
+            if ($response->failed() || preg_match('/^[a-f0-9]{32}$/', $challenge) !== 1) {
                 throw new \RuntimeException('geetest register failed');
             }
 

@@ -39,7 +39,7 @@ class GeoIp
             'longitude' => null,
         ];
 
-        if (! $ip || filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+        if (($ip === null || $ip === '') || filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
             return $result;
         }
 
@@ -116,7 +116,7 @@ class GeoIp
      */
     public static function continentFromCountry(?string $countryCode): ?string
     {
-        if (! $countryCode) {
+        if (($countryCode === null || $countryCode === '')) {
             return null;
         }
 

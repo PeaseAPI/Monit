@@ -65,8 +65,8 @@ class AuditContext
             $list = $this->dom()->getElementsByTagName('meta');
 
             foreach ($list as $node) {
-                if (strcasecmp((string) $node->getAttribute($attr), $name) === 0) {
-                    return $node->getAttribute('content') ?: null;
+                if (strcasecmp($node->getAttribute($attr), $name) === 0) {
+                    return $node->getAttribute('content');
                 }
             }
         }
@@ -113,7 +113,7 @@ class AuditContext
     public function header(string $name): ?string
     {
         foreach ($this->headers as $key => $value) {
-            if (strcasecmp((string) $key, $name) === 0) {
+            if (strcasecmp($key, $name) === 0) {
                 return is_array($value)
                     ? implode(', ', array_map(static fn ($v) => Typed::string($v), $value))
                     : Typed::string($value);

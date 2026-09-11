@@ -35,8 +35,8 @@ class WebsitesImportController extends Controller
         $urls = [];
 
         // 从文本框读取
-        if (! empty($validated['urls'])) {
-            $urls = array_filter(array_map('trim', explode("\n", Typed::string($validated['urls']))));
+        if (($validated['urls'] ?? '') !== '') {
+            $urls = array_filter(array_map('trim', explode("\n", Typed::string($validated['urls']))), fn (string $v): bool => $v !== '');
         }
 
         // 从 CSV 文件读取（列：name,url）
@@ -50,16 +50,16 @@ class WebsitesImportController extends Controller
             // 跳过表头
             fgetcsv($handle);
             while (($row = fgetcsv($handle)) !== false) {
-                if (isset($row[1]) && filter_var($row[1], FILTER_VALIDATE_URL)) {
+                if (isset($row[1]) && filter_var($row[1], FILTER_VALIDATE_URL) !== false) {
                     $urls[] = trim($row[1]);
-                } elseif (isset($row[0]) && filter_var($row[0], FILTER_VALIDATE_URL)) {
+                } elseif (isset($row[0]) && filter_var($row[0], FILTER_VALIDATE_URL) !== false) {
                     $urls[] = trim($row[0]);
                 }
             }
             fclose($handle);
         }
 
-        if (empty($urls)) {
+        if ($urls === []) {
             return back()->withErrors(['urls' => __('validation.import_urls_required')]);
         }
 

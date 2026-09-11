@@ -117,7 +117,7 @@ class EnvWriter
         // 换行统一转 \n 字面量（phpdotenv 双引号语义），保证一行一条记录
         $value = str_replace(["\r\n", "\r", "\n"], '\\n', $value);
 
-        if ($value !== '' && preg_match('/[\s"\'#\\\\]/', $value)) {
+        if ($value !== '' && (preg_match('/[\s"\'#\\\\]/', $value) !== 0 && preg_match('/[\s"\'#\\\\]/', $value) !== false)) {
             $value = '"'.str_replace(['\\', '"'], ['\\\\', '\\"'], $value).'"';
         }
 
@@ -145,7 +145,7 @@ class EnvWriter
         while ($i < $count) {
             $line = $lines[$i];
 
-            if (preg_match('/^([A-Z][A-Z0-9_]*)=(.*)$/', $line, $m)) {
+            if (preg_match('/^([A-Z][A-Z0-9_]*)=(.*)$/', $line, $m) > 0) {
                 $key = $m[1];
                 $raw = $m[2];
 
@@ -220,7 +220,7 @@ class EnvWriter
         $count = count($lines);
 
         for ($i = 0; $i < $count; $i++) {
-            if (preg_match('/^('.preg_quote($key, '/').')=(.*)$/', $lines[$i], $m)) {
+            if (preg_match('/^('.preg_quote($key, '/').')=(.*)$/', $lines[$i], $m) > 0) {
                 $start = $i;
                 $raw = $m[2];
 
@@ -240,7 +240,7 @@ class EnvWriter
 
     protected function assertValidKey(string $key): void
     {
-        if (! preg_match('/^[A-Z][A-Z0-9_]*$/', $key)) {
+        if (preg_match('/^[A-Z][A-Z0-9_]*$/', $key) !== 1) {
             throw new InvalidArgumentException("Illegal .env key: {$key}");
         }
     }

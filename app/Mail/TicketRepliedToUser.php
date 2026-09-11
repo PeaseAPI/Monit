@@ -30,8 +30,7 @@ class TicketRepliedToUser extends Mailable
                 'ticket' => $this->ticket,
                 'heading' => __('msg.ticket_user_replied_heading'),
                 'message' => $this->reply->message,
-                'actionUrl' => Settings::get('tickets.inbound_email') !== null && $this->ticket->user_id
-                    ? route('tickets.show', $this->ticket->ticket_id)
+                'actionUrl' => Settings::get('tickets.inbound_email') !== null && ($this->ticket->user_id !== 0 && $this->ticket->user_id !== null) ? route('tickets.show', $this->ticket->ticket_id)
                     : route('login'),
                 'actionText' => __('msg.ticket_user_view'),
                 'footerNote' => __('msg.ticket_user_direct_reply_note'),

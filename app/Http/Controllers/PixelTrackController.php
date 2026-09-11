@@ -76,7 +76,7 @@ class PixelTrackController extends Controller
             }
         }
 
-        if ($website) {
+        if ($website !== null) {
             try {
                 $tracker->handle($website, $request);
             } catch (\Throwable $e) {
@@ -132,7 +132,7 @@ class PixelTrackController extends Controller
             $website = Website::where('pixel_key', $pixel_key)->first();
         }
 
-        if (! $website || ! $website->is_enabled) {
+        if ($website === null || ! $website->is_enabled) {
             return response('{}', 200)
                 ->header('Access-Control-Allow-Origin', '*')
                 ->header('Content-Type', 'application/json')
@@ -145,7 +145,7 @@ class PixelTrackController extends Controller
             ->where('path', $path)
             ->first();
 
-        if (! $heatmap) {
+        if ($heatmap === null) {
             // 通配符匹配 /path/*
             $heatmap = Heatmap::where('website_id', $website->website_id)
                 ->where('is_enabled', true)
@@ -153,11 +153,11 @@ class PixelTrackController extends Controller
                 ->first();
         }
 
-        if (! $heatmap) {
+        if ($heatmap === null) {
             // pathname 回退：热图通常按纯路径配置（如 /about），而 PIXEL 上报的 path
             // 是 pathname + search——访问带 ?utm_source=... 等查询参数时精确匹配失败，
             // 导致该热图永远等不到底图快照（用户反馈「暂无热图/无底图」根因之一）
-            $pathname = parse_url($path, PHP_URL_PATH) ?: '/';
+            $pathname = parse_url($path, PHP_URL_PATH) ?? '/';
             if ($pathname !== $path) {
                 $heatmap = Heatmap::where('website_id', $website->website_id)
                     ->where('is_enabled', true)
@@ -177,7 +177,7 @@ class PixelTrackController extends Controller
             && isset($analyticsSettings->websites_heatmaps_is_enabled)
             && in_array($analyticsSettings->websites_heatmaps_is_enabled, [true, 1, '1', 'true', 'on'], true);
 
-        if (! $heatmap && $globalHeatmapsEnabled) {
+        if ($heatmap === null && $globalHeatmapsEnabled) {
             $heatmap = Heatmap::create([
                 'website_id' => $website->website_id,
                 'user_id' => $website->user_id,
@@ -200,8 +200,7 @@ class PixelTrackController extends Controller
             $replayEnabled = ($replayLimit === -1) || ($replayLimit > 0 && $website->current_month_sessions_replays < $replayLimit);
         }
 
-        $data = $heatmap
-            ? json_encode(['heatmap_id' => $heatmap->heatmap_id, 'replay_enabled' => $replayEnabled])
+        $data = ($heatmap !== null) ? json_encode(['heatmap_id' => $heatmap->heatmap_id, 'replay_enabled' => $replayEnabled])
             : json_encode(['replay_enabled' => $replayEnabled]);
 
         return response((string) $data, 200)

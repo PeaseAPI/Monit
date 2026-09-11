@@ -33,7 +33,7 @@ class WebsiteVisitor extends Model
     protected $appends = ['visitor_uuid'];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {
@@ -72,7 +72,7 @@ class WebsiteVisitor extends Model
 
     public static function binaryToUuid(?string $bytes): ?string
     {
-        if (! $bytes) {
+        if (($bytes === null || $bytes === '')) {
             return null;
         }
 

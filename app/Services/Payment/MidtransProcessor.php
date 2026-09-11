@@ -52,12 +52,12 @@ class MidtransProcessor
         $user = User::query()->where('user_id', Typed::int($customField['user_id'] ?? 0))->first();
         $plan = Plan::query()->where('plan_id', Typed::int($customField['plan_id'] ?? 0))->first();
 
-        if (! $user || ! $plan) {
+        if ($user === null || $plan === null) {
             return null;
         }
 
         $status = $request->input('transaction_status');
-        if (! in_array($status, ['capture', 'settlement'])) {
+        if (! in_array($status, ['capture', 'settlement'], true)) {
             return null;
         }
 

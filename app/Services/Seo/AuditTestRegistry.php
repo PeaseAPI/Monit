@@ -53,7 +53,7 @@ class AuditTestRegistry
      */
     protected static function requirementsMet(array $meta): bool
     {
-        if (empty($meta['requires'])) {
+        if (($meta['requires'] ?? []) === []) {
             return true;
         }
 

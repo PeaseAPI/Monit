@@ -16,7 +16,7 @@ class RedeemedCode extends Model
     protected $fillable = ['user_id', 'code_id', 'datetime'];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {

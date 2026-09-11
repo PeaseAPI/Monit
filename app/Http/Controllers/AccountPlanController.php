@@ -35,11 +35,11 @@ class AccountPlanController extends Controller
 
         $code = Code::where('code', $validated['code'])->first();
 
-        if (! $code) {
+        if ($code === null) {
             return back()->withErrors(['code' => __('msg.invalid_code')]);
         }
 
-        if ($issue = $code->redemptionIssue($this->user())) {
+        if (($issue = $code->redemptionIssue($this->user())) !== '' && $issue !== null) {
             return back()->withErrors(['code' => __($issue)]);
         }
 

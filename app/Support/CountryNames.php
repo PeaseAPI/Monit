@@ -81,7 +81,7 @@ class CountryNames
     {
         $code = strtoupper(trim((string) $code));
 
-        if (! preg_match('/^[A-Z]{2}$/', $code)) {
+        if (preg_match('/^[A-Z]{2}$/', $code) !== 1) {
             return '';
         }
 

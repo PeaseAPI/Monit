@@ -204,7 +204,7 @@ final class StatisticsService
             'visitors' => $visitors,
             'sessions' => $sessionCount,
             'bounce_rate' => $bounceRate,
-            'avg_duration' => $avgDuration ? Typed::int($avgDuration) : 0,
+            'avg_duration' => ((bool) $avgDuration) ? Typed::int($avgDuration) : 0,
         ];
     }
 
@@ -256,7 +256,7 @@ final class StatisticsService
 
         $byDay = [];
         foreach ($rows as $row) {
-            $byDay[$row->day] = ['pageviews' => (int) $row->pageviews, 'visitors' => (int) $row->visitors];
+            $byDay[$row->day] = ['pageviews' => $row->pageviews, 'visitors' => $row->visitors];
         }
 
         // 补全日期空洞
@@ -373,8 +373,8 @@ final class StatisticsService
         }
 
         return collect($rows)->map(fn ($row) => [
-            'key' => (string) ($row->k ?: __('stats.direct_access')),
-            'count' => (int) $row->total,
+            'key' => (string) ($row->k ?? __('stats.direct_access')),
+            'count' => $row->total,
             'utm_source' => $row->utm_source,
             'utm_medium' => $row->utm_medium,
             'utm_campaign' => $row->utm_campaign,
@@ -501,7 +501,7 @@ final class StatisticsService
         foreach ($dimensions as $dim) {
             $rows = $this->breakdown($dim, 20);
             foreach ($rows as $row) {
-                if (! empty($row['key']) && $row['key'] !== __('stats.unknown')) {
+                if ($row['key'] !== '' && $row['key'] !== __('stats.unknown')) {
                     $results[] = [
                         'key' => $row['key'],
                         'type' => $dim,
@@ -550,7 +550,7 @@ final class StatisticsService
      */
     protected function searchEngineParams(?string $host): ?array
     {
-        if (! $host) {
+        if (($host === null || $host === '')) {
             return null;
         }
 
@@ -568,7 +568,7 @@ final class StatisticsService
     /** 判定 host 是否属于社交平台 */
     protected function isSocialHost(?string $host): bool
     {
-        if (! $host) {
+        if (($host === null || $host === '')) {
             return false;
         }
 
@@ -612,7 +612,7 @@ final class StatisticsService
 
         $byHour = [];
         foreach ($rows as $row) {
-            $byHour[(int) $row->h] = ['pageviews' => (int) $row->pageviews, 'visitors' => (int) $row->visitors];
+            $byHour[Typed::int($row->h)] = ['pageviews' => $row->pageviews, 'visitors' => $row->visitors];
         }
 
         $series = [];
@@ -647,7 +647,7 @@ final class StatisticsService
             ->limit($limit)
             ->get();
 
-        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => (int) $row->total])->all();
+        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => $row->total])->all();
     }
 
     /**
@@ -664,7 +664,7 @@ final class StatisticsService
         $rows = DB::table('sessions_events as e')
             ->join(DB::raw('(select session_id, max(event_id) as max_id from sessions_events where website_id = ? and date between ? and ? group by session_id) as m'),
                 'e.event_id', '=', 'm.max_id')
-            ->addBinding([(int) $this->website->website_id, $this->startDate, $this->endDate], 'join')
+            ->addBinding([$this->website->website_id, $this->startDate, $this->endDate], 'join')
             ->groupBy('e.path')
             ->selectRaw('e.path as k, count(*) as total')
             ->orderByDesc('total')
@@ -698,7 +698,7 @@ final class StatisticsService
         $merged = [];
         foreach ($rows as $row) {
             $params = $this->searchEngineParams($row->referrer_host);
-            if (! $params) {
+            if (($params === null || $params === [])) {
                 continue;
             }
 
@@ -711,7 +711,7 @@ final class StatisticsService
                 $merged[$term] = ['term' => $term, 'engines' => [], 'count' => 0];
             }
             $merged[$term]['engines'][(string) $row->referrer_host] = true;
-            $merged[$term]['count'] += (int) $row->total;
+            $merged[$term]['count'] += $row->total;
         }
 
         $items = array_values($merged);
@@ -731,14 +731,14 @@ final class StatisticsService
      */
     protected function extractSearchTerm(?string $path, array $paramNames): ?string
     {
-        if (! $path || ! str_contains($path, '?')) {
+        if (($path === null || $path === '') || ! str_contains($path, '?')) {
             return null;
         }
 
         parse_str(substr($path, (int) strpos($path, '?') + 1), $query);
 
         foreach ($paramNames as $name) {
-            if (! empty($query[$name]) && is_string($query[$name])) {
+            if (is_string($query[$name] ?? null) && $query[$name] !== '') {
                 return mb_substr(trim($query[$name]), 0, 120);
             }
         }
@@ -764,18 +764,18 @@ final class StatisticsService
             ->get();
 
         $result = ['direct' => 0, 'organic' => 0, 'social' => 0, 'referral' => 0, 'campaign' => 0];
-        $selfHost = strtolower(Typed::string($this->website->host ?? $this->website->domain ?? ''));
+        $selfHost = strtolower(Typed::string($this->website->host ?? ''));
 
         foreach ($rows as $row) {
-            $count = (int) $row->total;
-            $host = $row->referrer_host ? strtolower((string) $row->referrer_host) : '';
-            $hasUtm = (bool) ($row->utm_source ?: $row->utm_medium);
+            $count = $row->total;
+            $host = ($row->referrer_host !== '' && $row->referrer_host !== null) ? strtolower($row->referrer_host) : '';
+            $hasUtm = (bool) ($row->utm_source ?? $row->utm_medium);
 
             if ($hasUtm) {
                 $result['campaign'] += $count;
             } elseif ($host === '' || ($selfHost !== '' && $host === $selfHost)) {
                 $result['direct'] += $count;
-            } elseif ($this->searchEngineParams($host)) {
+            } elseif ($this->searchEngineParams($host) !== [] && $this->searchEngineParams($host) !== null) {
                 $result['organic'] += $count;
             } elseif ($this->isSocialHost($host)) {
                 $result['social'] += $count;
@@ -812,7 +812,7 @@ final class StatisticsService
         $freqBuckets = ['1' => 0, '2' => 0, '3-4' => 0, '5-9' => 0, '10+' => 0];
 
         foreach ($freqRows as $row) {
-            $n = (int) $row->sessions;
+            $n = $row->sessions;
             $n === 1 ? $newVisitors++ : $returning++;
 
             if ($n === 1) {
@@ -847,7 +847,7 @@ final class StatisticsService
         $durationBuckets = ['0-10s' => 0, '11-30s' => 0, '31-60s' => 0, '1-3m' => 0, '3m+' => 0];
 
         foreach ($sessions as $session) {
-            $events = (int) $session->total_events;
+            $events = $session->total_events;
             if ($events <= 1) {
                 $depthBuckets['1']++;
             } elseif ($events <= 3) {
@@ -860,8 +860,11 @@ final class StatisticsService
                 $depthBuckets['30+']++;
             }
 
-            if ($last = ($lastBySession[$session->session_id] ?? null)) {
-                $seconds = max(0, strtotime(Typed::string($last)) - strtotime((string) $session->date));
+            $last = $lastBySession[$session->session_id] ?? null;
+            $from = $last !== null ? strtotime(Typed::string($last)) : false;
+            $to = strtotime((string) $session->date);
+            if ($from !== false && $to !== false) {
+                $seconds = max(0, $from - $to);
 
                 if ($seconds <= 10) {
                     $durationBuckets['0-10s']++;
@@ -927,9 +930,9 @@ final class StatisticsService
 
         $byDow = [];
         foreach ($rows as $row) {
-            $srcDow = (int) $row->dow;          // 源：0=周日（mysql DAYOFWEEK-1）
+            $srcDow = $row->dow;          // 源：0=周日（mysql DAYOFWEEK-1）
             $iso = $srcDow === 0 ? 7 : $srcDow;  // ISO：1=周一…7=周日
-            $byDow[$iso] = ['pageviews' => (int) $row->pageviews, 'visitors' => (int) $row->visitors];
+            $byDow[$iso] = ['pageviews' => $row->pageviews, 'visitors' => $row->visitors];
         }
 
         // ISO 顺序：周一(1)…周日(7)
@@ -1020,7 +1023,7 @@ final class StatisticsService
 
         foreach ($rows as $row) {
             $host = strtolower((string) $row->k);
-            $count = (int) $row->total;
+            $count = $row->total;
 
             // AI 引荐（openai/claude/perplexity/copilot/gemini）
             if (isset(static::AI_HOSTS[$host])) {
@@ -1052,7 +1055,7 @@ final class StatisticsService
 
                 continue;
             }
-            if (preg_match('/^(?:www\.)?google\.[a-z.]+$/', $host)) {
+            if (preg_match('/^(?:www\.)?google\.[a-z.]+$/', $host) !== 0 && preg_match('/^(?:www\.)?google\.[a-z.]+$/', $host) !== false) {
                 $search['google.com'] = ($search['google.com'] ?? 0) + $count;
 
                 continue;
@@ -1062,7 +1065,7 @@ final class StatisticsService
 
                 continue;
             }
-            if (preg_match('/^(?:m\.)?baidu\.[a-z.]+$/', $host)) {
+            if (preg_match('/^(?:m\.)?baidu\.[a-z.]+$/', $host) !== 0 && preg_match('/^(?:m\.)?baidu\.[a-z.]+$/', $host) !== false) {
                 $search['baidu.com'] = ($search['baidu.com'] ?? 0) + $count;
             }
         }
@@ -1104,7 +1107,7 @@ final class StatisticsService
             ->limit($limit)
             ->get();
 
-        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => (int) $row->total])->all();
+        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => $row->total])->all();
     }
 
     /**
@@ -1129,9 +1132,9 @@ final class StatisticsService
 
         return collect($rows)->map(fn ($row) => [
             'key' => $row->m.' × '.$row->c,
-            'medium' => (string) $row->m,
+            'medium' => $row->m,
             'campaign' => (string) $row->c,
-            'count' => (int) $row->total,
+            'count' => $row->total,
         ])->all();
     }
 
@@ -1152,6 +1155,6 @@ final class StatisticsService
             ->limit($limit)
             ->get();
 
-        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => (int) $row->total])->all();
+        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => $row->total])->all();
     }
 }

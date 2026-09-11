@@ -36,7 +36,7 @@ class AppServiceProvider extends ServiceProvider
             $proxies === '*' => '*',
             $proxies === 'none' => [],
             $proxies === 'private' => ['127.0.0.1', '::1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', 'fc00::/7'],
-            default => array_values(array_filter(array_map('trim', explode(',', $proxies)))),
+            default => array_values(array_filter(array_map('trim', explode(',', $proxies)), fn (string $v): bool => $v !== '')),
         });
 
         // SMTP 设置桥（后台 设置→SMTP → Laravel mail 运行时配置）
@@ -51,7 +51,7 @@ class AppServiceProvider extends ServiceProvider
                 $website = Website::findOrFail(Typed::int($website));
             }
 
-            return (int) $user->user_id === (int) $website->user_id || $user->isAdmin();
+            return $user->user_id === $website->user_id || $user->isAdmin();
         });
 
         // 启动已激活插件（规格书 §14：init.php 注册路由 / 指令 / 监听器）
@@ -86,7 +86,7 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            $port = Typed::int(Settings::get('smtp.smtp_port') ?: 587);
+            $port = Typed::int(Settings::get('smtp.smtp_port') ?? 587);
             $encryption = strtolower(trim(Typed::string(Settings::get('smtp.smtp_encryption', 'tls'))));
             $username = trim(Typed::string(Settings::get('smtp.smtp_username', '')));
             $password = Typed::string(Settings::get('smtp.smtp_password', ''));
@@ -108,7 +108,7 @@ class AppServiceProvider extends ServiceProvider
             if ($fromEmail !== '') {
                 config(['mail.from' => [
                     'address' => $fromEmail,
-                    'name' => trim(Typed::string(Settings::get('smtp.smtp_from_name', ''))) ?: config('app.name'),
+                    'name' => Typed::nonEmpty(trim(Typed::string(Settings::get('smtp.smtp_from_name', ''))), Typed::string(config('app.name'))),
                 ]]);
             }
 
@@ -125,7 +125,7 @@ class AppServiceProvider extends ServiceProvider
                 $value = trim(Typed::string(Settings::get('smtp.'.$setting, '')));
 
                 if ($value !== '') {
-                    config(['mail.'.$key => array_filter(array_map('trim', explode(',', $value)))]);
+                    config(['mail.'.$key => array_filter(array_map('trim', explode(',', $value)), fn (string $v): bool => $v !== '')]);
                 }
             }
         } catch (\Throwable) {

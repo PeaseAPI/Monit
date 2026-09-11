@@ -33,7 +33,7 @@ class VisitorSession extends Model
     protected $appends = ['session_uuid'];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {
@@ -68,7 +68,7 @@ class VisitorSession extends Model
 
     public function getSessionUuidAttribute(): ?string
     {
-        return $this->session_uuid_binary
+        return ($this->session_uuid_binary !== '')
             ? Uuid::fromBytes($this->session_uuid_binary)->toString()
             : null;
     }

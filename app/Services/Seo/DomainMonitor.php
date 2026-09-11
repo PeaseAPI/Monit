@@ -31,9 +31,9 @@ class DomainMonitor
             $raw = $this->query('whois.iana.org', $domain);
 
             if ($raw !== null
-                && preg_match('/whois:\s*(\S+)/i', $raw, $m)
+                && preg_match('/whois:\s*(\S+)/i', $raw, $m) > 0
                 && strcasecmp($m[1], 'whois.iana.org') !== 0
-                && preg_match('/^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+\.?$/i', rtrim($m[1], '.'))) {
+                && preg_match('/^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+\.?$/i', rtrim($m[1], '.')) > 0) {
                 $raw = $this->query($m[1], $domain) ?? $raw;
             }
         }
@@ -133,11 +133,11 @@ class DomainMonitor
     protected static function matchDate(string $raw, array $fields): ?string
     {
         foreach ($fields as $field) {
-            if (preg_match('/'.preg_quote($field, '/').':\s*(.+)/i', $raw, $m)) {
+            if (preg_match('/'.preg_quote($field, '/').':\s*(.+)/i', $raw, $m) > 0) {
                 $value = trim($m[1]);
 
                 // ISO 格式（2026-08-31T08:00:00Z）取日期部分
-                if (preg_match('/(\d{4}-\d{2}-\d{2})/', $value, $d)) {
+                if (preg_match('/(\d{4}-\d{2}-\d{2})/', $value, $d) > 0) {
                     return $d[1];
                 }
 
@@ -154,7 +154,7 @@ class DomainMonitor
 
     protected static function matchField(string $raw, string $field): ?string
     {
-        return preg_match('/'.preg_quote($field, '/').':\s*(.+)/i', $raw, $m) ? trim($m[1]) : null;
+        return preg_match('/'.preg_quote($field, '/').':\s*(.+)/i', $raw, $m) > 0 ? trim($m[1]) : null;
     }
 
     /**

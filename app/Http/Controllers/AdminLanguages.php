@@ -121,7 +121,9 @@ class AdminLanguages extends Controller
             $locales[] = basename(Typed::string($file), '.json');
         }
 
-        return array_map(static fn ($locale) => Typed::string($locale), $locales) ?: [Typed::string(config('app.locale'))];
+        $mapped = array_map(static fn ($locale) => Typed::string($locale), $locales);
+
+        return $mapped === [] ? [Typed::string(config('app.locale'))] : $mapped;
     }
 
     /**

@@ -45,7 +45,7 @@ class AdminStatistics extends Controller
             ->groupBy('city_name', 'latitude', 'longitude')
             ->selectRaw('city_name, latitude, longitude, count(*) as count')
             ->limit(200)->get()
-            ->map(fn ($row) => ['label' => $row->city_name, 'lat' => (float) $row->latitude, 'lng' => (float) $row->longitude, 'count' => (int) $row->count])
+            ->map(fn ($row) => ['label' => $row->city_name, 'lat' => (float) $row->latitude, 'lng' => (float) $row->longitude, 'count' => $row->count])
             ->all();
         $byCountry = User::whereNotNull('country')->where('country', '!=', '')
             ->groupBy('country')->selectRaw('country, count(*) as count')->orderByDesc('count')->limit(20)->get();
@@ -153,7 +153,7 @@ class AdminStatistics extends Controller
         $totalFiles = 0;
         $directories = [];
         foreach (scandir($path) as $entry) {
-            if (in_array($entry, ['.', '..'])) {
+            if (in_array($entry, ['.', '..'], true)) {
                 continue;
             }
             $fullPath = $path.'/'.$entry;
@@ -161,7 +161,7 @@ class AdminStatistics extends Controller
                 $totalSize += $this->dirSize($fullPath);
                 $totalFiles += $this->dirFileCount($fullPath);
             } else {
-                $totalSize += filesize($fullPath);
+                $totalSize += (int) filesize($fullPath);
                 $totalFiles++;
             }
         }

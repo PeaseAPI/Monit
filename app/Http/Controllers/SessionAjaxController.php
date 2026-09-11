@@ -24,7 +24,7 @@ class SessionAjaxController extends Controller
         //   改为查询 team_member_associations（成员↔网站关联网，周期 #12
         //   起由 TeamMember 级联清理维护，与团队成员数据流一致）
         $user = $request->user();
-        if ($user && (int) $session->website?->user_id !== (int) $user->user_id) {
+        if ($user !== null && $session->website?->user_id !== $user->user_id) {
             $isTeamMember = TeamMemberAssociation::query()
                 ->where('website_id', $session->website?->website_id)
                 ->whereHas('member', fn ($q) => $q->where('user_id', $user->user_id))

@@ -96,7 +96,7 @@ final class UserAgentParser
         ];
 
         foreach ($patterns as $name => $pattern) {
-            if (preg_match($pattern, $ua, $m)) {
+            if (preg_match($pattern, $ua, $m) > 0) {
                 $version = isset($m[1]) ? str_replace('_', '.', $m[1]) : null;
                 if ($name === 'Windows' && $version !== null) {
                     $version = $versionMap[$version] ?? $version;
@@ -105,7 +105,7 @@ final class UserAgentParser
                     $version = null;
                 }
 
-                return [$name, $version ?: null];
+                return [$name, $version ?? null];
             }
         }
 
@@ -133,7 +133,7 @@ final class UserAgentParser
         ];
 
         foreach ($patterns as $name => $pattern) {
-            if (preg_match($pattern, $ua, $m)) {
+            if (preg_match($pattern, $ua, $m) > 0) {
                 return [$name, $m[1]];
             }
         }

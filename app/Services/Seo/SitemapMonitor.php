@@ -32,7 +32,7 @@ class SitemapMonitor
             return ['ok' => false, 'urls' => [], 'error' => 'HTTP '.$response->status()];
         }
 
-        $xml = simplexml_load_string((string) $response->body());
+        $xml = simplexml_load_string($response->body());
 
         if ($xml === false) {
             return ['ok' => false, 'urls' => [], 'error' => 'XML 解析失败'];
@@ -71,7 +71,7 @@ class SitemapMonitor
      */
     public function check(Website $website): array
     {
-        $sitemapUrl = $website->seo_sitemap_url ?: $website->scheme.'://'.$website->host.'/sitemap.xml';
+        $sitemapUrl = $website->seo_sitemap_url ?? $website->scheme.'://'.$website->host.'/sitemap.xml';
 
         $result = $this->fetch($sitemapUrl);
 
@@ -104,7 +104,7 @@ class SitemapMonitor
         $website->update([
             'seo_sitemap_urls_hash' => $hash,
             'seo_sitemap_checked_at' => now(),
-            'settings' => array_merge((array) $website->settings, ['seo_sitemap_urls' => array_slice($urls, 0, 2000)]),
+            'settings' => array_merge($website->settings, ['seo_sitemap_urls' => array_slice($urls, 0, 2000)]),
         ]);
 
         return [

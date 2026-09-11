@@ -22,7 +22,7 @@ class EnsureUserActive
         // web 组无全局 Authenticate，需主动经 session guard 解析当前用户
         $user = Auth::guard('web')->user();
 
-        if ($user !== null && (int) $user->status !== 1) {
+        if ($user !== null && $user->status !== 1) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

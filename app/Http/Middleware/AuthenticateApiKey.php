@@ -30,7 +30,7 @@ class AuthenticateApiKey
 
         $bearer = $request->bearerToken();
 
-        if (! $bearer) {
+        if (($bearer === null || $bearer === '')) {
             return response()->json(['error' => 'Unauthorized — Bearer token required'], 401);
         }
 
@@ -45,11 +45,11 @@ class AuthenticateApiKey
 
         // 解密值恒时比较确认（第十三轮）：lookup 命中后再验明文，防哈希碰撞/
         // 遗留明文行双轨歧义；恒时比较防解密值比对侧信道
-        if (! $user || ! hash_equals((string) $user->api_key, $bearer)) {
+        if ($user === null || ! hash_equals((string) $user->api_key, $bearer)) {
             $user = null;
         }
 
-        if (! $user) {
+        if ($user === null) {
             RateLimiter::hit($failures, 900);
 
             return response()->json(['error' => 'Invalid API key'], 401);

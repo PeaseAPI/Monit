@@ -28,27 +28,27 @@ class PublicStatisticsController extends Controller
 
         // 检查用户套餐是否允许公开统计
         $user = $website->user;
-        if (! $user || $user->status !== 1) {
+        if ($user === null || $user->status !== 1) {
             abort(404);
         }
 
         $planSettings = $user->getPlanSettings();
-        if (empty($planSettings['websites_public_statistics_is_enabled'])) {
+        if (! (bool) ($planSettings['websites_public_statistics_is_enabled'] ?? false)) {
             abort(404);
         }
 
         // 密码保护检查
-        if ($website->settings && ! empty($website->settings['public_statistics_password'])) {
+        if ($website->settings !== [] && ($website->settings['public_statistics_password'] ?? '') !== '') {
             $sessionKey = 'public_stats_auth_'.$website->website_id;
             $authenticated = $request->session()->get($sessionKey, false);
 
-            if (! $authenticated) {
+            if (! (bool) $authenticated) {
                 return view('stats.public_auth', compact('website'));
             }
         }
 
         // 统计数据
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30], true)) {
             $range = 7;
         }

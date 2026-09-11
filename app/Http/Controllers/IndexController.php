@@ -327,18 +327,18 @@ class IndexController extends Controller
 
         $expected = hash_hmac('sha256', $email, Typed::string(config('app.key')));
 
-        if (! $email || ! hash_equals($expected, $signature)) {
+        if ($email === '' || ! hash_equals($expected, $signature)) {
             return redirect()->route('index')->with('error', __('msg.invalid_unsubscribe_link'));
         }
 
         $user = User::where('email', $email)->first();
-        $already = $user && ! $user->is_newsletter_subscribed;
+        $already = $user !== null && ! $user->is_newsletter_subscribed;
 
-        if ($user && $user->is_newsletter_subscribed) {
+        if ($user !== null && $user->is_newsletter_subscribed) {
             $user->update(['is_newsletter_subscribed' => false]);
         }
 
-        return view('unsubscribe', ['email' => $email, 'already' => $already || ! $user]);
+        return view('unsubscribe', ['email' => $email, 'already' => $already || $user === null]);
     }
 
     /**
@@ -360,7 +360,7 @@ class IndexController extends Controller
         }
 
         $user = User::where('email', $validated['email'])->first();
-        if ($user && $user->is_newsletter_subscribed) {
+        if ($user !== null && $user->is_newsletter_subscribed) {
             $user->update(['is_newsletter_subscribed' => false]);
         }
 

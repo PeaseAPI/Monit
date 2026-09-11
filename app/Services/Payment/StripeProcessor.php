@@ -31,7 +31,7 @@ class StripeProcessor
      */
     public function isConfigured(): bool
     {
-        return ! empty($this->secretKey) && ! empty($this->publishableKey);
+        return ($this->secretKey ?? '') !== '' && ($this->publishableKey ?? '') !== '';
     }
 
     /**
@@ -82,7 +82,7 @@ class StripeProcessor
      */
     public function verifyWebhook(Request $request): bool
     {
-        if (empty($this->webhookSecret)) {
+        if ($this->webhookSecret === null || $this->webhookSecret === '') {
             return false;
         }
 

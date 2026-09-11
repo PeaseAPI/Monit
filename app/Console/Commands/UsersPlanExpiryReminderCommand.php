@@ -25,7 +25,7 @@ class UsersPlanExpiryReminderCommand extends Command
             ->where('key', 'payment.user_plan_expiry_reminder')
             ->value('value');
 
-        if (! $isEnabled || $isEnabled === 'false') {
+        if (! (bool) $isEnabled || $isEnabled === 'false') {
             $this->info('套餐到期提醒功能未启用');
 
             return self::SUCCESS;

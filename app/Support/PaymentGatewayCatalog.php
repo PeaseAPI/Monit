@@ -120,7 +120,7 @@ class PaymentGatewayCatalog
 
         foreach (self::gateways() as $meta) {
             foreach (array_keys(Typed::arr($meta['keys'])) as $key) {
-                $keys[] = (string) $key;
+                $keys[] = $key;
             }
         }
 

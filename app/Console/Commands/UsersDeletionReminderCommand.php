@@ -21,7 +21,7 @@ class UsersDeletionReminderCommand extends Command
 
     public function handle(): int
     {
-        $autoDeleteDays = Typed::int(DB::table('settings')->where('key', 'auto_delete_inactive_users')->value('value') ?: 0);
+        $autoDeleteDays = Typed::int(DB::table('settings')->where('key', 'auto_delete_inactive_users')->value('value') ?? 0);
 
         if ($autoDeleteDays < 1) {
             $this->info('自动删除不活跃用户功能未启用');
@@ -29,7 +29,7 @@ class UsersDeletionReminderCommand extends Command
             return self::SUCCESS;
         }
 
-        $reminderDays = Typed::int(DB::table('settings')->where('key', 'user_deletion_reminder')->value('value') ?: 7);
+        $reminderDays = Typed::int(DB::table('settings')->where('key', 'user_deletion_reminder')->value('value') ?? 7);
         $pastDate = now()->subDays(max(0, $autoDeleteDays - $reminderDays));
 
         // 仅提醒免费、普通类型、未提醒过的不活跃用户（原版：plan_id=free AND type=0）

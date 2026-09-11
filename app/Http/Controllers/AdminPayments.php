@@ -23,7 +23,7 @@ class AdminPayments extends Controller
     {
         $query = Payment::with('user');
 
-        if ($search = $request->query('search')) {
+        if ((bool) $search = $request->query('search')) {
             $query->where('name', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")
                 ->orWhereHas('user', fn ($q) => $q->where('email', 'like', "%{$search}%"));

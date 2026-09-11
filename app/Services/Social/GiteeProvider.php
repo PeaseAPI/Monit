@@ -60,7 +60,7 @@ class GiteeProvider implements ChineseSocialProvider
         $data = Typed::arr($response->json());
 
         $email = Typed::stringOrNull($data['email'] ?? null);
-        if (empty($email)) {
+        if ($email === null || $email === '') {
             $emailResponse = Http::withToken($token)->get('https://gitee.com/api/v5/emails');
             $emails = $emailResponse->json();
             if (is_array($emails) && count($emails) > 0) {

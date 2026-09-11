@@ -23,7 +23,7 @@ class ReplayController extends Controller
      */
     public function index(Request $request, Website $website)
     {
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
 
         $replays = SessionReplay::with(['visitor', 'session'])
             ->where('website_id', $website->website_id)
@@ -81,9 +81,9 @@ class ReplayController extends Controller
         }
 
         // 2. DB 无数据 → 尝试从缓存读取
-        if (empty($events)) {
+        if ($events === []) {
             $session = $replay->session;
-            if ($session) {
+            if ($session !== null) {
                 $cacheKey = "session_replay_keys_{$session->session_id}";
                 $keys = Typed::arr(Cache::get($cacheKey));
 
@@ -97,7 +97,7 @@ class ReplayController extends Controller
         }
 
         // 3. 缓存无数据 → 尝试从对象存储读取（is_offloaded）
-        if (empty($events) && $replay->is_offloaded) {
+        if ($events === [] && $replay->is_offloaded) {
             try {
                 if (ObjectStorage::isConfigured()) {
                     $storage = ObjectStorage::make();

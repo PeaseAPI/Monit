@@ -74,9 +74,9 @@ class WebPushService
     public function sendOne(PushNotificationSubscriber $subscriber, string $title, string $body, string $url = '/'): bool
     {
         return $this->send(
-            (string) $subscriber->endpoint,
-            (string) $subscriber->keys_p256dh,
-            (string) $subscriber->keys_auth,
+            $subscriber->endpoint,
+            $subscriber->keys_p256dh,
+            $subscriber->keys_auth,
             ['title' => $title, 'body' => $body, 'url' => $url],
             Typed::string(PluginManager::setting('push-notifications', 'vapid_public_key', '')),
             Typed::string(PluginManager::setting('push-notifications', 'vapid_private_key', '')),
@@ -181,9 +181,10 @@ class WebPushService
 
     protected function buildVapidHeader(string $endpoint, string $subject, string $publicKeyB64, string $privateKeyB64): string
     {
-        $parts = parse_url($endpoint) ?: [];
-        $origin = ($parts['scheme'] ?? '').'://'.($parts['host'] ?? '')
-            .(isset($parts['port']) ? ':'.$parts['port'] : '');
+        $scheme = Typed::nonEmpty(parse_url($endpoint, PHP_URL_SCHEME) ?? '', '');
+        $host = Typed::nonEmpty(parse_url($endpoint, PHP_URL_HOST) ?? '', '');
+        $port = parse_url($endpoint, PHP_URL_PORT);
+        $origin = $scheme.'://'.$host.($port !== false && $port !== null ? ':'.$port : '');
 
         $header = $this->b64urlEncode((string) json_encode(['typ' => 'JWT', 'alg' => 'ES256']));
         $claims = $this->b64urlEncode((string) json_encode([
@@ -276,7 +277,7 @@ class WebPushService
         $pos++; // INTEGER tag
         $len = ord($der[$pos]);
         $pos++;
-        if ($len & 0x80) {
+        if (($len & 0x80) !== 0) {
             $numBytes = $len & 0x7F;
             $len = (int) hexdec(bin2hex(substr($der, $pos, $numBytes)));
             $pos += $numBytes;
@@ -324,7 +325,9 @@ class WebPushService
 
     protected function b64urlDecode(string $data): string
     {
-        return base64_decode(strtr($data, '-_', '+/').str_repeat('=', (4 - strlen($data) % 4) % 4));
+        $decoded = base64_decode(strtr($data, '-_', '+/').str_repeat('=', (4 - strlen($data) % 4) % 4), true);
+
+        return $decoded === false ? '' : $decoded;
     }
 
     protected function b64urlEncode(string $data): string
@@ -348,7 +351,7 @@ class WebPushService
             CURLOPT_TIMEOUT => 10,
         ]);
         curl_exec($ch);
-        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         return [$status];

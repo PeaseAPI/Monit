@@ -15,10 +15,10 @@ class AdminUsersLogs extends Controller
     {
         $query = AccountLog::with('user')->orderByDesc('datetime');
 
-        if ($userId = $request->query('user_id')) {
+        if ((bool) $userId = $request->query('user_id')) {
             $query->where('user_id', $userId);
         }
-        if ($type = $request->query('type')) {
+        if ((bool) $type = $request->query('type')) {
             $query->where('type', $type);
         }
 

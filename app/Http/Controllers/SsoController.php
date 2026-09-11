@@ -29,7 +29,7 @@ class SsoController extends Controller
         $ssoSecret = Setting::where('key', 'main.sso_secret_key')->value('value');
         $ssoEnabled = Setting::where('key', 'main.sso_is_enabled')->value('value');
 
-        if (! $ssoEnabled || $ssoEnabled !== 'true' || ! $ssoSecret) {
+        if (! (bool) $ssoEnabled || $ssoEnabled !== 'true' || ! (bool) $ssoSecret) {
             return redirect()->route('login')->withErrors(['sso' => __('auth.sso_not_enabled')]);
         }
 
@@ -76,7 +76,7 @@ class SsoController extends Controller
             $user = User::where('email', $request->input('email'))->first();
         }
 
-        if (! $user || $user->status != 1) {
+        if ($user === null || $user->status !== 1) {
             return redirect()->route('login')->withErrors(['sso' => __('auth.sso_user_not_found')]);
         }
 

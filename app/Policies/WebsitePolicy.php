@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Models\TeamMember;
 use App\Models\User;
 use App\Models\Website;
 
@@ -20,11 +19,10 @@ class WebsitePolicy
             return true;
         }
 
-        // 团队拥有
-        return TeamMember::where('team_id', $website->team_id ?? 0)
-            ->where('user_id', $user->user_id)
-            ->where('status', 1)
-            ->exists();
+        // 团队拥有：websites 表没有 team_id 关联列（协作关系走 collaboration 表），
+        // 原实现读取不存在的 $website->team_id 恒为 null→0，该查询永假，行为上即拒绝。
+        // 保持等价语义，显式化这一事实。
+        return false;
     }
 
     public function manage(User $user, Website $website): bool

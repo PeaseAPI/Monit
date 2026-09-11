@@ -21,7 +21,7 @@ class AutoDeleteInactiveUsersCommand extends Command
 
     public function handle(): int
     {
-        $days = Typed::int(DB::table('settings')->where('key', 'auto_delete_inactive_users')->value('value') ?: 0);
+        $days = Typed::int(DB::table('settings')->where('key', 'auto_delete_inactive_users')->value('value') ?? 0);
 
         if ($days < 1) {
             $this->info('自动删除不活跃用户功能未启用');

@@ -68,7 +68,7 @@ class WebhookSignature
         ?string $accessToken,
         ?string $webhookId,
     ): bool {
-        if (! $accessToken || empty($webhookId)) {
+        if ($accessToken === null || $accessToken === '' || $webhookId === null || $webhookId === '') {
             return false;
         }
 
@@ -133,11 +133,11 @@ class WebhookSignature
      */
     public static function verifyHmacHeader(Request $request, ?string $secret, string $header = 'X-Signature'): bool
     {
-        if (empty($secret)) {
+        if ($secret === null || $secret === '') {
             return false;
         }
 
-        $provided = (string) $request->header($header, '');
+        $provided = $request->header($header, '');
 
         // 兼容 hex 与 base64 两种常见签名编码
         $hex = hash_hmac('sha256', $request->getContent(), $secret);
@@ -155,7 +155,7 @@ class WebhookSignature
      */
     public static function fetchYooKassaPayment(string $paymentId, ?string $shopId, ?string $secretKey): ?array
     {
-        if (empty($shopId) || empty($secretKey) || $paymentId === '') {
+        if ($shopId === null || $shopId === '' || $secretKey === null || $secretKey === '' || $paymentId === '') {
             return null;
         }
 
@@ -203,11 +203,11 @@ class WebhookSignature
             return false;
         }
 
-        if (config('services.webhooks.allow_private_targets')) {
+        if ((bool) config('services.webhooks.allow_private_targets')) {
             return true;
         }
 
-        return ! self::resolvesToPrivateAddress((string) $parsed['host']);
+        return ! self::resolvesToPrivateAddress($parsed['host']);
     }
 
     /**
@@ -232,7 +232,7 @@ class WebhookSignature
         if (function_exists('dns_get_record')) {
             $records = @dns_get_record($host, DNS_A + DNS_AAAA);
 
-            foreach ($records ?: [] as $record) {
+            foreach (Typed::dnsRecords($records) as $record) {
                 $ip = $record['ip'] ?? $record['ipv6'] ?? null;
 
                 if (is_string($ip) && self::isPrivateAddress($ip)) {
@@ -271,6 +271,6 @@ class WebhookSignature
      */
     public static function sign(array $body, string $secret): string
     {
-        return hash_hmac('sha256', json_encode($body, JSON_UNESCAPED_UNICODE) ?: '', $secret);
+        return hash_hmac('sha256', Typed::string(json_encode($body, JSON_UNESCAPED_UNICODE), ''), $secret);
     }
 }

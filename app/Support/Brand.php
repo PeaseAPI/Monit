@@ -70,7 +70,7 @@ class Brand
     {
         $color = self::trimOrNull(Typed::string(Settings::get('branding.primary_color', '')));
 
-        return ($color && preg_match('/^#[0-9a-fA-F]{6}$/', $color)) ? $color : self::DEFAULT_PRIMARY;
+        return ($color !== null && $color !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $color) === 1) ? $color : self::DEFAULT_PRIMARY;
     }
 
     /**
@@ -129,7 +129,7 @@ class Brand
     {
         $theme = self::trimOrNull(Typed::string(Settings::get('branding.landing_theme', '')));
 
-        return ($theme && preg_match('/^[a-zA-Z0-9_-]+$/', $theme)) ? $theme : 'default';
+        return ($theme !== null && $theme !== '' && preg_match('/^[a-zA-Z0-9_-]+$/', $theme) === 1) ? $theme : 'default';
     }
 
     /**

@@ -28,7 +28,7 @@ class SeoDomainsMonitor extends Command
         }
 
         // 预警档位：逗号分隔天数（seo.domain_monitor_alert_days，默认 30,7,1）
-        $alertDays = array_map('intval', array_filter(array_map('trim', explode(',', Typed::string(Settings::get('seo.domain_monitor_alert_days', '30,7,1'))))));
+        $alertDays = array_map('intval', array_filter(array_map('trim', explode(',', Typed::string(Settings::get('seo.domain_monitor_alert_days', '30,7,1')))), fn (string $v): bool => $v !== ''));
 
         $domains = Domain::where('monitor_is_enabled', true)->get();
 
@@ -36,7 +36,7 @@ class SeoDomainsMonitor extends Command
 
         foreach ($domains as $domain) {
             // 每日一查：当天已查跳过
-            if ($domain->monitor_last_check_at && $domain->monitor_last_check_at->isToday()) {
+            if ($domain->monitor_last_check_at !== null && $domain->monitor_last_check_at->isToday()) {
                 continue;
             }
 

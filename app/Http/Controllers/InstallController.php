@@ -316,7 +316,7 @@ class InstallController extends Controller
 
         try {
             $stmt = $pdo->query('SELECT VERSION()');
-            $version = $stmt ? (string) $stmt->fetchColumn() : '未知版本';
+            $version = ($stmt !== false) ? (string) $stmt->fetchColumn() : '未知版本';
         } catch (\Throwable) {
             $version = '未知版本';
         }
@@ -512,7 +512,7 @@ class InstallController extends Controller
         }
 
         // 站点 URL 默认取当前访问地址
-        $host = (string) $request->getHost();
+        $host = $request->getHost();
         $defaultUrl = $host !== '' ? $request->getScheme().'://'.$host : Typed::string(config('app.url'));
 
         return view('install', [
@@ -685,13 +685,13 @@ class InstallController extends Controller
      */
     protected function ensureAppKey(): void
     {
-        if (! empty(config('app.key'))) {
+        if (Typed::string(config('app.key')) !== '') {
             return;
         }
 
         $existing = $this->env->read('APP_KEY');
 
-        $key = ! empty($existing)
+        $key = ($existing !== null && $existing !== '')
             ? $existing
             : 'base64:'.base64_encode(random_bytes(32));
 
@@ -735,16 +735,16 @@ class InstallController extends Controller
      */
     protected function backToAdmin(Request $request, array $errors): View
     {
-        $host = (string) $request->getHost();
+        $host = $request->getHost();
         $defaultUrl = Typed::string($request->input('site_url')
-            ?: ($host !== '' ? $request->getScheme().'://'.$host : config('app.url')));
+            ?? ($host !== '' ? $request->getScheme().'://'.$host : config('app.url')));
 
         return view('install', [
             'step' => 'admin',
             'old' => $request->only(['site_name', 'site_url', 'name', 'email']),
             'errors' => $errors,
             'defaultUrl' => $defaultUrl,
-            'defaultName' => Typed::string($request->input('site_name') ?: 'Monit 网站分析'),
+            'defaultName' => Typed::string($request->input('site_name') ?? 'Monit 网站分析'),
         ]);
     }
 }

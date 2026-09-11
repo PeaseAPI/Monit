@@ -16,7 +16,7 @@ class HelpArticle extends Model
     protected $fillable = ['user_id', 'category_id', 'title', 'url', 'content', 'description', 'is_published', 'views', 'order', 'datetime'];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {

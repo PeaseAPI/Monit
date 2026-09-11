@@ -34,7 +34,7 @@ class SeoBacklink extends Model
     ];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {
@@ -59,13 +59,13 @@ class SeoBacklink extends Model
     {
         $host = (string) parse_url($url, PHP_URL_HOST);
 
-        return strtolower(preg_replace('/^www\./i', '', $host) ?: $host);
+        return strtolower(preg_replace('/^www\./i', '', $host) ?? $host);
     }
 
     protected static function booted(): void
     {
         static::creating(function (self $backlink): void {
-            if (empty($backlink->url_hash)) {
+            if (($backlink->url_hash ?? '') === '') {
                 $backlink->url_hash = static::hashOf($backlink->source_url, $backlink->target_url);
             }
         });

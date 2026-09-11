@@ -96,7 +96,7 @@ class AuthController extends Controller
 
         $user = User::where('email', Typed::string($credentials['email']))->first();
 
-        if (! $user || $user->password === null || ! Hash::check(Typed::string($credentials['password']), $user->password)) {
+        if ($user === null || $user->password === null || ! Hash::check(Typed::string($credentials['password']), $user->password)) {
             // 失败锁定（users.login_lockout_*：N 次失败锁 M 分钟，默认 5/30）
             LoginLockout::recordFailure('login', Typed::string($credentials['email']));
 
@@ -150,7 +150,7 @@ class AuthController extends Controller
 
         // 短信验证码登录（免密码）
         if ($request->filled('sms_code')) {
-            if (! $user || ! SmsService::verify($phone, 'login', Typed::string($request->input('sms_code')))) {
+            if ($user === null || ! SmsService::verify($phone, 'login', Typed::string($request->input('sms_code')))) {
                 return back()
                     ->withInput($request->only('email'))
                     ->withErrors(['sms_code' => __('auth.sms_code_invalid')]);
@@ -160,7 +160,7 @@ class AuthController extends Controller
                 ->withInput($request->only('email'))
                 ->withErrors(['sms_code' => __('auth.sms_code_required_for_login')]);
         } else {
-            if (! $user || ! $request->filled('password') || $user->password === null || ! Hash::check(Typed::string($request->input('password')), $user->password)) {
+            if ($user === null || ! $request->filled('password') || $user->password === null || ! Hash::check(Typed::string($request->input('password')), $user->password)) {
                 // 手机号登录失败同样计入锁定（与邮箱共用 login scope 计数语义）
                 LoginLockout::recordFailure('login', 'phone:'.$phone);
 
@@ -185,8 +185,8 @@ class AuthController extends Controller
         }
 
         // 密码已验证正确：清零失败计数/锁定（邮箱 + 手机号两个维度）
-        LoginLockout::clear('login', (string) $user->email);
-        if ($user->phone) {
+        LoginLockout::clear('login', $user->email);
+        if ($user->phone !== '' && $user->phone !== null) {
             LoginLockout::clear('login', 'phone:'.$user->phone);
         }
 
@@ -253,7 +253,7 @@ class AuthController extends Controller
         $userId = $request->session()->get('twofa_user_id');
         $expiresAt = $request->session()->get('twofa_expires_at');
 
-        if (! $userId || ($expiresAt && now()->timestamp > $expiresAt)) {
+        if ((! (bool) $userId) || ($expiresAt !== null && now()->timestamp > Typed::int($expiresAt))) {
             $request->session()->forget(['twofa_user_id', 'twofa_remember', 'twofa_expires_at']);
 
             return redirect()->route('login')->withErrors(['email' => __('account.twofa_expired')]);
@@ -262,7 +262,7 @@ class AuthController extends Controller
         $user = User::query()->where('user_id', Typed::int($userId))->first();
 
         // 一次性消费：同一窗口的码登录后不可复用（RFC 6238 §5.2，防钓鱼重放）
-        if (! $user || ! $user->twofa_is_enabled
+        if ($user === null || ! $user->twofa_is_enabled
             || ! TotpService::consume(Typed::string($user->twofa_token), Typed::stringOrNull($validated['code']), "user.{$user->user_id}")) {
             return back()->withErrors(['code' => __('account.twofa_code_invalid')]);
         }
@@ -297,7 +297,7 @@ class AuthController extends Controller
         }
 
         // 如果 URL 中有推荐码，保存到 session
-        if ($ref = $request->query('ref')) {
+        if ((bool) $ref = $request->query('ref')) {
             session(['referral_key' => $ref]);
         }
 
@@ -357,19 +357,19 @@ class AuthController extends Controller
         // 注册黑名单（后台 设置→用户：域名 / IP，原版 blacklisted_*）
         $atSuffix = strrchr(Typed::string($validated['email']), '@');
         $emailDomain = strtolower($atSuffix === false ? '' : substr($atSuffix, 1));
-        $blacklistedDomains = array_filter(preg_split('/\r\n|\r|\n/', Typed::string(Settings::get('users.blacklisted_domains', ''))) ?: []);
+        $blacklistedDomains = Typed::strList(preg_split('/\r\n|\r|\n/', Typed::string(Settings::get('users.blacklisted_domains', '')), -1, PREG_SPLIT_NO_EMPTY));
         $blacklistedDomains = array_map(fn ($d) => strtolower(trim($d)), $blacklistedDomains);
 
-        if ($emailDomain && in_array($emailDomain, $blacklistedDomains, true)) {
+        if ($emailDomain !== '' && in_array($emailDomain, $blacklistedDomains, true)) {
             return back()
                 ->withInput($request->except(['password', 'password_confirmation', 'sms_code']))
                 ->withErrors(['email' => __('auth.email_domain_blacklisted')]);
         }
 
         $clientIp = $request->ip();
-        $blacklistedIps = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', Typed::string(Settings::get('users.blacklisted_ips', ''))) ?: []));
+        $blacklistedIps = array_filter(array_map('trim', Typed::strList(preg_split('/\r\n|\r|\n/', Typed::string(Settings::get('users.blacklisted_ips', ''))))), fn (string $ip): bool => $ip !== '');
 
-        if ($clientIp && in_array($clientIp, $blacklistedIps, true)) {
+        if (($clientIp !== '' && $clientIp !== null) && in_array($clientIp, $blacklistedIps, true)) {
             return back()
                 ->withInput($request->except(['password', 'password_confirmation', 'sms_code']))
                 ->withErrors(['email' => __('auth.registration_blocked')]);
@@ -377,8 +377,8 @@ class AuthController extends Controller
 
         // 国家黑名单（users.blacklisted_countries，ISO-3166 alpha-2 逗号分隔）
         // 国家来源：CF-IPCountry 请求头（Cloudflare）→ 无来源时跳过检测
-        if ($blockedCountries = self::blacklistedCountries()) {
-            $country = strtoupper(trim((string) $request->header('CF-IPCountry', '')));
+        if (($blockedCountries = self::blacklistedCountries()) !== []) {
+            $country = strtoupper(trim($request->header('CF-IPCountry', '')));
 
             if ($country !== '' && in_array($country, $blockedCountries, true)) {
                 return back()
@@ -402,9 +402,9 @@ class AuthController extends Controller
 
         // 处理推荐码（规格书 §14.7：?ref=XXXXX 绑定推荐人）
         $referredBy = null;
-        if ($ref = $request->input('ref') ?? session('referral_key')) {
+        if ((bool) $ref = $request->input('ref') ?? session('referral_key')) {
             $referrer = User::where('referral_key', $ref)->first();
-            if ($referrer) {
+            if ($referrer !== null) {
                 $referredBy = $referrer->user_id;
             }
         }
@@ -421,7 +421,7 @@ class AuthController extends Controller
                 'email' => $validated['email'],
                 'password' => $validated['password'],
                 'phone' => $phone,
-                'phone_verified_at' => $phone ? now() : null,
+                'phone_verified_at' => ($phone !== '' && $phone !== null) ? now() : null,
                 'plan_id' => 'free',
                 'referral_key' => Str::random(32),
                 'api_key' => Str::random(60),
@@ -479,7 +479,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        if ($user) {
+        if ($user !== null) {
             $this->logAccount($user, 'logout');
         }
 
@@ -492,7 +492,7 @@ class AuthController extends Controller
 
     protected function logAccount(User $user, string $type): void
     {
-        $parser = UserAgentParser::make($user->last_activity ? request()->userAgent() : request()->userAgent());
+        $parser = UserAgentParser::make(request()->userAgent());
         [$osName] = $parser->os();
         [$browserName] = $parser->browser();
 
@@ -569,8 +569,8 @@ class AuthController extends Controller
 
         return array_values(array_filter(array_map(
             fn ($c) => strtoupper(trim($c)),
-            preg_split('/[,\\s]+/', $raw) ?: []
-        )));
+            Typed::strList(preg_split('/[,\\s]+/', $raw))
+        ), fn (string $c): bool => $c !== ''));
     }
 
     /** remember-me Cookie 有效期（users.login_rememberme_cookie_days，默认 30 天） */

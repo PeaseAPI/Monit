@@ -30,7 +30,7 @@ class PayBillingController extends Controller
     {
         $user = $this->user();
 
-        if (! $user->payment_subscription_id) {
+        if ($user->payment_subscription_id === null || $user->payment_subscription_id === '') {
             return back()->withErrors(['error' => __('msg.no_active_subscription')]);
         }
 

@@ -25,7 +25,7 @@ class AdminLicense extends Controller
             'status' => $status,
             'license' => $status['data'],
             'licensePath' => LicenseManager::licensePath(),
-            'currentHost' => strtolower((string) (parse_url(Typed::string(config('app.url')), PHP_URL_HOST) ?: 'localhost')),
+            'currentHost' => strtolower(Typed::nonEmpty(parse_url(Typed::string(config('app.url')), PHP_URL_HOST) ?? 'localhost', 'localhost')),
         ])->with('adminNav', 'license');
     }
 

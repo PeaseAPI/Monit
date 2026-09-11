@@ -86,7 +86,7 @@ class PerformanceTests
             + $c->dom()->getElementsByTagName('iframe')->length;
 
         foreach ($c->dom()->getElementsByTagName('link') as $link) {
-            if (strtolower((string) $link->getAttribute('rel')) === 'stylesheet') {
+            if (strtolower($link->getAttribute('rel')) === 'stylesheet') {
                 $count++;
             }
         }
@@ -144,7 +144,7 @@ class PerformanceTests
         $legacy = 0;
         foreach ($c->dom()->getElementsByTagName('img') as $img) {
             $src = strtolower($img->getAttribute('src'));
-            if (preg_match('/\.(bmp|tiff?)($|\?)/', $src)) {
+            if (preg_match('/\.(bmp|tiff?)($|\?)/', $src) !== 0 && preg_match('/\.(bmp|tiff?)($|\?)/', $src) !== false) {
                 $legacy++;
             }
         }
@@ -202,7 +202,7 @@ class PerformanceTests
      */
     public function serverCompression(AuditContext $c): array
     {
-        $encoding = strtolower((string) ($c->header('content-encoding') ?? ''));
+        $encoding = strtolower(($c->header('content-encoding') ?? ''));
 
         return [
             'passed' => $encoding !== '',
@@ -217,7 +217,7 @@ class PerformanceTests
      */
     public function isHttp2(AuditContext $c): array
     {
-        $hint = (string) ($c->header('alt-svc') ?? '');
+        $hint = ($c->header('alt-svc') ?? '');
 
         return [
             'passed' => true,

@@ -63,7 +63,7 @@ class SeoBacklinkController extends Controller
 
         $websiteId = null;
 
-        if (! empty($validated['website_id'])) {
+        if (($validated['website_id'] ?? '') !== '') {
             $websiteId = Website::where('user_id', $this->user()->user_id)
                 ->where('website_id', Typed::int($validated['website_id']))
                 ->value('website_id');
@@ -153,7 +153,7 @@ class SeoBacklinkController extends Controller
 
     protected function authorizeOwn(Request $request, SeoBacklink $backlink): void
     {
-        if ((int) $backlink->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
+        if ($backlink->user_id !== $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
     }

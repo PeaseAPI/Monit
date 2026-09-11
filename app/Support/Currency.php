@@ -24,7 +24,7 @@ class Currency
             $code = strtoupper(Typed::string(config('monit.payment.default_currency', 'CNY')));
         }
 
-        return preg_match('/^[A-Z]{3}$/', $code) ? $code : 'CNY';
+        return (preg_match('/^[A-Z]{3}$/', $code) !== 0 && preg_match('/^[A-Z]{3}$/', $code) !== false) ? $code : 'CNY';
     }
 
     /**
@@ -53,7 +53,7 @@ class Currency
             foreach ($stored as $code => $row) {
                 $code = strtoupper(trim((string) $code));
 
-                if (preg_match('/^[A-Z]{3}$/', $code)) {
+                if (preg_match('/^[A-Z]{3}$/', $code) !== 0 && preg_match('/^[A-Z]{3}$/', $code) !== false) {
                     $currencies[$code] = static::normalizeRow(Typed::arr(array_merge(
                         $currencies[$code] ?? [],
                         (array) $row,
@@ -123,7 +123,7 @@ class Currency
             return number_format($amount, 2);
         }
 
-        return preg_match('/^[\x20-\x7E]+$/', $symbol)
+        return preg_match('/^[\x20-\x7E]+$/', $symbol) > 0
             ? $symbol.number_format($amount, 2)
             : number_format($amount, 2).' '.$symbol;
     }
@@ -158,7 +158,7 @@ class Currency
      */
     public static function planPrice($plan, string $currency, string $frequency): ?float
     {
-        $prices = $plan instanceof Plan ? ($plan->prices ?? []) : (array) ($plan ?? []);
+        $prices = $plan instanceof Plan ? ($plan->prices ?? []) : ($plan ?? []);
         $currency = strtoupper(trim($currency));
         $keys = $frequency === 'annual' ? ['annual', 'yearly'] : [$frequency];
         $default = static::default();
@@ -195,7 +195,7 @@ class Currency
         // 4) 任意其它货币直配价 → 跨汇率换算
         foreach ($prices as $code => $entry) {
             if (is_array($entry) && ($any = $pick($entry)) !== null) {
-                return static::convert($any, $currency, strtoupper((string) $code));
+                return static::convert($any, $currency, strtoupper($code));
             }
         }
 

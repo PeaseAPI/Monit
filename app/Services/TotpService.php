@@ -62,7 +62,7 @@ class TotpService
      */
     public static function verifyCounter(string $secret, ?string $code): ?int
     {
-        if (! $code || ! preg_match('/^\d{'.self::DIGITS.'}$/', $code)) {
+        if (($code === null || $code === '') || preg_match('/^\d{'.self::DIGITS.'}$/', $code) !== 1) {
             return null;
         }
 

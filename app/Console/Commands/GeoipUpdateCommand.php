@@ -21,7 +21,7 @@ class GeoipUpdateCommand extends Command
         $path = config('services.geoip.mmdb_path', storage_path('app/geoip/country.mmdb'));
 
         // 确保路径非空且为绝对路径
-        if (empty($path)) {
+        if (($path ?? '') === '') {
             $path = storage_path('app/geoip/country.mmdb');
         }
 

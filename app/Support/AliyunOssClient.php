@@ -26,7 +26,7 @@ class AliyunOssClient
     public function urlFor(string $key): string
     {
         $endpoint = rtrim($this->endpoint, '/');
-        $scheme = (string) (parse_url($endpoint, PHP_URL_SCHEME) ?: 'https');
+        $scheme = (parse_url($endpoint, PHP_URL_SCHEME) ?? 'https');
         $host = (string) parse_url($endpoint, PHP_URL_HOST);
 
         return "{$scheme}://{$this->bucket}.{$host}/".ltrim($key, '/');
@@ -79,7 +79,7 @@ class AliyunOssClient
         // CanonicalizedOSSHeaders：x-oss-* 头小写排序，每项以 \n 结尾
         $ossHeaders = [];
         foreach ($headers as $name => $value) {
-            if (stripos((string) $name, 'x-oss-') === 0) {
+            if (stripos($name, 'x-oss-') === 0) {
                 $ossHeaders[strtolower(Typed::string($name))] = trim(Typed::string($value));
             }
         }
@@ -107,8 +107,8 @@ class AliyunOssClient
             'Date: '.$date,
         ];
         foreach ($headers as $h => $v) {
-            if (strcasecmp((string) $h, 'host') !== 0) {
-                $curlHeaders[] = ucwords((string) $h, '-').': '.Typed::string($v);
+            if (strcasecmp($h, 'host') !== 0) {
+                $curlHeaders[] = ucwords($h, '-').': '.Typed::string($v);
             }
         }
 
@@ -125,7 +125,7 @@ class AliyunOssClient
             curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
         }
         $response = curl_exec($ch);
-        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         curl_close($ch);
 

@@ -42,7 +42,7 @@ class TextTools
             '字符数' => mb_strlen($text),
             '不含空格' => mb_strlen(str_replace(' ', '', $text)),
             '句子数' => (int) preg_match_all('/[.!?。！？]+/u', $text),
-            '段落数' => count(array_filter(explode("\n", trim($text)))),
+            '段落数' => count(array_filter(explode("\n", trim($text)), fn (string $v): bool => $v !== '')),
         ]];
     }
 
@@ -66,7 +66,7 @@ class TextTools
             default => $text,
         };
 
-        return ['ok' => true, 'data' => [], 'text' => (string) $converted];
+        return ['ok' => true, 'data' => [], 'text' => $converted];
     }
 
     /**

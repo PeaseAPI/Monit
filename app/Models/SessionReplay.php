@@ -23,7 +23,7 @@ class SessionReplay extends Model
      * Eloquent 会将其当作字符串属性，但读取时需要原生 SQL 来避免编码问题。
      * 该列不参与 $casts，手动用 gzencode/gzdecode 处理。
      *
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {

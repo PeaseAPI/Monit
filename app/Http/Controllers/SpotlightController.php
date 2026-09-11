@@ -59,8 +59,7 @@ class SpotlightController extends Controller
             // 回放详情路由参数是 SessionReplay 主键（replay_id），不是 session_id；
             // 无回放记录的会话跳回放列表页
             $replayId = SessionReplay::where('session_id', $session->session_id)->value('replay_id');
-            $url = $replayId
-                ? route('stats.replays.show', [$session->website, $replayId])
+            $url = ((bool) $replayId) ? route('stats.replays.show', [$session->website, $replayId])
                 : route('stats.replays', $session->website);
 
             $results[] = [

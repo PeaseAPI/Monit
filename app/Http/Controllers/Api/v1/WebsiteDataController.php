@@ -75,7 +75,7 @@ class WebsiteDataController extends Controller
             $q->select('event_id')->from('sessions_events')->where('website_id', $website);
         });
 
-        if ($type = $request->query('type')) {
+        if ((bool) $type = $request->query('type')) {
             $query->where('type', $type);
         }
 
@@ -88,7 +88,7 @@ class WebsiteDataController extends Controller
     {
         $query = OutboundClick::where('website_id', $this->ownWebsite($request, $website)->website_id);
 
-        if ($host = $request->query('host')) {
+        if ((bool) $host = $request->query('host')) {
             $query->where('host', $host);
         }
 

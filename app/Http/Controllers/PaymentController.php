@@ -166,7 +166,7 @@ class PaymentController extends Controller
     public function success(Request $request): View
     {
         $paymentId = $request->query('payment_id');
-        $payment = $paymentId ? Payment::find($paymentId) : null;
+        $payment = ((bool) $paymentId) ? Payment::find($paymentId) : null;
 
         return view('payments.success', compact('payment'));
     }
@@ -198,7 +198,7 @@ class PaymentController extends Controller
 
         $result = $this->paymentService->redeemCode($this->user(), Typed::string($validated['code']));
 
-        if (! $result['success']) {
+        if (! (bool) $result['success']) {
             return back()->withErrors(['code' => $result['message']]);
         }
 
@@ -216,7 +216,7 @@ class PaymentController extends Controller
         $offlineProcessor = new OfflinePaymentProcessor;
         $result = $offlineProcessor->uploadProof($request, $payment);
 
-        if (! ($result['success'] ?? false)) {
+        if (! (bool) ($result['success'] ?? false)) {
             return back()->withErrors(['proof' => $result['message'] ?? __('payment.proof_upload_failed')]);
         }
 
@@ -288,7 +288,7 @@ class PaymentController extends Controller
 
             // 金额防篡改（安全审计周期 #19）：resource.amount.total 为主单位字符串，
             // 须与本地订单一致方可入账（缺失/不符 fail-closed 拒绝）
-            if ($paymentId
+            if ((bool) $paymentId
                 && $this->paymentService->verifyGatewayAmount(
                     Typed::int($paymentId),
                     is_numeric(data_get($resource, 'amount.total')) ? (float) data_get($resource, 'amount.total') : null,
@@ -304,7 +304,7 @@ class PaymentController extends Controller
             $resource = Typed::arr($request->input('resource'));
             $paymentId = $resource['custom_id'] ?? null;
 
-            if ($paymentId) {
+            if ((bool) $paymentId) {
                 $this->paymentService->handlePaymentFailure(
                     Typed::int($paymentId),
                     Typed::string($resource['id'] ?? ''),
@@ -374,7 +374,7 @@ class PaymentController extends Controller
             return back()->withErrors(['processor' => $result['error']]);
         }
 
-        if ($result['approve_url'] ?? null) {
+        if ((bool) ($result['approve_url'] ?? null)) {
             return redirect(Typed::string($result['approve_url']));
         }
 
@@ -428,7 +428,7 @@ class PaymentController extends Controller
         if (isset($result['error'])) {
             return back()->withErrors(['processor' => $result['error']]);
         }
-        if ($result['checkout_url'] ?? null) {
+        if ((bool) ($result['checkout_url'] ?? null)) {
             return redirect(Typed::string($result['checkout_url']));
         }
 
@@ -448,7 +448,7 @@ class PaymentController extends Controller
         if (isset($result['error'])) {
             return back()->withErrors(['processor' => $result['error']]);
         }
-        if ($result['authorization_url'] ?? null) {
+        if ((bool) ($result['authorization_url'] ?? null)) {
             return redirect(Typed::string($result['authorization_url']));
         }
 
@@ -512,7 +512,7 @@ class PaymentController extends Controller
     {
         $class = self::GENERIC_PROCESSORS[$processor] ?? null;
 
-        if (! $class || ! class_exists($class)) {
+        if ($class === null) {
             return back()->withErrors(['processor' => __('payment.unsupported_processor')]);
         }
 
@@ -526,7 +526,7 @@ class PaymentController extends Controller
 
         // 若处理器直接给出网关跳转 URL 则跳转
         foreach (['redirect_url', 'url', 'checkout_url', 'approve_url', 'authorization_url', 'payment_url', 'pay_url', 'hosted_checkout_url'] as $key) {
-            if (! empty($result[$key]) && is_string($result[$key])) {
+            if (is_string($result[$key] ?? null) && $result[$key] !== '') {
                 return redirect()->away($result[$key]);
             }
         }

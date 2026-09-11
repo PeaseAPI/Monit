@@ -40,7 +40,7 @@ class AdminPages extends Controller
         Page::create([
             ...$validated,
             'user_id' => $this->user()->user_id,
-            'type' => $validated['is_published'] ? 'page' : 'draft',
+            'type' => ((bool) $validated['is_published']) ? 'page' : 'draft',
             'datetime' => now(),
         ]);
 
@@ -65,7 +65,7 @@ class AdminPages extends Controller
 
         $page->update([
             ...$validated,
-            'type' => $validated['is_published'] ? 'page' : 'draft',
+            'type' => ((bool) $validated['is_published']) ? 'page' : 'draft',
         ]);
 
         return redirect()->route('admin.pages.index')
@@ -94,7 +94,7 @@ class AdminPages extends Controller
             'is_published' => ['boolean'],
         ]));
 
-        $validated['url'] = $validated['url'] ?: Str::slug(Typed::string($request->input('title') ?? '')).'-'.Str::lower(Str::random(6));
+        $validated['url'] = $validated['url'] ?? Str::slug(Typed::string($request->input('title') ?? '')).'-'.Str::lower(Str::random(6));
         $validated['is_published'] = $request->boolean('is_published', false);
         $validated['position'] = $validated['position'] ?? 'none';
 

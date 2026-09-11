@@ -17,7 +17,7 @@ class AdminAffiliatesWithdrawals extends Controller
     {
         $query = AffiliateWithdrawal::with('user')->orderByDesc('datetime');
 
-        if ($status = $request->query('status')) {
+        if ((bool) $status = $request->query('status')) {
             $query->where('status', $status);
         }
 
@@ -36,7 +36,7 @@ class AdminAffiliatesWithdrawals extends Controller
             ->where('status', 'pending')
             ->update(['status' => 'approved']);
 
-        if (! $affected) {
+        if ($affected === 0) {
             return back()->withErrors(['status' => __('referrals.withdrawal_not_pending')]);
         }
 
@@ -49,7 +49,7 @@ class AdminAffiliatesWithdrawals extends Controller
             ->where('status', 'pending')
             ->update(['status' => 'rejected']);
 
-        if (! $affected) {
+        if ($affected === 0) {
             return back()->withErrors(['status' => __('referrals.withdrawal_not_pending')]);
         }
 

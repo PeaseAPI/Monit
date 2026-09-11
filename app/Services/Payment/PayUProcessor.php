@@ -62,7 +62,7 @@ class PayUProcessor
         $userId = $parts[1] ?? 0;
 
         $user = User::query()->where('user_id', (int) ($userId))->first();
-        if (! $user) {
+        if ($user === null) {
             return null;
         }
 
@@ -71,7 +71,7 @@ class PayUProcessor
 
         return Payment::create([
             'user_id' => $user->user_id,
-            'plan_id' => $plan ? $plan->plan_id : 'free',
+            'plan_id' => ($plan !== null) ? $plan->plan_id : 'free',
             'processor' => 'payu',
             'payment_id_external' => Typed::stringOrNull($order['orderId'] ?? null),
             'payment_frequency' => 'one_time',

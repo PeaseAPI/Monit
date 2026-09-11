@@ -15,7 +15,7 @@ class WebhookPaystackController extends Controller
     public function __invoke(Request $request, PaymentService $paymentService): JsonResponse
     {
         $secretKey = config('services.paystack.secret_key');
-        $signature = (string) $request->header('x-paystack-signature', '');
+        $signature = $request->header('x-paystack-signature', '');
 
         // fail-closed：密钥未配置或签名缺失/不符一律拒绝（原实现未配置时放行）
         if (! is_string($secretKey) || $secretKey === '' || $signature === '') {
@@ -36,7 +36,7 @@ class WebhookPaystackController extends Controller
             $externalId = $data['id'] ?? null;
 
             // 金额/币种防篡改：amount 为分/派萨（最小单位），须与本地订单一致方可入账
-            if ($paymentId
+            if ((bool) $paymentId
                 && $paymentService->verifyGatewayAmount(
                     Typed::int($paymentId),
                     PaymentService::majorUnits(
@@ -53,7 +53,7 @@ class WebhookPaystackController extends Controller
         if ($event === 'charge.failed') {
             $paymentId = data_get($data, 'metadata.payment_id');
 
-            if ($paymentId) {
+            if ((bool) $paymentId) {
                 $paymentService->handlePaymentFailure(
                     Typed::int($paymentId),
                     Typed::string($data['id'] ?? ''),
@@ -63,7 +63,7 @@ class WebhookPaystackController extends Controller
 
         if ($event === 'subscription.disable') {
             $subscriptionCode = $data['subscription_code'] ?? null;
-            if ($subscriptionCode) {
+            if ((bool) $subscriptionCode) {
                 $paymentService->handleSubscriptionCancelled(Typed::string($subscriptionCode), 'paystack');
             }
         }

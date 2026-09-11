@@ -19,7 +19,7 @@ class MyFatoorahProcessor
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
         $isTest = config('services.myfatoorah.is_test', true);
-        $baseUrl = $isTest ? 'https://apitest.myfatoorah.com' : 'https://api.myfatoorah.com';
+        $baseUrl = ((bool) $isTest) ? 'https://apitest.myfatoorah.com' : 'https://api.myfatoorah.com';
 
         return [
             'processor' => 'myfatoorah',
@@ -54,7 +54,7 @@ class MyFatoorahProcessor
         $user = User::query()->where('user_id', Typed::int($metadata['user_id'] ?? 0))->first();
         $plan = Plan::query()->where('plan_id', Typed::int($metadata['plan_id'] ?? 0))->first();
 
-        if (! $user || ! $plan) {
+        if ($user === null || $plan === null) {
             return null;
         }
 

@@ -22,7 +22,7 @@ class AdminApiController extends Controller
     public function users(Request $request): JsonResponse
     {
         $query = User::query();
-        if ($s = $request->input('search')) {
+        if ((bool) $s = $request->input('search')) {
             $query->where(fn ($q) => $q->where('name', 'like', '%'.Typed::string($s).'%')->orWhere('email', 'like', '%'.Typed::string($s).'%'));
         }
 
@@ -66,7 +66,7 @@ class AdminApiController extends Controller
     public function websites(Request $request): JsonResponse
     {
         $query = Website::with('user');
-        if ($uid = $request->input('user_id')) {
+        if ((bool) $uid = $request->input('user_id')) {
             $query->where('user_id', $uid);
         }
 
@@ -123,7 +123,7 @@ class AdminApiController extends Controller
     public function payments(Request $request): JsonResponse
     {
         $query = Payment::with('user');
-        if ($uid = $request->input('user_id')) {
+        if ((bool) $uid = $request->input('user_id')) {
             $query->where('user_id', $uid);
         }
 

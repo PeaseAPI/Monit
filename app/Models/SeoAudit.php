@@ -52,7 +52,7 @@ class SeoAudit extends Model
     ];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {
@@ -114,7 +114,7 @@ class SeoAudit extends Model
     {
         $grouped = [];
 
-        foreach ((array) ($this->results ?? []) as $key => $row) {
+        foreach (($this->results ?? []) as $key => $row) {
             $category = Typed::string($row['category'] ?? 'misc');
             $grouped[$category][Typed::string($key)] = $row;
         }

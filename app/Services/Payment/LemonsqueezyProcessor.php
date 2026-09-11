@@ -37,7 +37,7 @@ class LemonsqueezyProcessor
     public function handleWebhook(Request $request): ?Payment
     {
         $eventName = $request->input('meta.event_name');
-        if (! in_array($eventName, ['order_created', 'subscription_created'])) {
+        if (! in_array($eventName, ['order_created', 'subscription_created'], true)) {
             return null;
         }
 
@@ -47,7 +47,7 @@ class LemonsqueezyProcessor
         $user = User::query()->where('user_id', Typed::int($customData['user_id'] ?? 0))->first();
         $plan = Plan::query()->where('plan_id', Typed::int($customData['plan_id'] ?? 0))->first();
 
-        if (! $user || ! $plan) {
+        if ($user === null || $plan === null) {
             return null;
         }
 

@@ -27,7 +27,7 @@ class ActivationController extends Controller
     {
         $user = User::where('email_activation_code', $code)->first();
 
-        if (! $user) {
+        if ($user === null) {
             return redirect()->route('login')
                 ->withErrors(['email' => __('auth.activation_code_invalid')]);
         }
@@ -81,7 +81,7 @@ class ActivationController extends Controller
 
         $user = User::where('email', $validated['email'])->first();
 
-        if ($user && $user->status !== 1) {
+        if ($user !== null && $user->status !== 1) {
             $code = Str::random(64);
             $user->forceFill([
                 'email_activation_code' => $code,

@@ -18,10 +18,10 @@ class ApiPaymentsController extends Controller
         $query = Payment::where('user_id', Auth::id())
             ->orderByDesc('datetime');
 
-        if ($startDate = $request->query('start_date')) {
+        if ((bool) $startDate = $request->query('start_date')) {
             $query->where('datetime', '>=', $startDate);
         }
-        if ($endDate = $request->query('end_date')) {
+        if ((bool) $endDate = $request->query('end_date')) {
             $query->where('datetime', '<=', $endDate);
         }
 

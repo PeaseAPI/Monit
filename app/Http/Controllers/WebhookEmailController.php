@@ -35,12 +35,15 @@ class WebhookEmailController extends Controller
         }
 
         $token = $request->query('token');
-        $given = is_string($token) && $token !== '' ? $token : (string) $request->header('X-Webhook-Token', '');
+        $given = is_string($token) && $token !== '' ? $token : $request->header('X-Webhook-Token', '');
         if (! hash_equals($expected, $given)) {
             abort(404);
         }
 
-        $payload = $request->json()->all() ?: $request->post();
+        $payload = $request->json()->all();
+        if ($payload === []) {
+            $payload = $request->post();
+        }
         $from = strtolower(trim(Typed::string($payload['from'] ?? '')));
         $subject = trim(Typed::string($payload['subject'] ?? ''));
         $text = trim(is_scalar($payload['text'] ?? ($payload['body'] ?? '')) ? (string) ($payload['text'] ?? ($payload['body'] ?? '')) : '');
@@ -52,10 +55,10 @@ class WebhookEmailController extends Controller
         // 剥离引用正文（Outlook/Gmail 常见的 "On ... wrote:" 之前保留全文，由管理员甄别）
         $text = mb_substr($text, 0, 20000);
 
-        if (preg_match('/#TK-(\d{1,6})/i', $subject, $m)) {
+        if (preg_match('/#TK-(\d{1,6})/i', $subject, $m) > 0) {
             $ticket = Ticket::find((int) $m[1]);
 
-            if ($ticket && $ticket->status !== Ticket::STATUS_CLOSED) {
+            if ($ticket !== null && $ticket->status !== Ticket::STATUS_CLOSED) {
                 // 回复落库与工单状态回转同事务
                 [$reply] = DB::transaction(function () use ($ticket, $from, $text): array {
                     $reply = TicketReply::create([

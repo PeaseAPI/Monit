@@ -35,7 +35,7 @@ class SeoSitemapsCheck extends Command
 
         foreach ($websites as $website) {
             // 按检查间隔节流：未到期跳过
-            if ($website->seo_sitemap_checked_at && $website->seo_sitemap_checked_at->gt(now()->subDays($this->intervalDays($website->seo_sitemap_check_interval)))) {
+            if ($website->seo_sitemap_checked_at !== null && $website->seo_sitemap_checked_at->gt(now()->subDays($this->intervalDays($website->seo_sitemap_check_interval)))) {
                 continue;
             }
 

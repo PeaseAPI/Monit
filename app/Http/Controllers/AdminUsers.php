@@ -20,12 +20,12 @@ class AdminUsers extends Controller
     {
         $query = User::query();
 
-        if ($search = $request->query('search')) {
+        if ((bool) $search = $request->query('search')) {
             $query->where('name', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%");
         }
 
-        if ($plan = $request->query('plan')) {
+        if ((bool) $plan = $request->query('plan')) {
             $query->where('plan_id', $plan);
         }
 

@@ -34,8 +34,7 @@ class RankTracker
      */
     public function check(SeoKeyword $keyword): SeoKeywordRank
     {
-        $host = $keyword->website_id
-            ? strtolower((string) $keyword->website?->host)
+        $host = ($keyword->website_id !== 0) ? strtolower((string) $keyword->website?->host)
             : '';
 
         if ($host === '') {
@@ -111,8 +110,8 @@ class RankTracker
             'api_key' => trim(Typed::string(Settings::get('seo.serpapi_api_key'))),
             'engine' => $engine,
             'q' => $keyword->keyword,
-            'device' => $keyword->device ?: 'desktop',
-            'hl' => $keyword->locale ?: 'zh-CN',
+            'device' => $keyword->device ?? 'desktop',
+            'hl' => $keyword->locale ?? 'zh-CN',
             'gl' => static::localeToRegion($keyword->locale),
             'num' => 100,
         ]);
@@ -129,13 +128,13 @@ class RankTracker
 
     protected static function hostOfTarget(?string $url): string
     {
-        if (! $url) {
+        if ($url === null || $url === '') {
             return '';
         }
 
         $host = (string) parse_url($url, PHP_URL_HOST);
 
-        return strtolower(preg_replace('/^www\./i', '', $host) ?: $host);
+        return strtolower(preg_replace('/^www\./i', '', $host) ?? $host);
     }
 
     /**
@@ -158,6 +157,6 @@ class RankTracker
     {
         $parts = explode('-', str_replace('_', '-', $locale));
 
-        return strtoupper(end($parts) ?: 'CN');
+        return strtoupper(Typed::nonEmpty(end($parts), 'CN'));
     }
 }

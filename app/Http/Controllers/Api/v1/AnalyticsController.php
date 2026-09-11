@@ -337,7 +337,7 @@ class AnalyticsController extends Controller
      */
     protected function authorizeWebsite(Website $website): void
     {
-        if ((int) $website->user_id !== (int) Auth::id() && ! $this->user()->isAdmin()) {
+        if ($website->user_id !== (int) Auth::id() && ! $this->user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

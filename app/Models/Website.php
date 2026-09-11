@@ -62,13 +62,13 @@ class Website extends Model
     protected static function booted(): void
     {
         static::saved(function (Website $website): void {
-            if ($website->pixel_key) {
+            if ($website->pixel_key !== '') {
                 Cache::forget('pixel.website.'.$website->pixel_key);
             }
         });
 
         static::deleted(function (Website $website): void {
-            if ($website->pixel_key) {
+            if ($website->pixel_key !== '') {
                 Cache::forget('pixel.website.'.$website->pixel_key);
             }
         });
@@ -95,7 +95,7 @@ class Website extends Model
     ];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {
@@ -254,10 +254,10 @@ class Website extends Model
      */
     public function excludedIpsList(): array
     {
-        if (! $this->excluded_ips) {
+        if ($this->excluded_ips === null || $this->excluded_ips === '') {
             return [];
         }
 
-        return array_values(array_filter(array_map('trim', explode(',', $this->excluded_ips))));
+        return array_values(array_filter(array_map('trim', explode(',', $this->excluded_ips)), fn (string $v): bool => $v !== ''));
     }
 }

@@ -36,7 +36,7 @@ class AccountController extends Controller
             $raw = Settings::get('socials.'.$provider);
             $config = is_string($raw) ? Typed::arr(json_decode($raw, true)) : Typed::arr($raw);
 
-            if (! empty($config['is_enabled'])) {
+            if ((bool) ($config['is_enabled'] ?? false)) {
                 $socialProviders[$provider] = ucfirst($provider);
             }
         }
@@ -67,10 +67,10 @@ class AccountController extends Controller
      */
     public function update(Request $request)
     {
-        $avatarMax = Typed::int(Settings::get('main.avatar_size_limit') ?: 512);
+        $avatarMax = Typed::int(Settings::get('main.avatar_size_limit') ?? 512);
 
         $user = $this->user();
-        $emailChanged = strtolower(Typed::string($request->input('email'))) !== strtolower((string) $user->email);
+        $emailChanged = strtolower(Typed::string($request->input('email'))) !== strtolower($user->email);
 
         $validated = Typed::arr($request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
@@ -166,7 +166,7 @@ class AccountController extends Controller
      */
     private function deleteLocalAvatar(?string $avatar): void
     {
-        if (! $avatar || ! str_starts_with($avatar, '/uploads/avatars/')) {
+        if (($avatar === null || $avatar === '') || ! str_starts_with($avatar, '/uploads/avatars/')) {
             return;
         }
 
@@ -297,7 +297,7 @@ class AccountController extends Controller
 
         $secret = session('twofa_pending_secret');
 
-        if (! $secret || ! TotpService::verify(Typed::string($secret), Typed::stringOrNull($validated['code']))) {
+        if (! (bool) $secret || ! TotpService::verify(Typed::string($secret), Typed::stringOrNull($validated['code']))) {
             return back()->withErrors(['code' => __('account.twofa_code_invalid')]);
         }
 
@@ -376,11 +376,11 @@ class AccountController extends Controller
 
         $code = Code::where('code', $validated['code'])->first();
 
-        if (! $code) {
+        if ($code === null) {
             return back()->withErrors(['code' => __('account.invalid_code')]);
         }
 
-        if ($issue = $code->redemptionIssue($this->user())) {
+        if (($issue = $code->redemptionIssue($this->user())) !== '' && $issue !== null) {
             return back()->withErrors(['code' => __($issue)]);
         }
 

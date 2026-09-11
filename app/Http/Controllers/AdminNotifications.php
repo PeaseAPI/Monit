@@ -49,7 +49,7 @@ class AdminNotifications extends Controller
         $adminUserId = $this->user()->user_id;
 
         $query = User::where('status', 1);
-        if ($validated['target_email'] ?? null) {
+        if ((bool) ($validated['target_email'] ?? null)) {
             $query->where('email', $validated['target_email']);
         }
 

@@ -51,12 +51,12 @@ class NetworkTools
         $ip = gethostbyname($domain);
 
         $data = ['A 记录' => $ip !== $domain ? $ip : '未解析'];
-        $mx = @dns_get_record($domain, DNS_MX) ?: [];
-        $data['MX 记录'] = $mx ? implode(', ', array_map(fn ($v) => Typed::string($v), array_column($mx, 'target'))) : '无';
-        $ns = @dns_get_record($domain, DNS_NS) ?: [];
-        $data['NS 记录'] = $ns ? implode(', ', array_map(fn ($v) => Typed::string($v), array_column($ns, 'target'))) : '无';
-        $txt = @dns_get_record($domain, DNS_TXT) ?: [];
-        $data['TXT 记录'] = $txt ? implode(' | ', array_map(fn ($v) => Typed::string($v), array_column($txt, 'txt'))) : '无';
+        $mx = Typed::dnsRecords(@dns_get_record($domain, DNS_MX));
+        $data['MX 记录'] = $mx !== [] ? implode(', ', array_map(fn ($v) => Typed::string($v), array_column($mx, 'target'))) : '无';
+        $ns = Typed::dnsRecords(@dns_get_record($domain, DNS_NS));
+        $data['NS 记录'] = $ns !== [] ? implode(', ', array_map(fn ($v) => Typed::string($v), array_column($ns, 'target'))) : '无';
+        $txt = Typed::dnsRecords(@dns_get_record($domain, DNS_TXT));
+        $data['TXT 记录'] = $txt !== [] ? implode(' | ', array_map(fn ($v) => Typed::string($v), array_column($txt, 'txt'))) : '无';
 
         return ['ok' => true, 'data' => $data];
     }
@@ -69,13 +69,13 @@ class NetworkTools
     {
         $ip = trim(Typed::string($in['ip'] ?? ''));
 
-        if (! filter_var($ip, FILTER_VALIDATE_IP)) {
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
             return ['ok' => false, 'error' => 'IP 格式无效', 'data' => []];
         }
 
         return ['ok' => true, 'data' => [
-            '反向解析' => gethostbyaddr($ip) ?: '无',
-            '版本' => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? 'IPv4' : 'IPv6',
+            '反向解析' => Typed::nonEmpty(gethostbyaddr($ip), '无'),
+            '版本' => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false ? 'IPv4' : 'IPv6',
         ]];
     }
 
@@ -145,7 +145,7 @@ class NetworkTools
         return ['ok' => true, 'data' => [
             '到期日期' => $result['expiration_date'] ?? '-',
             '注册商' => $result['registrar'] ?? '-',
-            '域名服务器' => implode(', ', $result['nameservers'] ?? []) ?: '-',
+            '域名服务器' => Typed::nonEmpty(implode(', ', $result['nameservers'] ?? []), '-'),
         ]];
     }
 
@@ -186,7 +186,7 @@ class NetworkTools
     {
         $ip = trim(Typed::string($in['ip'] ?? ''));
 
-        if (! filter_var($ip, FILTER_VALIDATE_IP)) {
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
             return ['ok' => false, 'error' => 'IP 格式无效', 'data' => []];
         }
 
@@ -208,12 +208,12 @@ class NetworkTools
         }
 
         $ipv4 = gethostbyname($domain);
-        $ipv6 = @dns_get_record($domain, DNS_AAAA) ?: [];
+        $ipv6 = Typed::dnsRecords(@dns_get_record($domain, DNS_AAAA));
 
-        return ['ok' => $ipv4 !== $domain || $ipv6 !== [], 'data' => array_filter([
+        return ['ok' => $ipv4 !== $domain || $ipv6 !== [], 'data' => [
             'IPv4' => $ipv4 !== $domain ? $ipv4 : '无',
-            'IPv6' => $ipv6 ? $ipv6[0]['ipv6'] ?? '无' : '无',
-        ])];
+            'IPv6' => $ipv6 !== [] ? ($ipv6[0]['ipv6'] ?? '无') : '无',
+        ]];
     }
 
     /**
@@ -329,13 +329,13 @@ class NetworkTools
             return ['ok' => false, 'error' => '域名解析失败', 'data' => []];
         }
 
-        $reverse = gethostbyaddr($ip) ?: '';
+        $reverse = Typed::nonEmpty(gethostbyaddr($ip), '');
 
         return ['ok' => true, 'data' => array_filter([
             'IP 地址' => $ip,
             '反向解析' => $reverse,
-            '推测托管商' => preg_match('/([a-z0-9-]+)\.(com|net|org|cn|io)$/i', $reverse, $m) ? $m[1] : '无法识别',
-        ])];
+            '推测托管商' => preg_match('/([a-z0-9-]+)\.(com|net|org|cn|io)$/i', $reverse, $m) > 0 ? $m[1] : '无法识别',
+        ], fn (string $v): bool => $v !== '')];
     }
 
     /**
@@ -395,10 +395,10 @@ class NetworkTools
             return ['ok' => false, 'error' => mb_substr($e->getMessage(), 0, 200), 'data' => []];
         }
 
-        $encoding = strtolower((string) $response->header('Content-Encoding'));
+        $encoding = strtolower($response->header('Content-Encoding'));
 
         return ['ok' => true, 'data' => [
-            'Content-Encoding' => $encoding ?: '无',
+            'Content-Encoding' => Typed::nonEmpty($encoding, '无'),
             'Brotli' => str_contains($encoding, 'br') ? '已启用' : '未启用',
             'Gzip' => str_contains($encoding, 'gzip') ? '已启用' : '未启用',
         ]];
@@ -437,8 +437,8 @@ class NetworkTools
         }
 
         return ['ok' => true, 'data' => [
-            'Punycode' => idn_to_ascii($domain, IDNA_NONTRANSITIONAL_TO_ASCII) ?: '转换失败',
-            'Unicode' => idn_to_utf8($domain, IDNA_NONTRANSITIONAL_TO_UNICODE) ?: '转换失败',
+            'Punycode' => Typed::nonEmpty(idn_to_ascii($domain, IDNA_NONTRANSITIONAL_TO_ASCII), '转换失败'),
+            'Unicode' => Typed::nonEmpty(idn_to_utf8($domain, IDNA_NONTRANSITIONAL_TO_UNICODE), '转换失败'),
         ]];
     }
 
@@ -454,7 +454,7 @@ class NetworkTools
             return ['ok' => false, 'error' => $result['error'] ?? null, 'data' => []];
         }
 
-        $html = (string) $result['response']->body();
+        $html = $result['response']->body();
         $text = preg_replace('#<(script|style|noscript)[^>]*>.*?</\1>#is', ' ', $html) ?? '';
         $text = trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($text), ENT_QUOTES, 'UTF-8')) ?? '');
 
@@ -473,7 +473,7 @@ class NetworkTools
             return ['ok' => false, 'error' => $result['error'] ?? null, 'data' => []];
         }
 
-        $bytes = strlen((string) $result['response']->body());
+        $bytes = strlen($result['response']->body());
 
         return ['ok' => true, 'data' => [
             '页面大小' => number_format($bytes / 1024, 1).' KB',

@@ -20,7 +20,7 @@ class AdminWebsites extends Controller
     {
         $query = Website::with('user');
 
-        if ($search = $request->query('search')) {
+        if ((bool) $search = $request->query('search')) {
             $query->where('name', 'like', "%{$search}%")
                 ->orWhere('host', 'like', "%{$search}%")
                 ->orWhereHas('user', fn ($q) => $q->where('email', 'like', "%{$search}%"));

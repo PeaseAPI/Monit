@@ -19,7 +19,7 @@ class DemoHeatmapReplaySeeder extends Seeder
     public function run(): void
     {
         $website = Website::first();
-        if (! $website) {
+        if ($website === null) {
             $this->command->warn('No website found.');
 
             return;
@@ -88,7 +88,7 @@ class DemoHeatmapReplaySeeder extends Seeder
             $visitor = WebsiteVisitor::create([
                 'website_id' => $website->website_id,
                 'visitor_uuid_binary' => Uuid::uuid4()->getBytes(),
-                'ip' => long2ip((int) mt_rand((int) ip2long('1.0.0.0'), (int) ip2long('223.255.255.255'))),
+                'ip' => long2ip(mt_rand((int) ip2long('1.0.0.0'), (int) ip2long('223.255.255.255'))),
                 'continent_code' => 'AS',
                 'country_code' => 'CN',
                 'city_name' => ['北京', '上海', '广州', '深圳', '杭州'][mt_rand(0, 4)],

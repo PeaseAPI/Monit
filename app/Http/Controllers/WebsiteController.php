@@ -144,13 +144,13 @@ class WebsiteController extends Controller
     {
         $parts = parse_url($url);
 
-        $host = strtolower((string) ($parts['host'] ?? ''));
-        $host = preg_replace('/^www\./', '', $host) ?: $host;
+        $host = strtolower(($parts['host'] ?? ''));
+        $host = preg_replace('/^www\./', '', $host) ?? $host;
 
         return [
-            'scheme' => substr((string) ($parts['scheme'] ?? 'https'), 0, 8),
+            'scheme' => substr(($parts['scheme'] ?? 'https'), 0, 8),
             'host' => substr($host, 0, 256),
-            'path' => substr((string) ($parts['path'] ?? ''), 0, 256),
+            'path' => substr(($parts['path'] ?? ''), 0, 256),
         ];
     }
 
@@ -180,7 +180,7 @@ class WebsiteController extends Controller
     {
         $query = Website::where('user_id', $this->user()->user_id);
 
-        if ($search = $request->query('search')) {
+        if ((bool) $search = $request->query('search')) {
             // 分组括号必须包住 or 条件：否则 SQL 中 AND 优先于 OR，
             // (user_id=X AND name LIKE) OR (host LIKE) 会跨租户返回他人网站
             $query->where(function ($q) use ($search) {

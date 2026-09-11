@@ -31,11 +31,11 @@ final class TencentSmsProvider
     public static function make(): static
     {
         return new self(
-            Typed::string(Settings::get('sms.sms_tencent_secret_id') ?: config('services.sms_tencent.secret_id', '')),
-            Typed::string(Settings::get('sms.sms_tencent_secret_key') ?: config('services.sms_tencent.secret_key', '')),
-            Typed::string(Settings::get('sms.sms_tencent_sdk_app_id') ?: config('services.sms_tencent.sdk_app_id', '')),
-            Typed::string(Settings::get('sms.sms_tencent_sign_name') ?: config('services.sms_tencent.sign_name', '')),
-            Typed::string(Settings::get('sms.sms_tencent_template_id') ?: config('services.sms_tencent.template_id', '')),
+            Typed::string(Settings::get('sms.sms_tencent_secret_id') ?? config('services.sms_tencent.secret_id', '')),
+            Typed::string(Settings::get('sms.sms_tencent_secret_key') ?? config('services.sms_tencent.secret_key', '')),
+            Typed::string(Settings::get('sms.sms_tencent_sdk_app_id') ?? config('services.sms_tencent.sdk_app_id', '')),
+            Typed::string(Settings::get('sms.sms_tencent_sign_name') ?? config('services.sms_tencent.sign_name', '')),
+            Typed::string(Settings::get('sms.sms_tencent_template_id') ?? config('services.sms_tencent.template_id', '')),
         );
     }
 

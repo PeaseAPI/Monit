@@ -30,15 +30,16 @@ class FaviconController extends Controller
         // 后台已配置：本地文件直接代理输出（浏览器拿到真实内容而非 302），
         // 外链 302 跳转（避免服务器代理外网流量）
         if ($configured !== '' && $configured !== '/favicon.ico') {
-            if (preg_match('#^https?://#i', $configured)) {
+            if (preg_match('#^https?://#i', $configured) !== 0 && preg_match('#^https?://#i', $configured) !== false) {
                 return redirect()->away($configured, 302)->header('Cache-Control', 'public, max-age=3600')->send();
             }
 
-            $path = ltrim(parse_url($configured, PHP_URL_PATH) ?: $configured, '/');
+            $parsed = parse_url($configured, PHP_URL_PATH);
+            $path = ltrim($parsed === false || $parsed === null ? $configured : $parsed, '/');
 
             // storage 公开盘 或 public 目录（限定图片扩展，防任意文件读取）
             foreach ([storage_path('app/public/'.urldecode($path)), public_path(urldecode($path))] as $file) {
-                if (is_file($file) && preg_match('/\.(ico|png|jpg|jpeg|gif|svg|webp)$/i', $file)) {
+                if (is_file($file) && (preg_match('/\.(ico|png|jpg|jpeg|gif|svg|webp)$/i', $file) !== 0 && preg_match('/\.(ico|png|jpg|jpeg|gif|svg|webp)$/i', $file) !== false)) {
                     return new Response(file_get_contents($file), 200, [
                         'Content-Type' => $this->mimeType($file),
                         'Cache-Control' => 'public, max-age=3600',

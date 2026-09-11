@@ -23,7 +23,7 @@ class EnforcePlanLimits
     {
         $user = $request->user();
 
-        if (! $user) {
+        if ($user === null) {
             return $next($request);
         }
 

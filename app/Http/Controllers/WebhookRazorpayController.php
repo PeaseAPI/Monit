@@ -24,7 +24,7 @@ class WebhookRazorpayController extends Controller
         }
 
         $computed = hash_hmac('sha256', $request->getContent(), $webhookSecret);
-        $provided = (string) $request->header('x-razorpay-signature', '');
+        $provided = $request->header('x-razorpay-signature', '');
 
         if ($provided === '' || ! hash_equals($computed, $provided)) {
             return response()->json(['error' => 'Invalid signature'], 400);
@@ -39,7 +39,7 @@ class WebhookRazorpayController extends Controller
             $externalId = Typed::stringOrNull($paymentEntity['id'] ?? null);
 
             // 金额/币种防篡改：amount 为派萨（最小单位），须与本地订单一致方可入账
-            if ($paymentId
+            if (($paymentId !== 0 && $paymentId !== null)
                 && $paymentService->verifyGatewayAmount(
                     $paymentId,
                     PaymentService::majorUnits(
@@ -58,7 +58,7 @@ class WebhookRazorpayController extends Controller
             $paymentEntity = Typed::arr(data_get($payload, 'payload.payment.entity', []));
             $paymentId = Typed::intOrNull(data_get($paymentEntity, 'notes.payment_id'));
 
-            if ($paymentId) {
+            if ($paymentId !== 0 && $paymentId !== null) {
                 $paymentService->handlePaymentFailure(
                     $paymentId,
                     Typed::string($paymentEntity['id'] ?? ''),
@@ -70,7 +70,7 @@ class WebhookRazorpayController extends Controller
         if ($event === 'subscription.cancelled') {
             $subscriptionEntity = Typed::arr(data_get($payload, 'payload.subscription.entity', []));
             $subscriptionId = Typed::stringOrNull($subscriptionEntity['id'] ?? null);
-            if ($subscriptionId) {
+            if ($subscriptionId !== '' && $subscriptionId !== null) {
                 $paymentService->handleSubscriptionCancelled($subscriptionId, 'razorpay');
             }
         }

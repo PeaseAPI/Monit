@@ -104,7 +104,7 @@ class PixelTracker
         }
 
         // host 匹配验证（去 www. 前缀比对）
-        $urlHost = parse_url(Typed::string($this->payload['url'] ?? ''), PHP_URL_HOST) ?: '';
+        $urlHost = Typed::nonEmpty(parse_url(Typed::string($this->payload['url'] ?? ''), PHP_URL_HOST), '');
         if ($urlHost !== '' && ! $this->website->matchesHost($urlHost)) {
             $this->skip('host_mismatch');
 
@@ -128,7 +128,7 @@ class PixelTracker
 
         // 所属用户被禁用 / 套餐限额
         $user = $this->website->user;
-        if (! $user || $user->status !== 1) {
+        if ($user === null || $user->status !== 1) {
             $this->skip('user_disabled');
 
             return false;
@@ -211,11 +211,11 @@ class PixelTracker
             'city_name' => $geo['city_name'],
             'os_name' => $osName,
             'browser_name' => $browserName,
-            'browser_language' => substr(Typed::string($data['language'] ?? ''), 0, 16) ?: null,
-            'browser_timezone' => substr(Typed::string($data['timezone'] ?? ''), 0, 64) ?: null,
+            'browser_language' => substr(Typed::string($data['language'] ?? ''), 0, 16),
+            'browser_timezone' => substr(Typed::string($data['timezone'] ?? ''), 0, 64),
             'screen_resolution' => $this->parseResolution($data),
             'device_type' => $this->uaParser->deviceType(),
-            'theme' => substr(Typed::string($data['theme'] ?? ''), 0, 8) ?: null,
+            'theme' => substr(Typed::string($data['theme'] ?? ''), 0, 8),
             'date' => now(),
             'expiration_date' => now()->addDays(Typed::int(config('monit.pixel.events_retention_days'))),
         ]);
@@ -263,7 +263,7 @@ class PixelTracker
             case 'goal_conversion':
                 $visitor = $this->findVisitor();
                 $event = $this->findCurrentEvent($visitor);
-                $session = $visitor ? $this->findSession($visitor) : null;
+                $session = ($visitor !== null) ? $this->findSession($visitor) : null;
                 $this->handleGoalConversion($visitor, $event, $session);
                 $this->incrementUsage(false);
 
@@ -319,7 +319,7 @@ class PixelTracker
                 'website_id' => $this->website->website_id,
                 'visitor_uuid_binary' => $uuidBinary,
                 'ip' => $this->website->ip_tracking_is_enabled ? $this->clientIp() : null,
-                'custom_parameters' => $customParameters ? json_encode($customParameters, JSON_UNESCAPED_UNICODE) : null,
+                'custom_parameters' => ($customParameters !== []) ? json_encode($customParameters, JSON_UNESCAPED_UNICODE) : null,
                 'continent_code' => $geo['continent_code'],
                 'country_code' => $geo['country_code'],
                 'city_name' => $geo['city_name'],
@@ -327,11 +327,11 @@ class PixelTracker
                 'os_version' => $osVersion,
                 'browser_name' => $browserName,
                 'browser_version' => $browserVersion,
-                'browser_language' => substr(Typed::string($data['language'] ?? ''), 0, 16) ?: null,
-                'browser_timezone' => substr(Typed::string($data['timezone'] ?? ''), 0, 64) ?: null,
+                'browser_language' => substr(Typed::string($data['language'] ?? ''), 0, 16),
+                'browser_timezone' => substr(Typed::string($data['timezone'] ?? ''), 0, 64),
                 'screen_resolution' => $this->parseResolution($data),
                 'device_type' => $this->uaParser->deviceType(),
-                'theme' => substr(Typed::string($data['theme'] ?? ''), 0, 8) ?: null,
+                'theme' => substr(Typed::string($data['theme'] ?? ''), 0, 8),
                 'date' => now(),
                 'last_date' => now(),
             ]],
@@ -352,14 +352,14 @@ class PixelTracker
     protected function insertSessionEvent(string $type, array $data): void
     {
         $visitor = $this->findOrCreateVisitor();
-        if (! $visitor) {
+        if ($visitor === null) {
             $this->skip('visitor_not_found');
 
             return;
         }
 
         $session = $this->findOrCreateSession($visitor);
-        if (! $session) {
+        if ($session === null) {
             $this->skip('session_invalid');
 
             return;
@@ -374,14 +374,14 @@ class PixelTracker
             'website_id' => $this->website->website_id,
             'type' => $type,
             'path' => $path,
-            'title' => mb_substr(Typed::string($data['title'] ?? ''), 0, 512) ?: null,
+            'title' => mb_substr(Typed::string($data['title'] ?? ''), 0, 512),
             'referrer_host' => $this->parseReferrer($data, 'host'),
             'referrer_path' => $this->parseReferrer($data, 'path'),
             'utm_source' => $this->extractUtm($query, 'utm_source'),
             'utm_medium' => $this->extractUtm($query, 'utm_medium'),
             'utm_campaign' => $this->extractUtm($query, 'utm_campaign'),
-            'viewport_width' => Typed::int(data_get($data, 'viewport.width')) ?: null,
-            'viewport_height' => Typed::int(data_get($data, 'viewport.height')) ?: null,
+            'viewport_width' => Typed::int(data_get($data, 'viewport.width')),
+            'viewport_height' => Typed::int(data_get($data, 'viewport.height')),
             'has_bounced' => $type === 'landing_page',
             'date' => now(),
             'expiration_date' => now()->addDays(Typed::int(config('monit.pixel.events_retention_days'))),
@@ -417,7 +417,7 @@ class PixelTracker
         $visitor = $this->findVisitor();
         $event = $this->findCurrentEvent($visitor);
 
-        if (! $event) {
+        if ($event === null) {
             $this->skip('event_not_found');
 
             return;
@@ -471,9 +471,9 @@ class PixelTracker
             'website_id' => $this->website->website_id,
             'event_id' => $eventId,
             'visitor_id' => $visitorId,
-            'host' => mb_substr((string) (parse_url($url, PHP_URL_HOST) ?? ''), 0, 256) ?: null,
-            'path' => mb_substr((string) (parse_url($url, PHP_URL_PATH) ?? ''), 0, 2048) ?: null,
-            'title' => mb_substr(Typed::string($this->payload['outbound_title'] ?? ''), 0, 512) ?: null,
+            'host' => mb_substr((string) (parse_url($url, PHP_URL_HOST) ?? ''), 0, 256),
+            'path' => mb_substr((string) (parse_url($url, PHP_URL_PATH) ?? ''), 0, 2048),
+            'title' => mb_substr(Typed::string($this->payload['outbound_title'] ?? ''), 0, 512),
             'datetime' => now(),
         ]);
     }
@@ -495,16 +495,16 @@ class PixelTracker
             ->where('is_enabled', true)
             ->first();
 
-        if (! $goal) {
+        if ($goal === null) {
             $this->skip('goal_not_found');
 
             return;
         }
 
         // 同一访客同一目标去重
-        if ($visitor) {
+        if ($visitor !== null) {
             $converted = $visitor->goals_conversions_ids ?? [];
-            if (in_array($goal->goal_id, $converted, false)) {
+            if (in_array($goal->goal_id, $converted, true)) {
                 $this->skip('goal_duplicate');
 
                 return;
@@ -541,10 +541,10 @@ class PixelTracker
             ->where('session_uuid_binary', $sessionIdBinary)
             ->first();
 
-        if (! $session) {
+        if ($session === null) {
             // 回放数据先于 session 事件到达时，自动补建 visitor + session（防丟数据）
             $visitor = $this->findOrCreateVisitor();
-            if ($visitor) {
+            if ($visitor !== null) {
                 $session = VisitorSession::create([
                     'session_uuid_binary' => $sessionIdBinary,
                     'visitor_id' => $visitor->visitor_id,
@@ -555,7 +555,7 @@ class PixelTracker
             }
         }
 
-        if (! $session) {
+        if ($session === null) {
             $this->skip('session_not_found');
 
             return;
@@ -615,7 +615,7 @@ class PixelTracker
                 ->lockForUpdate()
                 ->first();
 
-            if (! $replay) {
+            if ($replay === null) {
                 // 回放配额（规格 §10.2：sessions_replays_limit；-1 不限、显式配置 0=无此功能）。
                 // 判定与 PixelTrackController::doHeatmapCheck 的 replay_enabled 严格一致：
                 // 0（落地页明确宣传「该套餐无回放」）或超限时一律拒收——
@@ -697,7 +697,7 @@ class PixelTracker
     protected function handleHeatmapSnapshot(): void
     {
         $heatmap = $this->findEnabledHeatmap();
-        if (! $heatmap) {
+        if ($heatmap === null) {
             return;
         }
 
@@ -732,8 +732,8 @@ class PixelTracker
             $compressed = gzencode((string) $json, 9);
 
             // 检查是否已有该设备的 snapshot（可能由 click/scroll 先到达时自动创建的空快照）
-            $existingSnapshotId = $heatmap->{"snapshot_id_{$device}"};
-            if ($existingSnapshotId) {
+            $existingSnapshotId = $heatmap->getAttribute("snapshot_id_{$device}");
+            if ($existingSnapshotId !== null) {
                 // 更新已有快照的真实 DOM 数据（原生 SQL 写 LONGBLOB，避免 Eloquent 编码问题）
                 DB::statement(
                     'UPDATE heatmaps_snapshots SET data = ? WHERE snapshot_id = ?',
@@ -774,7 +774,7 @@ class PixelTracker
     protected function handleHeatmapSnapshotClick(): void
     {
         $heatmap = $this->findEnabledHeatmap();
-        if (! $heatmap) {
+        if ($heatmap === null) {
             return;
         }
 
@@ -786,7 +786,7 @@ class PixelTracker
 
         HeatmapSnapshotClick::create([
             'website_id' => $this->website->website_id,
-            'snapshot_id' => $heatmap->{"snapshot_id_{$device}"},
+            'snapshot_id' => $heatmap->getAttribute("snapshot_id_{$device}"),
             'x_normalized' => $x,
             'y_normalized' => $y,
             'count' => $count,
@@ -801,7 +801,7 @@ class PixelTracker
     protected function handleHeatmapSnapshotScroll(): void
     {
         $heatmap = $this->findEnabledHeatmap();
-        if (! $heatmap) {
+        if ($heatmap === null) {
             return;
         }
 
@@ -819,7 +819,7 @@ class PixelTracker
         HeatmapSnapshotScroll::upsert(
             [[
                 'website_id' => $this->website->website_id,
-                'snapshot_id' => $heatmap->{"snapshot_id_{$device}"},
+                'snapshot_id' => $heatmap->getAttribute("snapshot_id_{$device}"),
                 'event_uuid_binary' => $uuidBinary,
                 'max_scroll' => $maxScroll,
                 'expiration_date' => now()->addDays(Typed::int(config('monit.pixel.events_retention_days')))->toDateString(),
@@ -843,7 +843,7 @@ class PixelTracker
             ->where('is_enabled', true)
             ->first();
 
-        if (! $heatmap) {
+        if ($heatmap === null) {
             $this->skip('heatmap_not_found');
         }
 
@@ -864,7 +864,7 @@ class PixelTracker
         }
 
         // snapshot_id 已存在 → 直接返回
-        if ($heatmap->{"snapshot_id_{$device}"}) {
+        if ($heatmap->getAttribute("snapshot_id_{$device}") !== null) {
             return $device;
         }
 
@@ -906,7 +906,7 @@ class PixelTracker
     {
         $visitor = $this->findVisitor();
 
-        if ($visitor) {
+        if ($visitor !== null) {
             return $visitor;
         }
 
@@ -934,10 +934,10 @@ class PixelTracker
     {
         $session = $this->findSession($visitor);
 
-        if ($session) {
+        if ($session !== null) {
             // 会话超时 => 开新会话
             $timeout = Typed::int(config('monit.pixel.session_timeout'));
-            if ($session->date && $session->date->diffInSeconds(now()) <= $timeout) {
+            if ($session->date !== null && $session->date->diffInSeconds(now()) <= $timeout) {
                 return $session;
             }
         }
@@ -953,7 +953,7 @@ class PixelTracker
 
     protected function findCurrentEvent(?WebsiteVisitor $visitor): ?SessionEvent
     {
-        if (! $visitor) {
+        if ($visitor === null) {
             return null;
         }
 
@@ -963,7 +963,7 @@ class PixelTracker
                 ->where('event_uuid_binary', $eventUuidBinary)
                 ->first();
 
-            if ($event) {
+            if ($event !== null) {
                 return $event;
             }
         }
@@ -990,7 +990,7 @@ class PixelTracker
 
     protected function uuidToBinary(?string $uuid): ?string
     {
-        if (! $uuid) {
+        if (($uuid === null || $uuid === '')) {
             return null;
         }
 
@@ -1011,8 +1011,8 @@ class PixelTracker
     protected function parseUrlPath(array $data): array
     {
         $url = Typed::string($data['url'] ?? $this->payload['url'] ?? '');
-        $path = (string) (parse_url($url, PHP_URL_PATH) ?: '/');
-        $query = (string) (parse_url($url, PHP_URL_QUERY) ?: '');
+        $path = Typed::nonEmpty(parse_url($url, PHP_URL_PATH) ?? '/', '/');
+        $query = Typed::nonEmpty(parse_url($url, PHP_URL_QUERY) ?? '', '');
 
         if (! $this->website->query_parameters_tracking_is_enabled) {
             $query = '';
@@ -1034,10 +1034,10 @@ class PixelTracker
         }
 
         if ($part === 'host') {
-            return mb_substr((string) (parse_url($referrer, PHP_URL_HOST) ?: ''), 0, 256) ?: null;
+            return mb_substr(Typed::nonEmpty(parse_url($referrer, PHP_URL_HOST) ?? '', ''), 0, 256);
         }
 
-        return mb_substr((string) (parse_url($referrer, PHP_URL_PATH) ?: ''), 0, 2048) ?: null;
+        return mb_substr(Typed::nonEmpty(parse_url($referrer, PHP_URL_PATH) ?? '', ''), 0, 2048);
     }
 
     protected function extractUtm(string $query, string $key): ?string
@@ -1049,7 +1049,7 @@ class PixelTracker
         parse_str($query, $params);
         $value = $params[$key] ?? null;
 
-        return $value && is_string($value) ? mb_substr($value, 0, 256) : null;
+        return is_string($value) && $value !== '' ? mb_substr($value, 0, 256) : null;
     }
 
     /**
@@ -1113,7 +1113,7 @@ class PixelTracker
 
     protected function skip(string $reason): void
     {
-        if ($this->skipCallback) {
+        if ($this->skipCallback !== null) {
             ($this->skipCallback)($reason);
         }
     }

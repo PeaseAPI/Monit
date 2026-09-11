@@ -26,7 +26,7 @@ class Plugin extends Model
     protected $fillable = ['plugin_id', 'name', 'is_installed', 'is_active', 'settings', 'datetime'];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {

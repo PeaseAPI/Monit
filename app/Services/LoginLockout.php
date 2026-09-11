@@ -41,16 +41,14 @@ class LoginLockout
 
     public static function recordFailure(string $scope, string $identifier): void
     {
-        [, , , $defaultRetries] = self::SCOPES[$scope] ?? [null, null, null, 5];
-
         [$enabled, $retries, $minutes] = self::config($scope);
 
         if (! $enabled) {
             return;
         }
 
-        $retries = max(1, (int) ($retries ?: $defaultRetries));
-        $minutes = max(1, (int) ($minutes ?: 30));
+        $retries = max(1, $retries);
+        $minutes = max(1, $minutes);
 
         $failsKey = self::key($scope, $identifier, 'fails');
         $fails = Typed::int(cache()->get($failsKey, 0)) + 1;
@@ -83,8 +81,8 @@ class LoginLockout
 
         return [
             $enabled,
-            Typed::int(Settings::get($retriesKey) ?: $defaultRetries),
-            Typed::int(Settings::get($minutesKey) ?: 30),
+            Typed::int(Settings::get($retriesKey) ?? $defaultRetries),
+            Typed::int(Settings::get($minutesKey) ?? 30),
         ];
     }
 

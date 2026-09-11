@@ -91,12 +91,12 @@ class SmsService
 
         $phone = static::normalizePhone($phone);
 
-        if (! preg_match('/^1[3-9]\d{9}$/', $phone)) {
+        if (preg_match('/^1[3-9]\d{9}$/', $phone) !== 1) {
             return [false, 'invalid_phone'];
         }
 
-        $ttl = max(1, Typed::int(Settings::get('sms.sms_code_ttl_minutes', 10) ?: 10));
-        $interval = max(10, Typed::int(Settings::get('sms.sms_resend_interval_seconds', 60) ?: 60));
+        $ttl = max(1, Typed::int(Settings::get('sms.sms_code_ttl_minutes', 10) ?? 10));
+        $interval = max(10, Typed::int(Settings::get('sms.sms_resend_interval_seconds', 60) ?? 60));
 
         // 发送节流
         if (! Cache::add("monit.sms.throttle.{$phone}", 1, $interval)) {
@@ -126,7 +126,7 @@ class SmsService
         $cacheKey = "monit.sms.{$purpose}.{$phone}";
         $expected = Cache::get($cacheKey);
 
-        if (! $expected || ! hash_equals(Typed::string($expected), trim($code))) {
+        if (! (bool) $expected || ! hash_equals(Typed::string($expected), trim($code))) {
             $attemptsKey = "monit.sms.attempts.{$purpose}.{$phone}";
             $attempts = Typed::int(Cache::get($attemptsKey, 0)) + 1;
 

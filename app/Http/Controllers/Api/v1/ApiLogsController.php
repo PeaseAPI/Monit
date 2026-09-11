@@ -18,13 +18,13 @@ class ApiLogsController extends Controller
         $query = AccountLog::where('user_id', Auth::id())
             ->orderByDesc('datetime');
 
-        if ($type = $request->query('type')) {
+        if ((bool) $type = $request->query('type')) {
             $query->where('type', $type);
         }
-        if ($startDate = $request->query('start_date')) {
+        if ((bool) $startDate = $request->query('start_date')) {
             $query->where('datetime', '>=', $startDate);
         }
-        if ($endDate = $request->query('end_date')) {
+        if ((bool) $endDate = $request->query('end_date')) {
             $query->where('datetime', '<=', $endDate);
         }
 

@@ -57,7 +57,7 @@ class KlarnaProcessor
         $orderId = Typed::string($request->input('order_id'));
         $event = $request->input('event_type');
 
-        if (! in_array($event, ['ORDER_COMPLETED', 'FRAUD_CHECK_ACCEPTED'])) {
+        if (! in_array($event, ['ORDER_COMPLETED', 'FRAUD_CHECK_ACCEPTED'], true)) {
             return null;
         }
 
@@ -67,7 +67,7 @@ class KlarnaProcessor
         $user = User::query()->where('user_id', Typed::int($metadata['user_id'] ?? 0))->first();
         $plan = Plan::query()->where('plan_id', Typed::int($metadata['plan_id'] ?? 0))->first();
 
-        if (! $user || ! $plan) {
+        if ($user === null || $plan === null) {
             return null;
         }
 

@@ -12,7 +12,7 @@ class Annotation extends Model
     protected $fillable = ['website_id', 'user_id', 'name', 'date'];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {

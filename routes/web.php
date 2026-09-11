@@ -872,7 +872,7 @@ Route::get('/dynamic-og-images/{type}/{id}', function (string $type, int $id) {
 
 // 404 兜底路由（规格书 §6.1：/not-found；main.not_found_url 配置时跳转外部页面）
 Route::fallback(function () {
-    if ($url = trim(Typed::string(Settings::get('main.not_found_url', '')))) {
+    if (($url = trim(Typed::string(Settings::get('main.not_found_url', '')))) !== '') {
         return redirect()->away($url, 302);
     }
 

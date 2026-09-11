@@ -16,7 +16,7 @@ class AlipayProcessor
 
     public function isConfigured(): bool
     {
-        return (bool) (config('services.alipay.app_id') && config('services.alipay.private_key'));
+        return (bool) config('services.alipay.app_id') && (bool) config('services.alipay.private_key');
     }
 
     /**
@@ -52,7 +52,7 @@ class AlipayProcessor
 
             $fields = '';
             foreach ($params as $key => $value) {
-                $fields .= '<input type="hidden" name="'.(string) e(Typed::string($key)).'" value="'.(string) e(Typed::string($value)).'">';
+                $fields .= '<input type="hidden" name="'.e(Typed::string($key)).'" value="'.e(Typed::string($value)).'">';
             }
 
             return [
@@ -71,7 +71,7 @@ class AlipayProcessor
      */
     public function verifyNotify(array $data): bool
     {
-        if (empty($data['sign']) || empty($data['sign_type'])) {
+        if (($data['sign'] ?? '') === '' || ($data['sign_type'] ?? '') === '') {
             return false;
         }
 
@@ -90,7 +90,7 @@ class AlipayProcessor
 
         $publicKey = $this->normalizePublicKey(Typed::string(config('services.alipay.alipay_public_key')));
 
-        return (bool) openssl_verify($content, base64_decode($sign), $publicKey, OPENSSL_ALGO_SHA256);
+        return (bool) openssl_verify($content, (string) base64_decode($sign, true), $publicKey, OPENSSL_ALGO_SHA256);
     }
 
     /**

@@ -21,7 +21,7 @@ class AccountPreferencesController extends Controller
         $timezones = timezone_identifiers_list();
 
         // 语言以 lang/*.json 文件管理（无 languages 表）
-        $languages = collect(glob(lang_path('*.json')) ?: [])
+        $languages = collect(Typed::strList(glob(lang_path('*.json'))))
             ->mapWithKeys(fn (string $file) => [
                 basename($file, '.json') => basename($file, '.json'),
             ]);

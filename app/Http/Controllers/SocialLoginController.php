@@ -109,7 +109,7 @@ class SocialLoginController extends Controller
         }
 
         $clientId = config("services.{$provider}.client_id");
-        if (! $clientId) {
+        if (! (bool) $clientId) {
             return redirect()->route('login')->withErrors(['provider' => __('auth.provider_not_configured')]);
         }
 
@@ -126,7 +126,7 @@ class SocialLoginController extends Controller
         ];
 
         // Discord/Twitter OAuth2 PKCE
-        if (in_array($provider, ['discord', 'twitter'])) {
+        if (in_array($provider, ['discord', 'twitter'], true)) {
             $codeVerifier = Str::random(128);
             $codeChallenge = rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
             session(["oauth_code_verifier_{$provider}" => $codeVerifier]);
@@ -148,7 +148,7 @@ class SocialLoginController extends Controller
     protected function redirectChinese(string $provider): RedirectResponse
     {
         $config = $this->getChineseProviderConfig($provider);
-        if (! $config) {
+        if (($config === null || $config === [])) {
             return redirect()->route('login')->withErrors(['provider' => __('auth.provider_not_configured')]);
         }
 
@@ -178,27 +178,27 @@ class SocialLoginController extends Controller
 
         // 验证 state 防止 CSRF（与国内提供商同标准：hash_equals 时序安全比较）
         $state = $request->input('state');
-        if (! $state || ! hash_equals(Typed::string(session("oauth_state_{$provider}")), Typed::string($state))) {
+        if (! (bool) $state || ! hash_equals(Typed::string(session("oauth_state_{$provider}")), Typed::string($state))) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_state_mismatch')]);
         }
         session()->forget("oauth_state_{$provider}");
 
-        if ($request->input('error')) {
+        if ((bool) $request->input('error')) {
             return redirect()->route('login')->withErrors(['oauth' => $request->input('error_description', $request->input('error'))]);
         }
 
         $code = $request->input('code');
-        if (! $code) {
+        if (! (bool) $code) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_no_code')]);
         }
 
         $tokenData = $this->getAccessToken($provider, Typed::string($code));
-        if (! $tokenData || isset($tokenData['error'])) {
+        if (($tokenData === null || $tokenData === []) || isset($tokenData['error'])) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_token_failed')]);
         }
 
         $userInfo = $this->getUserInfo($provider, Typed::string($tokenData['access_token']));
-        if (! $userInfo || empty($userInfo['email'])) {
+        if ($userInfo === null || ($userInfo['email'] ?? '') === '') {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_no_email')]);
         }
 
@@ -213,22 +213,22 @@ class SocialLoginController extends Controller
         // 验证 state 防止 CSRF（Login CSRF / code 注入）——与 callback() 同标准。
         // 此前国内 5 家完全缺失校验，攻击者可将自身 code 注入受害者浏览器完成登录。
         $state = $request->input('state');
-        if (! $state || ! hash_equals(Typed::string(session("oauth_state_{$provider}")), Typed::string($state))) {
+        if (! (bool) $state || ! hash_equals(Typed::string(session("oauth_state_{$provider}")), Typed::string($state))) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_state_mismatch')]);
         }
         session()->forget("oauth_state_{$provider}");
 
         $config = $this->getChineseProviderConfig($provider);
-        if (! $config) {
+        if (($config === null || $config === [])) {
             return redirect()->route('login')->withErrors(['provider' => __('auth.provider_not_configured')]);
         }
 
-        if ($request->input('error')) {
+        if ((bool) $request->input('error')) {
             return redirect()->route('login')->withErrors(['oauth' => $request->input('error_description', $request->input('error'))]);
         }
 
         $code = $request->input('code');
-        if (! $code) {
+        if (! (bool) $code) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_no_code')]);
         }
 
@@ -237,19 +237,19 @@ class SocialLoginController extends Controller
         );
 
         $tokenData = $providerInstance->getAccessToken(Typed::string($code));
-        if (! $tokenData || isset($tokenData['error'])) {
+        if ($tokenData === [] || isset($tokenData['error'])) {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_token_failed')]);
         }
 
         $userInfo = $providerInstance->getUserInfo((string) json_encode($tokenData));
 
         // 国内提供商可能不提供邮箱，允许空邮箱但需要标识符
-        if (! $userInfo || empty($userInfo['id'])) {
+        if ($userInfo === [] || ($userInfo['id'] ?? '') === '') {
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_no_email')]);
         }
 
         // 如果没有邮箱，用 provider+id 构造一个虚拟邮箱
-        if (empty($userInfo['email'])) {
+        if (($userInfo['email'] ?? '') === '') {
             $userInfo['email'] = $provider.'_'.Typed::string($userInfo['id']).'@social.login';
         }
 
@@ -294,11 +294,11 @@ class SocialLoginController extends Controller
 
         // 未配置（id/secret 为 null）时视为未配置：null 传入提供商类型化 string
         // 构造参数会抛 TypeError——此前未配置时 /social-login/{provider} 直接 500
-        if ($config) {
+        if ($config !== null) {
             $id = $config['appId'] ?? $config['clientId'] ?? $config['appKey'] ?? null;
             $secret = $config['appSecret'] ?? $config['clientSecret'] ?? $config['appKey'] ?? null;
 
-            if (! $id || ! $secret) {
+            if (! (bool) $id || ! (bool) $secret) {
                 return null;
             }
         }
@@ -326,7 +326,7 @@ class SocialLoginController extends Controller
         ];
 
         // PKCE providers
-        if (in_array($provider, ['discord', 'twitter']) && session("oauth_code_verifier_{$provider}")) {
+        if (in_array($provider, ['discord', 'twitter'], true) && (bool) session("oauth_code_verifier_{$provider}")) {
             $params['code_verifier'] = session("oauth_code_verifier_{$provider}");
         }
 
@@ -381,7 +381,7 @@ class SocialLoginController extends Controller
             // GitHub 需要单独获取邮箱——只接受 GitHub 已验证（verified）邮箱：
             // primary 可以是未验证邮箱（GitHub 允许设未验证邮箱为 primary），
             // 未验证 email 直接用于匹配本地账号 = 账号接管
-            if ($provider === 'github' && empty($data['email'])) {
+            if ($provider === 'github' && ($data['email'] ?? '') === '') {
                 $emailResponse = Http::withToken($accessToken)
                     ->get($config['userinfo_email_url'] ?? '');
                 /** @var array<int, array<string, mixed>> $emailsRaw */
@@ -464,7 +464,7 @@ class SocialLoginController extends Controller
             // 校验 aud：只接受签给本应用 client_id 的 id_token，防止其他 Apple
             // 应用的令牌跨应用重放（纵深防御，state 校验已挡主要注入路径）
             $clientId = config('services.apple.client_id');
-            if (! $clientId || ($payload['aud'] ?? null) !== $clientId) {
+            if (! (bool) $clientId || ($payload['aud'] ?? null) !== $clientId) {
                 return null;
             }
 
@@ -516,7 +516,7 @@ class SocialLoginController extends Controller
         $email = strtolower(Typed::string($userInfo['email']));
         $user = User::where('email', $email)->first();
 
-        if ($user) {
+        if ($user !== null) {
             if ($user->status !== 1) {
                 return redirect()->route('login')->withErrors(['email' => __('validation.account_disabled')]);
             }
@@ -539,16 +539,16 @@ class SocialLoginController extends Controller
 
         // 新用户 - 自动注册，处理推荐码
         $referredBy = null;
-        if ($ref = session('referral_key')) {
+        if ((bool) $ref = session('referral_key')) {
             $referrer = User::where('referral_key', $ref)->first();
-            if ($referrer) {
+            if ($referrer !== null) {
                 $referredBy = $referrer->user_id;
             }
         }
 
         $user = User::create([
             'type' => 0,
-            'name' => Typed::string($userInfo['name'] ?? '') ?: 'User',
+            'name' => Typed::nonEmpty($userInfo['name'] ?? '', 'User'),
             'email' => $email,
             'password' => bcrypt(Str::random(32)),
             'plan_id' => 'free',

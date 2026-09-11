@@ -33,7 +33,7 @@ class DashboardController extends Controller
         $website = $websites->firstWhere('website_id', (int) $request->query('website_id')) ?? $websites->first();
 
         // 时间范围：1/7/30 天
-        $range = (int) ($request->query('range') ?: 7);
+        $range = (int) ($request->query('range') ?? 7);
         if (! in_array($range, [1, 7, 30], true)) {
             $range = 7;
         }

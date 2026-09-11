@@ -21,7 +21,7 @@ class HelpCenterSeeder extends Seeder
     public function run(): void
     {
         $adminId = User::where('type', 1)->orderBy('user_id')->value('user_id')
-            ?? (User::query()->value('user_id') ?: 1);
+            ?? (User::query()->value('user_id') ?? 1);
 
         foreach ($this->catalog() as $catIndex => $cat) {
             $category = HelpCategory::updateOrCreate(

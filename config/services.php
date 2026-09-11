@@ -319,7 +319,7 @@ return [
     | 未放置库文件时国家维度显示为空，不影响其余采集。
     */
     'geoip' => [
-        'mmdb_path' => env('GEOIP_MMDB_PATH') ?: storage_path('app/geoip/country.mmdb'),
+        'mmdb_path' => env('GEOIP_MMDB_PATH') ?? storage_path('app/geoip/country.mmdb'),
     ],
 
     /*
@@ -344,7 +344,7 @@ return [
     |   WEBPUSH_EXTRA_ENDPOINT_DOMAINS=push.example.com,alt.example.org
     */
     'webpush' => [
-        'extra_endpoint_domains' => array_filter(explode(',', (string) env('WEBPUSH_EXTRA_ENDPOINT_DOMAINS', ''))),
+        'extra_endpoint_domains' => array_filter(explode(',', (string) env('WEBPUSH_EXTRA_ENDPOINT_DOMAINS', '')), fn (string $v): bool => $v !== ''),
     ],
 
 ];

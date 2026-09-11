@@ -22,7 +22,7 @@ class Heatmap extends Model
     ];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {
@@ -60,7 +60,7 @@ class Heatmap extends Model
             (int) $this->snapshot_id_desktop,
             (int) $this->snapshot_id_tablet,
             (int) $this->snapshot_id_mobile,
-        ]));
+        ], fn (int $v): bool => $v !== 0));
     }
 
     /**

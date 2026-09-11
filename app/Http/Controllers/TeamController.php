@@ -65,7 +65,7 @@ class TeamController extends Controller
             ->firstOrFail();
 
         $members = $team->members()->with(['user', 'associations.website'])->get();
-        $isOwner = (int) $team->user_id === (int) $this->user()->user_id;
+        $isOwner = $team->user_id === $this->user()->user_id;
         $userWebsites = $isOwner ? $this->user()->websites()->get() : collect();
 
         return view('teams.show', compact('team', 'members', 'userWebsites', 'isOwner'));
@@ -150,7 +150,7 @@ class TeamController extends Controller
         $member = TeamMember::findOrFail($memberId);
 
         // 归属校验：仅团队 owner 可移除成员
-        if ((int) $member->team?->user_id !== (int) $this->user()->user_id) {
+        if ($member->team?->user_id !== $this->user()->user_id) {
             abort(403);
         }
 
@@ -205,7 +205,7 @@ class TeamController extends Controller
         $memberId = $request->query('member_id');
 
         // 缺少 member_id 时返回空集合而非触发 where null 查询
-        if (! $memberId || ! is_numeric($memberId)) {
+        if (! is_numeric($memberId)) {
             return response()->json([]);
         }
 
@@ -215,8 +215,8 @@ class TeamController extends Controller
         $member = TeamMember::with('team')->find((int) $memberId);
 
         if ($member === null
-            || ((int) $member->user_id !== (int) $this->user()->user_id
-                && (int) $member->team?->user_id !== (int) $this->user()->user_id)) {
+            || ($member->user_id !== $this->user()->user_id
+                && $member->team?->user_id !== $this->user()->user_id)) {
             return response()->json([]);
         }
 

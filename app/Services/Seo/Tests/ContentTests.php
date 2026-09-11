@@ -35,8 +35,8 @@ class ContentTests
         $text = $c->bodyText();
         // 西文按空格分词，中文按字符计数
         $latin = str_word_count($text, 0, '0123456789..-');
-        $cjk = preg_match_all('/[\x{4e00}-\x{9fff}]/u', $text) ?: 0;
-        $total = $latin + (int) $cjk;
+        $cjk = Typed::int(preg_match_all('/[\x{4e00}-\x{9fff}]/u', $text));
+        $total = $latin + $cjk;
         $min = Typed::int(AuditTestRegistry::threshold('words_count_min', 300));
 
         return [
@@ -50,7 +50,7 @@ class ContentTests
      */
     public function wordsUsed(AuditContext $c): array
     {
-        $words = preg_split('/\s+/u', mb_strtolower($c->bodyText())) ?: [];
+        $words = Typed::strList(preg_split('/\s+/u', mb_strtolower($c->bodyText())));
         $words = array_values(array_filter($words, fn ($w) => mb_strlen($w) > 1));
 
         if ($words === []) {
@@ -151,7 +151,7 @@ class ContentTests
     public static function topKeywords(string $text, int $limit = 10): array
     {
         $text = mb_strtolower($text);
-        $words = preg_split('/[^\p{L}\p{N}]+/u', $text) ?: [];
+        $words = Typed::strList(preg_split('/[^\p{L}\p{N}]+/u', $text));
         $stop = ['的', '了', '和', '是', '在', '有', '与', 'for', 'the', 'and', 'you', 'that', 'this', 'with', 'from', 'are', 'was', 'not', 'but', 'his', 'her', 'she', 'him', 'has', 'have', 'will', 'your', 'they', 'its', 'our', 'out', 'can', 'just', 'about', 'into', 'than', 'then', 'them', 'these', 'some', 'more', 'very', 'also'];
 
         $counts = [];

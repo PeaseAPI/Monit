@@ -53,7 +53,7 @@ class SessionEvent extends Model
     ];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {
@@ -92,7 +92,7 @@ class SessionEvent extends Model
 
     public function getEventUuidAttribute(): ?string
     {
-        return $this->event_uuid_binary
+        return ($this->event_uuid_binary !== '')
             ? Uuid::fromBytes($this->event_uuid_binary)->toString()
             : null;
     }

@@ -22,7 +22,7 @@ class TeamMemberAssociation extends Model
     ];
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|\Stringable>
      */
     protected function casts(): array
     {

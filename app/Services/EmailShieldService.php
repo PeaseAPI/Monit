@@ -17,7 +17,7 @@ class EmailShieldService
      */
     public function obfuscate(string $email): string
     {
-        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             return e($email);
         }
 
@@ -36,7 +36,7 @@ class EmailShieldService
      */
     public function link(?string $email, ?string $label = null): string
     {
-        if (! $email || ! $this->isEnabled()) {
+        if (($email === null || $email === '') || ! $this->isEnabled()) {
             return e($email ?? '');
         }
 
