@@ -10,6 +10,12 @@ use App\Services\Seo\AuditTestRegistry;
  */
 class PerformanceTests
 {
+    /**
+     * @return array<string, string>
+     */
+    /**
+     * @return array<string, string>
+     */
     public function handles(): array
     {
         return [
@@ -27,6 +33,9 @@ class PerformanceTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function responseTime(AuditContext $c): array
     {
         $max = (int) AuditTestRegistry::threshold('response_time_max', 1500);
@@ -37,6 +46,9 @@ class PerformanceTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function pageSize(AuditContext $c): array
     {
         $max = (int) AuditTestRegistry::threshold('page_size_max', 3000000);
@@ -47,6 +59,9 @@ class PerformanceTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function domSize(AuditContext $c): array
     {
         $count = $c->dom()->getElementsByTagName('*')->length;
@@ -60,6 +75,8 @@ class PerformanceTests
 
     /**
      * 页面引用资源数（img/script/css/media）
+     *
+     * @return array<string, mixed>
      */
     public function httpRequests(AuditContext $c): array
     {
@@ -81,6 +98,9 @@ class PerformanceTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function nonDeferredScripts(AuditContext $c): array
     {
         $blocking = 0;
@@ -100,6 +120,9 @@ class PerformanceTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function inlineCss(AuditContext $c): array
     {
         preg_match_all('/style=["\'][^"\']*["\']/i', $c->html, $matches);
@@ -112,6 +135,9 @@ class PerformanceTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function imageFormats(AuditContext $c): array
     {
         $legacy = 0;
@@ -128,6 +154,9 @@ class PerformanceTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function imageLazyLoading(AuditContext $c): array
     {
         $images = $c->dom()->getElementsByTagName('img');
@@ -149,6 +178,9 @@ class PerformanceTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function deprecatedHtmlTags(AuditContext $c): array
     {
         $deprecated = ['center', 'font', 'marquee', 'big', 'strike', 'tt', 'frame', 'frameset', 'applet'];
@@ -164,6 +196,9 @@ class PerformanceTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function serverCompression(AuditContext $c): array
     {
         $encoding = strtolower((string) ($c->header('content-encoding') ?? ''));
@@ -176,6 +211,8 @@ class PerformanceTests
 
     /**
      * HTTP/2：客户端层面不可见，按响应头线索推断（alt-svc / x-firefox-spdy 等）
+     *
+     * @return array<string, mixed>
      */
     public function isHttp2(AuditContext $c): array
     {

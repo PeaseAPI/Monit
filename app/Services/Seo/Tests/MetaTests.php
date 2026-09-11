@@ -42,6 +42,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function title(AuditContext $c): array
     {
         $title = trim((string) $c->dom()->getElementsByTagName('title')->item(0)?->textContent);
@@ -66,6 +69,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function metaDescription(AuditContext $c): array
     {
         $desc = trim((string) ($c->meta('description') ?? ''));
@@ -90,6 +96,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function h1(AuditContext $c): array
     {
         $count = $c->dom()->getElementsByTagName('h1')->length;
@@ -115,6 +124,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function metaKeywords(AuditContext $c): array
     {
         $keywords = trim((string) ($c->meta('keywords') ?? ''));
@@ -132,6 +144,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function otherHeadings(AuditContext $c): array
     {
         $count = $c->dom()->getElementsByTagName('h2')->length
@@ -143,6 +158,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function language(AuditContext $c): array
     {
         $lang = (string) $c->dom()->documentElement->getAttribute('lang');
@@ -153,6 +171,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function metaCharset(AuditContext $c): array
     {
         $charset = (string) ($c->meta('charset') ?? '');
@@ -171,6 +192,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function metaViewport(AuditContext $c): array
     {
         $viewport = (string) ($c->meta('viewport') ?? '');
@@ -181,6 +205,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function metaRefresh(AuditContext $c): array
     {
         $refresh = (string) ($c->meta('refresh') ?? '');
@@ -192,6 +219,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function canonical(AuditContext $c): array
     {
         $canonical = '';
@@ -209,6 +239,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function opengraph(AuditContext $c): array
     {
         $count = 0;
@@ -224,6 +257,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function schemas(AuditContext $c): array
     {
         preg_match_all('/application\/ld\+json/i', $c->html, $matches);
@@ -234,6 +270,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function favicon(AuditContext $c): array
     {
         $found = false;
@@ -254,6 +293,8 @@ class MetaTests
 
     /**
      * 软 404 探测：状态码 4xx/5xx 或正文异常短
+     *
+     * @return array<string, mixed>
      */
     public function notFound(AuditContext $c): array
     {
@@ -265,6 +306,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function robots(AuditContext $c): array
     {
         $exists = (bool) ($c->extra['robots_exists'] ?? false);
@@ -276,6 +320,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function metaRobots(AuditContext $c): array
     {
         $robots = strtolower((string) ($c->meta('robots') ?? ''));
@@ -288,6 +335,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function headerRobots(AuditContext $c): array
     {
         $robots = strtolower((string) ($c->header('x-robots-tag') ?? ''));
@@ -299,6 +349,9 @@ class MetaTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function seoFriendlyUrl(AuditContext $c): array
     {
         $path = (string) parse_url($c->url, PHP_URL_PATH);
@@ -316,6 +369,8 @@ class MetaTests
 
     /**
      * 图片检索引流：og:image 覆盖视为友好
+     *
+     * @return array<string, mixed>
      */
     public function noindexImages(AuditContext $c): array
     {
@@ -332,31 +387,49 @@ class MetaTests
     |------ 外部条件项（requires 对应设置配置后才会执行）------
     */
 
+    /**
+     * @return array<string, mixed>
+     */
     public function gscIsIndexed(AuditContext $c): array
     {
         return ['passed' => false, 'value' => '-', 'detail' => 'GSC not configured', 'sub' => ['not_configured']];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function gscCoverage(AuditContext $c): array
     {
         return ['passed' => false, 'value' => '-', 'detail' => 'GSC not configured', 'sub' => ['not_configured']];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function ahrefsDomainRating(AuditContext $c): array
     {
         return ['passed' => false, 'value' => '-', 'detail' => 'Ahrefs API not configured', 'sub' => ['not_configured']];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function pageRank(AuditContext $c): array
     {
         return ['passed' => false, 'value' => '-', 'detail' => 'PageRank API not configured', 'sub' => ['not_configured']];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function bingIndexed(AuditContext $c): array
     {
         return ['passed' => false, 'value' => '-', 'detail' => 'Bing API not configured', 'sub' => ['not_configured']];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function yandexIndexed(AuditContext $c): array
     {
         return ['passed' => false, 'value' => '-', 'detail' => 'Yandex API not configured', 'sub' => ['not_configured']];

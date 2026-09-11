@@ -12,6 +12,9 @@ use Throwable;
  */
 class NetworkTools
 {
+    /**
+     * @return array<string, mixed>
+     */
     protected function fetch(string $url): array
     {
         // SSRF 防护：拦截内网/环回/云元数据目标
@@ -31,6 +34,10 @@ class NetworkTools
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function dnsLookup(array $in): array
     {
         $domain = trim((string) ($in['domain'] ?? ''));
@@ -52,6 +59,10 @@ class NetworkTools
         return ['ok' => true, 'data' => $data];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function ipLookup(array $in): array
     {
         $ip = trim((string) ($in['ip'] ?? ''));
@@ -66,6 +77,10 @@ class NetworkTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function sslLookup(array $in): array
     {
         $host = preg_replace('#^https?://#', '', trim((string) ($in['host'] ?? '')));
@@ -100,6 +115,10 @@ class NetworkTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function whoisLookup(array $in): array
     {
         $domain = trim((string) ($in['domain'] ?? ''));
@@ -121,6 +140,10 @@ class NetworkTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function ping(array $in): array
     {
         $host = preg_replace('#^https?://#', '', trim((string) ($in['host'] ?? '')));
@@ -146,6 +169,10 @@ class NetworkTools
         return ['ok' => true, 'data' => ['目标' => "{$host}:{$port}", '延迟' => $ms.' ms']];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function reverseIpLookup(array $in): array
     {
         $ip = trim((string) ($in['ip'] ?? ''));
@@ -159,6 +186,10 @@ class NetworkTools
         return ['ok' => $host !== $ip, 'error' => $host !== $ip ? null : '无反向记录', 'data' => ['主机名' => $host]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function domainIpLookup(array $in): array
     {
         $domain = preg_replace('#^https?://#', '', trim((string) ($in['domain'] ?? '')));
@@ -176,6 +207,10 @@ class NetworkTools
         ])];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function statusChecker(array $in): array
     {
         $result = $this->fetch((string) ($in['url'] ?? ''));
@@ -194,6 +229,10 @@ class NetworkTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function redirectChecker(array $in): array
     {
         $result = $this->fetch((string) ($in['url'] ?? ''));
@@ -211,6 +250,10 @@ class NetworkTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function redirectTrace(array $in): array
     {
         $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
@@ -246,6 +289,10 @@ class NetworkTools
         return ['ok' => true, 'data' => [], 'text' => implode("\n → ", $chain)];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function ttfbChecker(array $in): array
     {
         $result = $this->fetch((string) ($in['url'] ?? ''));
@@ -260,6 +307,10 @@ class NetworkTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function hostingChecker(array $in): array
     {
         $host = (string) parse_url(AuditEngine::normalizeUrl((string) ($in['url'] ?? '')), PHP_URL_HOST);
@@ -278,6 +329,10 @@ class NetworkTools
         ])];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function headersLookup(array $in): array
     {
         $result = $this->fetch((string) ($in['url'] ?? ''));
@@ -294,6 +349,10 @@ class NetworkTools
         return ['ok' => true, 'data' => $data];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function http2Checker(array $in): array
     {
         $result = $this->fetch((string) ($in['url'] ?? ''));
@@ -307,6 +366,10 @@ class NetworkTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function brotliChecker(array $in): array
     {
         // SSRF 防护：拦截内网/环回/云元数据目标
@@ -332,6 +395,10 @@ class NetworkTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function googleCacheChecker(array $in): array
     {
         $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
@@ -348,6 +415,10 @@ class NetworkTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function idnConverter(array $in): array
     {
         $domain = trim((string) ($in['domain'] ?? ''));
@@ -362,6 +433,10 @@ class NetworkTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function textExtractor(array $in): array
     {
         $result = $this->fetch((string) ($in['url'] ?? ''));
@@ -377,6 +452,10 @@ class NetworkTools
         return ['ok' => true, 'data' => ['提取字数' => mb_strlen($text)], 'text' => mb_substr($text, 0, 5000)];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function pageSizeChecker(array $in): array
     {
         $result = $this->fetch((string) ($in['url'] ?? ''));

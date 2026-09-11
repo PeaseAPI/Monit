@@ -91,6 +91,8 @@ class RankTracker
 
     /**
      * SerpApi search.json → organic_results
+     *
+     * @return array<int, array<string, mixed>>
      */
     protected function fetchOrganicResults(SeoKeyword $keyword): array
     {

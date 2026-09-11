@@ -14,7 +14,10 @@ class AuditTestRegistry
      */
     public static function all(): array
     {
-        return collect(config('seo.tests', []))
+        /** @var array<string, array{category:string, importance:string, requires?:string}> $tests */
+        $tests = config('seo.tests', []);
+
+        return collect($tests)
             ->filter(fn (array $meta, string $key) => static::requirementsMet($meta))
             ->all();
     }
@@ -36,11 +39,17 @@ class AuditTestRegistry
         };
     }
 
+    /**
+     * @return array<int, string>
+     */
     public static function categories(): array
     {
         return array_keys(config('seo.categories', []));
     }
 
+    /**
+     * @param  array<string, mixed>  $meta
+     */
     protected static function requirementsMet(array $meta): bool
     {
         if (empty($meta['requires'])) {

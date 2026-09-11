@@ -10,6 +10,9 @@ use App\Services\Seo\AuditTestRegistry;
  */
 class ContentTests
 {
+    /**
+     * @return array<string, string>
+     */
     public function handles(): array
     {
         return [
@@ -23,6 +26,9 @@ class ContentTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function wordsCount(AuditContext $c): array
     {
         $text = $c->bodyText();
@@ -38,6 +44,9 @@ class ContentTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function wordsUsed(AuditContext $c): array
     {
         $words = preg_split('/\s+/u', mb_strtolower($c->bodyText())) ?: [];
@@ -57,6 +66,9 @@ class ContentTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function textToHtmlRatio(AuditContext $c): array
     {
         $ratio = $c->textRatio();
@@ -68,6 +80,9 @@ class ContentTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function socialLinks(AuditContext $c): array
     {
         preg_match_all('/https?:\/\/(?:[^"\']*?)?(facebook|twitter|x\.com|instagram|linkedin|youtube|github|weibo|weixin|qq|tiktok)\./i', $c->html, $matches);
@@ -80,6 +95,9 @@ class ContentTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function emails(AuditContext $c): array
     {
         preg_match_all('/[\w.+-]+@[\w-]+\.[\w.]+/', $c->bodyText(), $matches);
@@ -92,6 +110,9 @@ class ContentTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function contentKeywords(AuditContext $c): array
     {
         $top = static::topKeywords($c->bodyText(), 5);
@@ -102,6 +123,9 @@ class ContentTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function imageKeywords(AuditContext $c): array
     {
         $alts = [];
@@ -120,6 +144,8 @@ class ContentTests
 
     /**
      * 高频关键词提取（去停用词）
+     *
+     * @return array<int, array<string, mixed>>
      */
     public static function topKeywords(string $text, int $limit = 10): array
     {

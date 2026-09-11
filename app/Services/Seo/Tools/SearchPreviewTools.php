@@ -7,6 +7,10 @@ namespace App\Services\Seo\Tools;
  */
 class SearchPreviewTools
 {
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     protected function preview(array $in, int $titleMax, int $descMax, string $engine): array
     {
         $title = trim((string) ($in['title'] ?? ''));
@@ -22,21 +26,37 @@ class SearchPreviewTools
         ], 'text' => "【{$title}】\n{$url}\n{$description}"];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function googlePreview(array $in): array
     {
         return $this->preview($in, 60, 160, 'Google');
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function bingPreview(array $in): array
     {
         return $this->preview($in, 60, 160, 'Bing');
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function yandexPreview(array $in): array
     {
         return $this->preview($in, 55, 160, 'Yandex');
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function yahooPreview(array $in): array
     {
         return $this->preview($in, 60, 160, 'Yahoo');

@@ -9,6 +9,12 @@ use App\Services\Seo\AuditContext;
  */
 class SecurityTests
 {
+    /**
+     * @return array<string, string>
+     */
+    /**
+     * @return array<string, string>
+     */
     public function handles(): array
     {
         return [
@@ -25,6 +31,9 @@ class SecurityTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function isHttps(AuditContext $c): array
     {
         return [
@@ -33,6 +42,9 @@ class SecurityTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function isSslValid(AuditContext $c): array
     {
         if ($c->scheme !== 'https') {
@@ -49,6 +61,9 @@ class SecurityTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function hsts(AuditContext $c): array
     {
         $hsts = (string) ($c->header('strict-transport-security') ?? '');
@@ -59,6 +74,9 @@ class SecurityTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function csp(AuditContext $c): array
     {
         $csp = (string) ($c->header('content-security-policy') ?? '');
@@ -69,6 +87,9 @@ class SecurityTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function unsafeForms(AuditContext $c): array
     {
         $unsafe = 0;
@@ -88,6 +109,8 @@ class SecurityTests
 
     /**
      * target=_blank 外链须带 rel=noopener/noreferrer
+     *
+     * @return array<string, mixed>
      */
     public function unsafeExternalLinks(AuditContext $c): array
     {
@@ -111,12 +134,18 @@ class SecurityTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function safeBrowsing(AuditContext $c): array
     {
         // 条件项：后台开启 safe_browsing 后执行（默认信任，标记未接入）
         return ['passed' => true, 'value' => '-'];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function headerServer(AuditContext $c): array
     {
         $server = (string) ($c->header('server') ?? '');
@@ -128,6 +157,9 @@ class SecurityTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function spf(AuditContext $c): array
     {
         $records = @dns_get_record($c->host, DNS_TXT) ?: [];
@@ -147,6 +179,9 @@ class SecurityTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function referrerPolicy(AuditContext $c): array
     {
         // meta referrer 或 Referrer-Policy 头任一即可

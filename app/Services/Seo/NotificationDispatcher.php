@@ -57,6 +57,9 @@ class NotificationDispatcher
         $this->dispatch($user, $event, $title, $message, route('seo.audits.show', $audit->seo_audit_id));
     }
 
+    /**
+     * @param  array<string, mixed>  $diff
+     */
     public function dispatchForSitemap(Website $website, array $diff): void
     {
         $user = User::find($website->user_id);
@@ -145,6 +148,9 @@ class NotificationDispatcher
         return true;
     }
 
+    /**
+     * @param  array<string, mixed>  $settings
+     */
     protected function sendTelegram(array $settings, string $title, string $message, ?string $link): bool
     {
         $token = (string) ($settings['bot_token'] ?? '');
@@ -159,6 +165,9 @@ class NotificationDispatcher
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>  $settings
+     */
     protected function sendPushover(array $settings, string $title, string $message, ?string $link): bool
     {
         return $this->postJson('https://api.pushover.net/1/messages.json', [
@@ -170,6 +179,9 @@ class NotificationDispatcher
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>  $settings
+     */
     protected function sendNtfy(array $settings, string $title, string $message, ?string $link): bool
     {
         $server = rtrim((string) ($settings['server'] ?? 'https://ntfy.sh'), '/');
@@ -186,6 +198,9 @@ class NotificationDispatcher
         return $response->successful();
     }
 
+    /**
+     * @param  array<string, mixed>  $settings
+     */
     protected function sendGotify(array $settings, string $title, string $message, ?string $link): bool
     {
         $server = rtrim((string) ($settings['server'] ?? ''), '/');
@@ -202,6 +217,9 @@ class NotificationDispatcher
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>  $payload
+     */
     protected function postJson(string $url, array $payload): bool
     {
         if ($url === '') {

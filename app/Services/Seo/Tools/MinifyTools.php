@@ -7,6 +7,10 @@ namespace App\Services\Seo\Tools;
  */
 class MinifyTools
 {
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function htmlMinifier(array $in): array
     {
         $code = (string) ($in['code'] ?? '');
@@ -24,6 +28,10 @@ class MinifyTools
         return $this->ratio($code, trim($minified));
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function cssMinifier(array $in): array
     {
         $code = (string) ($in['code'] ?? '');
@@ -41,6 +49,10 @@ class MinifyTools
         return $this->ratio($code, trim($minified));
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function jsMinifier(array $in): array
     {
         $code = (string) ($in['code'] ?? '');
@@ -59,6 +71,9 @@ class MinifyTools
         return $this->ratio($code, trim($minified));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function ratio(string $before, string $after): array
     {
         return ['ok' => true, 'data' => [
@@ -68,6 +83,10 @@ class MinifyTools
         ], 'text' => $after];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function jsonValidator(array $in): array
     {
         $code = trim((string) ($in['code'] ?? ''));
@@ -101,6 +120,10 @@ class MinifyTools
         };
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function textCleaner(array $in): array
     {
         $text = (string) ($in['text'] ?? '');
@@ -111,6 +134,10 @@ class MinifyTools
         return ['ok' => true, 'data' => ['清理后行数' => count(explode("\n", trim($cleaned)))], 'text' => trim($cleaned)];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function duplicateLineRemover(array $in): array
     {
         $text = (string) ($in['text'] ?? '');

@@ -30,10 +30,17 @@ class ToolRunner
         'dev' => DevTools::class,
     ];
 
+    /**
+     * 工具实例缓存
+     *
+     * @var array<string, object>
+     */
     protected array $instances = [];
 
     /**
      * 全部可用工具（后台停用 / requires 未配置的过滤）
+     *
+     * @return array<string, array<string, mixed>>
      */
     public function catalog(): array
     {
@@ -43,7 +50,10 @@ class ToolRunner
             ? array_filter(array_map('trim', preg_split('/[\r\n,]+/', $disabled)))
             : (array) $disabled;
 
-        return collect(config('seo.tools', []))
+        /** @var array<string, array<string, mixed>> $tools */
+        $tools = config('seo.tools', []);
+
+        return collect($tools)
             ->reject(fn (array $meta, string $slug) => in_array($slug, $disabled, true))
             ->filter(function (array $meta) {
                 if (empty($meta['requires'])) {
@@ -57,6 +67,9 @@ class ToolRunner
             ->all();
     }
 
+    /**
+     * @return array<string, array<string, mixed>>
+     */
     public function categoryTools(string $category): array
     {
         return collect($this->catalog())
@@ -67,6 +80,7 @@ class ToolRunner
     /**
      * 执行工具
      *
+     * @param  array<string, mixed>  $input
      * @return array{ok:bool, error?:string, data:array<string,mixed>, text?:string}
      */
     public function run(string $slug, array $input): array

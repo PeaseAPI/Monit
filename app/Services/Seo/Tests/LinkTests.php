@@ -9,6 +9,12 @@ use App\Services\Seo\AuditContext;
  */
 class LinkTests
 {
+    /**
+     * @return array<string, string>
+     */
+    /**
+     * @return array<string, string>
+     */
     public function handles(): array
     {
         return [
@@ -18,6 +24,9 @@ class LinkTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function internalLinks(AuditContext $c): array
     {
         $count = 0;
@@ -41,6 +50,9 @@ class LinkTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function externalLinks(AuditContext $c): array
     {
         $count = 0;
@@ -59,6 +71,9 @@ class LinkTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function inPageLinks(AuditContext $c): array
     {
         $count = $c->dom()->getElementsByTagName('a')->length;

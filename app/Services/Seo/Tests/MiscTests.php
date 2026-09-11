@@ -9,6 +9,12 @@ use App\Services\Seo\AuditContext;
  */
 class MiscTests
 {
+    /**
+     * @return array<string, string>
+     */
+    /**
+     * @return array<string, string>
+     */
     public function handles(): array
     {
         return [
@@ -19,6 +25,9 @@ class MiscTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function imageAlt(AuditContext $c): array
     {
         $images = $c->dom()->getElementsByTagName('img');
@@ -40,6 +49,9 @@ class MiscTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function doctype(AuditContext $c): array
     {
         $has = stripos($c->html, '<!DOCTYPE html>') !== false;
@@ -50,6 +62,9 @@ class MiscTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function sitemap(AuditContext $c): array
     {
         $exists = (bool) ($c->extra['sitemap_exists'] ?? false);
@@ -60,6 +75,9 @@ class MiscTests
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function mixedContent(AuditContext $c): array
     {
         $count = $c->insecureResourceCount();

@@ -7,6 +7,10 @@ namespace App\Services\Seo\Tools;
  */
 class TextTools
 {
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function wordCounter(array $in): array
     {
         $text = (string) ($in['text'] ?? '');
@@ -24,6 +28,10 @@ class TextTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function charCounter(array $in): array
     {
         $text = (string) ($in['text'] ?? '');
@@ -36,6 +44,10 @@ class TextTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function caseConverter(array $in): array
     {
         $text = (string) ($in['text'] ?? '');
@@ -55,6 +67,10 @@ class TextTools
         return ['ok' => true, 'data' => [], 'text' => (string) $converted];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function slugConverter(array $in): array
     {
         $text = (string) ($in['text'] ?? '');
@@ -67,6 +83,10 @@ class TextTools
         return ['ok' => true, 'data' => ['slug' => $slug]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function textReplacer(array $in): array
     {
         $text = (string) ($in['text'] ?? '');
@@ -82,6 +102,10 @@ class TextTools
         return ['ok' => true, 'data' => ['替换次数' => $count], 'text' => str_replace($search, $replace, $text)];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function textReverser(array $in): array
     {
         $text = (string) ($in['text'] ?? '');
@@ -89,6 +113,10 @@ class TextTools
         return ['ok' => true, 'data' => [], 'text' => implode('', array_reverse(mb_str_split($text)))];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function loremGenerator(array $in): array
     {
         $paragraphs = min(10, max(1, (int) ($in['paragraphs'] ?? 3)));
@@ -115,6 +143,10 @@ class TextTools
         return ['ok' => true, 'data' => [], 'text' => implode("\n\n", $out)];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function readingTime(array $in): array
     {
         $text = (string) ($in['text'] ?? '');
@@ -133,6 +165,10 @@ class TextTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function timestampConverter(array $in): array
     {
         $value = trim((string) ($in['value'] ?? ''));
@@ -164,6 +200,10 @@ class TextTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function keywordDensityText(array $in): array
     {
         $text = (string) ($in['text'] ?? '');

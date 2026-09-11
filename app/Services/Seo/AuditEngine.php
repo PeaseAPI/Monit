@@ -31,7 +31,11 @@ use Throwable;
  */
 class AuditEngine
 {
-    /** 测试组注册（键 => [实例, 方法]） */
+    /**
+     * 测试组注册（键 => [实例, 方法]）
+     *
+     * @var array<string, array{0: object, 1: string}>
+     */
     protected array $groups = [];
 
     public function __construct()
@@ -45,6 +49,9 @@ class AuditEngine
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $options
+     */
     public function run(string $url, ?User $user = null, string $type = 'single', array $options = []): SeoAudit
     {
         $url = static::normalizeUrl($url);
@@ -268,6 +275,8 @@ class AuditEngine
 
     /**
      * 逐测试执行：注册表过滤 + 异常隔离（单测试崩溃不影响整份报告）
+     *
+     * @return array<string, mixed>
      */
     protected function executeTests(AuditContext $context): array
     {

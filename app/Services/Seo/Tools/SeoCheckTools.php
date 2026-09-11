@@ -17,7 +17,8 @@ class SeoCheckTools
     /**
      * 抓取并解析页面（各检查工具共享）
      *
-     * @return array{ok:bool, html:string, headers:array, dom:?\DOMDocument, status:int, error?:string}
+     * @param  array<string, mixed>  $in
+     * @return array{ok:bool, html:string, headers:array<string, mixed>, dom:?\DOMDocument, status:int, error?:string}
      */
     protected function fetchPage(array $in): array
     {
@@ -59,6 +60,10 @@ class SeoCheckTools
         return null;
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function metaTags(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -80,6 +85,10 @@ class SeoCheckTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function keywordDensity(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -95,6 +104,8 @@ class SeoCheckTools
 
     /**
      * 关键词密度计算核心
+     *
+     * @return array<string, mixed>
      */
     protected function density(string $text, int $minLength = 3): array
     {
@@ -118,6 +129,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => $data];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function openGraph(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -140,6 +155,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => ['标签数量' => $count, ...$data]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function twitterCard(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -160,6 +179,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => $data !== [] ? $data : ['结果' => '未发现 Twitter Card 标签']];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function robotsTxt(array $in): array
     {
         $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
@@ -191,6 +214,10 @@ class SeoCheckTools
         ], 'text' => mb_substr($body, 0, 3000)];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function sitemapChecker(array $in): array
     {
         $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
@@ -208,6 +235,10 @@ class SeoCheckTools
         ], 'text' => implode("\n", array_slice($result['urls'], 0, 200))];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function mixedContent(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -225,6 +256,10 @@ class SeoCheckTools
         ], 'text' => $urls ? implode("\n", $urls) : null];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function safeUrl(array $in): array
     {
         $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
@@ -252,6 +287,10 @@ class SeoCheckTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function faviconChecker(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -270,6 +309,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => ['声明' => $found !== [] ? implode(' | ', $found) : '未声明 favicon']];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function h1Checker(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -289,6 +332,10 @@ class SeoCheckTools
         ], 'text' => $h1s ? implode("\n", $h1s) : null];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function imageAlt(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -312,6 +359,9 @@ class SeoCheckTools
 
     /**
      * 站内死链探测（同源链接抽样检查，上限 20）
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
      */
     public function brokenLinks(array $in): array
     {
@@ -366,6 +416,10 @@ class SeoCheckTools
         ], 'text' => $broken ? implode("\n", $broken) : null];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function urlSeo(array $in): array
     {
         $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
@@ -390,6 +444,10 @@ class SeoCheckTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function canonicalChecker(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -410,6 +468,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => ['canonical' => $canonical !== '' ? mb_substr($canonical, 0, 200) : '未声明']];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function hreflangChecker(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -428,6 +490,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => $data !== [] ? $data : ['结果' => '未声明 hreflang']];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function structuredData(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -452,6 +518,10 @@ class SeoCheckTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function viewportChecker(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -465,6 +535,10 @@ class SeoCheckTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function languageChecker(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -479,6 +553,10 @@ class SeoCheckTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function charsetChecker(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -497,6 +575,9 @@ class SeoCheckTools
         return ['ok' => true, 'data' => ['字符集' => $charset !== '' ? $charset : '未声明']];
     }
 
+    /**
+     * @param  array<string, mixed>  $headers
+     */
     protected function headerOf(array $headers, string $name): ?string
     {
         foreach ($headers as $key => $value) {
@@ -508,6 +589,10 @@ class SeoCheckTools
         return null;
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function textHtmlRatio(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -525,6 +610,10 @@ class SeoCheckTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function cacheHeaders(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -541,6 +630,10 @@ class SeoCheckTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function securityHeaders(array $in): array
     {
         $page = $this->fetchPage($in);
@@ -569,6 +662,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => $data];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function emailExtractor(array $in): array
     {
         preg_match_all('/[\w.+-]+@[\w-]+\.[\w.]+/', (string) ($in['text'] ?? ''), $matches);
@@ -578,6 +675,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => ['数量' => count($emails)], 'text' => $emails ? implode("\n", $emails) : null];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function linkExtractor(array $in): array
     {
         preg_match_all('/<a[^>]+href=["\']([^"\']+)["\'][^>]*>/i', (string) ($in['text'] ?? ''), $matches);
@@ -587,6 +688,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => ['数量' => count($links)], 'text' => $links ? implode("\n", $links) : null];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function imageExtractor(array $in): array
     {
         preg_match_all('/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', (string) ($in['text'] ?? ''), $matches);
@@ -596,6 +701,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => ['数量' => count($images)], 'text' => $images ? implode("\n", $images) : null];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function headingExtractor(array $in): array
     {
         preg_match_all('/<h([1-6])[^>]*>(.*?)<\/h\1>/is', (string) ($in['text'] ?? ''), $matches, PREG_SET_ORDER);
@@ -608,6 +717,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => ['数量' => count($lines)], 'text' => $lines ? implode("\n", $lines) : null];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function keywordExtractor(array $in): array
     {
         $top = ContentTests::topKeywords((string) ($in['text'] ?? ''), 20);
@@ -615,6 +728,10 @@ class SeoCheckTools
         return ['ok' => true, 'data' => ['关键词' => $top ? implode('、', $top) : '无']];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function uptimeCalculator(array $in): array
     {
         $downtime = max(0, (int) ($in['downtime_minutes'] ?? 0));
@@ -632,6 +749,9 @@ class SeoCheckTools
 
     /**
      * 可读性（Flesch 阅读易读度 + 中文平均句长）
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
      */
     public function readability(array $in): array
     {
@@ -661,6 +781,10 @@ class SeoCheckTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function metaLength(array $in): array
     {
         $title = (string) ($in['title'] ?? '');
@@ -676,6 +800,9 @@ class SeoCheckTools
 
     /**
      * 快速体检：复用审计引擎
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
      */
     public function seoScore(array $in): array
     {
@@ -696,6 +823,9 @@ class SeoCheckTools
 
     /**
      * 两页相似度（3-gram shingle，重复内容检测）
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
      */
     public function duplicateContent(array $in): array
     {
@@ -742,6 +872,9 @@ class SeoCheckTools
 
     /**
      * 邮箱防爬混淆
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
      */
     public function emailProtector(array $in): array
     {
@@ -761,6 +894,9 @@ class SeoCheckTools
 
     /**
      * Ahrefs DR（条件工具：后台配置 API Key 后开放）
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
      */
     public function ahrefsDomainRating(array $in): array
     {

@@ -11,7 +11,7 @@ use Throwable;
 class DomainMonitor
 {
     /**
-     * @return array{ok:bool, expiration_date?:string, registrar?:string, nameservers?:array, error?:string}
+     * @return array{ok:bool, expiration_date?:string, registrar?:string, nameservers?:array<int, string>, error?:string}
      */
     public function whois(string $domain): array
     {
@@ -126,6 +126,9 @@ class DomainMonitor
         };
     }
 
+    /**
+     * @param  array<int, string>  $fields
+     */
     protected static function matchDate(string $raw, array $fields): ?string
     {
         foreach ($fields as $field) {
@@ -153,6 +156,9 @@ class DomainMonitor
         return preg_match('/'.preg_quote($field, '/').':\s*(.+)/i', $raw, $m) ? trim($m[1]) : null;
     }
 
+    /**
+     * @return array<int, string>
+     */
     protected static function matchNameservers(string $raw): array
     {
         preg_match_all('/Name Server:\s*(\S+)/i', $raw, $matches);

@@ -10,6 +10,10 @@ use DOMNodeList;
  */
 class AuditContext
 {
+    /**
+     * @param  array<string, mixed>  $headers
+     * @param  array<string, mixed>|null  $sslInfo
+     */
     public function __construct(
         public readonly string $url,
         public readonly string $scheme,
@@ -25,7 +29,11 @@ class AuditContext
 
     protected ?DOMDocument $dom = null;
 
-    /** 引擎预取的附加数据（robots 状态 / sitemap 状态等） */
+    /**
+     * 引擎预取的附加数据（robots 状态 / sitemap 状态等）
+     *
+     * @var array<string, mixed>
+     */
     public array $extra = [];
 
     /**
@@ -67,6 +75,8 @@ class AuditContext
 
     /**
      * 提取指定标签文本列表
+     *
+     * @return DOMNodeList<\DOMElement>
      */
     public function tags(string $tag): DOMNodeList
     {

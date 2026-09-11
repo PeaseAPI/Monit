@@ -12,6 +12,10 @@ use Throwable;
  */
 class DevTools
 {
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function passwordGenerator(array $in): array
     {
         $length = max(6, min(64, (int) ($in['length'] ?? 16)));
@@ -32,6 +36,9 @@ class DevTools
 
     /**
      * QR 码：返回生成服务的图片地址
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
      */
     public function qrGenerator(array $in): array
     {
@@ -48,6 +55,10 @@ class DevTools
         return ['ok' => true, 'data' => ['图片地址' => $url, '尺寸' => $size.'×'.$size]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function userAgentParser(array $in): array
     {
         $ua = trim((string) ($in['ua'] ?? ''));
@@ -83,6 +94,10 @@ class DevTools
         return ['ok' => true, 'data' => ['浏览器' => $browser, '系统' => $os, '类型' => $type]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function md5Generator(array $in): array
     {
         $text = (string) ($in['text'] ?? '');
@@ -99,6 +114,10 @@ class DevTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function colorConverter(array $in): array
     {
         $color = trim((string) ($in['color'] ?? ''));
@@ -118,6 +137,9 @@ class DevTools
         ]];
     }
 
+    /**
+     * @return array<int, int|float>
+     */
     protected static function rgbToHsl(int $r, int $g, int $b): array
     {
         $r /= 255;
@@ -144,6 +166,10 @@ class DevTools
         return [(int) round($h * 60), (int) round($s * 100), (int) round($l * 100)];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function utmBuilder(array $in): array
     {
         $url = trim((string) ($in['url'] ?? ''));
@@ -167,6 +193,10 @@ class DevTools
         return ['ok' => true, 'data' => ['URL' => $url.(str_contains($url, '?') ? '&' : '?').http_build_query($params)]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function urlParser(array $in): array
     {
         $url = trim((string) ($in['url'] ?? ''));
@@ -186,6 +216,10 @@ class DevTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function urlConverter(array $in): array
     {
         $text = (string) ($in['text'] ?? '');
@@ -198,6 +232,10 @@ class DevTools
         return ['ok' => true, 'data' => [], 'text' => $mode === 'encode' ? rawurlencode($text) : rawurldecode($text)];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function uuidGenerator(array $in): array
     {
         return ['ok' => true, 'data' => [
@@ -206,6 +244,10 @@ class DevTools
         ]];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function numberGenerator(array $in): array
     {
         $min = (int) ($in['min'] ?? 1);
@@ -222,6 +264,10 @@ class DevTools
         return ['ok' => true, 'data' => [], 'text' => implode("\n", $numbers)];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function base64Converter(array $in): array
     {
         $text = (string) ($in['text'] ?? '');
@@ -240,6 +286,10 @@ class DevTools
         return ['ok' => true, 'data' => [], 'text' => $result];
     }
 
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
     public function binaryConverter(array $in): array
     {
         $text = trim((string) ($in['text'] ?? ''));
@@ -274,6 +324,9 @@ class DevTools
 
     /**
      * 明文邮箱检测（页面暴露的 mailto: 链接）
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
      */
     public function plaintextEmail(array $in): array
     {

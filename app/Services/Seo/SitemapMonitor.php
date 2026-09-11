@@ -67,7 +67,7 @@ class SitemapMonitor
     /**
      * 检查网站 sitemap 并对比上次快照
      *
-     * @return array{changed:bool, added:array, removed:array, total:int, error:?string}
+     * @return array{changed:bool, added:array<int, string>, removed:array<int, string>, total:int, error:?string}
      */
     public function check(Website $website): array
     {
@@ -92,6 +92,7 @@ class SitemapMonitor
 
         if ($changed) {
             // 上次 URL 集合存在 settings 快照中（首检只记录不告警）
+            /** @var array<int, string> $lastUrls */
             $lastUrls = (array) ($website->settings['seo_sitemap_urls'] ?? []);
 
             if ($lastUrls !== []) {
