@@ -27,7 +27,7 @@ class MollieProcessor
             $order = $mollie->payments->create([
                 'amount' => [
                     'currency' => $payment->currency,
-                    'value' => number_format($payment->total_amount, 2, '.', ''),
+                    'value' => number_format((float) $payment->total_amount, 2, '.', ''),
                 ],
                 'description' => config('app.name').' - '.$payment->frequency,
                 'redirectUrl' => $successUrl,

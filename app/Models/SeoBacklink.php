@@ -4,11 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * SEO 反链台账
  * status：pending（未验证）/ active（重验命中）/ lost（重验未找到或请求失败）
  * rel：dofollow / nofollow / unknown
+ *
+ * @property int $seo_backlink_id
+ * @property int $user_id
+ * @property int $website_id
+ * @property string $source_url
+ * @property string $source_host
+ * @property string $target_url
+ * @property string|null $anchor_text
+ * @property string $rel
+ * @property string $status
+ * @property int|null $dr
+ * @property Carbon|null $last_checked_at
+ * @property Carbon|null $first_seen_at
  */
 class SeoBacklink extends Model
 {

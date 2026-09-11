@@ -77,7 +77,7 @@ class PayPalProcessor
                 'reference_id' => (string) $payment->payment_id,
                 'amount' => [
                     'currency_code' => $payment->currency,
-                    'value' => number_format($payment->total_amount, 2, '.', ''),
+                    'value' => number_format((float) $payment->total_amount, 2, '.', ''),
                 ],
                 'custom_id' => (string) $payment->payment_id,
             ]],

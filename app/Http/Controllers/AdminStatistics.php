@@ -29,8 +29,8 @@ class AdminStatistics extends Controller
         $totalWebsites = Website::count();
         $enabledWebsites = Website::where('is_enabled', true)->count();
         $totalPayments = Payment::where('status', 1)->count();
-        $totalRevenue = Payment::where('status', 1)->sum('total_amount') ?? 0;
-        $monthlyRevenue = Payment::where('status', 1)->whereMonth('datetime', now()->month)->whereYear('datetime', now()->year)->sum('total_amount') ?? 0;
+        $totalRevenue = Payment::where('status', 1)->sum('total_amount');
+        $monthlyRevenue = Payment::where('status', 1)->whereMonth('datetime', now()->month)->whereYear('datetime', now()->year)->sum('total_amount');
         $totalVisitors = WebsiteVisitor::count();
         $totalSessions = VisitorSession::count();
         $totalEvents = SessionEvent::count();
@@ -134,7 +134,7 @@ class AdminStatistics extends Controller
         $revenue = [];
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = now()->subDays($i)->format('Y-m-d');
-            $revenue[] = ['date' => $date, 'amount' => Payment::where('status', 1)->whereDate('datetime', $date)->sum('total_amount') ?? 0];
+            $revenue[] = ['date' => $date, 'amount' => Payment::where('status', 1)->whereDate('datetime', $date)->sum('total_amount')];
         }
         $byProcessor = Payment::selectRaw('payment_processor as processor, count(*) as count, sum(total_amount) as total')->where('status', 1)->whereDate('datetime', '>=', now()->subDays($days))->groupBy('payment_processor')->get();
         $byPlan = Payment::selectRaw('plan_id, count(*) as count, sum(total_amount) as total')->where('status', 1)->whereDate('datetime', '>=', now()->subDays($days))->groupBy('plan_id')->get();

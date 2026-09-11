@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Http;
  * 凭据来源：settings sms.sms_tencent_* 优先，回落 config/services.php（env：SMS_TENCENT_*）
  * 模板变量固定为 ["123456"]，对应控制台模板 {1} 或 {code}
  */
-class TencentSmsProvider
+final class TencentSmsProvider
 {
     public const ENDPOINT = 'https://sms.tencentcloudapi.com';
 
@@ -19,7 +19,7 @@ class TencentSmsProvider
 
     public const VERSION = '2021-01-11';
 
-    public function __construct(
+    private function __construct(
         protected string $secretId,
         protected string $secretKey,
         protected string $sdkAppId,
@@ -29,7 +29,7 @@ class TencentSmsProvider
 
     public static function make(): static
     {
-        return new static(
+        return new self(
             (string) (Settings::get('sms.sms_tencent_secret_id') ?: config('services.sms_tencent.secret_id', '')),
             (string) (Settings::get('sms.sms_tencent_secret_key') ?: config('services.sms_tencent.secret_key', '')),
             (string) (Settings::get('sms.sms_tencent_sdk_app_id') ?: config('services.sms_tencent.sdk_app_id', '')),

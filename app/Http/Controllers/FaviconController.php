@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Support\Brand;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 
 /**
@@ -21,7 +22,7 @@ class FaviconController extends Controller
     /**
      * 输出动态 favicon
      */
-    public function __invoke(): Response
+    public function __invoke(): Response|RedirectResponse
     {
         $configured = trim((string) Brand::faviconUrl());
 

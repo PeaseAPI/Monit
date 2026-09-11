@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Http;
  * 凭据来源：settings sms.sms_aliyun_* 优先，回落 config/services.php（env：SMS_ALIYUN_*）
  * 模板变量固定为 {"code": "123456"}，对应控制台模板 ${code}
  */
-class AliyunSmsProvider
+final class AliyunSmsProvider
 {
     public const ENDPOINT = 'https://dysmsapi.aliyuncs.com/';
 
-    public function __construct(
+    private function __construct(
         protected string $accessKeyId,
         protected string $accessKeySecret,
         protected string $signName,
@@ -24,7 +24,7 @@ class AliyunSmsProvider
 
     public static function make(): static
     {
-        return new static(
+        return new self(
             (string) (Settings::get('sms.sms_aliyun_access_key_id') ?: config('services.sms_aliyun.access_key_id', '')),
             (string) (Settings::get('sms.sms_aliyun_access_key_secret') ?: config('services.sms_aliyun.access_key_secret', '')),
             (string) (Settings::get('sms.sms_aliyun_sign_name') ?: config('services.sms_aliyun.sign_name', '')),

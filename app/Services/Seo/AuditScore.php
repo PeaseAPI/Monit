@@ -24,10 +24,10 @@ class AuditScore
         $passed = 0;
 
         foreach ($results as $row) {
-            $weight = AuditTestRegistry::weightOf($row['importance'] ?? 'minor');
+            $weight = AuditTestRegistry::weightOf($row['importance']);
             $totalWeight += $weight;
 
-            $category = $row['category'] ?? 'misc';
+            $category = $row['category'];
             $categoryWeight[$category] = ($categoryWeight[$category] ?? 0) + $weight;
 
             if (! empty($row['passed'])) {

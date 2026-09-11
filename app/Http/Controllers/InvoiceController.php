@@ -50,8 +50,8 @@ class InvoiceController extends Controller
         $billing = $user->billing ?? [];
 
         $data = [
-            'invoice_number' => 'INV-'.str_pad($payment->payment_id, 6, '0', STR_PAD_LEFT),
-            'date' => $payment->datetime->format('Y-m-d') ?? now()->format('Y-m-d'),
+            'invoice_number' => 'INV-'.str_pad((string) $payment->payment_id, 6, '0', STR_PAD_LEFT),
+            'date' => $payment->datetime->format('Y-m-d'),
             'user' => $user,
             'payment' => $payment,
             'plan' => $plan,

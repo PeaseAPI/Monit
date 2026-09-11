@@ -102,7 +102,7 @@ class SeoAuditController extends Controller
         if ($type === 'sitemap') {
             dispatch(function () use ($validated, $request, $bulkLimit) {
                 $urls = app(SitemapMonitor::class)
-                    ->fetch($validated['url'])['urls'] ?? [];
+                    ->fetch($validated['url'])['urls'];
                 $urls = array_slice($urls, 0, $bulkLimit);
                 foreach ($urls as $url) {
                     RunSeoAuditJob::dispatch($url, $request->user()->user_id, 'single');
@@ -343,7 +343,7 @@ class SeoAuditController extends Controller
             return back()->withErrors(['ai' => __('seo.ai_not_enabled')]);
         }
 
-        SeoAiSummaryJob::dispatch($seoAudit, $request->user());
+        SeoAiSummaryJob::dispatch($seoAudit);
 
         return back()->with('success', __('seo.ai_summary_queued'));
     }

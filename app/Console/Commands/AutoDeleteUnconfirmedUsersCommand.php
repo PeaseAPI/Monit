@@ -30,7 +30,7 @@ class AutoDeleteUnconfirmedUsersCommand extends Command
             return self::SUCCESS;
         }
 
-        $days = (int) ($settingsValue ?? 3);
+        $days = (int) $settingsValue;
         if ($days < 1) {
             $days = 3;
         }

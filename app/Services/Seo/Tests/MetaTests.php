@@ -265,8 +265,8 @@ class MetaTests
         preg_match_all('/application\/ld\+json/i', $c->html, $matches);
 
         return [
-            'passed' => count($matches[0] ?? []) > 0,
-            'value' => (string) count($matches[0] ?? []),
+            'passed' => count($matches[0]) > 0,
+            'value' => (string) count($matches[0]),
         ];
     }
 

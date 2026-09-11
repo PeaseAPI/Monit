@@ -131,6 +131,6 @@ class AuditContext
 
         preg_match_all('/(?:src|href)=["\']http:\/\/[^"\']+["\']/i', $this->html, $matches);
 
-        return count($matches[0] ?? []);
+        return count($matches[0]);
     }
 }

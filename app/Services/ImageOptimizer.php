@@ -33,21 +33,15 @@ class ImageOptimizer
         [$width, $height, $type] = $info;
         $originalSize = (int) filesize($path);
 
-        switch ($type) {
-            case IMAGETYPE_JPEG:
-                $image = @imagecreatefromjpeg($path);
-                $fileType = 'jpeg';
-                break;
-            case IMAGETYPE_PNG:
-                $image = @imagecreatefrompng($path);
-                $fileType = 'png';
-                break;
-            case IMAGETYPE_GIF:
-                $image = @imagecreatefromgif($path);
-                $fileType = 'gif';
-                break;
-            default:
-                return ['ok' => false, 'original_size' => $originalSize, 'optimized_size' => $originalSize, 'file_type' => '', 'error' => 'unsupported_type'];
+        [$image, $fileType] = match ($type) {
+            IMAGETYPE_JPEG => [@imagecreatefromjpeg($path), 'jpeg'],
+            IMAGETYPE_PNG => [@imagecreatefrompng($path), 'png'],
+            IMAGETYPE_GIF => [@imagecreatefromgif($path), 'gif'],
+            default => [null, ''],
+        };
+
+        if ($image === null) {
+            return ['ok' => false, 'original_size' => $originalSize, 'optimized_size' => $originalSize, 'file_type' => '', 'error' => 'unsupported_type'];
         }
 
         if ($image === false) {
@@ -67,10 +61,10 @@ class ImageOptimizer
         // 先写入临时文件，成功后再替换原文件（失败不破坏原图）
         $tmpPath = $path.'.optimized';
 
-        $success = match ($type) {
-            IMAGETYPE_JPEG => imagejpeg($image, $tmpPath, max(1, min(100, $quality))),
-            IMAGETYPE_PNG => imagepng($image, $tmpPath, 6),
-            IMAGETYPE_GIF => imagegif($image, $tmpPath),
+        $success = match ($fileType) {
+            'jpeg' => imagejpeg($image, $tmpPath, max(1, min(100, $quality))),
+            'png' => imagepng($image, $tmpPath, 6),
+            'gif' => imagegif($image, $tmpPath),
             default => false,
         };
 

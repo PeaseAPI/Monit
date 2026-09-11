@@ -87,7 +87,7 @@ class ContentTests
     {
         preg_match_all('/https?:\/\/(?:[^"\']*?)?(facebook|twitter|x\.com|instagram|linkedin|youtube|github|weibo|weixin|qq|tiktok)\./i', $c->html, $matches);
 
-        $count = count(array_unique($matches[1] ?? []));
+        $count = count(array_unique($matches[1]));
 
         return [
             'passed' => $count > 0,
@@ -102,7 +102,7 @@ class ContentTests
     {
         preg_match_all('/[\w.+-]+@[\w-]+\.[\w.]+/', $c->bodyText(), $matches);
 
-        $count = count(array_unique($matches[0] ?? []));
+        $count = count(array_unique($matches[0]));
 
         return [
             'passed' => $count > 0,

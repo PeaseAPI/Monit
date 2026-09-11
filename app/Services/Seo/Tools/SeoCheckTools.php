@@ -210,7 +210,7 @@ class SeoCheckTools
 
         return ['ok' => true, 'data' => [
             '大小' => strlen($body).' 字节',
-            '声明 Sitemap' => implode(', ', $sitemaps[1] ?? []) ?: '未声明',
+            '声明 Sitemap' => implode(', ', $sitemaps[1]) ?: '未声明',
         ], 'text' => mb_substr($body, 0, 3000)];
     }
 
@@ -249,10 +249,10 @@ class SeoCheckTools
 
         preg_match_all('/(?:src|href)=["\']http:\/\/[^"\']+["\']/i', $page['html'], $matches);
 
-        $urls = array_slice($matches[0] ?? [], 0, 50);
+        $urls = array_slice($matches[0], 0, 50);
 
         return ['ok' => true, 'data' => [
-            'HTTP 不安全资源' => count($matches[0] ?? []),
+            'HTTP 不安全资源' => count($matches[0]),
         ], 'text' => $urls ? implode("\n", $urls) : null];
     }
 
@@ -506,14 +506,14 @@ class SeoCheckTools
 
         $valid = 0;
 
-        foreach ($matches[1] ?? [] as $json) {
+        foreach ($matches[1] as $json) {
             if (json_decode(trim($json)) !== null) {
                 $valid++;
             }
         }
 
         return ['ok' => true, 'data' => [
-            '结构化数据块' => count($matches[1] ?? []),
+            '结构化数据块' => count($matches[1]),
             'JSON 有效' => $valid,
         ]];
     }
@@ -670,7 +670,7 @@ class SeoCheckTools
     {
         preg_match_all('/[\w.+-]+@[\w-]+\.[\w.]+/', (string) ($in['text'] ?? ''), $matches);
 
-        $emails = array_unique($matches[0] ?? []);
+        $emails = array_unique($matches[0]);
 
         return ['ok' => true, 'data' => ['数量' => count($emails)], 'text' => $emails ? implode("\n", $emails) : null];
     }
@@ -683,7 +683,7 @@ class SeoCheckTools
     {
         preg_match_all('/<a[^>]+href=["\']([^"\']+)["\'][^>]*>/i', (string) ($in['text'] ?? ''), $matches);
 
-        $links = array_unique($matches[1] ?? []);
+        $links = array_unique($matches[1]);
 
         return ['ok' => true, 'data' => ['数量' => count($links)], 'text' => $links ? implode("\n", $links) : null];
     }
@@ -696,7 +696,7 @@ class SeoCheckTools
     {
         preg_match_all('/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', (string) ($in['text'] ?? ''), $matches);
 
-        $images = array_unique($matches[1] ?? []);
+        $images = array_unique($matches[1]);
 
         return ['ok' => true, 'data' => ['数量' => count($images)], 'text' => $images ? implode("\n", $images) : null];
     }
@@ -762,7 +762,7 @@ class SeoCheckTools
         }
 
         $sentences = max(1, (int) preg_match_all('/[.!?。！？]+/u', $text));
-        $words = preg_split('/\s+/u', trim((string) preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text)) ?? '', -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $words = preg_split('/\s+/u', trim((string) preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text)), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         $wordCount = max(1, count($words));
         $cjk = (int) preg_match_all('/[\x{4e00}-\x{9fff}]/u', $text);
 

@@ -219,7 +219,7 @@ class WebhookSignature
 
         $resolved = @gethostbyname($host);
 
-        if ($resolved !== false && $resolved !== $host) {
+        if ($resolved !== $host) {
             return self::isPrivateAddress($resolved);
         }
 

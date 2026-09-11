@@ -62,10 +62,10 @@ class AdminIndex extends Controller
         ];
 
         $activeUsers = User::where('status', 1)->count();
-        $monthlyRevenue = (float) (Payment::where('status', 1)
+        $monthlyRevenue = (float) Payment::where('status', 1)
             ->whereMonth('datetime', now()->month)
             ->whereYear('datetime', now()->year)
-            ->sum('total_amount') ?? 0);
+            ->sum('total_amount');
 
         // 最新用户（对标原版 latest users 表：头像/状态/套餐/注册时间/操作）
         $recentUsers = User::orderByDesc('created_at')->limit(10)->get();

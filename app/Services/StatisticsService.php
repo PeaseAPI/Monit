@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\DB;
  * - 口径：星期按 ISO 存储（源 dow 0=周日入库转 ISO 7），展示层再转 locale（M22）
  * - 过滤：AnalyticsFilters（§5.3）country/browser/os/device… 透传至各维度方法
  */
-class StatisticsService
+final class StatisticsService
 {
     protected bool $isLightweight;
 
@@ -48,14 +48,14 @@ class StatisticsService
         'city_name', 'browser_timezone', 'screen_resolution', 'theme', 'ip',
     ];
 
-    public function __construct(protected Website $website)
+    private function __construct(protected Website $website)
     {
         $this->isLightweight = $website->isLightweight();
     }
 
     public static function for(Website $website): static
     {
-        return new static($website);
+        return new self($website);
     }
 
     /**
@@ -383,7 +383,7 @@ class StatisticsService
     /**
      * 顶级访客列表（按访客维度聚合）
      *
-     * @return array<int, array{visitor_id: int, visitor_uuid: string, country_code: string, device_type: string, os_name: string, browser_name: string, total_events: int, last_date: string}>
+     * @return array<int, array{visitor_id: int|null, visitor_uuid: string, country_code: mixed, device_type: mixed, os_name: mixed, browser_name: mixed, total_events: int, last_date: string}>
      */
     public function topVisitors(int $limit = 50): array
     {
@@ -490,7 +490,7 @@ class StatisticsService
     /**
      * UTM 来源分析（独立聚合）
      *
-     * @return array<int, array{key: string, source: string, medium: string, campaign: string, count: int}>
+     * @return list<array{key: string, type: string, count: int}>
      */
     public function utmAnalysis(): array
     {
@@ -542,9 +542,10 @@ class StatisticsService
         'reddit.com', 'youtube.com', 'vk.com', 't.me', 'telegram.me', 'douban.com',
     ];
 
-    /** 判定 host 是否属于搜索引擎；返回参数名列表或 null */
     /**
-     * @return array<string, mixed>
+     * 判定 host 是否属于搜索引擎；返回搜索词 query 参数名列表或 null
+     *
+     * @return list<string>|null
      */
     protected function searchEngineParams(?string $host): ?array
     {
@@ -722,9 +723,10 @@ class StatisticsService
         ], $items), 0, $limit);
     }
 
-    /** 从 referrer_path 解析搜索词；解析失败返回 null */
     /**
-     * @param  array<string, mixed>  $paramNames
+     * 从 referrer_path 解析搜索词；解析失败返回 null
+     *
+     * @param  list<string>  $paramNames
      */
     protected function extractSearchTerm(?string $path, array $paramNames): ?string
     {
@@ -766,7 +768,7 @@ class StatisticsService
         foreach ($rows as $row) {
             $count = (int) $row->total;
             $host = $row->referrer_host ? strtolower((string) $row->referrer_host) : '';
-            $hasUtm = ($row->utm_source && $row->utm_source !== '') || ($row->utm_medium && $row->utm_medium !== '');
+            $hasUtm = (bool) ($row->utm_source ?: $row->utm_medium);
 
             if ($hasUtm) {
                 $result['campaign'] += $count;
@@ -837,7 +839,6 @@ class StatisticsService
             ->whereBetween('date', [$this->startDate, $this->endDate])
             ->groupBy('session_id')
             ->selectRaw('session_id, max(date) as last_date')
-            ->get()
             ->pluck('last_date', 'session_id')
             ->all();
 

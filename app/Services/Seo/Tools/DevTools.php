@@ -208,7 +208,7 @@ class DevTools
 
         return ['ok' => true, 'data' => [
             '协议' => $parts['scheme'] ?? '-',
-            '主机' => $parts['host'] ?? '-',
+            '主机' => $parts['host'],
             '端口' => $parts['port'] ?? '-',
             '路径' => $parts['path'] ?? '/',
             '查询参数' => $parts['query'] ?? '-',
@@ -346,7 +346,7 @@ class DevTools
 
         preg_match_all('/mailto:([\w.+-]+@[\w-]+\.[\w.]+)/i', $html, $matches);
 
-        $emails = array_unique($matches[1] ?? []);
+        $emails = array_unique($matches[1]);
 
         return ['ok' => true, 'data' => [
             '明文邮箱数' => count($emails),

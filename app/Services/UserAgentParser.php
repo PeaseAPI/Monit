@@ -6,7 +6,7 @@ namespace App\Services;
  * Monit 用户代理解析器
  * 替代原系统 jaybizzle/crawler-detect + UA 检测（无第三方依赖实现）
  */
-class UserAgentParser
+final class UserAgentParser
 {
     /**
      * 常见爬虫 / 机器人 UA 关键字
@@ -30,7 +30,7 @@ class UserAgentParser
 
     public static function make(?string $userAgent): static
     {
-        return new static($userAgent);
+        return new self($userAgent);
     }
 
     public function isCrawler(): bool
@@ -130,12 +130,11 @@ class UserAgentParser
             'Firefox' => '/(?:Firefox|FxiOS)\/([0-9.]+)/',
             'Chrome' => '/Chrome\/([0-9.]+)/',
             'Safari' => '/Version\/([0-9.]+).*Safari/',
-            'Safari' => '/Safari\/([0-9.]+)/',
         ];
 
         foreach ($patterns as $name => $pattern) {
             if (preg_match($pattern, $ua, $m)) {
-                return [$name, $m[1] ?? null];
+                return [$name, $m[1]];
             }
         }
 

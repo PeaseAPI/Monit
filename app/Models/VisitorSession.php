@@ -5,12 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Ramsey\Uuid\Uuid;
 
 /**
  * -- 聚合查询别名（selectRaw）：
  *
  * @property int $sessions
+ * @property Carbon|null $date
  */
 class VisitorSession extends Model
 {

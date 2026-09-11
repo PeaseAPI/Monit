@@ -4,7 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $domain_id
+ * @property int $user_id
+ * @property string $scheme
+ * @property string $host
+ * @property int $type
+ * @property bool $is_enabled
+ * @property Carbon|null $datetime
+ * @property bool $monitor_is_enabled
+ * @property Carbon|string|null $monitor_expiration_date
+ * @property string|null $monitor_registrar
+ * @property string|null $monitor_nameservers
+ * @property string|null $monitor_ssl
+ * @property Carbon|null $monitor_last_check_at
+ */
 class Domain extends Model
 {
     protected $primaryKey = 'domain_id';

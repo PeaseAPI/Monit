@@ -10,6 +10,32 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * SEO 审计报告
  * privacy 三态：public（链接直达）/ private（仅作者）/ password（凭密码访问）
+ *
+ * @property int $seo_audit_id
+ * @property int|null $user_id
+ * @property int $website_id
+ * @property string|null $uploader_key
+ * @property string $url
+ * @property string $host
+ * @property string $type
+ * @property string $status
+ * @property string|null $error
+ * @property int|null $score
+ * @property int|null $total_tests
+ * @property int|null $passed_tests
+ * @property int|null $major_issues
+ * @property int|null $moderate_issues
+ * @property int|null $minor_issues
+ * @property array<string, mixed>|null $category_scores
+ * @property int|null $response_time_ms
+ * @property int|null $page_size_bytes
+ * @property array<string, array<string, mixed>>|null $results
+ * @property string|null $ai_summary
+ * @property array<string, mixed>|null $ai_suggestions
+ * @property string $privacy
+ * @property string|null $password
+ * @property string|null $share_token
+ * @property bool $is_public_directory
  */
 class SeoAudit extends Model
 {

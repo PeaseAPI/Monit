@@ -4,7 +4,29 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $payment_id
+ * @property int $user_id
+ * @property string $name
+ * @property string $email
+ * @property string|null $external_id
+ * @property int|null $plan_id
+ * @property string $payment_processor
+ * @property string $type
+ * @property string $frequency
+ * @property string|null $base_amount
+ * @property array<string, mixed>|null $billing
+ * @property int $status
+ * @property int|null $code_id
+ * @property string|null $discount_amount
+ * @property string|null $taxes_amount
+ * @property string|null $total_amount
+ * @property string $currency
+ * @property Carbon $datetime
+ * @property Carbon|null $last_datetime
+ */
 class Payment extends Model
 {
     protected $primaryKey = 'payment_id';

@@ -11,6 +11,21 @@ use Illuminate\Support\Carbon;
  * SEO 关键词排名跟踪
  * search_engine：google / bing / baidu（SerpApi 引擎标识）
  * check_interval：never / daily / weekly / monthly（monit:seo-keywords-refresh 扫描）
+ *
+ * @property int $seo_keyword_id
+ * @property int $user_id
+ * @property int $website_id
+ * @property string $keyword
+ * @property string $search_engine
+ * @property string $device
+ * @property string $locale
+ * @property string $target_url
+ * @property string $check_interval
+ * @property bool $is_enabled
+ * @property int|null $last_position
+ * @property int|null $previous_position
+ * @property int|null $best_position
+ * @property Carbon|null $last_checked_at
  */
 class SeoKeyword extends Model
 {
@@ -75,6 +90,7 @@ class SeoKeyword extends Model
             return null;
         }
 
+        /** @var Carbon $base */
         $base = $this->last_checked_at ?? $this->created_at ?? now();
 
         return match ($this->check_interval) {

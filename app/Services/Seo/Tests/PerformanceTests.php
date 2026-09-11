@@ -127,7 +127,7 @@ class PerformanceTests
     {
         preg_match_all('/style=["\'][^"\']*["\']/i', $c->html, $matches);
 
-        $count = count($matches[0] ?? []);
+        $count = count($matches[0]);
 
         return [
             'passed' => $count <= 10,

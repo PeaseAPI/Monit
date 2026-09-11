@@ -32,7 +32,7 @@ return new class extends Migration
             $table->boolean('user_deletion_reminder')->default(false)->after('plan_expiry_reminder');
             // 推荐返佣
             $table->string('referral_key', 64)->nullable()->unique()->after('user_deletion_reminder');
-            $table->foreignId('referred_by')->nullable()->constrained('users', 'user_id')->nullOnDelete()->after('referral_key');
+            $table->foreignId('referred_by')->nullable()->after('referral_key')->constrained('users', 'user_id')->nullOnDelete();
             $table->boolean('referred_by_has_converted')->default(false)->after('referred_by');
             // 支付信息
             $table->string('payment_subscription_id', 256)->nullable()->after('referred_by_has_converted');

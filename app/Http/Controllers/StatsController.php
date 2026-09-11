@@ -48,7 +48,7 @@ class StatsController extends Controller
         $overview = $stats->overview();
 
         $top = fn (string $dimension, int $limit = 5) => collect($stats->breakdown($dimension, $limit))
-            ->map(fn ($row) => ($row['label'] ?? $row['name'] ?? '?').' ('.($row['value'] ?? $row['count'] ?? 0).')')
+            ->map(fn ($row) => $row['key'].' ('.$row['count'].')')
             ->implode('、');
 
         $prompt = sprintf(
