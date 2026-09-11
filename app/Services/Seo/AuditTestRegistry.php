@@ -44,7 +44,7 @@ class AuditTestRegistry
      */
     public static function categories(): array
     {
-        return array_keys(config('seo.categories', []));
+        return array_map('strval', array_keys(config('seo.categories', [])));
     }
 
     /**

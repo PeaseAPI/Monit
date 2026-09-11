@@ -41,7 +41,13 @@ class QQProvider implements ChineseSocialProvider
 
         parse_str($response->body(), $params);
 
-        return $params;
+        // 归一化为 array<string, mixed>（QQ 返回标准 query string，无嵌套数组）
+        $normalized = [];
+        foreach ($params as $key => $value) {
+            $normalized[(string) $key] = is_array($value) ? $value : (string) $value;
+        }
+
+        return $normalized;
     }
 
     /**

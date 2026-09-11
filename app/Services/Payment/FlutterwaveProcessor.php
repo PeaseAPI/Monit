@@ -52,8 +52,8 @@ class FlutterwaveProcessor
         $data = $request->input('data', []);
         $meta = $data['meta'] ?? [];
 
-        $user = User::find($meta['user_id'] ?? 0);
-        $plan = Plan::find($meta['plan_id'] ?? 0);
+        $user = User::query()->where('user_id', (int) ($meta['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', (int) ($meta['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -81,7 +81,7 @@ class FlutterwaveProcessor
     {
         $prices = $plan->prices['USD'] ?? $plan->prices;
 
-        return match ($frequency) {
+        return (float) match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,
             'lifetime' => $prices['lifetime'] ?? 0,

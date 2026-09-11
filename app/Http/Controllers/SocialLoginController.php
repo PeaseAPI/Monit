@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\Social\ChineseSocialProvider;
 use App\Services\Social\FeishuProvider;
 use App\Services\Social\GiteeProvider;
 use App\Services\Social\QQProvider;
@@ -83,6 +84,7 @@ class SocialLoginController extends Controller
      *
      * @var array<string, class-string>
      */
+    /** @var array<string, class-string<ChineseSocialProvider>> */
     protected array $chineseProviders = [
         'qq' => QQProvider::class,
         'wechat' => WeChatProvider::class,
@@ -238,7 +240,7 @@ class SocialLoginController extends Controller
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_token_failed')]);
         }
 
-        $userInfo = $providerInstance->getUserInfo(json_encode($tokenData));
+        $userInfo = $providerInstance->getUserInfo((string) json_encode($tokenData));
 
         // 国内提供商可能不提供邮箱，允许空邮箱但需要标识符
         if (! $userInfo || empty($userInfo['id'])) {
@@ -475,8 +477,8 @@ class SocialLoginController extends Controller
         $keyId = config('services.apple.key_id', '');
         $privateKey = config('services.apple.private_key', '');
 
-        $header = base64_encode(json_encode(['alg' => 'ES256', 'kid' => $keyId]));
-        $payload = base64_encode(json_encode([
+        $header = base64_encode((string) json_encode(['alg' => 'ES256', 'kid' => $keyId]));
+        $payload = base64_encode((string) json_encode([
             'iss' => $teamId,
             'iat' => time(),
             'exp' => time() + 86400 * 180,

@@ -117,8 +117,11 @@ class SeoBacklinkController extends Controller
     {
         $query = SeoBacklink::where('user_id', $request->user()->user_id)->orderByDesc('seo_backlink_id');
 
-        return response()->streamDownload(function () use ($query) {
+        return response()->streamDownload(function () use ($query): void {
             $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
             fwrite($out, "\xEF\xBB\xBFsource_url,source_host,target_url,anchor,rel,status,dr,first_seen,last_checked\n");
 
             $query->chunk(200, function ($rows) use ($out) {

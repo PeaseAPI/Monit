@@ -63,8 +63,8 @@ class KlarnaProcessor
         // 从 session 或缓存获取 metadata
         $metadata = cache()->get("klarna_order_{$orderId}", []);
 
-        $user = User::find($metadata['user_id'] ?? 0);
-        $plan = Plan::find($metadata['plan_id'] ?? 0);
+        $user = User::query()->where('user_id', (int) ($metadata['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', (int) ($metadata['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -92,7 +92,7 @@ class KlarnaProcessor
     {
         $prices = $plan->prices['EUR'] ?? $plan->prices['USD'] ?? $plan->prices;
 
-        return match ($frequency) {
+        return (float) match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,
             'lifetime' => $prices['lifetime'] ?? 0,

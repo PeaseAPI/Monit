@@ -210,7 +210,7 @@ class PaymentService
                 $user->update([
                     'payment_subscription_id' => $subscriptionId,
                     'payment_processor' => $payment->payment_processor,
-                    'payment_total_amount' => ($user->payment_total_amount ?? 0) + $payment->total_amount,
+                    'payment_total_amount' => (float) ($user->payment_total_amount ?? 0) + (float) $payment->total_amount,
                     'payment_currency' => $payment->currency,
                 ]);
 
@@ -272,7 +272,7 @@ class PaymentService
      */
     public function activatePlan(User $user, Payment $payment): void
     {
-        $plan = Plan::find($payment->plan_id ?: $user->plan_id);
+        $plan = Plan::query()->where('plan_id', (int) ($payment->plan_id ?: $user->plan_id))->first();
         if (! $plan) {
             return;
         }

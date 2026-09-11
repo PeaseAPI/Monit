@@ -130,6 +130,10 @@ class Captcha
 
         $provider = self::provider();
 
+        if ($provider === null) {
+            return '';
+        }
+
         if ($provider === 'geetest') {
             return self::geetestWidget();
         }
@@ -165,7 +169,7 @@ class Captcha
                 'geetest_seccode' => trim((string) ($input['geetest_seccode'] ?? '')),
             ];
 
-            return $payload['geetest_validate'] !== '' ? json_encode($payload) : null;
+            return $payload['geetest_validate'] !== '' ? (string) json_encode($payload) : null;
         }
 
         $field = self::PROVIDERS[$provider]['field'];

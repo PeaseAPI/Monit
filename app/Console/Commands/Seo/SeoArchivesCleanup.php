@@ -28,7 +28,7 @@ class SeoArchivesCleanup extends Command
         $userIds = SeoAuditArchive::whereNotNull('user_id')->distinct()->pluck('user_id');
 
         foreach ($userIds as $userId) {
-            $user = User::find($userId);
+            $user = User::query()->where('user_id', (int) $userId)->first();
 
             $retention = (int) ($user?->getPlanSettings()['seo_history_retention_days'] ?? $defaultRetention);
 

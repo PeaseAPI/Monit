@@ -34,7 +34,7 @@ class AuditEngine
     /**
      * 测试组注册（键 => [实例, 方法]）
      *
-     * @var array<string, array{0: object, 1: string}>
+     * @var array<string, callable>
      */
     protected array $groups = [];
 
@@ -44,7 +44,11 @@ class AuditEngine
             $instance = new $group;
 
             foreach ($instance->handles() as $key => $method) {
-                $this->groups[$key] = [$instance, $method];
+                $handler = [$instance, $method];
+                if (! is_callable($handler)) {
+                    continue;
+                }
+                $this->groups[$key] = $handler;
             }
         }
     }
@@ -324,7 +328,7 @@ class AuditEngine
                 'major' => $audit->major_issues,
                 'moderate' => $audit->moderate_issues,
                 'minor' => $audit->minor_issues,
-                'results_hash' => md5(json_encode($audit->results)),
+                'results_hash' => md5((string) json_encode($audit->results)),
             ],
             'created_at' => now(),
         ]);
@@ -338,7 +342,7 @@ class AuditEngine
         $completed = $website->seoAudits()->where('status', 'completed');
 
         $website->update([
-            'seo_avg_score' => (int) round((clone $completed)->avg('score') ?? 0),
+            'seo_avg_score' => (int) round((float) ((clone $completed)->avg('score') ?? 0)),
             'seo_total_audits' => (clone $completed)->count(),
             'seo_last_audit_at' => now(),
             'seo_next_audit_at' => static::nextRunTime($website->seo_audit_check_interval),

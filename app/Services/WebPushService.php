@@ -118,7 +118,7 @@ class WebPushService
             return false;
         }
 
-        $payloadJson = json_encode([
+        $payloadJson = (string) json_encode([
             'title' => $payload['title'] ?? '',
             'body' => $payload['body'] ?? '',
             'url' => $payload['url'] ?? '/',
@@ -156,6 +156,9 @@ class WebPushService
         // 2. ECDH 共享密钥
         $uaPublicDer = $this->rawPublicToDer($uaPublic);
         $sharedSecret = openssl_pkey_derive($uaPublicDer, $asPrivate, 32);
+        if ($sharedSecret === false) {
+            throw new \RuntimeException('ECDH 密钥交换失败');
+        }
 
         // 3. IKM = HKDF(salt=auth, ikm=shared, info="WebPush: info\0"||ua||as)
         $ikm = $this->hkdf($authSecret, $sharedSecret, 'WebPush: info'."\0".$uaPublic.$asPublicRaw, 32);
@@ -177,8 +180,8 @@ class WebPushService
 
     protected function buildVapidHeader(string $endpoint, string $subject, string $publicKeyB64, string $privateKeyB64): string
     {
-        $parts = parse_url($endpoint);
-        $origin = $parts['scheme'].'://'.$parts['host']
+        $parts = parse_url($endpoint) ?: [];
+        $origin = ($parts['scheme'] ?? '').'://'.($parts['host'] ?? '')
             .(isset($parts['port']) ? ':'.$parts['port'] : '');
 
         $header = $this->b64urlEncode((string) json_encode(['typ' => 'JWT', 'alg' => 'ES256']));
@@ -221,7 +224,11 @@ class WebPushService
      */
     protected function publicKeyToRaw($pkey): string
     {
+        /** @var array{ec: array{x: string, y: string}}|false $details */
         $details = openssl_pkey_get_details($pkey);
+        if ($details === false) {
+            throw new \RuntimeException('无法解析 EC 公钥');
+        }
 
         return "\x04".str_pad($details['ec']['x'], 32, "\0", STR_PAD_LEFT)
             .str_pad($details['ec']['y'], 32, "\0", STR_PAD_LEFT);
@@ -286,7 +293,14 @@ class WebPushService
     public static function generateVapidKeys(): array
     {
         $key = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
+        if ($key === false) {
+            throw new \RuntimeException('生成 VAPID 密钥失败');
+        }
+        /** @var array{ec: array{x: string, y: string}, key: string}|false $details */
         $details = openssl_pkey_get_details($key);
+        if ($details === false) {
+            throw new \RuntimeException('生成 VAPID 密钥失败');
+        }
 
         $public = "\x04".str_pad($details['ec']['x'], 32, "\0", STR_PAD_LEFT)
             .str_pad($details['ec']['y'], 32, "\0", STR_PAD_LEFT);
@@ -294,6 +308,9 @@ class WebPushService
         // 从 SEC1 DER 中提取 32 字节私钥 d（"\x04\x20" 定位）
         $pem = $details['key'];
         $pos = strpos($pem, "\x04\x20");
+        if ($pos === false) {
+            throw new \RuntimeException('生成 VAPID 密钥失败');
+        }
         $d = substr($pem, $pos + 2, 32);
 
         return [

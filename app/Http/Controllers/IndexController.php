@@ -69,9 +69,10 @@ class IndexController extends Controller
         // 视图解析 themes/{theme}/index.blade.php，不存在时回退 default 主题。
         // 二开新增主题：只需新建 resources/views/themes/{name}/index.blade.php 并在后台切换。
         $theme = Brand::landingTheme();
-        $view = view()->exists("themes.{$theme}.index")
-            ? "themes.{$theme}.index"
-            : 'themes.default.index';
+        $view = "themes.{$theme}.index";
+        if (! view()->exists($view)) {
+            $view = 'themes.default.index';
+        }
 
         return view($view, [
             'plans' => $plans,

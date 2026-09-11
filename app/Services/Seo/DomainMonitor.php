@@ -104,7 +104,8 @@ class DomainMonitor
 
     protected static function whoisServer(string $domain): ?string
     {
-        $tld = strtolower((string) substr(strrchr($domain, '.'), 1));
+        $dot = strrchr($domain, '.');
+        $tld = strtolower($dot === false ? '' : substr($dot, 1));
 
         return match ($tld) {
             'com', 'net' => 'whois.verisign-grs.com',

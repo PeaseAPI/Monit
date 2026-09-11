@@ -100,7 +100,7 @@ class DomainController extends Controller
         ]);
 
         // 归属校验：仅允许操作自己的域名（防 IDOR 越权改他人域名/监控开关）
-        $domain = $request->user()->domains()->findOrFail($validated['domain_id']);
+        $domain = $request->user()->domains()->where('domain_id', (int) $validated['domain_id'])->firstOrFail();
 
         $attributes = [];
         if (array_key_exists('host', $validated)) {

@@ -68,9 +68,13 @@ class LicenseGenerateCommand extends Command
         ];
 
         // 3. Ed25519 签名（对规范 JSON detached 签名）
+        $secretKey = hex2bin($keypair['secret_key']);
+        if ($secretKey === false || $secretKey === '') {
+            throw new \RuntimeException('密钥反序列化失败');
+        }
         $signature = sodium_crypto_sign_detached(
             LicenseManager::canonicalJson($license),
-            hex2bin($keypair['secret_key']),
+            $secretKey,
         );
         $license['signature'] = bin2hex($signature);
 
@@ -79,7 +83,7 @@ class LicenseGenerateCommand extends Command
         file_put_contents($out, json_encode($license, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n");
 
         $this->info('License written: '.$out);
-        $this->line(json_encode($license, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $this->line((string) json_encode($license, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         return self::SUCCESS;
     }

@@ -29,14 +29,15 @@ class LicenseManager
     /**
      * 获取验证结果（带缓存）
      *
-     * @return array{valid: bool, reason: string, data: ?array<string, mixed>}
+     * @return array{valid: bool, reason: string, data: ?array<int|string, mixed>}
      */
     public static function status(bool $refresh = false): array
     {
         if (! $refresh) {
             $cached = Cache::get(self::CACHE_KEY);
 
-            if (is_array($cached)) {
+            if (is_array($cached) && isset($cached['valid'], $cached['reason'])) {
+                /** @var array{valid: bool, reason: string, data: ?array<int|string, mixed>} $cached */
                 return $cached;
             }
         }
@@ -50,7 +51,7 @@ class LicenseManager
     /**
      * 实际验证逻辑
      *
-     * @return array<string, mixed>
+     * @return array{valid: bool, reason: string, data: ?array<int|string, mixed>}
      */
     protected static function doVerify(): array
     {
@@ -118,10 +119,16 @@ class LicenseManager
 
         $payload = self::canonicalJson($license);
 
+        $signatureBin = hex2bin($signature);
+        $publicKeyBin = hex2bin($publicKey);
+        if ($signatureBin === false || $signatureBin === '' || $publicKeyBin === false || $publicKeyBin === '') {
+            return false;
+        }
+
         return sodium_crypto_sign_verify_detached(
-            hex2bin($signature),
+            $signatureBin,
             $payload,
-            hex2bin($publicKey),
+            $publicKeyBin,
         );
     }
 

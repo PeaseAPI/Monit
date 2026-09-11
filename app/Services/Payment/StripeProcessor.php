@@ -52,7 +52,7 @@ class StripeProcessor
                     'product_data' => [
                         'name' => 'Monit Plan',
                     ],
-                    'unit_amount' => (int) ($payment->total_amount * 100), // cents
+                    'unit_amount' => (int) ((float) ($payment->total_amount ?? 0) * 100), // cents
                 ],
                 'quantity' => 1,
             ]],

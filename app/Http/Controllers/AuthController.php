@@ -258,7 +258,7 @@ class AuthController extends Controller
             return redirect()->route('login')->withErrors(['email' => __('account.twofa_expired')]);
         }
 
-        $user = User::find($userId);
+        $user = User::query()->where('user_id', (int) $userId)->first();
 
         // 一次性消费：同一窗口的码登录后不可复用（RFC 6238 §5.2，防钓鱼重放）
         if (! $user || ! $user->twofa_is_enabled
@@ -354,8 +354,9 @@ class AuthController extends Controller
         ]);
 
         // 注册黑名单（后台 设置→用户：域名 / IP，原版 blacklisted_*）
-        $emailDomain = strtolower(substr(strrchr($validated['email'], '@'), 1) ?: '');
-        $blacklistedDomains = array_filter(preg_split('/\r\n|\r|\n/', (string) Settings::get('users.blacklisted_domains', '')));
+        $atSuffix = strrchr($validated['email'], '@');
+        $emailDomain = strtolower($atSuffix === false ? '' : substr($atSuffix, 1));
+        $blacklistedDomains = array_filter(preg_split('/\r\n|\r|\n/', (string) Settings::get('users.blacklisted_domains', '')) ?: []);
         $blacklistedDomains = array_map(fn ($d) => strtolower(trim($d)), $blacklistedDomains);
 
         if ($emailDomain && in_array($emailDomain, $blacklistedDomains, true)) {
@@ -365,7 +366,7 @@ class AuthController extends Controller
         }
 
         $clientIp = $request->ip();
-        $blacklistedIps = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string) Settings::get('users.blacklisted_ips', ''))));
+        $blacklistedIps = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string) Settings::get('users.blacklisted_ips', '')) ?: []));
 
         if ($clientIp && in_array($clientIp, $blacklistedIps, true)) {
             return back()

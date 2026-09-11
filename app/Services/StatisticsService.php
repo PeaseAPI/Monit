@@ -661,9 +661,9 @@ final class StatisticsService
         }
 
         $rows = DB::table('sessions_events as e')
-            ->join(DB::raw('(select session_id, max(event_id) as max_id from sessions_events where website_id = '.(int) $this->website->website_id.' and date between ? and ? group by session_id) as m'),
+            ->join(DB::raw('(select session_id, max(event_id) as max_id from sessions_events where website_id = ? and date between ? and ? group by session_id) as m'),
                 'e.event_id', '=', 'm.max_id')
-            ->addBinding([$this->startDate, $this->endDate], 'join')
+            ->addBinding([(int) $this->website->website_id, $this->startDate, $this->endDate], 'join')
             ->groupBy('e.path')
             ->selectRaw('e.path as k, count(*) as total')
             ->orderByDesc('total')

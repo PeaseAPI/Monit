@@ -42,8 +42,8 @@ class MercadoPagoProcessor
         }
 
         $externalRef = json_decode($data['data']['external_reference'] ?? '{}', true);
-        $user = User::find($externalRef['user_id'] ?? 0);
-        $plan = Plan::find($externalRef['plan_id'] ?? 0);
+        $user = User::query()->where('user_id', (int) ($externalRef['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', (int) ($externalRef['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -71,7 +71,7 @@ class MercadoPagoProcessor
     {
         $prices = $plan->prices['USD'] ?? $plan->prices;
 
-        return match ($frequency) {
+        return (float) match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,
             'lifetime' => $prices['lifetime'] ?? 0,

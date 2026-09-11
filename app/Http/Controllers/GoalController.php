@@ -54,7 +54,7 @@ class GoalController extends Controller
         ]);
 
         $user = $request->user();
-        $website = $user->websites()->findOrFail($validated['website_id']);
+        $website = $user->websites()->where('website_id', (int) $validated['website_id'])->firstOrFail();
 
         WebsiteGoal::create([
             ...$validated,
@@ -78,7 +78,7 @@ class GoalController extends Controller
             'is_enabled' => ['boolean'],
         ]);
 
-        $goal = WebsiteGoal::find($validated['goal_id']);
+        $goal = WebsiteGoal::query()->where('goal_id', (int) $validated['goal_id'])->firstOrFail();
         $website = Website::where('website_id', $goal->website_id)
             ->where('user_id', $request->user()->user_id)
             ->firstOrFail();

@@ -43,8 +43,8 @@ class LemonsqueezyProcessor
         $data = $request->input('data', []);
         $customData = $data['attributes']['custom_data'] ?? [];
 
-        $user = User::find($customData['user_id'] ?? 0);
-        $plan = Plan::find($customData['plan_id'] ?? 0);
+        $user = User::query()->where('user_id', (int) ($customData['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', (int) ($customData['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;

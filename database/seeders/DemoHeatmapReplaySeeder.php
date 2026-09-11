@@ -45,14 +45,14 @@ class DemoHeatmapReplaySeeder extends Seeder
                 'heatmap_id' => $heatmap->heatmap_id,
                 'website_id' => $website->website_id,
                 'type' => 'desktop',
-                'data' => gzencode(json_encode(['events' => $snapshotEvents, 'viewport' => ['width' => 1920, 'height' => 1080]]), 9),
+                'data' => gzencode((string) json_encode(['events' => $snapshotEvents, 'viewport' => ['width' => 1920, 'height' => 1080]]), 9),
                 'date' => now()->toDateString(),
             ]);
 
-            $compressed = gzencode(json_encode(['events' => $snapshotEvents, 'viewport' => ['width' => 1920, 'height' => 1080]]), 9);
+            $compressed = gzencode((string) json_encode(['events' => $snapshotEvents, 'viewport' => ['width' => 1920, 'height' => 1080]]), 9);
             $heatmap->update([
                 'snapshot_id_desktop' => $snap->snapshot_id,
-                'desktop_size' => strlen($compressed),
+                'desktop_size' => $compressed === false ? 0 : strlen($compressed),
             ]);
 
             // Click data
@@ -88,7 +88,7 @@ class DemoHeatmapReplaySeeder extends Seeder
             $visitor = WebsiteVisitor::create([
                 'website_id' => $website->website_id,
                 'visitor_uuid_binary' => Uuid::uuid4()->getBytes(),
-                'ip' => long2ip(mt_rand(ip2long('1.0.0.0'), ip2long('223.255.255.255'))),
+                'ip' => long2ip((int) mt_rand((int) ip2long('1.0.0.0'), (int) ip2long('223.255.255.255'))),
                 'continent_code' => 'AS',
                 'country_code' => 'CN',
                 'city_name' => ['北京', '上海', '广州', '深圳', '杭州'][mt_rand(0, 4)],

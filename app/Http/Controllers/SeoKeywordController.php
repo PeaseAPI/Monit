@@ -133,7 +133,9 @@ class SeoKeywordController extends Controller
             return back()->withErrors(['keyword' => __('seo.rank_check_failed')]);
         }
 
-        return back()->with('success', __('seo.rank_checked', ['position' => $rank->position ?? __('seo.not_ranked')]));
+        $position = $rank->position;
+
+        return back()->with('success', __('seo.rank_checked', ['position' => is_scalar($position) ? (string) $position : __('seo.not_ranked')]));
     }
 
     /**

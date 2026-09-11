@@ -70,7 +70,7 @@ class SsoController extends Controller
         // 查找用户
         $user = null;
         if ($request->filled('user_id')) {
-            $user = User::find($request->input('user_id'));
+            $user = User::query()->where('user_id', (int) $request->input('user_id'))->first();
         } elseif ($request->filled('email')) {
             $user = User::where('email', $request->input('email'))->first();
         }

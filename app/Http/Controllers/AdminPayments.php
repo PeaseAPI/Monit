@@ -54,7 +54,7 @@ class AdminPayments extends Controller
             'plan_id' => ['nullable', 'string', 'max:64', 'exists:plans,plan_id'],
         ]);
 
-        $user = User::find($validated['user_id']);
+        $user = User::query()->where('user_id', (int) $validated['user_id'])->firstOrFail();
 
         $payment = Payment::create([
             ...$validated,

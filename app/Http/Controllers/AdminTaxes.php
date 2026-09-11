@@ -111,7 +111,11 @@ class AdminTaxes extends Controller
         ]);
 
         $file = $request->file('file');
-        $handle = fopen($file->getRealPath(), 'r');
+        $realPath = $file->getRealPath();
+        $handle = is_string($realPath) ? fopen($realPath, 'r') : false;
+        if ($handle === false) {
+            abort(422, '无法读取上传的 CSV 文件');
+        }
         $header = fgetcsv($handle); // skip header
         $count = 0;
 

@@ -122,7 +122,7 @@ class S3Client
 
         $ch = curl_init($url);
         curl_setopt_array($ch, [
-            CURLOPT_CUSTOMREQUEST => $method,
+            CURLOPT_CUSTOMREQUEST => $method !== '' ? $method : 'GET',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => false,
             CURLOPT_HTTPHEADER => $curlHeaders,

@@ -41,7 +41,11 @@ class WebsitesImportController extends Controller
         // 从 CSV 文件读取（列：name,url）
         if ($request->hasFile('csv_file')) {
             $csv = $request->file('csv_file');
-            $handle = fopen($csv->getRealPath(), 'r');
+            $realPath = $csv->getRealPath();
+            $handle = is_string($realPath) ? fopen($realPath, 'r') : false;
+            if ($handle === false) {
+                abort(422, '无法读取上传的 CSV 文件');
+            }
             // 跳过表头
             fgetcsv($handle);
             while (($row = fgetcsv($handle)) !== false) {

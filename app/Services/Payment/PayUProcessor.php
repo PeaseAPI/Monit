@@ -60,12 +60,12 @@ class PayUProcessor
         $parts = explode('-', $extOrderId);
         $userId = $parts[1] ?? 0;
 
-        $user = User::find($userId);
+        $user = User::query()->where('user_id', (int) ($userId))->first();
         if (! $user) {
             return null;
         }
 
-        $plan = Plan::find($user->plan_id);
+        $plan = Plan::query()->where('plan_id', (int) ($user->plan_id))->first();
         $totalAmount = ($order['totalAmount'] ?? 0) / 100;
 
         return Payment::create([
@@ -90,7 +90,7 @@ class PayUProcessor
     {
         $prices = $plan->prices['PLN'] ?? $plan->prices['USD'] ?? $plan->prices;
 
-        return match ($frequency) {
+        return (float) match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,
             'lifetime' => $prices['lifetime'] ?? 0,

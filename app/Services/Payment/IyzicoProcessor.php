@@ -59,12 +59,12 @@ class IyzicoProcessor
         $parts = explode('-', $conversationId);
         $userId = $parts[1] ?? 0;
 
-        $user = User::find($userId);
+        $user = User::query()->where('user_id', (int) ($userId))->first();
         if (! $user) {
             return null;
         }
 
-        $plan = Plan::find($user->plan_id);
+        $plan = Plan::query()->where('plan_id', (int) ($user->plan_id))->first();
 
         return Payment::create([
             'user_id' => $user->user_id,
@@ -88,7 +88,7 @@ class IyzicoProcessor
     {
         $prices = $plan->prices['TRY'] ?? $plan->prices['USD'] ?? $plan->prices;
 
-        return match ($frequency) {
+        return (float) match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,
             'lifetime' => $prices['lifetime'] ?? 0,

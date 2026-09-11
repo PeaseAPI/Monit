@@ -113,9 +113,9 @@ class SeoAuditController extends Controller
         }
 
         if ($type === 'bulk') {
-            $urls = collect(preg_split('/\R/', $validated['urls']))
+            $urls = collect(preg_split('/\R/', $validated['urls']) ?: [])
                 ->map(fn (string $u) => static::ensureScheme(trim($u)))
-                ->filter(fn (string $u) => filter_var($u, FILTER_VALIDATE_URL))
+                ->filter(fn (string $u) => filter_var($u, FILTER_VALIDATE_URL) !== false)
                 ->take($bulkLimit);
 
             foreach ($urls as $url) {
@@ -255,8 +255,11 @@ class SeoAuditController extends Controller
     {
         $query = SeoAudit::where('user_id', $request->user()->user_id)->orderByDesc('seo_audit_id');
 
-        return response()->streamDownload(function () use ($query) {
+        return response()->streamDownload(function () use ($query): void {
             $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
             fwrite($out, "\xEF\xBB\xBFurl,score,status,major,moderate,minor,created_at\n");
 
             $query->chunk(200, function ($rows) use ($out) {
@@ -436,8 +439,8 @@ class SeoAuditController extends Controller
             'audit_b' => 'integer|exists:seo_audits,seo_audit_id|different:audit_a',
         ]);
 
-        $auditA = SeoAudit::findOrFail($validated['audit_a']);
-        $auditB = SeoAudit::findOrFail($validated['audit_b']);
+        $auditA = SeoAudit::query()->where('seo_audit_id', (int) $validated['audit_a'])->firstOrFail();
+        $auditB = SeoAudit::query()->where('seo_audit_id', (int) $validated['audit_b'])->firstOrFail();
 
         // Access check
         foreach ([$auditA, $auditB] as $audit) {

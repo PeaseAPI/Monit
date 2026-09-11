@@ -109,7 +109,7 @@ class PaymentController extends Controller
     /**
      * 发起支付（规格书 §11：22 处理器统一入口）
      *
-     * @return View|RedirectResponse
+     * @return View|RedirectResponse|Response
      */
     public function checkout(Request $request)
     {
@@ -125,7 +125,7 @@ class PaymentController extends Controller
         ]);
 
         $user = $request->user();
-        $plan = Plan::findOrFail($validated['plan_id']);
+        $plan = Plan::query()->where('plan_id', (int) $validated['plan_id'])->firstOrFail();
         $processor = $validated['processor'];
         $frequency = $validated['frequency'];
 
@@ -144,7 +144,7 @@ class PaymentController extends Controller
 
             throw $e;
         }
-        $payment = Payment::find($order['payment_id']);
+        $payment = Payment::query()->where('payment_id', (int) $order['payment_id'])->firstOrFail();
 
         return match ($processor) {
             'stripe' => $this->redirectToStripe($payment),

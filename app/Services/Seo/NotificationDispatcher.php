@@ -33,7 +33,7 @@ class NotificationDispatcher
 
         // changes 去噪：结果与上次一致则跳过
         if ($event === 'audit_refreshed' && $website && $website->seo_notifications_mode === 'changes') {
-            $current = md5(json_encode($audit->results));
+            $current = md5((string) json_encode($audit->results));
 
             $previous = $website->seoAudits()
                 ->where('seo_audit_id', '!=', $audit->seo_audit_id)
@@ -41,7 +41,7 @@ class NotificationDispatcher
                 ->orderByDesc('seo_audit_id')
                 ->first();
 
-            if ($previous && md5(json_encode($previous->results)) === $current) {
+            if ($previous && md5((string) json_encode($previous->results)) === $current) {
                 return;
             }
         }

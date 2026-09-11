@@ -33,7 +33,8 @@ class WebhookEmailController extends Controller
             abort(404);
         }
 
-        $given = (string) ($request->query('token') ?: $request->header('X-Webhook-Token', ''));
+        $token = $request->query('token');
+        $given = is_string($token) && $token !== '' ? $token : (string) $request->header('X-Webhook-Token', '');
         if (! hash_equals($expected, $given)) {
             abort(404);
         }

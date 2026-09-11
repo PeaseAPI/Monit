@@ -26,7 +26,7 @@ class RazorpayProcessor
         try {
             $response = Http::withBasicAuth($apiKey, $apiSecret)
                 ->post('https://api.razorpay.com/v1/orders', [
-                    'amount' => (int) ($payment->total_amount * 100),
+                    'amount' => (int) ((float) ($payment->total_amount ?? 0) * 100),
                     'currency' => $payment->currency,
                     'receipt' => (string) $payment->payment_id,
                     'notes' => ['payment_id' => $payment->payment_id],
@@ -37,7 +37,7 @@ class RazorpayProcessor
             return [
                 'order_id' => $data['id'] ?? null,
                 'key_id' => $apiKey,
-                'amount' => $payment->total_amount * 100,
+                'amount' => (float) ($payment->total_amount ?? 0) * 100,
                 'currency' => $payment->currency,
                 'prefill' => [
                     'name' => $payment->name,

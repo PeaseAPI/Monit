@@ -48,8 +48,8 @@ class MidtransProcessor
     public function handleWebhook(Request $request): ?Payment
     {
         $customField = json_decode($request->input('custom_field1', '{}'), true);
-        $user = User::find($customField['user_id'] ?? 0);
-        $plan = Plan::find($customField['plan_id'] ?? 0);
+        $user = User::query()->where('user_id', (int) ($customField['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', (int) ($customField['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -82,7 +82,7 @@ class MidtransProcessor
     {
         $prices = $plan->prices['USD'] ?? $plan->prices;
 
-        return match ($frequency) {
+        return (float) match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,
             'lifetime' => $prices['lifetime'] ?? 0,

@@ -30,7 +30,8 @@ class SetLocale
 
         // 浏览器语言自动检测（main.auto_language_detection_is_enabled，默认开启）
         if ($locale === '' && $this->autoDetectEnabled()) {
-            $locale = $this->detectFromAcceptLanguage((string) $request->server('HTTP_ACCEPT_LANGUAGE', ''));
+            $acceptLanguage = $request->server('HTTP_ACCEPT_LANGUAGE', '');
+            $locale = $this->detectFromAcceptLanguage(is_string($acceptLanguage) ? $acceptLanguage : '');
         }
 
         // 后台默认语言（main.default_language）

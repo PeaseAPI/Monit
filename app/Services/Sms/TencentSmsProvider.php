@@ -49,7 +49,7 @@ final class TencentSmsProvider
             return [false, 'tencent_not_configured'];
         }
 
-        $body = json_encode([
+        $body = (string) json_encode([
             'PhoneNumberSet' => ['+86'.$phone],
             'SmsSdkAppId' => $this->sdkAppId,
             'SignName' => $this->signName,
@@ -84,7 +84,7 @@ final class TencentSmsProvider
     protected function signedHeaders(string $jsonBody): array
     {
         $host = 'sms.tencentcloudapi.com';
-        $timestamp = now()->timestamp;
+        $timestamp = (int) now()->timestamp;
         $date = gmdate('Y-m-d', $timestamp);
 
         $contentType = 'application/json; charset=utf-8';

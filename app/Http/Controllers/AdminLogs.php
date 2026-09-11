@@ -61,6 +61,9 @@ class AdminLogs extends Controller
 
         return response()->streamDownload(function () use ($logs): void {
             $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
             // BOM 让 Excel 正确识别 UTF-8
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['log_id', 'user_id', 'email', 'type', 'ip', 'device_type', 'os_name', 'browser_name', 'country_code', 'city_name', 'datetime']);

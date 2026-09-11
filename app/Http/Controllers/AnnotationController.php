@@ -47,7 +47,7 @@ class AnnotationController extends Controller
         ]);
 
         $user = $request->user();
-        $website = $user->websites()->findOrFail($validated['website_id']);
+        $website = $user->websites()->where('website_id', (int) $validated['website_id'])->firstOrFail();
 
         Annotation::create([
             ...$validated,
@@ -66,7 +66,7 @@ class AnnotationController extends Controller
             'date' => ['required', 'date'],
         ]);
 
-        $annotation = Annotation::find($validated['annotation_id']);
+        $annotation = Annotation::query()->where('annotation_id', (int) $validated['annotation_id'])->firstOrFail();
         $website = Website::where('website_id', $annotation->website_id)
             ->where('user_id', $request->user()->user_id)
             ->firstOrFail();

@@ -73,8 +73,8 @@ class TencentCosClient
         $host = $this->bucket.'.cos.'.$this->region.'.myqcloud.com';
         $contentType = (string) ($headers['Content-Type'] ?? '');
 
-        $startTime = now()->timestamp - 60;
-        $endTime = now()->timestamp + 600;
+        $startTime = (int) now()->timestamp - 60;
+        $endTime = (int) now()->timestamp + 600;
         $keyTime = $startTime.';'.$endTime;
 
         // 签名头（小写排序）
@@ -117,7 +117,7 @@ class TencentCosClient
 
         $ch = curl_init($url);
         curl_setopt_array($ch, [
-            CURLOPT_CUSTOMREQUEST => $method,
+            CURLOPT_CUSTOMREQUEST => $method !== '' ? $method : 'GET',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => false,
             CURLOPT_HTTPHEADER => $curlHeaders,

@@ -203,7 +203,7 @@ class PixelTrackController extends Controller
             ? json_encode(['heatmap_id' => $heatmap->heatmap_id, 'replay_enabled' => $replayEnabled])
             : json_encode(['replay_enabled' => $replayEnabled]);
 
-        return response($data, 200)
+        return response((string) $data, 200)
             ->header('Access-Control-Allow-Origin', '*')
             ->header('Content-Type', 'application/json')
             ->header('Cache-Control', 'no-store');

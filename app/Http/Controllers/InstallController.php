@@ -314,7 +314,8 @@ class InstallController extends Controller
         }
 
         try {
-            $version = (string) $pdo->query('SELECT VERSION()')->fetchColumn();
+            $stmt = $pdo->query('SELECT VERSION()');
+            $version = $stmt ? (string) $stmt->fetchColumn() : '未知版本';
         } catch (\Throwable) {
             $version = '未知版本';
         }
@@ -344,7 +345,7 @@ class InstallController extends Controller
         $validated = Validator::make($request->all(), $this->databaseRules());
 
         if ($validated->fails()) {
-            return $this->backToDatabase($request, $validated->errors()->all());
+            return $this->backToDatabase($request, array_values($validated->errors()->all()));
         }
 
         $data = $validated->validated();
@@ -556,7 +557,7 @@ class InstallController extends Controller
         ]);
 
         if ($validated->fails()) {
-            return $this->backToAdmin($request, $validated->errors()->all());
+            return $this->backToAdmin($request, array_values($validated->errors()->all()));
         }
 
         if (! Schema::hasTable('users')) {

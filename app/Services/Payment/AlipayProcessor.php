@@ -31,7 +31,7 @@ class AlipayProcessor
                 'total_amount' => number_format((float) $payment->total_amount, 2, '.', ''),
                 'subject' => mb_substr('Monit Plan '.$payment->payment_id, 0, 256),
                 'product_code' => 'FAST_INSTANT_TRADE_PAY',
-                'passback_params' => urlencode(json_encode(['payment_id' => $payment->payment_id])),
+                'passback_params' => urlencode((string) json_encode(['payment_id' => $payment->payment_id])),
             ];
 
             $params = [

@@ -35,8 +35,8 @@ class PaddleProcessor
     public function handleWebhook(Request $request): Payment
     {
         $passthrough = json_decode($request->input('passthrough', '{}'), true);
-        $user = User::findOrFail($passthrough['user_id'] ?? 0);
-        $plan = Plan::findOrFail($passthrough['plan_id'] ?? 0);
+        $user = User::query()->where('user_id', (int) ($passthrough['user_id'] ?? 0))->firstOrFail();
+        $plan = Plan::query()->where('plan_id', (int) ($passthrough['plan_id'] ?? 0))->firstOrFail();
 
         return Payment::create([
             'user_id' => $user->user_id,

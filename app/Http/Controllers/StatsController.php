@@ -205,8 +205,11 @@ class StatsController extends Controller
         $filename = 'visitors_'.$website->website_id.'_'.now()->format('Ymd_His');
 
         if ($format === 'csv') {
-            $callback = function () use ($visitors) {
+            $callback = function () use ($visitors): void {
                 $out = fopen('php://output', 'w');
+                if ($out === false) {
+                    return;
+                }
                 fputcsv($out, array_keys($visitors->first()?->getAttributes() ?? ['visitor_id' => '']));
 
                 foreach ($visitors as $v) {

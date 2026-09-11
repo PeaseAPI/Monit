@@ -50,8 +50,8 @@ class MyFatoorahProcessor
             $metadata = json_decode($metadata, true) ?? [];
         }
 
-        $user = User::find($metadata['user_id'] ?? 0);
-        $plan = Plan::find($metadata['plan_id'] ?? 0);
+        $user = User::query()->where('user_id', (int) ($metadata['user_id'] ?? 0))->first();
+        $plan = Plan::query()->where('plan_id', (int) ($metadata['plan_id'] ?? 0))->first();
 
         if (! $user || ! $plan) {
             return null;
@@ -79,7 +79,7 @@ class MyFatoorahProcessor
     {
         $prices = $plan->prices['USD'] ?? $plan->prices;
 
-        return match ($frequency) {
+        return (float) match ($frequency) {
             'monthly' => $prices['monthly'] ?? 0,
             'annual' => $prices['annual'] ?? 0,
             'lifetime' => $prices['lifetime'] ?? 0,

@@ -26,7 +26,7 @@ class PaystackProcessor
             $response = Http::withToken($secretKey)
                 ->post('https://api.paystack.co/transaction/initialize', [
                     'email' => $payment->email,
-                    'amount' => (int) ($payment->total_amount * 100),
+                    'amount' => (int) ((float) ($payment->total_amount ?? 0) * 100),
                     'currency' => $payment->currency,
                     'callback_url' => $successUrl,
                     'metadata' => [

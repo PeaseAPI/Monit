@@ -46,7 +46,7 @@ class HeatmapController extends Controller
             'is_enabled' => ['boolean'],
         ]);
 
-        $website = $request->user()->websites()->findOrFail($validated['website_id']);
+        $website = $request->user()->websites()->where('website_id', (int) $validated['website_id'])->firstOrFail();
 
         // datetime 列 NOT NULL 无默认值（模型 $timestamps=false），必须显式赋值，否则 SQL 报错 500
         Heatmap::create([
@@ -136,7 +136,7 @@ class HeatmapController extends Controller
             'is_enabled' => ['boolean'],
         ]);
 
-        $heatmap = Heatmap::find($validated['heatmap_id']);
+        $heatmap = Heatmap::query()->where('heatmap_id', (int) $validated['heatmap_id'])->firstOrFail();
         $website = Website::where('website_id', $heatmap->website_id)
             ->where('user_id', $request->user()->user_id)
             ->firstOrFail();

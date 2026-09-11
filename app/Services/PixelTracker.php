@@ -568,7 +568,7 @@ class PixelTracker
             return;
         }
         $events = array_values($events);
-        $chunkSize = strlen(json_encode($events, JSON_UNESCAPED_UNICODE));
+        $chunkSize = strlen((string) json_encode($events, JSON_UNESCAPED_UNICODE));
 
         // 事务 + 行锁：同一会话的多个 chunk 并发到达时，"读取→合并→写回"必须
         // 原子执行，否则两个请求读到同一份旧 data 后互相覆盖（整批事件丢失）。
@@ -638,7 +638,7 @@ class PixelTracker
                 }
 
                 // 压缩初始事件数据
-                $compressed = gzencode(json_encode($events, JSON_UNESCAPED_UNICODE), 9);
+                $compressed = gzencode((string) json_encode($events, JSON_UNESCAPED_UNICODE), 9);
 
                 $replay = SessionReplay::create([
                     'session_id' => $session->session_id,
@@ -676,11 +676,11 @@ class PixelTracker
 
                 // 合并新事件
                 $allEvents = array_merge($existingEvents, $events);
-                $compressed = gzencode(json_encode($allEvents, JSON_UNESCAPED_UNICODE), 9);
+                $compressed = gzencode((string) json_encode($allEvents, JSON_UNESCAPED_UNICODE), 9);
 
                 DB::statement(
                     'UPDATE sessions_replays SET data = ?, events = ?, size = ?, last_datetime = ? WHERE replay_id = ?',
-                    [$compressed !== false ? $compressed : null, count($allEvents), strlen(json_encode($allEvents, JSON_UNESCAPED_UNICODE)), now(), $replay->replay_id],
+                    [$compressed !== false ? $compressed : null, count($allEvents), strlen((string) json_encode($allEvents, JSON_UNESCAPED_UNICODE)), now(), $replay->replay_id],
                 );
             }
         });
@@ -1043,7 +1043,7 @@ class PixelTracker
         parse_str($query, $params);
         $value = $params[$key] ?? null;
 
-        return $value ? mb_substr((string) $value, 0, 256) : null;
+        return $value && is_string($value) ? mb_substr($value, 0, 256) : null;
     }
 
     /**
