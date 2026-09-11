@@ -17,7 +17,7 @@ class InternalNotificationsController extends Controller
      */
     public function index(Request $request)
     {
-        $notifications = $request->user()->internalNotifications()
+        $notifications = $this->user()->internalNotifications()
             ->orderByDesc('datetime')
             ->paginate(50);
 
@@ -27,7 +27,7 @@ class InternalNotificationsController extends Controller
     public function markAsRead(Request $request, int $notificationId): RedirectResponse
     {
         // 归属校验：仅允许操作自己的通知（防 IDOR 越权）
-        $notification = $request->user()->internalNotifications()->findOrFail($notificationId);
+        $notification = $this->user()->internalNotifications()->findOrFail($notificationId);
         $notification->update(['is_read' => true]);
 
         return back()->with('success', __('msg.notification_read'));
@@ -35,7 +35,7 @@ class InternalNotificationsController extends Controller
 
     public function markAllAsRead(Request $request): RedirectResponse
     {
-        $request->user()->internalNotifications()
+        $this->user()->internalNotifications()
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
@@ -45,7 +45,7 @@ class InternalNotificationsController extends Controller
     public function destroy(Request $request, int $notificationId): RedirectResponse
     {
         // 归属校验：仅允许操作自己的通知（防 IDOR 越权）
-        $notification = $request->user()->internalNotifications()->findOrFail($notificationId);
+        $notification = $this->user()->internalNotifications()->findOrFail($notificationId);
         $notification->delete();
 
         return back()->with('success', __('msg.notification_deleted'));

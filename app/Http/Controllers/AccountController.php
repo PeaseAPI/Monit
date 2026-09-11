@@ -41,7 +41,7 @@ class AccountController extends Controller
         }
 
         return view('account.index', [
-            'user' => $request->user()->load('plan'),
+            'user' => $this->user()->load('plan'),
             'socialProviders' => $socialProviders,
         ]);
     }
@@ -53,7 +53,7 @@ class AccountController extends Controller
      */
     public function logs(Request $request)
     {
-        $logs = $request->user()->accountLogs()->orderByDesc('datetime')->paginate(25);
+        $logs = $this->user()->accountLogs()->orderByDesc('datetime')->paginate(25);
 
         return view('account.logs', compact('logs'));
     }
@@ -68,7 +68,7 @@ class AccountController extends Controller
     {
         $avatarMax = (int) (Settings::get('main.avatar_size_limit') ?: 512);
 
-        $user = $request->user();
+        $user = $this->user();
         $emailChanged = strtolower((string) $request->input('email')) !== strtolower((string) $user->email);
 
         $validated = $request->validate(array_merge([
@@ -187,7 +187,7 @@ class AccountController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        $user = $request->user();
+        $user = $this->user();
 
         // 撤销其他会话（安全审计周期 #7）：保留当前浏览器会话（改密者
         // 本人），踢出其余 session 记录并轮换 remember cookie——被盗会话
@@ -212,7 +212,7 @@ class AccountController extends Controller
      */
     public function regenerateApiToken(Request $request)
     {
-        $token = $request->user()->generateApiToken();
+        $token = $this->user()->generateApiToken();
 
         return back()->with('success', __('msg.api_token_generated'))->with('api_token', $token);
     }
@@ -224,7 +224,7 @@ class AccountController extends Controller
      */
     public function revokeApiToken(Request $request)
     {
-        $request->user()->update(['api_key' => null]);
+        $this->user()->update(['api_key' => null]);
 
         return back()->with('success', __('msg.api_token_revoked'));
     }
@@ -257,7 +257,7 @@ class AccountController extends Controller
             return back()->withInput()->withErrors(['sms_code' => __('auth.sms_code_invalid')]);
         }
 
-        $request->user()->forceFill([
+        $this->user()->forceFill([
             'phone' => $phone,
             'phone_verified_at' => now(),
         ])->save();
@@ -278,8 +278,8 @@ class AccountController extends Controller
 
         return back()->with('twofa_setup', [
             'secret' => $secret,
-            'uri' => TotpService::uri($secret, $request->user()->email),
-            'qr' => TotpService::qrImageUrl(TotpService::uri($secret, $request->user()->email)),
+            'uri' => TotpService::uri($secret, $this->user()->email),
+            'qr' => TotpService::qrImageUrl(TotpService::uri($secret, $this->user()->email)),
         ]);
     }
 
@@ -300,7 +300,7 @@ class AccountController extends Controller
             return back()->withErrors(['code' => __('account.twofa_code_invalid')]);
         }
 
-        $request->user()->update([
+        $this->user()->update([
             'twofa_token' => $secret,
             'twofa_is_enabled' => true,
         ]);
@@ -322,7 +322,7 @@ class AccountController extends Controller
             'code' => ['required', 'digits:6'],
         ]);
 
-        $user = $request->user();
+        $user = $this->user();
 
         // 一次性消费：关闭 2FA 的码与登录共用判重池——防止钓鱼拿到「密码+码」后
         // 在有效窗口内重放同一码绕过双重确认
@@ -346,7 +346,7 @@ class AccountController extends Controller
     public function deleteForm(Request $request)
     {
         return view('account.delete', [
-            'user' => $request->user(),
+            'user' => $this->user(),
         ]);
     }
 
@@ -358,7 +358,7 @@ class AccountController extends Controller
     public function redeemCodeForm(Request $request)
     {
         return view('account.redeem-code', [
-            'user' => $request->user(),
+            'user' => $this->user(),
         ]);
     }
 
@@ -379,16 +379,16 @@ class AccountController extends Controller
             return back()->withErrors(['code' => __('account.invalid_code')]);
         }
 
-        if ($issue = $code->redemptionIssue($request->user())) {
+        if ($issue = $code->redemptionIssue($this->user())) {
             return back()->withErrors(['code' => __($issue)]);
         }
 
         // 并发窗口内计数被打满时拒绝
-        if (! $code->recordRedemption($request->user())) {
+        if (! $code->recordRedemption($this->user())) {
             return back()->withErrors(['code' => __('account.code_fully_redeemed')]);
         }
 
-        $code->applyToUser($request->user());
+        $code->applyToUser($this->user());
 
         return back()->with('success', __('account.code_redeemed_successfully'));
     }
@@ -405,7 +405,7 @@ class AccountController extends Controller
         ]);
 
         // 先留存快照再删除（Webhook 载荷需要）
-        $user = $request->user();
+        $user = $this->user();
         $snapshot = ['user_id' => $user->user_id, 'email' => $user->email];
 
         $user->websites()->delete();

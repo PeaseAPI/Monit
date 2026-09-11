@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,13 +11,13 @@ use Illuminate\Http\Request;
  * API v1 - 账户资源：当前用户 / 日志 / 支付记录 / 仪表盘视图 / 团队
  * 规格书 §8：/api/user、/api/logs、/api/payments、/api/dashboard-views、/api/teams
  */
-class AccountController
+class AccountController extends Controller
 {
     /* ---------------- 当前用户 ---------------- */
 
-    public function user(Request $request): JsonResponse
+    public function me(): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->user();
 
         return response()->json([
             'user' => $user->only(['user_id', 'name', 'email', 'plan_id', 'plan_expiration_date', 'api_key', 'datetime']),
@@ -31,7 +32,7 @@ class AccountController
     public function logs(Request $request): JsonResponse
     {
         return response()->json(
-            $request->user()->accountLogs()->orderByDesc('datetime')->limit(100)->get()
+            $this->user()->accountLogs()->orderByDesc('datetime')->limit(100)->get()
         );
     }
 
@@ -40,7 +41,7 @@ class AccountController
     public function payments(Request $request): JsonResponse
     {
         return response()->json(
-            $request->user()->payments()->orderByDesc('payment_id')->get()
+            $this->user()->payments()->orderByDesc('payment_id')->get()
         );
     }
 
@@ -48,7 +49,7 @@ class AccountController
 
     public function dashboardViewsIndex(Request $request): JsonResponse
     {
-        return response()->json($request->user()->dashboardViews()->orderByDesc('dashboard_view_id')->get());
+        return response()->json($this->user()->dashboardViews()->orderByDesc('dashboard_view_id')->get());
     }
 
     public function dashboardViewsStore(Request $request): JsonResponse
@@ -59,9 +60,9 @@ class AccountController
             'settings' => ['nullable', 'array'],
         ]);
 
-        $website = $request->user()->websites()->where('websites.website_id', $validated['website_id'])->firstOrFail();
+        $website = $this->user()->websites()->where('websites.website_id', $validated['website_id'])->firstOrFail();
 
-        $view = $request->user()->dashboardViews()->create([
+        $view = $this->user()->dashboardViews()->create([
             'website_id' => $website->website_id,
             'name' => $validated['name'],
             'settings' => $validated['settings'] ?? [],
@@ -73,7 +74,7 @@ class AccountController
 
     public function dashboardViewsUpdate(Request $request, int $view): JsonResponse
     {
-        $viewModel = $request->user()->dashboardViews()->where('dashboard_view_id', $view)->firstOrFail();
+        $viewModel = $this->user()->dashboardViews()->where('dashboard_view_id', $view)->firstOrFail();
 
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:256'],
@@ -87,7 +88,7 @@ class AccountController
 
     public function dashboardViewsDestroy(Request $request, int $view): JsonResponse
     {
-        $request->user()->dashboardViews()->where('dashboard_view_id', $view)->firstOrFail()->delete();
+        $this->user()->dashboardViews()->where('dashboard_view_id', $view)->firstOrFail()->delete();
 
         return response()->json(['message' => __('msg.dashboard_view_deleted')]);
     }
@@ -97,7 +98,7 @@ class AccountController
     public function teamsIndex(Request $request): JsonResponse
     {
         return response()->json(
-            $request->user()->teams()->with('members')->orderByDesc('team_id')->get()
+            $this->user()->teams()->with('members')->orderByDesc('team_id')->get()
         );
     }
 
@@ -107,19 +108,19 @@ class AccountController
             'name' => ['required', 'string', 'max:256'],
         ]);
 
-        $team = $request->user()->teams()->create([...$validated, 'datetime' => now()]);
+        $team = $this->user()->teams()->create([...$validated, 'datetime' => now()]);
 
         return response()->json(['message' => __('msg.team_created'), 'team' => $team], 201);
     }
 
     public function teamsShow(Request $request, int $team): JsonResponse
     {
-        return response()->json($request->user()->teams()->with('members')->where('team_id', $team)->firstOrFail());
+        return response()->json($this->user()->teams()->with('members')->where('team_id', $team)->firstOrFail());
     }
 
     public function teamsDestroy(Request $request, int $team): JsonResponse
     {
-        $request->user()->teams()->where('team_id', $team)->firstOrFail()->delete();
+        $this->user()->teams()->where('team_id', $team)->firstOrFail()->delete();
 
         return response()->json(['message' => __('msg.team_deleted')]);
     }
@@ -128,14 +129,14 @@ class AccountController
 
     public function teamMembersIndex(Request $request, int $team): JsonResponse
     {
-        $teamModel = $request->user()->teams()->where('team_id', $team)->firstOrFail();
+        $teamModel = $this->user()->teams()->where('team_id', $team)->firstOrFail();
 
         return response()->json($teamModel->members()->orderByDesc('team_member_id')->get());
     }
 
     public function teamMembersDestroy(Request $request, int $team, int $member): JsonResponse
     {
-        $teamModel = $request->user()->teams()->where('team_id', $team)->firstOrFail();
+        $teamModel = $this->user()->teams()->where('team_id', $team)->firstOrFail();
 
         $teamModel->members()->where('team_member_id', $member)->firstOrFail()->delete();
 

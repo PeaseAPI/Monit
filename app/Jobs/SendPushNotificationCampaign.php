@@ -37,7 +37,7 @@ class SendPushNotificationCampaign implements ShouldQueue
                         $subscriber,
                         $this->campaign->title,
                         $this->campaign->description ?? '',
-                        $this->campaign->url,
+                        $this->campaign->url ?? '/',
                     );
                 } catch (\Throwable $e) {
                     Log::warning('Push notification failed', [

@@ -162,7 +162,7 @@ class TotpService
         $bits = 0;
         $output = '';
 
-        foreach (str_split(strtoupper(preg_replace('/[^A-Za-z2-7]/', '', $encoded))) as $char) {
+        foreach (str_split(strtoupper((string) preg_replace('/[^A-Za-z2-7]/', '', $encoded))) as $char) {
             $position = strpos($alphabet, $char);
 
             if ($position === false) {

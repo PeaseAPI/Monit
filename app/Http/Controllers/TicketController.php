@@ -17,7 +17,7 @@ class TicketController extends Controller
 {
     public function index(Request $request): View
     {
-        $tickets = $request->user()->tickets()->orderByDesc('ticket_id')->paginate(20);
+        $tickets = $this->user()->tickets()->orderByDesc('ticket_id')->paginate(20);
 
         return view('tickets.index', compact('tickets'));
     }
@@ -32,10 +32,10 @@ class TicketController extends Controller
         $validated = $this->validated($request);
 
         // 工单与首条回复同事务落库：部分失败会产生无回复的空工单或孤儿回复
-        $ticket = DB::transaction(function () use ($request, $validated): Ticket {
+        $ticket = DB::transaction(function () use ($validated): Ticket {
             $ticket = Ticket::create([
-                'user_id' => $request->user()->user_id,
-                'email' => $request->user()->email,
+                'user_id' => $this->user()->user_id,
+                'email' => $this->user()->email,
                 'subject' => $validated['subject'],
                 'category' => $validated['category'],
                 'priority' => $validated['priority'],
@@ -46,7 +46,7 @@ class TicketController extends Controller
 
             TicketReply::create([
                 'ticket_id' => $ticket->ticket_id,
-                'user_id' => $request->user()->user_id,
+                'user_id' => $this->user()->user_id,
                 'is_staff' => false,
                 'message' => $validated['message'],
                 'via' => 'web',
@@ -68,7 +68,7 @@ class TicketController extends Controller
 
     public function show(Request $request, int $ticketId): View
     {
-        $ticket = $request->user()->tickets()
+        $ticket = $this->user()->tickets()
             ->with(['replies.user', 'user'])
             ->findOrFail($ticketId);
 
@@ -79,17 +79,17 @@ class TicketController extends Controller
     {
         $validated = $request->validate(['message' => ['required', 'string', 'max:20000']]);
 
-        $ticket = $request->user()->tickets()->findOrFail($ticketId);
+        $ticket = $this->user()->tickets()->findOrFail($ticketId);
 
         if ($ticket->status === Ticket::STATUS_CLOSED) {
             return back()->withErrors(['message' => __('msg.ticket_closed_no_reply')]);
         }
 
         // 回复落库与工单状态回转同事务
-        $reply = DB::transaction(function () use ($ticket, $request, $validated): TicketReply {
+        $reply = DB::transaction(function () use ($ticket, $validated): TicketReply {
             $reply = TicketReply::create([
                 'ticket_id' => $ticket->ticket_id,
-                'user_id' => $request->user()->user_id,
+                'user_id' => $this->user()->user_id,
                 'is_staff' => false,
                 'message' => $validated['message'],
                 'via' => 'web',
@@ -112,7 +112,7 @@ class TicketController extends Controller
 
     public function close(Request $request, int $ticketId): RedirectResponse
     {
-        $ticket = $request->user()->tickets()->findOrFail($ticketId);
+        $ticket = $this->user()->tickets()->findOrFail($ticketId);
         $ticket->update(['status' => Ticket::STATUS_CLOSED]);
 
         return back()->with('success', __('msg.ticket_closed'));

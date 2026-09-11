@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Http\Controllers\Controller;
 use App\Models\SessionReplay;
 use App\Models\Website;
 use App\Services\StatisticsService;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\DB;
  * API v1 - 数据分析接口
  * 规格书 §4.2：Analytics API
  */
-class AnalyticsController
+class AnalyticsController extends Controller
 {
     protected function resolveStats(Website $website, int $range): StatisticsService
     {
@@ -334,7 +335,7 @@ class AnalyticsController
      */
     protected function authorizeWebsite(Website $website): void
     {
-        if ((int) $website->user_id !== (int) Auth::id() && ! Auth::user()->isAdmin()) {
+        if ((int) $website->user_id !== (int) Auth::id() && ! $this->user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

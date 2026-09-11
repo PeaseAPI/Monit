@@ -62,7 +62,7 @@ class WebsitesImportController extends Controller
             return back()->withErrors(['urls' => __('validation.import_urls_required')]);
         }
 
-        $user = $request->user();
+        $user = $this->user();
         $planSettings = $user->getPlanSettings();
         $limit = $planSettings['websites_limit'] ?? -1;
         $current = $user->websites()->count();
@@ -82,7 +82,7 @@ class WebsitesImportController extends Controller
                 continue;
             }
 
-            $host = strtolower(preg_replace('/^www\./', '', $parts['host']));
+            $host = strtolower((string) preg_replace('/^www\./', '', $parts['host']));
 
             // 检查是否已存在该域名的网站（同一用户下）
             if ($user->websites()->where('host', $host)->exists()) {

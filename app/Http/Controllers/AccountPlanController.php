@@ -6,7 +6,6 @@ use App\Models\Code;
 use App\Models\Plan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -17,7 +16,7 @@ class AccountPlanController extends Controller
 {
     public function index(): View
     {
-        $user = Auth::user();
+        $user = $this->user();
         $currentPlan = Plan::find($user->plan_id);
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
 
@@ -39,16 +38,16 @@ class AccountPlanController extends Controller
             return back()->withErrors(['code' => __('msg.invalid_code')]);
         }
 
-        if ($issue = $code->redemptionIssue($request->user())) {
+        if ($issue = $code->redemptionIssue($this->user())) {
             return back()->withErrors(['code' => __($issue)]);
         }
 
         // 并发窗口内计数被打满时拒绝
-        if (! $code->recordRedemption($request->user())) {
+        if (! $code->recordRedemption($this->user())) {
             return back()->withErrors(['code' => __('msg.code_fully_redeemed')]);
         }
 
-        $code->applyToUser($request->user());
+        $code->applyToUser($this->user());
 
         return back()->with('success', __('msg.code_redeemed_successfully'));
     }

@@ -51,10 +51,10 @@ class AdminTickets extends Controller
         $ticket = Ticket::findOrFail($ticketId);
 
         // 回复落库与工单状态置 ANSWERED 同事务
-        $reply = DB::transaction(function () use ($ticket, $request, $validated): TicketReply {
+        $reply = DB::transaction(function () use ($ticket, $validated): TicketReply {
             $reply = TicketReply::create([
                 'ticket_id' => $ticket->ticket_id,
-                'user_id' => $request->user()->user_id,
+                'user_id' => $this->user()->user_id,
                 'is_staff' => true,
                 'message' => $validated['message'],
                 'via' => 'web',

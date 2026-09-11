@@ -78,7 +78,13 @@ class OfflinePaymentProcessor
         ]);
 
         $paymentService = new PaymentService;
-        $paymentService->activatePlan($payment->user, $payment);
+        $paymentUser = $payment->user;
+
+        if ($paymentUser === null) {
+            throw new \RuntimeException('离线支付记录缺少关联用户，无法激活套餐');
+        }
+
+        $paymentService->activatePlan($paymentUser, $payment);
 
         return [
             'success' => true,

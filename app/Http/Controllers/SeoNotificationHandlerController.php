@@ -19,7 +19,7 @@ class SeoNotificationHandlerController extends Controller
     public function index(Request $request): View
     {
         return view('seo.handlers', [
-            'handlers' => $request->user()->notificationHandlers()->orderByDesc('notification_handler_id')->get(),
+            'handlers' => $this->user()->notificationHandlers()->orderByDesc('notification_handler_id')->get(),
             'types' => self::TYPES,
         ]);
     }
@@ -37,14 +37,14 @@ class SeoNotificationHandlerController extends Controller
             'events.*' => 'in:audit_refreshed,audit_failed,sitemap_changed,domain_expiring',
         ]);
 
-        $limit = (int) ($request->user()->getPlanSettings()['seo_notifications_limit'] ?? -1);
-        $count = $request->user()->notificationHandlers()->count();
+        $limit = (int) ($this->user()->getPlanSettings()['seo_notifications_limit'] ?? -1);
+        $count = $this->user()->notificationHandlers()->count();
 
         if ($limit >= 0 && $count >= $limit) {
             return back()->withErrors(['name' => __('seo.quota_exceeded')]);
         }
 
-        $request->user()->notificationHandlers()->create([
+        $this->user()->notificationHandlers()->create([
             'name' => $validated['name'],
             'type' => $validated['type'],
             'settings' => $this->settingsFor($validated['type'], $validated['settings'] ?? [])
@@ -124,7 +124,7 @@ class SeoNotificationHandlerController extends Controller
 
     protected function authorizeOwner(Request $request, NotificationHandler $handler): void
     {
-        if ((int) $handler->user_id !== (int) $request->user()->user_id && ! $request->user()->isAdmin()) {
+        if ((int) $handler->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
     }

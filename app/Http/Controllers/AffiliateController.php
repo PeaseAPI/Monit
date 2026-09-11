@@ -46,7 +46,7 @@ class AffiliateController extends Controller
     {
         $this->ensureAffiliateEnabled();
 
-        $user = $request->user();
+        $user = $this->user();
         $referralKey = $user->referral_key;
         $referralUrl = route('register').'?ref='.$referralKey;
 
@@ -98,7 +98,7 @@ class AffiliateController extends Controller
             'note' => ['nullable', 'string', 'max:1024'],
         ]);
 
-        $user = $request->user();
+        $user = $this->user();
 
         // 事务 + 行锁（安全审计周期 #9）：与佣金基数入账
         // （settlePayment 对 payment_total_amount 的累计）及并发申请
@@ -106,6 +106,10 @@ class AffiliateController extends Controller
         // 超额提现（双击/并发即可超发）
         [$ok] = DB::transaction(function () use ($user, $validated) {
             $locked = User::where('user_id', $user->user_id)->lockForUpdate()->first();
+
+            if ($locked === null) {
+                return [false];
+            }
 
             $available = $this->getAvailableBalance($locked);
 
@@ -139,7 +143,7 @@ class AffiliateController extends Controller
     {
         $this->ensureAffiliateEnabled();
 
-        $withdrawals = AffiliateWithdrawal::where('user_id', $request->user()->user_id)
+        $withdrawals = AffiliateWithdrawal::where('user_id', $this->user()->user_id)
             ->orderByDesc('datetime')
             ->paginate(20);
 

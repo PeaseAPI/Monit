@@ -7,7 +7,6 @@ use App\Models\PushNotificationCampaign;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -46,7 +45,7 @@ class AdminNotifications extends Controller
         ]);
 
         $data = ['title' => $validated['title'], 'message' => $validated['message']];
-        $adminUserId = Auth::user()->user_id;
+        $adminUserId = $this->user()->user_id;
 
         $query = User::where('status', 1);
         if ($validated['target_email'] ?? null) {

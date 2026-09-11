@@ -22,8 +22,8 @@ class TeamController extends Controller
      */
     public function index(Request $request)
     {
-        $teams = Team::where('user_id', $request->user()->user_id)->get();
-        $invitations = TeamMember::where('user_email', $request->user()->email)
+        $teams = Team::where('user_id', $this->user()->user_id)->get();
+        $invitations = TeamMember::where('user_email', $this->user()->email)
             ->where('is_owned', false)
             ->where('status', 0)
             ->with('team')
@@ -39,7 +39,7 @@ class TeamController extends Controller
         ]);
 
         Team::create([
-            'user_id' => $request->user()->user_id,
+            'user_id' => $this->user()->user_id,
             'name' => $validated['name'],
             'datetime' => now(),
         ]);
@@ -55,17 +55,17 @@ class TeamController extends Controller
     {
         // 归属校验：仅团队 owner 或已接受邀请的成员可访问
         $team = Team::where('team_id', $teamId)
-            ->where(function ($query) use ($request) {
-                $query->where('user_id', $request->user()->user_id)
-                    ->orWhereHas('members', function ($q) use ($request) {
-                        $q->where('user_id', $request->user()->user_id)->where('status', 1);
+            ->where(function ($query) {
+                $query->where('user_id', $this->user()->user_id)
+                    ->orWhereHas('members', function ($q) {
+                        $q->where('user_id', $this->user()->user_id)->where('status', 1);
                     });
             })
             ->firstOrFail();
 
         $members = $team->members()->with(['user', 'associations.website'])->get();
-        $isOwner = (int) $team->user_id === (int) $request->user()->user_id;
-        $userWebsites = $isOwner ? $request->user()->websites()->get() : collect();
+        $isOwner = (int) $team->user_id === (int) $this->user()->user_id;
+        $userWebsites = $isOwner ? $this->user()->websites()->get() : collect();
 
         return view('teams.show', compact('team', 'members', 'userWebsites', 'isOwner'));
     }
@@ -82,7 +82,7 @@ class TeamController extends Controller
 
         // 归属校验：仅团队 owner 可邀请成员
         $team = Team::where('team_id', $validated['team_id'])
-            ->where('user_id', $request->user()->user_id)
+            ->where('user_id', $this->user()->user_id)
             ->firstOrFail();
 
         // 检查是否已存在
@@ -97,7 +97,7 @@ class TeamController extends Controller
         $websiteIdsRaw = $validated['websites_ids'] ?? [];
         $websiteIds = collect($websiteIdsRaw)
             ->map(fn ($id) => (int) $id)
-            ->filter(fn ($id) => $request->user()->websites()->where('website_id', $id)->exists())
+            ->filter(fn ($id) => $this->user()->websites()->where('website_id', $id)->exists())
             ->unique()
             ->values()
             ->all();
@@ -131,17 +131,17 @@ class TeamController extends Controller
     {
         $member = TeamMember::findOrFail($memberId);
 
-        if ($member->user_email !== $request->user()->email) {
+        if ($member->user_email !== $this->user()->email) {
             abort(403);
         }
 
         $member->update([
             'status' => 1,
-            'user_id' => $request->user()->user_id,
+            'user_id' => $this->user()->user_id,
         ]);
 
         return redirect()->route('teams.index')
-            ->with('success', __('msg.team_joined', ['name' => $member->team->name]));
+            ->with('success', __('msg.team_joined', ['name' => $member->team?->name ?? '']));
     }
 
     public function remove(Request $request, int $memberId): RedirectResponse
@@ -149,7 +149,7 @@ class TeamController extends Controller
         $member = TeamMember::findOrFail($memberId);
 
         // 归属校验：仅团队 owner 可移除成员
-        if ((int) $member->team->user_id !== (int) $request->user()->user_id) {
+        if ((int) $member->team?->user_id !== (int) $this->user()->user_id) {
             abort(403);
         }
 
@@ -164,7 +164,7 @@ class TeamController extends Controller
     {
         // 归属校验：仅团队 owner 可解散团队
         $team = Team::where('team_id', $teamId)
-            ->where('user_id', $request->user()->user_id)
+            ->where('user_id', $this->user()->user_id)
             ->firstOrFail();
 
         // 逐条删除以触发 TeamMember::deleting 钩子（级联清理关联；
@@ -186,7 +186,7 @@ class TeamController extends Controller
      */
     public function ajax(Request $request)
     {
-        $teams = Team::where('user_id', $request->user()->user_id)
+        $teams = Team::where('user_id', $this->user()->user_id)
             ->withCount('members')
             ->orderByDesc('team_id')
             ->paginate(25);
@@ -214,8 +214,8 @@ class TeamController extends Controller
         $member = TeamMember::with('team')->find((int) $memberId);
 
         if ($member === null
-            || ((int) $member->user_id !== (int) $request->user()->user_id
-                && (int) $member->team->user_id !== (int) $request->user()->user_id)) {
+            || ((int) $member->user_id !== (int) $this->user()->user_id
+                && (int) $member->team?->user_id !== (int) $this->user()->user_id)) {
             return response()->json([]);
         }
 

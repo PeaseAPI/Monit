@@ -238,8 +238,8 @@ class Website extends Model
      */
     public function matchesHost(string $host): bool
     {
-        $host = strtolower(preg_replace('/^www\./', '', trim($host)));
-        $registeredHost = strtolower(preg_replace('/^www\./', '', trim($this->host)));
+        $host = strtolower((string) preg_replace('/^www\./', '', trim($host)));
+        $registeredHost = strtolower((string) preg_replace('/^www\./', '', trim($this->host)));
 
         return $host === $registeredHost;
     }

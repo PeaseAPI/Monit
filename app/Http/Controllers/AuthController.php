@@ -95,7 +95,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+        if (! $user || $user->password === null || ! Hash::check($credentials['password'], $user->password)) {
             // 失败锁定（users.login_lockout_*：N 次失败锁 M 分钟，默认 5/30）
             LoginLockout::recordFailure('login', $credentials['email']);
 
@@ -159,7 +159,7 @@ class AuthController extends Controller
                 ->withInput($request->only('email'))
                 ->withErrors(['sms_code' => __('auth.sms_code_required_for_login')]);
         } else {
-            if (! $user || ! $request->filled('password') || ! Hash::check((string) $request->input('password'), $user->password)) {
+            if (! $user || ! $request->filled('password') || $user->password === null || ! Hash::check((string) $request->input('password'), $user->password)) {
                 // 手机号登录失败同样计入锁定（与邮箱共用 login scope 计数语义）
                 LoginLockout::recordFailure('login', 'phone:'.$phone);
 

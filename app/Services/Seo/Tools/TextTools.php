@@ -58,7 +58,7 @@ class TextTools
             'lower' => mb_strtolower($text),
             'title' => mb_convert_case($text, MB_CASE_TITLE, 'UTF-8'),
             'sentence' => ucfirst(mb_strtolower($text)),
-            'camel' => lcfirst(str_replace(' ', '', ucwords(preg_replace('/[_-]+/', ' ', strtolower($text))))),
+            'camel' => lcfirst(str_replace(' ', '', ucwords((string) preg_replace('/[_-]+/', ' ', strtolower($text))))),
             'snake' => strtolower((string) preg_replace('/\s+/', '_', trim($text))),
             'kebab' => strtolower((string) preg_replace('/\s+/', '-', trim($text))),
             default => $text,

@@ -23,7 +23,7 @@ class AnnotationController extends Controller
     public function index(Request $request, Website $website)
     {
         $annotations = $website->annotations()
-            ->where('user_id', $request->user()->user_id)
+            ->where('user_id', $this->user()->user_id)
             ->orderByDesc('date')
             ->get();
 
@@ -46,7 +46,7 @@ class AnnotationController extends Controller
             'date' => ['required', 'date'],
         ]);
 
-        $user = $request->user();
+        $user = $this->user();
         $website = $user->websites()->where('website_id', (int) $validated['website_id'])->firstOrFail();
 
         Annotation::create([
@@ -68,7 +68,7 @@ class AnnotationController extends Controller
 
         $annotation = Annotation::query()->where('annotation_id', (int) $validated['annotation_id'])->firstOrFail();
         $website = Website::where('website_id', $annotation->website_id)
-            ->where('user_id', $request->user()->user_id)
+            ->where('user_id', $this->user()->user_id)
             ->firstOrFail();
         $websiteId = $website->website_id;
         $annotation->update($validated);
@@ -81,7 +81,7 @@ class AnnotationController extends Controller
     {
         $annotation = Annotation::findOrFail($annotationId);
         $website = Website::where('website_id', $annotation->website_id)
-            ->where('user_id', $request->user()->user_id)
+            ->where('user_id', $this->user()->user_id)
             ->firstOrFail();
         $websiteId = $website->website_id;
         $annotation->delete();

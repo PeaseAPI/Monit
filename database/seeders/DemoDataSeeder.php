@@ -206,7 +206,7 @@ class DemoDataSeeder extends Seeder
         ];
 
         foreach ($payments as $p) {
-            $u = User::find($p['user_id']);
+            $u = User::findOrFail($p['user_id']);
             Payment::create([
                 'user_id' => $p['user_id'], 'name' => $u->name, 'email' => $u->email,
                 'payment_processor' => 'stripe', 'type' => $p['type'],
@@ -258,7 +258,7 @@ class DemoDataSeeder extends Seeder
         ]);
 
         InternalNotification::create([
-            'user_id' => User::where('type', 1)->first()->user_id,
+            'user_id' => User::where('type', 1)->firstOrFail()->user_id,
             'for_type' => 'new_user',
             'data' => json_encode(['message' => '新用户注册：free@monit.dev']),
             'is_read' => true, 'datetime' => now()->subDays(2),

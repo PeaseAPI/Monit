@@ -28,7 +28,7 @@ class AdminBlogPostsCategories extends Controller
         $validated = $this->validated($request);
 
         BlogPostsCategory::create($validated + [
-            'user_id' => $request->user()->user_id,
+            'user_id' => $this->user()->user_id,
             'datetime' => now(),
         ]);
 

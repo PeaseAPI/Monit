@@ -20,6 +20,12 @@ class SeoCheckTools
      * @param  array<string, mixed>  $in
      * @return array{ok:bool, html:string, headers:array<string, mixed>, dom:?\DOMDocument, status:int, error?:string}
      */
+    /**
+     * 拉取目标页并解析 DOM（SSRF 防护见 AuditEngine::rejectUnsafeUrl）
+     *
+     * @param  array<string, mixed>  $in
+     * @return array{ok: true, html: string, headers: mixed, dom: \DOMDocument, status: int}|array{ok: false, html: string, headers: mixed, dom: null, status: int, error: string}
+     */
     protected function fetchPage(array $in): array
     {
         $url = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
@@ -69,7 +75,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         return ['ok' => true, 'data' => [
@@ -94,7 +100,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $text = trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($page['html']), ENT_QUOTES, 'UTF-8')) ?? '');
@@ -138,7 +144,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $data = [];
@@ -164,7 +170,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $data = [];
@@ -244,7 +250,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         preg_match_all('/(?:src|href)=["\']http:\/\/[^"\']+["\']/i', $page['html'], $matches);
@@ -296,7 +302,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $found = [];
@@ -318,7 +324,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $h1s = [];
@@ -341,7 +347,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $missing = [];
@@ -368,7 +374,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $origin = AuditEngine::normalizeUrl((string) ($in['url'] ?? ''));
@@ -453,7 +459,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $canonical = '';
@@ -477,7 +483,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $data = [];
@@ -499,7 +505,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         preg_match_all('/<script[^>]+ld\+json[^>]*>(.*?)<\/script>/is', $page['html'], $matches);
@@ -527,7 +533,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         return ['ok' => true, 'data' => [
@@ -544,11 +550,11 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         return ['ok' => true, 'data' => [
-            'html lang' => (string) ($page['dom']->documentElement->getAttribute('lang') ?: '未声明'),
+            'html lang' => (string) ($page['dom']->documentElement?->getAttribute('lang') ?: '未声明'),
             'Content-Language 头' => (string) ($this->headerOf($page['headers'], 'content-language') ?? '未设置'),
         ]];
     }
@@ -562,7 +568,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $charset = (string) ($this->metaOf($page['dom'], 'charset') ?? '');
@@ -598,7 +604,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $text = strip_tags($page['html']);
@@ -619,7 +625,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         return ['ok' => true, 'data' => [
@@ -639,7 +645,7 @@ class SeoCheckTools
         $page = $this->fetchPage($in);
 
         if (! $page['ok']) {
-            return ['ok' => false, 'error' => $page['error'] ?? 'fetch failed', 'data' => []];
+            return ['ok' => false, 'error' => $page['error'], 'data' => []];
         }
 
         $checks = ['strict-transport-security', 'content-security-policy', 'x-content-type-options', 'x-frame-options', 'referrer-policy'];

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Plan;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -15,7 +14,7 @@ class PayThankYouController extends Controller
 {
     public function index(Request $request): View
     {
-        $user = Auth::user();
+        $user = $this->user();
         $plan = Plan::find($user->plan_id);
 
         return view('pay.thank_you', compact('user', 'plan'));

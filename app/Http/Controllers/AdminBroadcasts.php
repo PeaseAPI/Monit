@@ -41,7 +41,7 @@ class AdminBroadcasts extends Controller
 
         Broadcast::create([
             ...$validated,
-            'user_id' => $request->user()->user_id,
+            'user_id' => $this->user()->user_id,
             'status' => 'draft',
             'datetime' => now(),
         ]);

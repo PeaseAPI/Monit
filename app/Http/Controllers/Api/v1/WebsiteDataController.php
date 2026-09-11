@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Http\Controllers\Controller;
 use App\Models\EventChild;
 use App\Models\Heatmap;
 use App\Models\OutboundClick;
@@ -13,7 +14,7 @@ use Illuminate\Http\Request;
  * API v1 - 网站级数据资源：热图 / 事件子项 / 出站点击
  * 规格书 §8：/api/heatmaps、/api/events-children、/api/outbound-clicks
  */
-class WebsiteDataController
+class WebsiteDataController extends Controller
 {
     /* ---------------- 热图 ---------------- */
 
@@ -100,6 +101,6 @@ class WebsiteDataController
      */
     protected function ownWebsite(Request $request, int $websiteId)
     {
-        return $request->user()->websites()->where('websites.website_id', $websiteId)->firstOrFail();
+        return $this->user()->websites()->where('websites.website_id', $websiteId)->firstOrFail();
     }
 }

@@ -83,7 +83,7 @@ class NetworkTools
      */
     public function sslLookup(array $in): array
     {
-        $host = preg_replace('#^https?://#', '', trim((string) ($in['host'] ?? '')));
+        $host = (string) preg_replace('#^https?://#', '', trim((string) ($in['host'] ?? '')));
 
         if ($host === '') {
             return ['ok' => false, 'error' => '请输入主机名', 'data' => []];
@@ -146,7 +146,7 @@ class NetworkTools
      */
     public function ping(array $in): array
     {
-        $host = preg_replace('#^https?://#', '', trim((string) ($in['host'] ?? '')));
+        $host = (string) preg_replace('#^https?://#', '', trim((string) ($in['host'] ?? '')));
 
         if ($host === '') {
             return ['ok' => false, 'error' => '请输入主机名', 'data' => []];
@@ -192,7 +192,7 @@ class NetworkTools
      */
     public function domainIpLookup(array $in): array
     {
-        $domain = preg_replace('#^https?://#', '', trim((string) ($in['domain'] ?? '')));
+        $domain = (string) preg_replace('#^https?://#', '', trim((string) ($in['domain'] ?? '')));
 
         if ($domain === '') {
             return ['ok' => false, 'error' => '请输入域名', 'data' => []];

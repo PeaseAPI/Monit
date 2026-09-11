@@ -88,7 +88,7 @@ class BacklinkChecker
                 }
 
                 return [
-                    'anchor' => trim(preg_replace('/\s+/u', ' ', strip_tags($m[3]))),
+                    'anchor' => trim((string) preg_replace('/\s+/u', ' ', strip_tags($m[3]))),
                     'rel' => str_contains($relRaw, 'nofollow') ? 'nofollow' : 'dofollow',
                 ];
             }

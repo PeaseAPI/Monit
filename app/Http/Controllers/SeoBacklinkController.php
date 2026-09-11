@@ -20,7 +20,7 @@ class SeoBacklinkController extends Controller
     public function index(Request $request): View
     {
         $query = SeoBacklink::with('website')
-            ->where('user_id', $request->user()->user_id)
+            ->where('user_id', $this->user()->user_id)
             ->orderByDesc('seo_backlink_id');
 
         $links = (clone $query)->paginate(20)->withQueryString();
@@ -38,7 +38,7 @@ class SeoBacklinkController extends Controller
         return view('seo.backlinks', [
             'links' => $links,
             'summary' => $summary,
-            'websites' => Website::where('user_id', $request->user()->user_id)->orderBy('host')->get(['website_id', 'host']),
+            'websites' => Website::where('user_id', $this->user()->user_id)->orderBy('host')->get(['website_id', 'host']),
         ]);
     }
 
@@ -63,12 +63,12 @@ class SeoBacklinkController extends Controller
         $websiteId = null;
 
         if (! empty($validated['website_id'])) {
-            $websiteId = Website::where('user_id', $request->user()->user_id)
+            $websiteId = Website::where('user_id', $this->user()->user_id)
                 ->where('website_id', (int) $validated['website_id'])
                 ->value('website_id');
         }
 
-        $exists = SeoBacklink::where('user_id', $request->user()->user_id)
+        $exists = SeoBacklink::where('user_id', $this->user()->user_id)
             ->where('url_hash', SeoBacklink::hashOf($validated['source_url'], $validated['target_url'] ?? null))
             ->exists();
 
@@ -77,7 +77,7 @@ class SeoBacklinkController extends Controller
         }
 
         SeoBacklink::create([
-            'user_id' => $request->user()->user_id,
+            'user_id' => $this->user()->user_id,
             'website_id' => $websiteId,
             'source_url' => $validated['source_url'],
             'source_host' => SeoBacklink::normalizeHost($validated['source_url']),
@@ -115,7 +115,7 @@ class SeoBacklinkController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
-        $query = SeoBacklink::where('user_id', $request->user()->user_id)->orderByDesc('seo_backlink_id');
+        $query = SeoBacklink::where('user_id', $this->user()->user_id)->orderByDesc('seo_backlink_id');
 
         return response()->streamDownload(function () use ($query): void {
             $out = fopen('php://output', 'w');
@@ -152,7 +152,7 @@ class SeoBacklinkController extends Controller
 
     protected function authorizeOwn(Request $request, SeoBacklink $backlink): void
     {
-        if ((int) $backlink->user_id !== (int) $request->user()->user_id && ! $request->user()->isAdmin()) {
+        if ((int) $backlink->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
     }

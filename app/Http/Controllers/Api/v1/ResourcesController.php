@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Http\Controllers\Controller;
 use App\Models\Website;
 use App\Models\WebsiteGoal;
 use Illuminate\Http\JsonResponse;
@@ -11,7 +12,7 @@ use Illuminate\Http\Request;
  * API v1 - 目标与标注 资源接口
  * 规格书 §8：/api/goals、/api/annotations
  */
-class ResourcesController
+class ResourcesController extends Controller
 {
     /* ---------------- 目标（按网站嵌套） ---------------- */
 
@@ -78,7 +79,7 @@ class ResourcesController
 
     public function annotationsIndex(Request $request): JsonResponse
     {
-        return response()->json($request->user()->annotations()->orderByDesc('date')->get());
+        return response()->json($this->user()->annotations()->orderByDesc('date')->get());
     }
 
     public function annotationsStore(Request $request): JsonResponse
@@ -91,7 +92,7 @@ class ResourcesController
 
         $website = $this->ownWebsite($request, $validated['website_id']);
 
-        $annotation = $request->user()->annotations()->create([
+        $annotation = $this->user()->annotations()->create([
             'website_id' => $website->website_id,
             'name' => $validated['name'],
             'date' => $validated['date'],
@@ -102,7 +103,7 @@ class ResourcesController
 
     public function annotationsUpdate(Request $request, int $annotation): JsonResponse
     {
-        $annotationModel = $request->user()->annotations()->where('annotation_id', $annotation)->firstOrFail();
+        $annotationModel = $this->user()->annotations()->where('annotation_id', $annotation)->firstOrFail();
 
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:256'],
@@ -116,7 +117,7 @@ class ResourcesController
 
     public function annotationsDestroy(Request $request, int $annotation): JsonResponse
     {
-        $request->user()->annotations()->where('annotation_id', $annotation)->firstOrFail()->delete();
+        $this->user()->annotations()->where('annotation_id', $annotation)->firstOrFail()->delete();
 
         return response()->json(['message' => __('msg.annotation_deleted')]);
     }
@@ -128,6 +129,6 @@ class ResourcesController
      */
     protected function ownWebsite(Request $request, int $websiteId)
     {
-        return $request->user()->websites()->where('websites.website_id', $websiteId)->firstOrFail();
+        return $this->user()->websites()->where('websites.website_id', $websiteId)->firstOrFail();
     }
 }

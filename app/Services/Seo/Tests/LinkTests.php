@@ -39,7 +39,7 @@ class LinkTests
 
             $host = (string) parse_url($href, PHP_URL_HOST);
 
-            if ($host === '' || strcasecmp(preg_replace('/^www\./', '', $host), $c->host) === 0) {
+            if ($host === '' || strcasecmp((string) preg_replace('/^www\./', '', $host), $c->host) === 0) {
                 $count++;
             }
         }
@@ -60,7 +60,7 @@ class LinkTests
             $href = trim($a->getAttribute('href'));
             $host = (string) parse_url($href, PHP_URL_HOST);
 
-            if ($host !== '' && strcasecmp(preg_replace('/^www\./', '', $host), $c->host) !== 0) {
+            if ($host !== '' && strcasecmp((string) preg_replace('/^www\./', '', $host), $c->host) !== 0) {
                 $count++;
             }
         }

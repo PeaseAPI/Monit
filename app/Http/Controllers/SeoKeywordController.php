@@ -21,26 +21,26 @@ class SeoKeywordController extends Controller
     public function index(Request $request): View
     {
         $keywords = SeoKeyword::with('website')
-            ->where('user_id', $request->user()->user_id)
+            ->where('user_id', $this->user()->user_id)
             ->when($request->filled('website'), fn ($q) => $q->where('website_id', (int) $request->query('website')))
             ->orderByDesc('seo_keyword_id')
             ->paginate(20)
             ->withQueryString();
 
-        $all = SeoKeyword::where('user_id', $request->user()->user_id)->whereNotNull('last_position')->get();
+        $all = SeoKeyword::where('user_id', $this->user()->user_id)->whereNotNull('last_position')->get();
 
         $summary = [
-            'tracked' => SeoKeyword::where('user_id', $request->user()->user_id)->count(),
+            'tracked' => SeoKeyword::where('user_id', $this->user()->user_id)->count(),
             'top3' => $all->where('last_position', '<=', 3)->count(),
             'top10' => $all->where('last_position', '<=', 10)->count(),
             'top100' => $all->where('last_position', '<=', 100)->count(),
-            'avg' => $all->isNotEmpty() ? (int) round($all->avg('last_position')) : null,
+            'avg' => $all->isNotEmpty() ? (int) round((float) $all->avg('last_position')) : null,
         ];
 
         return view('seo.keywords', [
             'keywords' => $keywords,
             'summary' => $summary,
-            'websites' => Website::where('user_id', $request->user()->user_id)->orderBy('host')->get(['website_id', 'host']),
+            'websites' => Website::where('user_id', $this->user()->user_id)->orderBy('host')->get(['website_id', 'host']),
             'autoEnabled' => RankTracker::configured(),
         ]);
     }
@@ -64,11 +64,11 @@ class SeoKeywordController extends Controller
 
         $validated['website_id'] = $this->ownWebsiteId($request, (int) ($validated['website_id'] ?? 0));
 
-        if (! $limits->checkLimit($request->user(), 'seo_keywords_limit')) {
+        if (! $limits->checkLimit($this->user(), 'seo_keywords_limit')) {
             return back()->withErrors(['keyword' => __('seo.keywords_quota_exceeded')]);
         }
 
-        $exists = SeoKeyword::where('user_id', $request->user()->user_id)
+        $exists = SeoKeyword::where('user_id', $this->user()->user_id)
             ->where('keyword', $validated['keyword'])
             ->where('search_engine', $validated['search_engine'] ?? 'google')
             ->where('device', $validated['device'] ?? 'desktop')
@@ -80,7 +80,7 @@ class SeoKeywordController extends Controller
         }
 
         SeoKeyword::create([
-            'user_id' => $request->user()->user_id,
+            'user_id' => $this->user()->user_id,
             'website_id' => $validated['website_id'],
             'keyword' => trim($validated['keyword']),
             'search_engine' => $validated['search_engine'] ?? 'google',
@@ -179,14 +179,14 @@ class SeoKeywordController extends Controller
             return null;
         }
 
-        $owned = Website::where('user_id', $request->user()->user_id)->where('website_id', $websiteId)->value('website_id');
+        $owned = Website::where('user_id', $this->user()->user_id)->where('website_id', $websiteId)->value('website_id');
 
         return $owned ? (int) $owned : null;
     }
 
     protected function authorizeOwn(Request $request, SeoKeyword $keyword): void
     {
-        if ((int) $keyword->user_id !== (int) $request->user()->user_id && ! $request->user()->isAdmin()) {
+        if ((int) $keyword->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
     }

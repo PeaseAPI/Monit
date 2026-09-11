@@ -11,7 +11,7 @@ use Throwable;
 class DomainMonitor
 {
     /**
-     * @return array{ok:bool, expiration_date?:string, registrar?:string, nameservers?:array<int, string>, error?:string}
+     * @return array{ok:bool, expiration_date?:string, registrar?:string|null, nameservers?:array<int, string>, error?:string}
      */
     public function whois(string $domain): array
     {

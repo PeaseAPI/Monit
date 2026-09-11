@@ -49,7 +49,7 @@ class SeoAuditController extends Controller
      */
     public function index(Request $request): View
     {
-        $audits = SeoAudit::where('user_id', $request->user()->user_id)
+        $audits = SeoAudit::where('user_id', $this->user()->user_id)
             ->orderByDesc('seo_audit_id')
             ->paginate(15)
             ->withQueryString();
@@ -78,9 +78,9 @@ class SeoAuditController extends Controller
 
         $validated = $request->validate($rules);
 
-        $plan = $request->user()->getPlanSettings();
+        $plan = $this->user()->getPlanSettings();
         $limit = $this->monthlyLimit($plan, 'seo_audits_limit');
-        $used = SeoAudit::where('user_id', $request->user()->user_id)
+        $used = SeoAudit::where('user_id', $this->user()->user_id)
             ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
 
@@ -100,12 +100,12 @@ class SeoAuditController extends Controller
         }
 
         if ($type === 'sitemap') {
-            dispatch(function () use ($validated, $request, $bulkLimit) {
+            dispatch(function () use ($validated, $bulkLimit) {
                 $urls = app(SitemapMonitor::class)
                     ->fetch($validated['url'])['urls'];
                 $urls = array_slice($urls, 0, $bulkLimit);
                 foreach ($urls as $url) {
-                    RunSeoAuditJob::dispatch($url, $request->user()->user_id, 'single');
+                    RunSeoAuditJob::dispatch($url, $this->user()->user_id, 'single');
                 }
             });
 
@@ -119,7 +119,7 @@ class SeoAuditController extends Controller
                 ->take($bulkLimit);
 
             foreach ($urls as $url) {
-                RunSeoAuditJob::dispatch($url, $request->user()->user_id, 'single');
+                RunSeoAuditJob::dispatch($url, $this->user()->user_id, 'single');
             }
 
             return redirect()->route('seo.audits')->with('success', __('seo.audit_queued'));
@@ -135,7 +135,7 @@ class SeoAuditController extends Controller
             // 历史上走队列导致未部署 queue:worker 的实例审计永不执行、记录不落库
             $audit = app(AuditEngine::class)->run(
                 $validated['url'],
-                $request->user(),
+                $this->user(),
                 'html',
                 ['html' => $html, 'with_ai' => true],
             );
@@ -145,7 +145,7 @@ class SeoAuditController extends Controller
 
         // Single：同步执行并直达报告（避免队列未消费导致列表始终为空）
         $url = static::ensureScheme($validated['url']);
-        $audit = app(AuditEngine::class)->run($url, $request->user(), 'single', ['with_ai' => true]);
+        $audit = app(AuditEngine::class)->run($url, $this->user(), 'single', ['with_ai' => true]);
 
         return redirect()->route('seo.audits.show', $audit->seo_audit_id);
     }
@@ -219,7 +219,7 @@ class SeoAuditController extends Controller
      */
     public function analyze(Request $request, AuditEngine $engine)
     {
-        $user = $request->user();
+        $user = auth()->user();
 
         if ($user === null && ! $this->guestAllowed()) {
             abort(403, __('seo.guest_disabled'));
@@ -253,7 +253,7 @@ class SeoAuditController extends Controller
      */
     public function export(Request $request): StreamedResponse
     {
-        $query = SeoAudit::where('user_id', $request->user()->user_id)->orderByDesc('seo_audit_id');
+        $query = SeoAudit::where('user_id', $this->user()->user_id)->orderByDesc('seo_audit_id');
 
         return response()->streamDownload(function () use ($query): void {
             $out = fopen('php://output', 'w');
@@ -296,7 +296,7 @@ class SeoAuditController extends Controller
      */
     public function share(Request $request, SeoAudit $seoAudit)
     {
-        if ((int) $seoAudit->user_id !== (int) $request->user()->user_id && ! $request->user()->isAdmin()) {
+        if ((int) $seoAudit->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
 
@@ -322,7 +322,7 @@ class SeoAuditController extends Controller
      */
     public function destroy(Request $request, SeoAudit $seoAudit)
     {
-        if ((int) $seoAudit->user_id !== (int) $request->user()->user_id && ! $request->user()->isAdmin()) {
+        if ((int) $seoAudit->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
 
@@ -338,7 +338,7 @@ class SeoAuditController extends Controller
      */
     public function aiSummary(Request $request, SeoAudit $seoAudit)
     {
-        if ((int) $seoAudit->user_id !== (int) $request->user()->user_id && ! $request->user()->isAdmin()) {
+        if ((int) $seoAudit->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
 
@@ -358,13 +358,13 @@ class SeoAuditController extends Controller
      */
     public function refresh(Request $request, SeoAudit $seoAudit)
     {
-        if ((int) $seoAudit->user_id !== (int) $request->user()->user_id && ! $request->user()->isAdmin()) {
+        if ((int) $seoAudit->user_id !== (int) $this->user()->user_id && ! $this->user()->isAdmin()) {
             abort(403);
         }
 
-        $plan = $request->user()->getPlanSettings();
+        $plan = $this->user()->getPlanSettings();
         $limit = $this->monthlyLimit($plan, 'seo_audits_limit');
-        $used = SeoAudit::where('user_id', $request->user()->user_id)
+        $used = SeoAudit::where('user_id', $this->user()->user_id)
             ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
 
@@ -372,7 +372,7 @@ class SeoAuditController extends Controller
             return back()->withErrors(['url' => __('seo.quota_exceeded')]);
         }
 
-        RunSeoAuditJob::dispatch($seoAudit->url, $request->user()->user_id, 'single');
+        RunSeoAuditJob::dispatch($seoAudit->url, $this->user()->user_id, 'single');
 
         return back()->with('success', __('seo.audit_queued'));
     }
@@ -390,12 +390,12 @@ class SeoAuditController extends Controller
         ]);
 
         $audits = SeoAudit::whereIn('seo_audit_id', $validated['audit_ids'])
-            ->where('user_id', $request->user()->user_id)
+            ->where('user_id', $this->user()->user_id)
             ->get();
 
-        $plan = $request->user()->getPlanSettings();
+        $plan = $this->user()->getPlanSettings();
         $limit = $this->monthlyLimit($plan, 'seo_audits_limit');
-        $used = SeoAudit::where('user_id', $request->user()->user_id)
+        $used = SeoAudit::where('user_id', $this->user()->user_id)
             ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
 
@@ -406,7 +406,7 @@ class SeoAuditController extends Controller
             if ($dispatched >= $remaining) {
                 break;
             }
-            RunSeoAuditJob::dispatch($audit->url, $request->user()->user_id, 'single');
+            RunSeoAuditJob::dispatch($audit->url, $this->user()->user_id, 'single');
             $dispatched++;
         }
 
@@ -421,7 +421,7 @@ class SeoAuditController extends Controller
     public function compare(Request $request)
     {
         // 当前用户可对比的审计列表（下拉数据源）
-        $availableAudits = SeoAudit::where('user_id', $request->user()->user_id)
+        $availableAudits = SeoAudit::where('user_id', $this->user()->user_id)
             ->orderByDesc('seo_audit_id')
             ->limit(100)
             ->get(['seo_audit_id', 'url', 'score']);
@@ -467,7 +467,7 @@ class SeoAuditController extends Controller
      */
     protected function accessState(Request $request, SeoAudit $audit): string
     {
-        $user = $request->user();
+        $user = auth()->user();
         $isOwner = $user !== null
             && ((int) $audit->user_id === (int) $user->user_id || $user->isAdmin());
 

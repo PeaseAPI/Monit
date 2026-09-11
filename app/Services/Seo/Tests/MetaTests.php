@@ -163,7 +163,7 @@ class MetaTests
      */
     public function language(AuditContext $c): array
     {
-        $lang = (string) $c->dom()->documentElement->getAttribute('lang');
+        $lang = (string) ($c->dom()?->documentElement?->getAttribute('lang') ?? '');
 
         return [
             'passed' => $lang !== '',

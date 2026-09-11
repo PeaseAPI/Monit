@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Http\Controllers\Controller;
 use App\Models\Website;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,11 +13,11 @@ use Illuminate\Support\Str;
  * API v1 - 网站管理接口
  * 规格书 §4.2：Website API
  */
-class WebsiteController
+class WebsiteController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $websites = $request->user()->websites()->orderByDesc('website_id')->get();
+        $websites = $this->user()->websites()->orderByDesc('website_id')->get();
 
         return response()->json($websites);
     }
@@ -37,7 +38,7 @@ class WebsiteController
 
         $website = Website::create([
             ...$validated,
-            'user_id' => $request->user()->user_id,
+            'user_id' => $this->user()->user_id,
             'pixel_key' => $pixelKey,
             'scheme' => 'https',
             'tracking_type' => $validated['tracking_type'] ?? 'advanced',
@@ -90,7 +91,7 @@ class WebsiteController
      */
     protected function authorizeWebsite(Website $website): void
     {
-        if ((int) $website->user_id !== (int) Auth::id() && ! Auth::user()->isAdmin()) {
+        if ((int) $website->user_id !== (int) Auth::id() && ! $this->user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

@@ -31,7 +31,7 @@ class DomainController extends Controller
      */
     public function index(Request $request)
     {
-        $domains = $request->user()->domains()->orderBy('domain_id')->get();
+        $domains = $this->user()->domains()->orderBy('domain_id')->get();
 
         return view('domains.index', compact('domains'));
     }
@@ -50,15 +50,15 @@ class DomainController extends Controller
             'host' => array_merge(['required'], self::HOST_RULES),
         ]);
 
-        $host = strtolower(preg_replace('/^www\./', '', trim($validated['host'])));
+        $host = strtolower((string) preg_replace('/^www\./', '', trim($validated['host'])));
 
         // 同一域名重复添加：友好提示而非 500（unique(user_id, host) 冲突）
-        if (Domain::where('user_id', $request->user()->user_id)->where('host', $host)->exists()) {
+        if (Domain::where('user_id', $this->user()->user_id)->where('host', $host)->exists()) {
             return back()->withErrors(['host' => __('msg.domain_exists')])->withInput();
         }
 
         $domain = Domain::create([
-            'user_id' => $request->user()->user_id,
+            'user_id' => $this->user()->user_id,
             'host' => $host,
             'scheme' => 'https',
             'is_enabled' => true,
@@ -85,7 +85,7 @@ class DomainController extends Controller
      */
     public function show(Request $request, int $domainId)
     {
-        $domain = $request->user()->domains()->findOrFail($domainId);
+        $domain = $this->user()->domains()->findOrFail($domainId);
 
         return view('domains.show', compact('domain'));
     }
@@ -100,11 +100,11 @@ class DomainController extends Controller
         ]);
 
         // 归属校验：仅允许操作自己的域名（防 IDOR 越权改他人域名/监控开关）
-        $domain = $request->user()->domains()->where('domain_id', (int) $validated['domain_id'])->firstOrFail();
+        $domain = $this->user()->domains()->where('domain_id', (int) $validated['domain_id'])->firstOrFail();
 
         $attributes = [];
         if (array_key_exists('host', $validated)) {
-            $attributes['host'] = strtolower(preg_replace('/^www\./', '', trim($validated['host'])));
+            $attributes['host'] = strtolower((string) preg_replace('/^www\./', '', trim($validated['host'])));
         }
         if (array_key_exists('is_enabled', $validated)) {
             $attributes['is_enabled'] = (bool) $validated['is_enabled'];
@@ -121,7 +121,7 @@ class DomainController extends Controller
 
     public function destroy(Request $request, int $domainId): RedirectResponse
     {
-        $domain = $request->user()->domains()->findOrFail($domainId);
+        $domain = $this->user()->domains()->findOrFail($domainId);
         $domain->delete();
 
         return redirect()->route('domains.index')

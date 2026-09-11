@@ -88,7 +88,7 @@ class PlanLimitService
     public function checkMonthlyEventsQuota(Website $website): bool
     {
         $user = $website->user;
-        $settings = $user->getPlanSettings();
+        $settings = $user?->getPlanSettings() ?? [];
         $limit = $settings['sessions_events_limit'] ?? -1; // 缺键=不限（书写统一）
 
         if ($limit <= 0) {
@@ -104,7 +104,7 @@ class PlanLimitService
     public function checkMonthlyReplaysQuota(Website $website): bool
     {
         $user = $website->user;
-        $settings = $user->getPlanSettings();
+        $settings = $user?->getPlanSettings() ?? [];
         $limit = $settings['sessions_replays_limit'] ?? -1; // 缺键=不限（书写统一）
 
         if ($limit <= 0) {

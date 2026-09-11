@@ -89,7 +89,7 @@ class PaymentController extends Controller
         }
 
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get();
-        $user = $request->user();
+        $user = $this->user();
         $currentPlan = Plan::find($user->plan_id);
         $recentPayments = $user->payments()->orderByDesc('datetime')->limit(5)->get();
 
@@ -124,7 +124,7 @@ class PaymentController extends Controller
             'code' => ['nullable', 'string'],
         ]);
 
-        $user = $request->user();
+        $user = $this->user();
         $plan = Plan::query()->where('plan_id', (int) $validated['plan_id'])->firstOrFail();
         $processor = $validated['processor'];
         $frequency = $validated['frequency'];
@@ -195,7 +195,7 @@ class PaymentController extends Controller
             'code' => ['required', 'string'],
         ]);
 
-        $result = $this->paymentService->redeemCode($request->user(), $validated['code']);
+        $result = $this->paymentService->redeemCode($this->user(), $validated['code']);
 
         if (! $result['success']) {
             return back()->withErrors(['code' => $result['message']]);
@@ -210,7 +210,7 @@ class PaymentController extends Controller
      */
     public function uploadProof(Request $request, Payment $payment): RedirectResponse
     {
-        abort_unless($payment->user_id === $request->user()->user_id, 403);
+        abort_unless($payment->user_id === $this->user()->user_id, 403);
 
         $offlineProcessor = new OfflinePaymentProcessor;
         $result = $offlineProcessor->uploadProof($request, $payment);
@@ -320,7 +320,7 @@ class PaymentController extends Controller
      */
     public function history(Request $request): View
     {
-        $payments = $request->user()->payments()
+        $payments = $this->user()->payments()
             ->orderByDesc('datetime')
             ->paginate(20);
 
@@ -383,8 +383,14 @@ class PaymentController extends Controller
 
     protected function handleOffline(Payment $payment): View
     {
+        $paymentUser = $payment->user;
+
+        if ($paymentUser === null) {
+            abort(404);
+        }
+
         $offlineProcessor = new OfflinePaymentProcessor;
-        $result = $offlineProcessor->createOrder($payment->user, $payment);
+        $result = $offlineProcessor->createOrder($paymentUser, $payment);
 
         return view('payments.offline-instructions', [
             'payment' => $payment,

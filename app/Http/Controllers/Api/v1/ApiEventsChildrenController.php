@@ -37,7 +37,7 @@ class ApiEventsChildrenController extends Controller
 
     protected function authorizeWebsite(Website $website): void
     {
-        if ((int) $website->user_id !== (int) Auth::id() && ! Auth::user()->isAdmin()) {
+        if ((int) $website->user_id !== (int) Auth::id() && ! $this->user()->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }

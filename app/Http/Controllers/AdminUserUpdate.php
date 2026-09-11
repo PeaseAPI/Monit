@@ -47,7 +47,7 @@ class AdminUserUpdate extends Controller
 
         AccountLog::create([
             'user_id' => $target->user_id,
-            'type' => $action.'_by_'.request()->user()->user_id,
+            'type' => $action.'_by_'.(request()->user()?->user_id ?? 0),
             'ip' => request()->ip(),
             'device_type' => $parser->deviceType(),
             'os_name' => $osName,
@@ -170,7 +170,7 @@ class AdminUserUpdate extends Controller
         $user = User::findOrFail($userId);
 
         // 封禁自己会立即失去 admin 会话（status!=1 下个请求被登出）——无意义自锁
-        abort_if($user->user_id === $request->user()->user_id, 403, __('msg.forbidden_admin'));
+        abort_if($user->user_id === $this->user()->user_id, 403, __('msg.forbidden_admin'));
 
         // 激活 ↔ 禁用 往返切换（对标原版双态切换，未确认态经编辑页调整）
         $user->update(['status' => $user->status === 1 ? 2 : 1]);

@@ -53,7 +53,7 @@ class GoalController extends Controller
             'is_enabled' => ['boolean'],
         ]);
 
-        $user = $request->user();
+        $user = $this->user();
         $website = $user->websites()->where('website_id', (int) $validated['website_id'])->firstOrFail();
 
         WebsiteGoal::create([
@@ -80,7 +80,7 @@ class GoalController extends Controller
 
         $goal = WebsiteGoal::query()->where('goal_id', (int) $validated['goal_id'])->firstOrFail();
         $website = Website::where('website_id', $goal->website_id)
-            ->where('user_id', $request->user()->user_id)
+            ->where('user_id', $this->user()->user_id)
             ->firstOrFail();
         $websiteId = $website->website_id;
         $goal->update($validated);
@@ -93,7 +93,7 @@ class GoalController extends Controller
     {
         $goal = WebsiteGoal::findOrFail($goalId);
         $website = Website::where('website_id', $goal->website_id)
-            ->where('user_id', $request->user()->user_id)
+            ->where('user_id', $this->user()->user_id)
             ->firstOrFail();
         $websiteId = $website->website_id;
 

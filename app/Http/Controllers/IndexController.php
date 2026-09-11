@@ -52,8 +52,8 @@ class IndexController extends Controller
         // 定价卡：优先 prices 直配价，无则按默认货币价 × 汇率换算（规格书 §10.4）
         // 同时输出年付价（原站定价区月/年切换 + 折扣徽章）
         $plans = Plan::where('is_enabled', true)->orderBy('order')->get()->map(function (Plan $plan) use ($currency) {
-            $plan->landing_price = Currency::planPrice($plan, $currency, 'monthly');
-            $plan->landing_price_annual = Currency::planPrice($plan, $currency, 'annual');
+            $plan->landing_price = (float) Currency::planPrice($plan, $currency, 'monthly');
+            $plan->landing_price_annual = (float) Currency::planPrice($plan, $currency, 'annual');
             $plan->landing_currency = $currency;
 
             return $plan;

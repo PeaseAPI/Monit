@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Page;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -39,7 +38,7 @@ class AdminPages extends Controller
 
         Page::create([
             ...$validated,
-            'user_id' => Auth::user()->user_id,
+            'user_id' => $this->user()->user_id,
             'type' => $validated['is_published'] ? 'page' : 'draft',
             'datetime' => now(),
         ]);

@@ -341,7 +341,7 @@ final class StatisticsService
     /**
      * 来源 + UTM 组合分析（包含 utm_* 分组）
      *
-     * @return array<int, array{key: string, count: int, utm_source?: string, utm_medium?: string, utm_campaign?: string}>
+     * @return array<int, array{key: string, count: int, utm_source?: string|null, utm_medium?: string|null, utm_campaign?: string|null}>
      */
     public function breakdownWithUtm(string $dimension, int $limit = 50): array
     {

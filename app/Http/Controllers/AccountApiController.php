@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -15,14 +14,14 @@ class AccountApiController extends Controller
 {
     public function index(): View
     {
-        $user = Auth::user();
+        $user = $this->user();
 
         return view('account.api', compact('user'));
     }
 
     public function regenerate(): RedirectResponse
     {
-        $user = Auth::user();
+        $user = $this->user();
         $user->forceFill(['api_key' => Str::random(60)])->save();
 
         return back()->with('success', __('msg.api_key_regenerated'));
@@ -30,7 +29,7 @@ class AccountApiController extends Controller
 
     public function revoke(): RedirectResponse
     {
-        $user = Auth::user();
+        $user = $this->user();
         $user->forceFill(['api_key' => null])->save();
 
         return back()->with('success', __('msg.api_key_revoked'));

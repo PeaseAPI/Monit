@@ -20,7 +20,7 @@ class WebsiteController extends Controller
      */
     public function index(Request $request)
     {
-        $websites = $request->user()
+        $websites = $this->user()
             ->websites()
             ->withCount([
                 'events as events_count' => fn ($q) => $q->whereIn('type', ['landing_page', 'pageview']),
@@ -41,7 +41,7 @@ class WebsiteController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $user = $request->user();
+        $user = $this->user();
 
         // 套餐网站数量限额
         $planSettings = $user->getPlanSettings();
@@ -167,7 +167,7 @@ class WebsiteController extends Controller
 
     protected function findOwnedWebsite(Request $request, int $websiteId): Website
     {
-        return $request->user()->websites()->findOrFail($websiteId);
+        return $this->user()->websites()->findOrFail($websiteId);
     }
 
     /**
@@ -177,7 +177,7 @@ class WebsiteController extends Controller
      */
     public function ajax(Request $request)
     {
-        $query = Website::where('user_id', $request->user()->user_id);
+        $query = Website::where('user_id', $this->user()->user_id);
 
         if ($search = $request->query('search')) {
             // 分组括号必须包住 or 条件：否则 SQL 中 AND 优先于 OR，

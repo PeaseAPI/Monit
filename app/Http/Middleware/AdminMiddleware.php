@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,11 +16,14 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! Auth::check()) {
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        if ($user === null) {
             return redirect()->route('login');
         }
 
-        if (Auth::user()->type !== 1) {
+        if ($user->type !== 1) {
             abort(403, __('msg.forbidden_admin'));
         }
 

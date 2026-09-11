@@ -97,8 +97,8 @@ class Tasks25RegressionTest extends TestCase
             app_path('Http/Controllers/SeoAuditController.php')
         );
 
-        // single 类型同步执行 AuditEngine
-        $this->assertStringContainsString("app(AuditEngine::class)->run(\$url, \$request->user(), 'single'", $source);
+        // single 类型同步执行 AuditEngine（L8 周期：store 在 auth 组内，经基类 user() 窄化）
+        $this->assertStringContainsString("app(AuditEngine::class)->run(\$url, \$this->user(), 'single'", $source);
         // 同步执行后直接重定向到报告页
         $this->assertStringContainsString("redirect()->route('seo.audits.show', \$audit->seo_audit_id)", $source);
     }

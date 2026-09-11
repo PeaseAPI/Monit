@@ -77,9 +77,9 @@ class PushNotificationsCampaignsCommand extends Command
                             $subscriber->keys_auth,
                             [
                                 'title' => $campaign->title,
-                                'body' => $campaign->description,
-                                'url' => $campaign->url,
-                                'icon' => $campaign->icon,
+                                'body' => $campaign->description ?? '',
+                                'url' => $campaign->url ?? '/',
+                                'icon' => $campaign->icon ?? '',
                             ],
                             $publicKey,
                             $privateKey,

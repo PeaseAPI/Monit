@@ -19,7 +19,7 @@ class SpotlightController extends Controller
     public function search(Request $request)
     {
         $query = $request->input('q', '');
-        $user = $request->user();
+        $user = $this->user();
 
         if (strlen($query) < 2) {
             return response()->json(['results' => []]);

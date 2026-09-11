@@ -47,7 +47,7 @@ class PayPalProcessor
 
         // 简化实现 - 生产环境应缓存 token
         try {
-            $response = Http::withBasicAuth($this->clientId, $this->clientSecret)
+            $response = Http::withBasicAuth((string) $this->clientId, (string) $this->clientSecret)
                 ->asForm()
                 ->post("{$this->baseUrl}/v1/oauth2/token", [
                     'grant_type' => 'client_credentials',

@@ -18,7 +18,7 @@ class PayBillingController extends Controller
      */
     public function index(Request $request): View
     {
-        $user = $request->user();
+        $user = $this->user();
 
         return view('pay.billing', compact('user'));
     }
@@ -28,7 +28,7 @@ class PayBillingController extends Controller
      */
     public function cancel(Request $request): RedirectResponse
     {
-        $user = $request->user();
+        $user = $this->user();
 
         if (! $user->payment_subscription_id) {
             return back()->withErrors(['error' => __('msg.no_active_subscription')]);
@@ -39,7 +39,7 @@ class PayBillingController extends Controller
         $paymentService = app(PaymentService::class);
 
         try {
-            $paymentService->cancelSubscription($user, $processor);
+            $paymentService->cancelSubscription($user, (string) $processor);
 
             return back()->with('success', __('msg.subscription_cancelled'));
         } catch (\Exception $e) {
