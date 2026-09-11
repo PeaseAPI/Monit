@@ -4,8 +4,39 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Ramsey\Uuid\Uuid;
 
+/**
+ * @property int $event_id
+ * @property string $event_uuid_binary
+ * @property int $session_id
+ * @property int $visitor_id
+ * @property int $website_id
+ * @property string $type
+ * @property string|null $path
+ * @property string|null $title
+ * @property string|null $referrer_host
+ * @property string|null $referrer_path
+ * @property string|null $utm_source
+ * @property string|null $utm_medium
+ * @property string|null $utm_campaign
+ * @property int|null $viewport_width
+ * @property int|null $viewport_height
+ * @property bool $has_bounced
+ * @property Carbon $date
+ * @property Carbon|null $expiration_date
+ *                                        -- 聚合查询别名（selectRaw）：
+ * @property string $day
+ * @property int $pageviews
+ * @property int $visitors
+ * @property string|null $k
+ * @property int $total
+ * @property string $h
+ * @property int $dow
+ * @property int $c
+ * @property string $m
+ */
 class SessionEvent extends Model
 {
     protected $table = 'sessions_events';

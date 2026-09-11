@@ -57,7 +57,7 @@ class StatsController extends Controller
             '主要来源：%s。'."\n".
             '访客地区：%s。',
             $website->name,
-            $website->host ?? $website->domain,
+            $website->host,
             $range,
             (int) ($overview['pageviews'] ?? 0),
             (int) ($overview['visitors'] ?? 0),

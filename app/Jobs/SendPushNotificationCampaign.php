@@ -30,21 +30,18 @@ class SendPushNotificationCampaign implements ShouldQueue
 
     public function handle(): void
     {
-        $subscribers = PushNotificationSubscriber::when(
-            $this->campaign->target_users,
-            fn ($q) => $q->whereIn('user_id', $this->campaign->target_users)
-        )->chunk(100, function ($subscribers) {
+        $subscribers = PushNotificationSubscriber::query()->chunk(100, function ($subscribers) {
             foreach ($subscribers as $subscriber) {
                 try {
                     app(WebPushService::class)->sendOne(
                         $subscriber,
                         $this->campaign->title,
-                        $this->campaign->content,
+                        $this->campaign->description ?? '',
                         $this->campaign->url,
                     );
                 } catch (\Throwable $e) {
                     Log::warning('Push notification failed', [
-                        'subscriber_id' => $subscriber->id,
+                        'subscriber_id' => $subscriber->subscriber_id,
                         'error' => $e->getMessage(),
                     ]);
                 }

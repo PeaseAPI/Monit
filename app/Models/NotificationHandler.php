@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * SEO 事件通知处理器
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $type
  * @property array<string, mixed> $settings
  * @property bool $is_enabled
- * @property \Illuminate\Support\Carbon|null $last_sent_at
+ * @property Carbon|null $last_sent_at
  */
 class NotificationHandler extends Model
 {

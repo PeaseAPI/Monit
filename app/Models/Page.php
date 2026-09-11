@@ -3,7 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
+/**
+ * -- pages 表为可选模块（可能缺失，读取处有 try-catch 防御）：
+ *
+ * @property Carbon|null $updated_at
+ */
 class Page extends Model
 {
     protected $table = 'pages';

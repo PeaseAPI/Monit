@@ -19,12 +19,6 @@ parameters:
 			path: app/Http/Controllers/AdminIndex.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$count\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/AdminStatistics.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 3
@@ -35,30 +29,6 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/FaviconController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Page\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/IndexController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Plan\:\:\$landing_currency\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/IndexController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Plan\:\:\$landing_price\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/IndexController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Plan\:\:\$landing_price_annual\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/IndexController.php
 
 		-
 			message: '#^Cannot call method format\(\) on string\.$#'
@@ -91,12 +61,6 @@ parameters:
 			path: app/Http/Controllers/SeoBacklinkController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Website\:\:\$domain\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/StatsController.php
-
-		-
 			message: '#^Offset ''count'' on array\{key\: string, count\: int\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
@@ -119,24 +83,6 @@ parameters:
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Http/Controllers/StatsController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\PushNotificationCampaign\:\:\$content\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Jobs/SendPushNotificationCampaign.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\PushNotificationCampaign\:\:\$target_users\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Jobs/SendPushNotificationCampaign.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\PushNotificationSubscriber\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Jobs/SendPushNotificationCampaign.php
 
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,string\>\:\:map\(\) expects callable\(string, int\)\: non\-falsy\-string, Closure\(array, string\)\: non\-falsy\-string given\.$#'
@@ -269,90 +215,6 @@ parameters:
 			identifier: new.static
 			count: 1
 			path: app/Services/Sms/TencentSmsProvider.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\LightweightEvent\:\:\$c\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\LightweightEvent\:\:\$k\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\LightweightEvent\:\:\$m\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\LightweightEvent\:\:\$total\.$#'
-			identifier: property.notFound
-			count: 6
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\LightweightEvent\|App\\Models\\SessionEvent\:\:\$day\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\LightweightEvent\|App\\Models\\SessionEvent\:\:\$dow\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\LightweightEvent\|App\\Models\\SessionEvent\:\:\$h\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\LightweightEvent\|App\\Models\\SessionEvent\:\:\$pageviews\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\LightweightEvent\|App\\Models\\SessionEvent\:\:\$visitors\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\OutboundClick\:\:\$k\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\OutboundClick\:\:\$total\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\SessionEvent\:\:\$k\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\SessionEvent\:\:\$total\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/StatisticsService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\VisitorSession\:\:\$sessions\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/StatisticsService.php
 
 		-
 			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'

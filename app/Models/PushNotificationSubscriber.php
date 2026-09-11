@@ -4,7 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $subscriber_id
+ * @property int $website_id
+ * @property int $user_id
+ * @property string $endpoint
+ * @property string $keys_p256dh
+ * @property string $keys_auth
+ * @property string|null $ip
+ * @property string|null $country_code
+ * @property string|null $city
+ * @property Carbon $subscriber_datetime
+ */
 class PushNotificationSubscriber extends Model
 {
     protected $table = 'push_notifications_subscribers';

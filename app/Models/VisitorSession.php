@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Ramsey\Uuid\Uuid;
 
+/**
+ * -- 聚合查询别名（selectRaw）：
+ *
+ * @property int $sessions
+ */
 class VisitorSession extends Model
 {
     protected $table = 'visitors_sessions';

@@ -16,6 +16,10 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $order
  * @property int $trial_days
  * @property bool $is_enabled
+ *                            -- 动态挂载属性（IndexController 定价卡计算后附加）：
+ * @property float $landing_price
+ * @property float $landing_price_annual
+ * @property string $landing_currency
  */
 class Plan extends Model
 {

@@ -64,6 +64,8 @@ use Throwable;
  * @property Plan|null $plan
  * @property string|null $api_key_lookup
  * @property string|null $api_key_encrypted
+ *                                          -- 聚合别名（selectRaw）：
+ * @property int $count
  */
 class User extends Authenticatable
 {
