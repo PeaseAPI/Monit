@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Support\Settings;
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * 前台语言切换（对标原版 settings.languages + language 切换器）
@@ -20,9 +21,9 @@ use Illuminate\Http\Request;
 class SetLocale
 {
     /**
-     * @return mixed
+     * @param  Closure(Request): (Response)  $next
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
         $locales = (array) config('monit.locales');
         $locale = (string) $request->session()->get('locale', '');

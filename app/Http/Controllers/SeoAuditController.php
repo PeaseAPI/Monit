@@ -215,7 +215,7 @@ class SeoAuditController extends Controller
     /**
      * 访客即时分析（uploader_key 限额）
      *
-     * @return mixed
+     * @return RedirectResponse
      */
     public function analyze(Request $request, AuditEngine $engine)
     {

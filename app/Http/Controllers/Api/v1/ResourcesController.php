@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Models\Website;
 use App\Models\WebsiteGoal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -123,7 +124,7 @@ class ResourcesController
     /* ---------------- 辅助 ---------------- */
 
     /**
-     * @return mixed
+     * @return Website
      */
     protected function ownWebsite(Request $request, int $websiteId)
     {

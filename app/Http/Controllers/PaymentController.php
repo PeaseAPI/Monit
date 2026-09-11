@@ -109,7 +109,7 @@ class PaymentController extends Controller
     /**
      * 发起支付（规格书 §11：22 处理器统一入口）
      *
-     * @return mixed
+     * @return View|RedirectResponse
      */
     public function checkout(Request $request)
     {

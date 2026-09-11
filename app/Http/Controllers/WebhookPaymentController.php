@@ -416,7 +416,7 @@ class WebhookPaymentController extends Controller
     /**
      * Alipay 异步通知（规格书 §11：中国）
      *
-     * @return mixed
+     * @return JsonResponse|Response
      */
     public function alipay(Request $request)
     {

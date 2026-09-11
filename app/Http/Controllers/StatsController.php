@@ -152,7 +152,7 @@ class StatsController extends Controller
     /**
      * 访客列表
      *
-     * @return mixed
+     * @return StreamedResponse|JsonResponse|View
      */
     public function visitors(Request $request, Website $website)
     {
@@ -260,7 +260,7 @@ class StatsController extends Controller
     /**
      * 统计概览（别名路由，复用 index 逻辑）
      *
-     * @return mixed
+     * @return View
      */
     public function overview(Request $request, Website $website)
     {
@@ -320,7 +320,7 @@ class StatsController extends Controller
     /**
      * 热门来源（别名，复用 referrers）
      *
-     * @return mixed
+     * @return View
      */
     public function topReferrers(Request $request, Website $website)
     {

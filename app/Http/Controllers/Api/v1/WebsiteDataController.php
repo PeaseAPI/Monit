@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Models\EventChild;
 use App\Models\Heatmap;
 use App\Models\OutboundClick;
+use App\Models\Website;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -95,7 +96,7 @@ class WebsiteDataController
     /* ---------------- 辅助 ---------------- */
 
     /**
-     * @return mixed
+     * @return Website
      */
     protected function ownWebsite(Request $request, int $websiteId)
     {
