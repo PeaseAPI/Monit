@@ -124,6 +124,9 @@ class DemoHeatmapReplaySeeder extends Seeder
         $this->command->info('Demo data created!');
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     protected function generateRrwebEvents(): array
     {
         $ts = now()->subMinutes(5)->getPreciseTimestamp(3);
@@ -221,6 +224,8 @@ class DemoHeatmapReplaySeeder extends Seeder
     /**
      * Generate rrweb snapshot events for heatmap DOM snapshot (new format)
      * These events can be rendered by rrweb-player to show the actual webpage
+     *
+     * @return array<int, array<string, mixed>>
      */
     protected function generateSnapshotEvents(string $pageName): array
     {

@@ -18,7 +18,10 @@ use Illuminate\Support\Facades\Schema;
  */
 class PluginManager
 {
-    /** 已 boot 的插件（防止重复 include） */
+    /** 已 boot 的插件（防止重复 include）
+     *
+     * @var array<int, string>
+     */
     protected static array $booted = [];
 
     /* -----------------------------------------------------------------
@@ -61,6 +64,9 @@ class PluginManager
         return $plugins;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function meta(string $id): ?array
     {
         foreach (static::scan() as $plugin) {
@@ -151,6 +157,8 @@ class PluginManager
 
     /**
      * 保存插件设置（仅允许 config settings 定义过的键）
+     *
+     * @param  array<string, mixed>  $values
      */
     public static function saveSettings(string $id, array $values): void
     {
@@ -203,6 +211,9 @@ class PluginManager
      | 工具
      ----------------------------------------------------------------- */
 
+    /**
+     * @return array<string, mixed>
+     */
     protected static function requireMeta(string $id): array
     {
         $meta = static::meta($id);

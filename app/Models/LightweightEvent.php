@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LightweightEvent extends Model
 {
@@ -18,6 +19,9 @@ class LightweightEvent extends Model
         'device_type', 'theme', 'date', 'expiration_date',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -26,6 +30,9 @@ class LightweightEvent extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');

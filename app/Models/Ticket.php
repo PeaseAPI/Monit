@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ticket extends Model
 {
@@ -25,17 +26,26 @@ class Ticket extends Model
 
     protected $fillable = ['user_id', 'email', 'subject', 'category', 'priority', 'status', 'last_reply_at', 'datetime'];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return ['status' => 'integer', 'last_reply_at' => 'datetime', 'datetime' => 'datetime'];
     }
 
     /** @return BelongsTo<User, $this> */
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<TicketReply, $this>
+     */
     public function replies()
     {
         return $this->hasMany(TicketReply::class, 'ticket_id', 'ticket_id')->orderBy('reply_id');

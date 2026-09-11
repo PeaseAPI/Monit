@@ -18,6 +18,9 @@ class PushNotificationSubscriber extends Model
         'ip', 'country_code', 'city', 'subscriber_datetime',
     ];
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website(): BelongsTo
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');

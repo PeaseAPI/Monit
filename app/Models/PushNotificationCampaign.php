@@ -18,6 +18,9 @@ class PushNotificationCampaign extends Model
         'is_enabled', 'is_sent', 'sent_datetime', 'total_sent', 'total_failed',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -27,6 +30,9 @@ class PushNotificationCampaign extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website(): BelongsTo
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');

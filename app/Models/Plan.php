@@ -18,6 +18,9 @@ class Plan extends Model
         'taxes_ids', 'is_enabled',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [

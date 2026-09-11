@@ -167,10 +167,7 @@ class WebsiteController extends Controller
 
     protected function findOwnedWebsite(Request $request, int $websiteId): Website
     {
-        $website = $request->user()->websites()->findOrFail($websiteId);
-        abort_if(! $website, 404);
-
-        return $website;
+        return $request->user()->websites()->findOrFail($websiteId);
     }
 
     /**

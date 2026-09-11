@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Ramsey\Uuid\Uuid;
 
 class SessionEvent extends Model
@@ -20,6 +21,9 @@ class SessionEvent extends Model
         'has_bounced', 'date', 'expiration_date',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -31,16 +35,25 @@ class SessionEvent extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return BelongsTo<WebsiteVisitor, $this>
+     */
     public function visitor()
     {
         return $this->belongsTo(WebsiteVisitor::class, 'visitor_id', 'visitor_id');
     }
 
+    /**
+     * @return BelongsTo<VisitorSession, $this>
+     */
     public function session()
     {
         return $this->belongsTo(VisitorSession::class, 'session_id', 'session_id');

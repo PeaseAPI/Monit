@@ -98,6 +98,8 @@ class WebhookSignature
      * Paddle 经典（alert_name 体系）官方 RSA 验签：
      * 对除 p_signature 外的全部字段 ksort 后 http_build_query，
      * 用商户公钥 openssl_verify(SHA256) 校验 base64 签名
+     *
+     * @param  array<string, mixed>  $payload
      */
     public static function verifyPaddleClassic(array $payload, string $publicKey): bool
     {
@@ -148,6 +150,8 @@ class WebhookSignature
      * YooKassa 回查：通知本身无签名，官方要求回查支付状态
      * GET /v3/payments/{id}（Basic auth = shopId:secretKey）
      * 返回回查载荷（调用方须比对 metadata.payment_id 防止「真交易 id + 伪造 metadata」嫁接）
+     *
+     * @return array<string, mixed>
      */
     public static function fetchYooKassaPayment(string $paymentId, ?string $shopId, ?string $secretKey): ?array
     {
@@ -257,6 +261,8 @@ class WebhookSignature
     /**
      * 出站 Webhook 签名（webhooks.webhooks_secret_key）
      * HMAC-SHA256(json(body))，hex 输出，接收方可用同算法验证
+     *
+     * @param  array<string, mixed>  $body
      */
     public static function sign(array $body, string $secret): string
     {

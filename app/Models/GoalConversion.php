@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class GoalConversion extends Model
 {
@@ -14,6 +15,9 @@ class GoalConversion extends Model
         'goal_id', 'event_id', 'session_id', 'visitor_id', 'website_id', 'expiration_date',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -21,11 +25,17 @@ class GoalConversion extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<WebsiteGoal, $this>
+     */
     public function goal()
     {
         return $this->belongsTo(WebsiteGoal::class, 'goal_id', 'goal_id');
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');

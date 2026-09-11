@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
@@ -16,6 +17,9 @@ class Payment extends Model
         'currency', 'datetime', 'last_datetime',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -29,6 +33,9 @@ class Payment extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
@@ -39,6 +46,8 @@ class Payment extends Model
      * 支付成功后的套餐激活、发票套餐名展示均以本关联为准，
      * 避免激活「用户当前套餐」而非「本次购买套餐」的错配。
      * 失效位置：plan 被删除后返回 null，调用方需自行兜底（如 user->plan_id）。
+     *
+     * @return BelongsTo<Plan, $this>
      */
     public function plan()
     {

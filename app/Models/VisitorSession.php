@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Ramsey\Uuid\Uuid;
 
 class VisitorSession extends Model
@@ -23,6 +25,9 @@ class VisitorSession extends Model
 
     protected $appends = ['session_uuid'];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -30,16 +35,25 @@ class VisitorSession extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return BelongsTo<WebsiteVisitor, $this>
+     */
     public function visitor()
     {
         return $this->belongsTo(WebsiteVisitor::class, 'visitor_id', 'visitor_id');
     }
 
+    /**
+     * @return HasMany<SessionEvent, $this>
+     */
     public function events()
     {
         return $this->hasMany(SessionEvent::class, 'session_id', 'session_id');

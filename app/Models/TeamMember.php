@@ -26,6 +26,9 @@ class TeamMember extends Model
         });
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -37,18 +40,27 @@ class TeamMember extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Team, $this>
+     */
     public function team()
     {
         return $this->belongsTo(Team::class, 'team_id', 'team_id');
     }
 
     /** @return HasMany<TeamMemberAssociation, $this> */
+    /**
+     * @return HasMany<TeamMemberAssociation, $this>
+     */
     public function associations(): HasMany
     {
         return $this->hasMany(TeamMemberAssociation::class, 'team_member_id', 'team_member_id');
     }
 
     /** @return BelongsTo<User, $this> */
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');

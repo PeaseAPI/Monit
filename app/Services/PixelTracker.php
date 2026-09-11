@@ -509,7 +509,7 @@ class PixelTracker
             }
 
             $converted[] = $goal->goal_id;
-            $visitor->goals_conversions_ids = array_values($converted);
+            $visitor->goals_conversions_ids = $converted;
             $visitor->save();
         }
 

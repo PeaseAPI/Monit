@@ -19,6 +19,9 @@ class Code extends Model
         'max_redemptions', 'redeemed', 'date_start', 'date_end', 'is_enabled', 'datetime',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -34,6 +37,9 @@ class Code extends Model
     }
 
     /** @return HasMany<RedeemedCode, $this> */
+    /**
+     * @return HasMany<RedeemedCode, $this>
+     */
     public function redeemedCodes(): HasMany
     {
         return $this->hasMany(RedeemedCode::class, 'code_id', 'code_id');

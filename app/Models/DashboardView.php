@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DashboardView extends Model
 {
@@ -14,6 +15,9 @@ class DashboardView extends Model
         'website_id', 'user_id', 'name', 'settings', 'order', 'datetime',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -23,11 +27,17 @@ class DashboardView extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');

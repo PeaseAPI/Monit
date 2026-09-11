@@ -13,6 +13,9 @@ class SeoToolUse extends Model
 
     protected $fillable = ['user_id', 'uploader_key', 'tool', 'created_at'];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return ['created_at' => 'datetime'];
@@ -35,6 +38,8 @@ class SeoToolUse extends Model
 
     /**
      * 热门工具榜
+     *
+     * @return array<string, mixed>
      */
     public static function topTools(int $limit = 10): array
     {

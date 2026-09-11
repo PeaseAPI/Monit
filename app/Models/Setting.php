@@ -16,6 +16,9 @@ class Setting extends Model
 
     protected $fillable = ['key', 'value'];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -25,6 +28,8 @@ class Setting extends Model
 
     /**
      * Get all settings for a given group prefix
+     *
+     * @return array<string, mixed>
      */
     public static function getGroup(string $prefix): array
     {

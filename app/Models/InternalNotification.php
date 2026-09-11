@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InternalNotification extends Model
 {
@@ -17,6 +18,9 @@ class InternalNotification extends Model
         'is_read', 'datetime',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -26,11 +30,17 @@ class InternalNotification extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function fromUser()
     {
         return $this->belongsTo(User::class, 'from_user_id', 'user_id');

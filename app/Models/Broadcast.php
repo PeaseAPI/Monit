@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Broadcast extends Model
 {
@@ -17,6 +18,9 @@ class Broadcast extends Model
         'total_emails', 'total_sent', 'total_failed',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -29,6 +33,9 @@ class Broadcast extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');

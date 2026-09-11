@@ -16,6 +16,8 @@ class PaymentGatewayCatalog
     /**
      * 网关 => ['keys' => [ENV键 => 类型], 'webhook_keys' => [...]]
      * 类型：password（密钥，掩码显示）/ text / bool（true/false 下拉）
+     *
+     * @return array<string, mixed>
      */
     public static function gateways(): array
     {

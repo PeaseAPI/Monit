@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BlogPost extends Model
 {
@@ -17,6 +18,9 @@ class BlogPost extends Model
         'description', 'image', 'type', 'is_published', 'datetime',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -25,6 +29,9 @@ class BlogPost extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<BlogPostCategory, $this>
+     */
     public function category()
     {
         return $this->belongsTo(BlogPostCategory::class, 'category_id', 'category_id');

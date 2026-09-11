@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -22,6 +24,9 @@ class SeoAudit extends Model
         'ai_summary', 'ai_suggestions', 'privacy', 'password', 'share_token', 'is_public_directory',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -36,16 +41,25 @@ class SeoAudit extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<SeoAuditArchive, $this>
+     */
     public function archives()
     {
         return $this->hasMany(SeoAuditArchive::class, 'seo_audit_id', 'seo_audit_id');
@@ -66,6 +80,8 @@ class SeoAudit extends Model
 
     /**
      * 按类别取测试结果（报告页四类仪表数据源）
+     *
+     * @return array<string, mixed>
      */
     public function resultsByCategory(): array
     {

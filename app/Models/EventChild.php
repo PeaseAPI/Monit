@@ -17,6 +17,9 @@ class EventChild extends Model
         'date', 'expiration_date',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [

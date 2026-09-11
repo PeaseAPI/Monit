@@ -84,6 +84,9 @@ class LicenseGenerateCommand extends Command
         return self::SUCCESS;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function parseFeatures(): array
     {
         $raw = (string) $this->option('features');

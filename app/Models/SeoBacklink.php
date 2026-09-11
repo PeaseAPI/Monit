@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * SEO 反链台账
@@ -18,6 +19,9 @@ class SeoBacklink extends Model
         'anchor_text', 'rel', 'status', 'dr', 'last_checked_at', 'first_seen_at',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -29,6 +33,9 @@ class SeoBacklink extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');

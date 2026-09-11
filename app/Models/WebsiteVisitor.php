@@ -3,8 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Ramsey\Uuid\Uuid;
 
+/**
+ * @property array<int, int>|null $goals_conversions_ids
+ */
 class WebsiteVisitor extends Model
 {
     protected $table = 'websites_visitors';
@@ -27,6 +32,9 @@ class WebsiteVisitor extends Model
 
     protected $appends = ['visitor_uuid'];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -37,11 +45,17 @@ class WebsiteVisitor extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return HasMany<VisitorSession, $this>
+     */
     public function sessions()
     {
         return $this->hasMany(VisitorSession::class, 'visitor_id', 'visitor_id');

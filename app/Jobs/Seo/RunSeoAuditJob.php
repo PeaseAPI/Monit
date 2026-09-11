@@ -21,6 +21,9 @@ class RunSeoAuditJob implements ShouldQueue
 
     public int $timeout = 300;
 
+    /**
+     * @param  array<string, mixed>  $options
+     */
     public function __construct(
         public readonly string $url,
         public readonly ?int $userId = null,

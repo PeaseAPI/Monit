@@ -22,6 +22,8 @@ class SessionReplay extends Model
      * data 列是 LONGBLOB（gzencode 压缩的 rrweb 事件 JSON），
      * Eloquent 会将其当作字符串属性，但读取时需要原生 SQL 来避免编码问题。
      * 该列不参与 $casts，手动用 gzencode/gzdecode 处理。
+     *
+     * @return array<string, mixed>
      */
     protected function casts(): array
     {
@@ -31,17 +33,26 @@ class SessionReplay extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<VisitorSession, $this>
+     */
     public function session()
     {
         return $this->belongsTo(VisitorSession::class, 'session_id', 'session_id');
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');
     }
 
     /** @return BelongsTo<WebsiteVisitor, $this> */
+    /**
+     * @return BelongsTo<WebsiteVisitor, $this>
+     */
     public function visitor(): BelongsTo
     {
         return $this->belongsTo(WebsiteVisitor::class, 'visitor_id', 'visitor_id');

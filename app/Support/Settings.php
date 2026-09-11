@@ -26,6 +26,7 @@ class Settings
         }
 
         // 缓存以数组存储（反序列化安全），读取后重建为对象，坏条目自动重建
+        /** @var mixed $cached */
         $cached = Cache::remember(
             'monit.settings',
             now()->addHours(12),
@@ -42,6 +43,9 @@ class Settings
         return static::$cached = static::arrayToObject($cached);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected static function buildArray(): array
     {
         $settings = [];
@@ -63,6 +67,9 @@ class Settings
         return $settings;
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     protected static function arrayToObject(array $data): \stdClass
     {
         $object = new \stdClass;

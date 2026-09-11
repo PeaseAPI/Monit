@@ -15,6 +15,9 @@ class EmailReport extends Mailable
     use Queueable;
     use SerializesModels;
 
+    /**
+     * @param  array<string, mixed>  $stats
+     */
     public function __construct(public Website $website, public array $stats) {}
 
     public function build(): static

@@ -52,6 +52,9 @@ class HelpCenterSeeder extends Seeder
         }
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     private function catalog(): array
     {
         return [

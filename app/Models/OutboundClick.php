@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OutboundClick extends Model
 {
@@ -14,6 +15,9 @@ class OutboundClick extends Model
         'website_id', 'event_id', 'visitor_id', 'host', 'path', 'title', 'datetime',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -21,6 +25,9 @@ class OutboundClick extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');

@@ -30,10 +30,14 @@ class Currency
     /**
      * 全部可用货币：[CODE => ['name' =>, 'symbol' =>, 'rate' => float]]
      * 默认货币强制 rate=1 且置顶；settings 配置可覆盖预设行或新增任意货币
+     *
+     * @return array<string, mixed>
      */
     public static function all(): array
     {
-        $currencies = collect(config('monit.payment.currencies', []))
+        /** @var array<string, mixed> $configRows */
+        $configRows = config('monit.payment.currencies', []);
+        $currencies = collect($configRows)
             ->map(fn ($row) => static::normalizeRow((array) $row))
             ->all();
 
@@ -72,6 +76,10 @@ class Currency
         return [$default => $defaultRow] + $currencies;
     }
 
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
     protected static function normalizeRow(array $row): array
     {
         $rate = (float) ($row['rate'] ?? 1);
@@ -145,7 +153,7 @@ class Currency
      * 4) 任意其它货币直配价 → 跨汇率换算（兼容旧数据：切换默认货币后原价仍可展示）
      * 均无 → null（调用方不得以 0 元下单）
      *
-     * @param  array|Plan|null  $plan  Plan 模型或 prices 数组
+     * @param  array<string, mixed>|Plan|null  $plan  Plan 模型或 prices 数组
      */
     public static function planPrice($plan, string $currency, string $frequency): ?float
     {

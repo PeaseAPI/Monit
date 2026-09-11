@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
@@ -88,6 +90,9 @@ class User extends Authenticatable
         $this->attributes['api_key_encrypted'] = Crypt::encryptString($value);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -113,81 +118,129 @@ class User extends Authenticatable
      | 关系
      --------------------------------------------------------------------- */
 
+    /**
+     * @return HasMany<Website, $this>
+     */
     public function websites()
     {
         return $this->hasMany(Website::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return BelongsTo<Plan, $this>
+     */
     public function plan()
     {
         return $this->belongsTo(Plan::class, 'plan_id', 'plan_id');
     }
 
+    /**
+     * @return HasMany<Payment, $this>
+     */
     public function payments()
     {
         return $this->hasMany(Payment::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<Ticket, $this>
+     */
     public function tickets()
     {
         return $this->hasMany(Ticket::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<Domain, $this>
+     */
     public function domains()
     {
         return $this->hasMany(Domain::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<Team, $this>
+     */
     public function teams()
     {
         return $this->hasMany(Team::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<TeamMember, $this>
+     */
     public function teamMembers()
     {
         return $this->hasMany(TeamMember::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<InternalNotification, $this>
+     */
     public function internalNotifications()
     {
         return $this->hasMany(InternalNotification::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<AccountLog, $this>
+     */
     public function accountLogs()
     {
         return $this->hasMany(AccountLog::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<User, $this>
+     */
     public function referrals()
     {
         return $this->hasMany(User::class, 'referred_by', 'user_id');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function referredBy()
     {
         return $this->belongsTo(User::class, 'referred_by', 'user_id');
     }
 
+    /**
+     * @return HasMany<DashboardView, $this>
+     */
     public function dashboardViews()
     {
         return $this->hasMany(DashboardView::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<SeoAudit, $this>
+     */
     public function seoAudits()
     {
         return $this->hasMany(SeoAudit::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<NotificationHandler, $this>
+     */
     public function notificationHandlers()
     {
         return $this->hasMany(NotificationHandler::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<Annotation, $this>
+     */
     public function annotations()
     {
         return $this->hasMany(Annotation::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<RedeemedCode, $this>
+     */
     public function redeemedCodes()
     {
         return $this->hasMany(RedeemedCode::class, 'user_id', 'user_id');
@@ -213,9 +266,12 @@ class User extends Authenticatable
      * 1) plan_id=custom 且有用户级 plan_settings → 直接使用
      * 2) 用户级 plan_settings 非空 → 逐键覆盖套餐默认（管理员微调单个用户限额）
      * 3) 套餐表 settings → config 兜底
+     *
+     * @return array<string, mixed>
      */
     public function getPlanSettings(): array
     {
+        /** @var array<string, mixed> $userSettings */
         $userSettings = $this->plan_settings;
 
         if ($this->plan_id === 'custom' && $userSettings) {
@@ -223,6 +279,7 @@ class User extends Authenticatable
         }
 
         $plan = Plan::find($this->plan_id);
+        /** @var array<string, mixed> $base */
         $base = $plan?->settings ?? config('monit.plan_defaults');
 
         if ($userSettings) {

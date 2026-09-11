@@ -18,6 +18,9 @@ class PlanExpiringNotification extends Notification
         public string $expirationDate,
     ) {}
 
+    /**
+     * @return array<int, string>
+     */
     public function via(object $notifiable): array
     {
         return ['database', 'mail'];
@@ -34,6 +37,9 @@ class PlanExpiringNotification extends Notification
             ->action(__('msg.renew_plan'), route('account.plan'));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toDatabase(object $notifiable): array
     {
         return [

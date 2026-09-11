@@ -16,6 +16,9 @@ class ImageOptimizerStat extends Model
         'user_id', 'file_type', 'original_size', 'optimized_size', 'datetime',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [

@@ -27,16 +27,25 @@ class S3Client
         return 'https://s3.'.$this->region.'.amazonaws.com/'.$this->bucket;
     }
 
+    /**
+     * @return array{0: int, 1: string, 2: ?string}
+     */
     public function put(string $key, string $content, string $contentType = 'application/octet-stream'): array
     {
         return $this->request('PUT', $key, $content, ['Content-Type' => $contentType]);
     }
 
+    /**
+     * @return array{0: int, 1: string, 2: ?string}
+     */
     public function get(string $key): array
     {
         return $this->request('GET', $key);
     }
 
+    /**
+     * @return array{0: int, 1: string, 2: ?string}
+     */
     public function delete(string $key): array
     {
         return $this->request('DELETE', $key);
@@ -51,6 +60,10 @@ class S3Client
 
     /* ---------------- SigV4 ---------------- */
 
+    /**
+     * @param  array<string, mixed>  $headers
+     * @return array{0: int, 1: string, 2: ?string}
+     */
     protected function request(string $method, string $key, ?string $body = null, array $headers = []): array
     {
         $url = $this->baseUrl().'/'.ltrim($key, '/');

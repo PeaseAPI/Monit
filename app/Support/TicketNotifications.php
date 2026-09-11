@@ -5,7 +5,9 @@ namespace App\Support;
 use App\Mail\TicketSubmittedToAdmin;
 use App\Mail\TicketUserRepliedToAdmin;
 use App\Models\Ticket;
+use App\Models\TicketReply;
 use App\Models\User;
+use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -19,11 +21,17 @@ class TicketNotifications
         self::toAdmins(new TicketSubmittedToAdmin($ticket, $message));
     }
 
+    /**
+     * @param  TicketReply  $reply
+     */
     public static function notifyAdminsTicketReplied(Ticket $ticket, $reply): void
     {
         self::toAdmins(new TicketUserRepliedToAdmin($ticket, $reply));
     }
 
+    /**
+     * @param  Mailable  $mailable
+     */
     protected static function toAdmins($mailable): void
     {
         $custom = trim((string) Settings::get('tickets.notification_email', ''));

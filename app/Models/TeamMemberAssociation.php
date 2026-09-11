@@ -21,6 +21,9 @@ class TeamMemberAssociation extends Model
         'datetime',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -29,12 +32,18 @@ class TeamMemberAssociation extends Model
     }
 
     /** @return BelongsTo<Website, $this> */
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website(): BelongsTo
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');
     }
 
     /** @return BelongsTo<TeamMember, $this> */
+    /**
+     * @return BelongsTo<TeamMember, $this>
+     */
     public function member(): BelongsTo
     {
         return $this->belongsTo(TeamMember::class, 'team_member_id', 'team_member_id');

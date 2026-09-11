@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HeatmapSnapshot extends Model
 {
@@ -16,6 +17,9 @@ class HeatmapSnapshot extends Model
         'heatmap_id', 'website_id', 'type', 'data', 'date',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -23,6 +27,9 @@ class HeatmapSnapshot extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Heatmap, $this>
+     */
     public function heatmap()
     {
         return $this->belongsTo(Heatmap::class, 'heatmap_id', 'heatmap_id');

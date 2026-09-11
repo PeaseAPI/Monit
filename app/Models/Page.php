@@ -17,6 +17,9 @@ class Page extends Model
         'image', 'type', 'position', 'order', 'is_published', 'datetime',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [

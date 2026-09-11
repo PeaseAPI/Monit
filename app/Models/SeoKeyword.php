@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -20,6 +22,9 @@ class SeoKeyword extends Model
         'last_position', 'previous_position', 'best_position', 'last_checked_at',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -33,11 +38,17 @@ class SeoKeyword extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return HasMany<SeoKeywordRank, $this>
+     */
     public function ranks()
     {
         return $this->hasMany(SeoKeywordRank::class, 'seo_keyword_id', 'seo_keyword_id');

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Heatmap extends Model
@@ -19,6 +20,9 @@ class Heatmap extends Model
         'is_enabled', 'datetime', 'last_datetime',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -27,12 +31,18 @@ class Heatmap extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Website, $this>
+     */
     public function website()
     {
         return $this->belongsTo(Website::class, 'website_id', 'website_id');
     }
 
     /** @return HasMany<HeatmapSnapshot, $this> */
+    /**
+     * @return HasMany<HeatmapSnapshot, $this>
+     */
     public function snapshots(): HasMany
     {
         return $this->hasMany(HeatmapSnapshot::class, 'heatmap_id', 'heatmap_id');
@@ -40,6 +50,8 @@ class Heatmap extends Model
 
     /**
      * 三端（desktop / tablet / mobile）已采集的 snapshot_id 列表
+     *
+     * @return list<int>
      */
     public function snapshotIds(): array
     {
@@ -50,12 +62,18 @@ class Heatmap extends Model
         ]));
     }
 
+    /**
+     * @return mixed
+     */
     public function clicks()
     {
         return HeatmapSnapshotClick::where('website_id', $this->website_id)
             ->whereIn('snapshot_id', $this->snapshotIds());
     }
 
+    /**
+     * @return mixed
+     */
     public function scrolls()
     {
         return HeatmapSnapshotScroll::where('website_id', $this->website_id)

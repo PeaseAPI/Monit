@@ -44,6 +44,9 @@ class ProductionSeeder extends Seeder
     }
 
     /** @return array<int, array<string, mixed>> */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     protected function plans(): array
     {
         return [
@@ -140,6 +143,9 @@ class ProductionSeeder extends Seeder
     }
 
     /** @return array<int, array<string, mixed>> */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     protected function taxes(): array
     {
         $now = now();

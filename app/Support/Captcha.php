@@ -147,6 +147,8 @@ class Captcha
      * 请求中提取验证 token（按供应商字段名）
      *
      * geetest：三字段打包为 JSON 字符串（verify 再解码）
+     *
+     * @param  array<string, mixed>  $input
      */
     public static function tokenFrom(array $input): ?string
     {
@@ -175,6 +177,8 @@ class Captcha
      * Geetest v3 注册负载（GET /captcha/geetest/register）：
      * 服务端预注册 challenge 并以私钥加盐（md5），前端 initGeetest 直用；
      * 注册接口不可达时返回 offline=true 降级负载（fail-back 模式）。
+     *
+     * @return array<string, mixed>
      */
     public static function geetestRegisterPayload(): array
     {

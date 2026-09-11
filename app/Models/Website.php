@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
 
 class Website extends Model
@@ -48,6 +50,9 @@ class Website extends Model
         'seo_avg_score', 'seo_total_audits',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -76,61 +81,97 @@ class Website extends Model
      | 关系
      --------------------------------------------------------------------- */
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<WebsiteVisitor, $this>
+     */
     public function visitors()
     {
         return $this->hasMany(WebsiteVisitor::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return HasMany<VisitorSession, $this>
+     */
     public function sessions()
     {
         return $this->hasMany(VisitorSession::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return HasMany<SessionEvent, $this>
+     */
     public function events()
     {
         return $this->hasMany(SessionEvent::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return HasMany<LightweightEvent, $this>
+     */
     public function lightweightEvents()
     {
         return $this->hasMany(LightweightEvent::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return HasMany<WebsiteGoal, $this>
+     */
     public function goals()
     {
         return $this->hasMany(WebsiteGoal::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return HasMany<OutboundClick, $this>
+     */
     public function outboundClicks()
     {
         return $this->hasMany(OutboundClick::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return HasMany<Annotation, $this>
+     */
     public function annotations()
     {
         return $this->hasMany(Annotation::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return HasMany<Heatmap, $this>
+     */
     public function heatmaps()
     {
         return $this->hasMany(Heatmap::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return HasMany<DashboardView, $this>
+     */
     public function dashboardViews()
     {
         return $this->hasMany(DashboardView::class, 'website_id', 'website_id');
     }
 
+    /**
+     * @return HasMany<Domain, $this>
+     */
     public function domains()
     {
         return $this->hasMany(Domain::class, 'user_id', 'user_id');
     }
 
+    /**
+     * @return HasMany<SeoAudit, $this>
+     */
     public function seoAudits()
     {
         return $this->hasMany(SeoAudit::class, 'website_id', 'website_id');
@@ -161,6 +202,11 @@ class Website extends Model
 
     /**
      * 获取排除 IP 列表（逗号分隔 -> 数组）
+     *
+     * @return array<string, mixed>
+     */
+    /**
+     * @return list<string>
      */
     public function excludedIpsList(): array
     {

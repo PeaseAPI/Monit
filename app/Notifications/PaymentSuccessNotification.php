@@ -20,6 +20,9 @@ class PaymentSuccessNotification extends Notification
         public ?string $frequency = null,
     ) {}
 
+    /**
+     * @return array<int, string>
+     */
     public function via(object $notifiable): array
     {
         return ['database', 'mail'];
@@ -37,6 +40,9 @@ class PaymentSuccessNotification extends Notification
             ->action(__('msg.view_plan'), route('account.plan'));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toDatabase(object $notifiable): array
     {
         return [

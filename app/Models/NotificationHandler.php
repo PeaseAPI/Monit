@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * SEO 事件通知处理器
@@ -21,6 +22,9 @@ class NotificationHandler extends Model
         'user_id', 'name', 'type', 'settings', 'is_enabled', 'last_sent_at',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
@@ -30,6 +34,9 @@ class NotificationHandler extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');

@@ -15,6 +15,9 @@ class Tax extends Model
         'countries', 'datetime',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function casts(): array
     {
         return [
