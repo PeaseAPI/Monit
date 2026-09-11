@@ -12,6 +12,7 @@ use App\Models\Broadcast;
 use App\Models\User;
 use App\Models\Website;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
@@ -146,7 +147,7 @@ class MailLifecycleTest extends TestCase
             'password_confirmation' => 'newpassword123',
         ])->assertRedirect(route('login'));
 
-        $this->assertTrue(password_verify('newpassword123', $user->refresh()->password));
+        $this->assertTrue(password_verify('newpassword123', Typed::string($user->refresh()->password)));
         $this->assertNull($user->refresh()->lost_password_code);
     }
 

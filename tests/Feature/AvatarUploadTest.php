@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
@@ -62,7 +65,11 @@ class AvatarUploadTest extends TestCase
         return new UploadedFile($tmp, $clientName, 'image/gif', null, true);
     }
 
-    private function postProfile(User $user, array $payload)
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return TestResponse<Response>
+     */
+    private function postProfile(User $user, array $payload): TestResponse
     {
         return $this->actingAs($user)->post('/account', array_merge([
             '_method' => 'PUT',
@@ -163,15 +170,15 @@ class AvatarUploadTest extends TestCase
         $this->postProfile($user, [
             'avatar' => UploadedFile::fake()->image('a.png', 8, 8),
         ])->assertRedirect();
-        $firstPath = public_path(ltrim($this->freshModel($user)->avatar, '/'));
+        $firstPath = public_path(ltrim((string) $this->freshModel($user)->avatar, '/'));
 
         // 无 sleep：同一秒内连续上传，历史上 time() 文件名会互相覆盖
         $this->postProfile($user, [
             'avatar' => UploadedFile::fake()->image('b.png', 8, 8),
         ])->assertRedirect();
 
-        $user = $user->fresh();
-        $secondPath = public_path(ltrim($user->avatar, '/'));
+        $user = $this->freshModel($user);
+        $secondPath = public_path(ltrim(Typed::string($user->avatar), '/'));
         $this->written[] = $secondPath;
 
         $this->assertNotEquals($firstPath, $secondPath, '随机文件名：同秒上传不得重名');
@@ -186,7 +193,7 @@ class AvatarUploadTest extends TestCase
         $this->postProfile($user, [
             'avatar' => UploadedFile::fake()->image('x.png', 8, 8),
         ])->assertRedirect();
-        $path = public_path(ltrim($this->freshModel($user)->avatar, '/'));
+        $path = public_path(ltrim((string) $this->freshModel($user)->avatar, '/'));
         $this->assertFileExists($path);
 
         $this->postProfile($user, ['avatar_remove' => '1'])->assertRedirect();

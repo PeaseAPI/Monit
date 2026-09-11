@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property array<string, mixed> $settings
  * @property array<string, mixed> $additional_settings
  * @property array<string, mixed> $translations
- * @property array<int, string> $taxes_ids
+ * @property array<int, int> $taxes_ids
  * @property int $order
  * @property int $trial_days
  * @property bool $is_enabled

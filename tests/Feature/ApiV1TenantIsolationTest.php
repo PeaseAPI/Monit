@@ -25,8 +25,6 @@ class ApiV1TenantIsolationTest extends TestCase
 
     private User $owner;
 
-    private User $attacker;
-
     private Website $target;
 
     protected function setUp(): void
@@ -38,7 +36,7 @@ class ApiV1TenantIsolationTest extends TestCase
             'password' => bcrypt('x'), 'status' => 1, 'plan_id' => 'free',
             'api_key' => 'key_owner_15',
         ]);
-        $this->attacker = User::create([
+        User::create([
             'name' => 'Attacker', 'email' => 'attacker@example.com',
             'password' => bcrypt('x'), 'status' => 1, 'plan_id' => 'free',
             'api_key' => 'key_attacker_15',

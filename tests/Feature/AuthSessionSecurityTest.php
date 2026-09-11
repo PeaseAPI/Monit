@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Services\TotpService;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -186,7 +188,9 @@ class AuthSessionSecurityTest extends TestCase
             ->get('/social-login/callback/github?code=abc&state=state123');
 
         $this->assertAuthenticated();
-        $this->assertSame('attacker-own@test.dev', request()->user()->email, '必须选取 verified email，跳过未验证的 primary');
+        $authUser = request()->user();
+        $this->assertNotNull($authUser);
+        $this->assertSame('attacker-own@test.dev', $authUser->email, '必须选取 verified email，跳过未验证的 primary');
     }
 
     public function test_discord_unverified_email_rejected(): void
@@ -227,6 +231,9 @@ class AuthSessionSecurityTest extends TestCase
         ]);
     }
 
+    /**
+     * @return TestResponse<Response>
+     */
     private function qqCallback(string $openid): TestResponse
     {
         // QQ 提供商配置（getChineseProviderConfig 现要求非空 id/secret）
@@ -237,7 +244,7 @@ class AuthSessionSecurityTest extends TestCase
 
         // 先走 redirect 拿到写入 session 的 state
         $this->get('/social-login/qq');
-        $state = session('oauth_state_qq');
+        $state = Typed::string(session('oauth_state_qq'));
 
         return $this->get("/social-login/callback/qq?code=abc&state={$state}");
     }

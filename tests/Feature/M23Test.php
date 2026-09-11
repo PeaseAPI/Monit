@@ -36,14 +36,14 @@ class M23Test extends TestCase
     /** 语言文件完整性：6 种语言键集与 en 完全一致且可解析 */
     public function test_language_files_complete(): void
     {
-        $en = json_decode((string) file_get_contents(lang_path('en.json')), true);
+        $en = $this->decodeJson((string) file_get_contents(lang_path('en.json')));
 
         foreach (['zh_CN', 'zh_TW', 'ru', 'be', 'ms'] as $locale) {
             $path = lang_path($locale.'.json');
             $this->assertFileExists($path, $locale.'.json 缺失');
 
-            $data = json_decode((string) file_get_contents($path), true);
-            $this->assertNotNull($data, $locale.'.json 解析失败');
+            $data = $this->decodeJson((string) file_get_contents($path));
+
             $this->assertSame(array_keys($en), array_keys($data), $locale.' 键集与 en 不一致');
             $this->assertNotEmpty($data['landing.hero_title'], $locale.' landing.hero_title 为空');
         }
@@ -127,8 +127,10 @@ class M23Test extends TestCase
     /** 跟踪优化：pixel 端点 204 + 无 Session Cookie（无中间件路由组） */
     public function test_pixel_endpoint_has_no_session_overhead(): void
     {
+        $owner = User::first();
+        $this->assertNotNull($owner);
         Website::create([
-            'user_id' => User::first()->user_id,
+            'user_id' => $owner->user_id,
             'pixel_key' => 'px_m23', 'name' => 'M23 Site',
             'scheme' => 'https', 'host' => 'm23.test',
             'tracking_type' => 'advanced', 'is_enabled' => true,
@@ -147,8 +149,10 @@ class M23Test extends TestCase
     /** Website 查询缓存失效钩子：更新/删除站点后缓存被清除 */
     public function test_website_cache_invalidated_on_save(): void
     {
+        $owner = User::first();
+        $this->assertNotNull($owner);
         $website = Website::create([
-            'user_id' => User::first()->user_id,
+            'user_id' => $owner->user_id,
             'pixel_key' => 'px_cache', 'name' => 'Cache Site',
             'scheme' => 'https', 'host' => 'cache.test',
             'tracking_type' => 'lightweight', 'is_enabled' => true,

@@ -162,7 +162,7 @@ class PaymentGatewaySettingsTest extends TestCase
         $writer->write('PADDLE_PUBLIC_KEY', $pem);
 
         // 写入后仍是单行记录（\n 字面转义）
-        $this->assertSame(1, substr_count(file_get_contents($this->tmpEnv), 'PADDLE_PUBLIC_KEY='));
+        $this->assertSame(1, substr_count((string) file_get_contents($this->tmpEnv), 'PADDLE_PUBLIC_KEY='));
         $this->assertSame($pem, $writer->read('PADDLE_PUBLIC_KEY'));
 
         // 覆盖多行旧值不残留
@@ -197,7 +197,7 @@ class PaymentGatewaySettingsTest extends TestCase
         // 尝试用引号闭合 + 换行注入新 env 行
         $writer->write('STRIPE_SECRET', "v\"\nEVIL_KEY=pwned");
 
-        $content = file_get_contents($this->tmpEnv);
+        $content = (string) file_get_contents($this->tmpEnv);
         // EVIL_KEY 不得作为独立 env 行出现（换行已转义）
         $this->assertSame(0, preg_match('/^EVIL_KEY=/m', $content));
         $this->assertSame("v\"\nEVIL_KEY=pwned", $writer->read('STRIPE_SECRET'));
@@ -210,7 +210,7 @@ class PaymentGatewaySettingsTest extends TestCase
 
         $writer->write('NEW_KEY', 'v');
 
-        $content = file_get_contents($this->tmpEnv);
+        $content = (string) file_get_contents($this->tmpEnv);
         // 尾部连续空行收敛为恰好一个分隔
         $this->assertMatchesRegularExpression('/A=1\n\nNEW_KEY=v\n$/', $content);
     }

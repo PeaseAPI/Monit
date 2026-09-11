@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
@@ -21,6 +22,9 @@ class SpotlightSearchTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @return array{0: User, 1: Website}
+     */
     private function seedUserAndWebsite(string $email, string $host): array
     {
         $user = User::create([
@@ -71,10 +75,11 @@ class SpotlightSearchTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['results']);
 
-        $types = collect($res->json('results'))->pluck('type');
+        $results = Typed::arr($res->json('results'));
+        $types = collect($results)->pluck('type');
         $this->assertContains('website', $types);
 
-        $hit = collect($res->json('results'))->firstWhere('type', 'website');
+        $hit = Typed::arr(collect($results)->firstWhere('type', 'website'));
         $this->assertSame($website->website_id, $hit['id']);
         $this->assertSame('findme.test', $hit['subtitle']);
     }
@@ -89,10 +94,11 @@ class SpotlightSearchTest extends TestCase
             ->getJson(route('spotlight.search', ['q' => 'unique-checkout']))
             ->assertOk();
 
-        $types = collect($res->json('results'))->pluck('type');
+        $results = Typed::arr($res->json('results'));
+        $types = collect($results)->pluck('type');
         $this->assertContains('session', $types);
 
-        $hit = collect($res->json('results'))->firstWhere('type', 'session');
+        $hit = Typed::arr(collect($results)->firstWhere('type', 'session'));
         $this->assertSame(
             route('stats.replays', $website),
             $hit['url'],
@@ -111,7 +117,8 @@ class SpotlightSearchTest extends TestCase
             ->getJson(route('spotlight.search', ['q' => 'unique-checkout']))
             ->assertOk();
 
-        $hit = collect($res->json('results'))->firstWhere('type', 'session');
+        $results = Typed::arr($res->json('results'));
+        $hit = Typed::arr(collect($results)->firstWhere('type', 'session'));
         $this->assertSame(
             route('stats.replays.show', [$website, $replay->replay_id]),
             $hit['url'],
@@ -131,7 +138,7 @@ class SpotlightSearchTest extends TestCase
             ->getJson(route('spotlight.search', ['q' => 'secret-site']))
             ->assertOk();
 
-        $types = collect($res->json('results'))->pluck('type');
+        $types = collect(Typed::arr($res->json('results')))->pluck('type');
         $this->assertNotContains('website', $types);
     }
 
@@ -146,7 +153,7 @@ class SpotlightSearchTest extends TestCase
             ->getJson(route('spotlight.search', ['q' => '仪表']))
             ->assertOk();
 
-        $this->assertContains('nav', collect($res->json('results'))->pluck('type'));
+        $this->assertContains('nav', collect(Typed::arr($res->json('results')))->pluck('type'));
     }
 
     public function test_spotlight_requires_two_chars(): void

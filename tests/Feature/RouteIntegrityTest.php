@@ -21,8 +21,8 @@ class RouteIntegrityTest extends TestCase
 
     public function test_referenced_route_names_are_registered(): void
     {
-        $registered = collect(Route::getRoutes())
-            ->map(fn ($r) => $r->getName())
+        $registered = collect(Route::getRoutes()->getRoutes())
+            ->map(fn (\Illuminate\Routing\Route $r) => $r->getName())
             ->filter()
             ->all();
 
@@ -52,7 +52,7 @@ class RouteIntegrityTest extends TestCase
 
     public function test_referenced_lang_keys_exist(): void
     {
-        $keys = array_keys(json_decode((string) file_get_contents(lang_path('en.json')), true));
+        $keys = array_keys($this->decodeJson((string) file_get_contents(lang_path('en.json'))));
 
         $used = [];
 

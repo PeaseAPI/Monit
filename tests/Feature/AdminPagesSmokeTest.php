@@ -24,7 +24,7 @@ class AdminPagesSmokeTest extends TestCase
         ]));
 
         $checked = 0;
-        foreach (Route::getRoutes() as $route) {
+        foreach (Route::getRoutes()->getRoutes() as $route) {
             if (! str_starts_with($route->getName() ?? '', 'admin.')) {
                 continue;
             }

@@ -6,7 +6,9 @@ use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
 use App\Services\Payment\PaymentService;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
@@ -50,8 +52,12 @@ class PaymentAmountTamperTest extends TestCase
         config()->set('services.yookassa.secret_key', 'yoo_secret');
 
         $res = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
-        openssl_pkey_export($res, $this->paddlePrivateKey);
-        config()->set('services.paddle.public_key', openssl_pkey_get_details($res)['key']);
+        $this->assertNotFalse($res);
+        openssl_pkey_export($res, $paddlePrivate);
+        $this->paddlePrivateKey = Typed::string($paddlePrivate);
+        $paddleDetails = openssl_pkey_get_details($res);
+        $this->assertNotFalse($paddleDetails);
+        config()->set('services.paddle.public_key', Typed::string($paddleDetails['key']));
 
         $this->user = User::create([
             'name' => 'Tamper Tester', 'email' => 'tamper@example.com',
@@ -89,7 +95,10 @@ class PaymentAmountTamperTest extends TestCase
         $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
-    private function postRazorpay(int $minorAmount, string $currency)
+    /**
+     * @return TestResponse<Response>
+     */
+    private function postRazorpay(int $minorAmount, string $currency): TestResponse
     {
         $payload = [
             'event' => 'payment.captured',
@@ -130,7 +139,10 @@ class PaymentAmountTamperTest extends TestCase
         $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
-    private function postPaystack(int $minorAmount, string $currency)
+    /**
+     * @return TestResponse<Response>
+     */
+    private function postPaystack(int $minorAmount, string $currency): TestResponse
     {
         $payload = [
             'event' => 'charge.success',
@@ -325,6 +337,9 @@ class PaymentAmountTamperTest extends TestCase
         $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
+    /**
+     * @return TestResponse<Response>
+     */
     private function postPaddleClassic(string $gross, string $currency): TestResponse
     {
         $payload = [
@@ -337,7 +352,7 @@ class PaymentAmountTamperTest extends TestCase
 
         ksort($payload);
         openssl_sign(http_build_query($payload), $signature, $this->paddlePrivateKey, OPENSSL_ALGO_SHA256);
-        $payload['p_signature'] = base64_encode($signature);
+        $payload['p_signature'] = base64_encode(Typed::string($signature));
 
         return $this->postJson('/webhooks/paddle', $payload);
     }
@@ -354,7 +369,7 @@ class PaymentAmountTamperTest extends TestCase
             'object' => ['id' => 'yoo_1', 'metadata' => ['payment_id' => (string) $this->payment->payment_id]],
         ])->assertOk();
 
-        $this->assertSame(1, (int) $this->freshModel($this->payment)->status);
+        $this->assertSame(1, $this->freshModel($this->payment)->status);
     }
 
     #[Test]
@@ -367,7 +382,7 @@ class PaymentAmountTamperTest extends TestCase
             'object' => ['id' => 'yoo_1', 'metadata' => ['payment_id' => (string) $this->payment->payment_id]],
         ])->assertOk();
 
-        $this->assertSame(0, (int) $this->freshModel($this->payment)->status);
+        $this->assertSame(0, $this->freshModel($this->payment)->status);
     }
 
     private function fakeYookassaLookup(string $value, string $currency): void
@@ -426,7 +441,7 @@ class PaymentAmountTamperTest extends TestCase
                 'amount_total' => 100, 'currency' => 'usd',
             ]],
         ];
-        $body = json_encode($payload);
+        $body = Typed::string(json_encode($payload));
         $timestamp = time();
         $signature = hash_hmac('sha256', "{$timestamp}.{$body}", 'whsec_c19');
 
@@ -435,7 +450,7 @@ class PaymentAmountTamperTest extends TestCase
             'Stripe-Signature' => "t={$timestamp},v1={$signature}",
         ]), $body)->assertOk();
 
-        $this->assertSame(0, (int) $this->freshModel($payment)->status);
+        $this->assertSame(0, $this->freshModel($payment)->status);
     }
 
     #[Test]
@@ -467,7 +482,7 @@ class PaymentAmountTamperTest extends TestCase
                 'amount_total' => 999, 'currency' => 'eur',
             ]],
         ];
-        $body = json_encode($payload);
+        $body = Typed::string(json_encode($payload));
         $timestamp = time();
         $signature = hash_hmac('sha256', "{$timestamp}.{$body}", 'whsec_c19');
 
@@ -476,7 +491,7 @@ class PaymentAmountTamperTest extends TestCase
             'Stripe-Signature' => "t={$timestamp},v1={$signature}",
         ]), $body)->assertOk();
 
-        $this->assertSame(0, (int) $this->freshModel($payment)->status);
+        $this->assertSame(0, $this->freshModel($payment)->status);
     }
 
     /* ---------------- Mollie（amount.value：主单位，API 回查） ---------------- */
@@ -620,7 +635,7 @@ class PaymentAmountTamperTest extends TestCase
                 'amount_total' => 100, 'currency' => 'jpy',
             ]],
         ];
-        $body = json_encode($payload);
+        $body = Typed::string(json_encode($payload));
         $timestamp = time();
         $signature = hash_hmac('sha256', "{$timestamp}.{$body}", 'whsec_jpy');
 
@@ -629,6 +644,6 @@ class PaymentAmountTamperTest extends TestCase
             'Stripe-Signature' => "t={$timestamp},v1={$signature}",
         ]), $body)->assertOk();
 
-        $this->assertSame(0, (int) $this->freshModel($payment)->status);
+        $this->assertSame(0, $this->freshModel($payment)->status);
     }
 }

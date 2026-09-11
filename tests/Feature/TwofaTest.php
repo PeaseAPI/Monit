@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Services\TotpService;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -60,7 +61,7 @@ class TwofaTest extends TestCase
     public function test_login_replays_same_code_is_rejected(): void
     {
         $user = $this->twofaUser();
-        $code = TotpService::code($user->twofa_token, intdiv(time(), TotpService::PERIOD));
+        $code = TotpService::code(Typed::string($user->twofa_token), intdiv(time(), TotpService::PERIOD));
 
         // 第一次登录：密码 → 2FA 码 → 成功
         $this->post('/login', ['email' => $user->email, 'password' => 'secret123'])
@@ -80,7 +81,7 @@ class TwofaTest extends TestCase
     public function test_twofa_disable_replays_same_code_is_rejected(): void
     {
         $user = $this->twofaUser();
-        $secret = (string) $user->getRawOriginal('twofa_token'); // disable 置空前留存
+        $secret = Typed::string($user->getRawOriginal('twofa_token')); // disable 置空前留存
         $code = TotpService::code($secret, intdiv(time(), TotpService::PERIOD));
 
         // 正常关闭：密码 + 码 → 成功

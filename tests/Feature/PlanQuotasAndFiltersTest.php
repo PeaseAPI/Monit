@@ -278,6 +278,9 @@ class PlanQuotasAndFiltersTest extends TestCase
 
     public function test_sessions_replays_session_id_is_unique(): void
     {
+        // 本用例验证 persistReplayChunk 在唯一键冲突时由异常捕获兜底，不抛出即通过
+        $this->expectNotToPerformAssertions();
+
         // session_id 唯一索引：并发首建防重复的兜底（persistReplayChunk 捕获
         // UniqueConstraintViolationException 后重跑转追加分支，chunk 不丢）
         $user = User::create([
@@ -317,7 +320,7 @@ class PlanQuotasAndFiltersTest extends TestCase
             SessionReplay::create($replay);
             $this->fail('sessions_replays.session_id 唯一索引缺失：并发首建会产生重复回放行');
         } catch (UniqueConstraintViolationException) {
-            $this->assertTrue(true);
+
         }
     }
 
@@ -514,7 +517,6 @@ class PlanQuotasAndFiltersTest extends TestCase
             'current_month_events_children' => 500,
             'current_month_sessions_replays' => 100,
         ]);
-        $this->assertNotNull($website);
 
         DB::table('settings')->updateOrInsert(['key' => 'email_notices_is_enabled'], ['value' => true]);
 
@@ -576,11 +578,11 @@ class PlanQuotasAndFiltersTest extends TestCase
 
         // 显式 0 = 禁用语义不被本次修复破坏
         $user->forceFill(['plan_settings' => ['annotations_limit' => 0]])->save();
-        $this->assertFalse($service->checkLimit($user->fresh(), 'annotations_limit'));
+        $this->assertFalse($service->checkLimit($this->freshModel($user), 'annotations_limit'));
 
         // 显式 -1 = 不限
         $user->forceFill(['plan_settings' => ['annotations_limit' => -1]])->save();
-        $this->assertTrue($service->checkLimit($user->fresh(), 'annotations_limit'));
+        $this->assertTrue($service->checkLimit($this->freshModel($user), 'annotations_limit'));
     }
 
     public function test_annotation_create_allowed_when_limit_key_missing(): void

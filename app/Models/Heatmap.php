@@ -7,6 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $heatmap_id
+ * @property int $website_id
+ * @property int|null $user_id
+ * @property string $path
+ * @property string|null $name
+ * @property int|null $snapshot_id_desktop
+ * @property int|null $snapshot_id_tablet
+ * @property int|null $snapshot_id_mobile
+ * @property int|null $desktop_size
+ * @property int|null $tablet_size
+ * @property int|null $mobile_size
+ * @property bool $is_enabled
+ * @property string|null $datetime
+ * @property string|null $last_datetime
+ */
 class Heatmap extends Model
 {
     protected $table = 'websites_heatmaps';

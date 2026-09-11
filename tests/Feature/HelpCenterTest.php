@@ -55,8 +55,6 @@ class HelpCenterTest extends TestCase
         ])->assertSessionHas('success');
 
         $article = HelpArticle::where('title', '如何安装统计代码')->firstOrFail();
-        $this->assertNotNull($article);
-        $this->assertNotNull($article->url);
 
         // 前台帮助中心展示分类与文章
         $this->get('/help')
@@ -95,7 +93,7 @@ class HelpCenterTest extends TestCase
     public function test_admin_category_update_and_delete(): void
     {
         $admin = $this->makeUser(['type' => 1, 'email' => 'hc-admin3@help.test']);
-        $this->assertNotNull($admin);
+
         $category = HelpCategory::create([
             'user_id' => $admin->user_id, 'title' => '旧分类', 'url' => 'old-cat', 'order' => 0, 'datetime' => now(),
         ]);

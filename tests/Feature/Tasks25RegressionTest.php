@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\GeoIp;
 use App\Services\Sms\SmsService;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
@@ -109,7 +110,7 @@ class Tasks25RegressionTest extends TestCase
         // 验证 /seo/analyze 路由已注册且受 seo.feature:audits 控制
         $route = Route::getRoutes()->getByName('seo.analyze');
         $this->assertNotNull($route, 'seo.analyze route should exist');
-        $this->assertStringContainsString('SeoAuditController@analyze', ltrim($route->getAction('uses'), '\\'));
+        $this->assertStringContainsString('SeoAuditController@analyze', ltrim(Typed::string($route->getAction('uses')), '\\'));
     }
 
     #[Test]
@@ -218,7 +219,7 @@ class Tasks25RegressionTest extends TestCase
     public function item_9_domain_store_calls_whois_immediately(): void
     {
         $source = (string) file_get_contents(
-            (new \ReflectionMethod(DomainController::class, 'store'))->getFileName()
+            (string) (new \ReflectionMethod(DomainController::class, 'store'))->getFileName()
         );
 
         $this->assertStringContainsString('DomainMonitor', $source);
@@ -307,7 +308,7 @@ class Tasks25RegressionTest extends TestCase
         ]);
 
         SmsService::send('13400134000', 'phone_bind');
-        $code = (string) Cache::get('monit.sms.phone_bind.'.SmsService::normalizePhone('13400134000'));
+        $code = Typed::string(Cache::get('monit.sms.phone_bind.'.SmsService::normalizePhone('13400134000')));
 
         $this->actingAs($user)
             ->post('/account/phone/bind', [

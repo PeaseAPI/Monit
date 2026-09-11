@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\LightweightEvent;
 use App\Models\User;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
@@ -58,7 +59,7 @@ class VisitorsJourneyTest extends TestCase
         $payload = [
             'type' => 'pageview',
             'visitor_uuid' => $this->visitorUuid,
-            'data' => array_filter(['url' => $url, 'referrer' => $referrer]),
+            'data' => array_filter(['url' => $url, 'referrer' => $referrer], fn ($value) => (bool) $value),
         ];
 
         $this->postJson("/pixel-track/{$this->website->pixel_key}", ['data' => json_encode($payload)], [
@@ -73,8 +74,9 @@ class VisitorsJourneyTest extends TestCase
         $this->assertSame(1, LightweightEvent::count());
 
         $event = LightweightEvent::query()->first();
+        $this->assertNotNull($event);
         $binary = $event->getRawOriginal('visitor_uuid');
-        $hex = bin2hex(is_resource($binary) ? stream_get_contents($binary) : (string) $binary);
+        $hex = bin2hex(is_resource($binary) ? stream_get_contents($binary) : Typed::string($binary));
 
         $this->assertSame(str_replace('-', '', $this->visitorUuid), strtolower($hex));
     }
@@ -90,7 +92,7 @@ class VisitorsJourneyTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString(substr(str_replace('-', '', $this->visitorUuid), 0, 8), $html);
+        $this->assertStringContainsString(substr(str_replace('-', '', $this->visitorUuid), 0, 8), (string) $html);
     }
 
     public function test_visitor_detail_shows_journey_timeline(): void
@@ -107,10 +109,10 @@ class VisitorsJourneyTest extends TestCase
             ->getContent();
 
         // 画像 + 时间线 + 进入/退出路径
-        $this->assertStringContainsString('macOS', $html);
-        $this->assertStringContainsString('/landing', $html);
-        $this->assertStringContainsString('/exit', $html);
-        $this->assertStringContainsString('www.bing.com', $html);
+        $this->assertStringContainsString('macOS', (string) $html);
+        $this->assertStringContainsString('/landing', (string) $html);
+        $this->assertStringContainsString('/exit', (string) $html);
+        $this->assertStringContainsString('www.bing.com', (string) $html);
     }
 
     public function test_visitor_detail_rejects_unknown_uuid(): void

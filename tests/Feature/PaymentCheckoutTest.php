@@ -55,6 +55,7 @@ class PaymentCheckoutTest extends TestCase
         $this->makePlan();
         $user = $this->makeUser();
 
+        $this->assertIsArray(config('monit.payment.supported_processors'));
         $this->assertCount(22, config('monit.payment.supported_processors'));
         $this->assertSame(
             config('monit.payment.supported_processors'),

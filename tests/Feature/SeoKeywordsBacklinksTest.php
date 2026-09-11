@@ -123,8 +123,8 @@ class SeoKeywordsBacklinksTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString('rank magic word', $html);
-        $this->assertStringContainsString('seo-target.test', $html);
+        $this->assertStringContainsString('rank magic word', (string) $html);
+        $this->assertStringContainsString('seo-target.test', (string) $html);
     }
 
     public function test_keyword_store_rejects_duplicates(): void
@@ -213,8 +213,8 @@ class SeoKeywordsBacklinksTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString('blog-one.test/post', $html);
-        $this->assertStringContainsString('Dofollow', $html);
+        $this->assertStringContainsString('blog-one.test/post', (string) $html);
+        $this->assertStringContainsString('Dofollow', (string) $html);
     }
 
     /** 第十二轮：source_url 协议白名单——javascript:（FILTER_VALIDATE_URL 合法但可执行）不得入库 */
@@ -259,7 +259,7 @@ class SeoKeywordsBacklinksTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringNotContainsString('href="javascript:', $html, '存量恶意协议数据不得渲染为可点击 href');
-        $this->assertStringContainsString('href="#"', $html);
+        $this->assertStringNotContainsString('href="javascript:', (string) $html, '存量恶意协议数据不得渲染为可点击 href');
+        $this->assertStringContainsString('href="#"', (string) $html);
     }
 }

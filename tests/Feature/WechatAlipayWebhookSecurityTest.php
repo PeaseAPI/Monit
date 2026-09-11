@@ -5,8 +5,11 @@ namespace Tests\Feature;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
@@ -65,51 +68,69 @@ class WechatAlipayWebhookSecurityTest extends TestCase
 
     /* ---------------- 签名构造（复刻处理器官方算法） ---------------- */
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     protected function wechatSign(array $data, string $key): string
     {
         ksort($data);
         $parts = [];
         foreach ($data as $k => $v) {
             if ($k !== 'sign' && $v !== '' && $v !== null) {
-                $parts[] = $k.'='.$v;
+                $parts[] = $k.'='.Typed::string($v);
             }
         }
 
         return strtoupper(md5(implode('&', $parts).'&key='.$key));
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     protected function wechatXml(array $data): string
     {
         $xml = '<xml>';
         foreach ($data as $k => $v) {
-            $xml .= '<'.$k.'>'.$v.'</'.$k.'>';
+            $xml .= '<'.Typed::string($k).'>'.Typed::string($v).'</'.Typed::string($k).'>';
         }
 
         return $xml.'</xml>';
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     protected function alipaySign(array $data, string $privateKey): string
     {
         ksort($data);
         $parts = [];
         foreach ($data as $k => $v) {
             if ($v !== '' && $v !== null) {
-                $parts[] = $k.'='.$v;
+                $parts[] = $k.'='.Typed::string($v);
             }
         }
         openssl_sign(implode('&', $parts), $signature, $privateKey, OPENSSL_ALGO_SHA256);
 
-        return base64_encode($signature);
+        return base64_encode(Typed::string($signature));
     }
 
+    /**
+     * @return array{0: string, 1: string}
+     */
     protected function rsaKeyPair(): array
     {
         $res = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        $this->assertNotFalse($res);
         openssl_pkey_export($res, $privateKey);
+        $details = openssl_pkey_get_details($res);
+        $this->assertNotFalse($details);
 
-        return [$privateKey, openssl_pkey_get_details($res)['key']];
+        return [Typed::string($privateKey), Typed::string($details['key'])];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function wechatCallbackData(Payment $payment, string $totalFee): array
     {
         return [
@@ -125,7 +146,11 @@ class WechatAlipayWebhookSecurityTest extends TestCase
         ];
     }
 
-    protected function postWechatXml(array $data, string $xml)
+    /**
+     * @param  array<string, mixed>  $data
+     * @return TestResponse<Response>
+     */
+    protected function postWechatXml(array $data, string $xml): TestResponse
     {
         return $this->call('POST', '/webhooks/wechatpay', [], [], [], [
             'CONTENT_TYPE' => 'text/xml',
@@ -163,7 +188,7 @@ class WechatAlipayWebhookSecurityTest extends TestCase
         $response = $this->postWechatXml($data, $this->wechatXml($data));
 
         $response->assertStatus(200);
-        $this->assertStringContainsString('FAIL', $response->getContent());
+        $this->assertStringContainsString('FAIL', (string) $response->getContent());
         $this->assertDatabaseHas('payments', ['payment_id' => $payment->payment_id, 'status' => 0]);
     }
 
@@ -182,7 +207,7 @@ class WechatAlipayWebhookSecurityTest extends TestCase
         $response = $this->postWechatXml($data, $this->wechatXml($data));
 
         $response->assertStatus(200);
-        $this->assertStringContainsString('FAIL', $response->getContent());
+        $this->assertStringContainsString('FAIL', (string) $response->getContent());
         $this->assertDatabaseHas('payments', ['payment_id' => $payment->payment_id, 'status' => 0]);
     }
 
@@ -199,7 +224,7 @@ class WechatAlipayWebhookSecurityTest extends TestCase
         $response = $this->postWechatXml($data, $this->wechatXml($data));
 
         $response->assertStatus(200);
-        $this->assertStringContainsString('SUCCESS', $response->getContent());
+        $this->assertStringContainsString('SUCCESS', (string) $response->getContent());
         $this->assertDatabaseHas('payments', ['payment_id' => $payment->payment_id, 'status' => 1]);
         $this->assertSame('pro', $this->freshModel($user)->plan_id);
     }
@@ -218,7 +243,7 @@ class WechatAlipayWebhookSecurityTest extends TestCase
             'out_trade_no' => 'monit_'.$payment->payment_id.'_120000',
             'total_amount' => '9.99',
             'trade_no' => '20240903220010000000',
-            'passback_params' => urlencode(json_encode(['payment_id' => $payment->payment_id])),
+            'passback_params' => urlencode((string) json_encode(['payment_id' => $payment->payment_id])),
             'sign' => base64_encode(Str::random(64)),
             'sign_type' => 'RSA2',
         ])->assertStatus(400);
@@ -240,9 +265,9 @@ class WechatAlipayWebhookSecurityTest extends TestCase
             'out_trade_no' => 'monit_'.$payment->payment_id.'_120000',
             'total_amount' => '0.01', // 回调仅 0.01 元，签名正确
             'trade_no' => '20240903220010000000',
-            'passback_params' => urlencode(json_encode(['payment_id' => $payment->payment_id])),
+            'passback_params' => urlencode((string) json_encode(['payment_id' => $payment->payment_id])),
         ];
-        $data['sign'] = $this->alipaySign($data, $privateKey);
+        $data['sign'] = $this->alipaySign($data, Typed::string($privateKey));
         $data['sign_type'] = 'RSA2';
 
         $response = $this->post('/webhooks/alipay', $data);
@@ -266,9 +291,9 @@ class WechatAlipayWebhookSecurityTest extends TestCase
             'out_trade_no' => 'monit_'.$payment->payment_id.'_120000',
             'total_amount' => '9.99',
             'trade_no' => '20240903220010000000',
-            'passback_params' => urlencode(json_encode(['payment_id' => $payment->payment_id])),
+            'passback_params' => urlencode((string) json_encode(['payment_id' => $payment->payment_id])),
         ];
-        $data['sign'] = $this->alipaySign($data, $privateKey);
+        $data['sign'] = $this->alipaySign($data, Typed::string($privateKey));
         $data['sign_type'] = 'RSA2';
 
         $response = $this->post('/webhooks/alipay', $data);

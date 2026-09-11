@@ -25,6 +25,9 @@ class UserCenterTest extends TestCase
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function userPages(): array
     {
         return [
@@ -65,7 +68,8 @@ class UserCenterTest extends TestCase
         ]);
 
         foreach (['stats/'.$website->website_id, 'stats/'.$website->website_id.'/goals', 'stats/'.$website->website_id.'/annotations', 'stats/'.$website->website_id.'/heatmaps', 'stats/'.$website->website_id.'/replays'] as $uri) {
-            $this->actingAs($user)->get($uri)->assertOk("GET {$uri} 应返回 200");
+            // GET {$uri} 应返回 200
+            $this->actingAs($user)->get($uri)->assertOk();
         }
     }
 

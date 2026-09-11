@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Services\Sms\SmsService;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -34,7 +35,7 @@ class SmsAuthTest extends TestCase
     /** 从 Cache 取出验证码（log driver 下生产端写入处） */
     protected function codeFromCache(string $phone, string $purpose): string
     {
-        return (string) Cache::get("monit.sms.{$purpose}.".SmsService::normalizePhone($phone));
+        return Typed::string(Cache::get("monit.sms.{$purpose}.".SmsService::normalizePhone($phone)));
     }
 
     public function test_register_with_phone_and_sms_code(): void
@@ -91,7 +92,9 @@ class SmsAuthTest extends TestCase
         ]);
 
         $response->assertRedirect(route('dashboard'));
-        $this->assertAuthenticatedAs(User::where('phone', '13900139000')->first());
+        $authed = User::where('phone', '13900139000')->first();
+        $this->assertNotNull($authed);
+        $this->assertAuthenticatedAs($authed);
     }
 
     /**

@@ -11,6 +11,7 @@ use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
 use App\Services\StatisticsService;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -78,6 +79,9 @@ class M22Test extends TestCase
         ], $attrs));
     }
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeEvent(WebsiteVisitor $v, VisitorSession $s, string $type, string $path, array $attrs = []): SessionEvent
     {
         return SessionEvent::create(array_merge([
@@ -233,7 +237,6 @@ class M22Test extends TestCase
             'password' => bcrypt('x'), 'status' => 1, 'plan_id' => 'free', 'type' => 0,
             'last_activity' => now()->subDays(25),
         ]);
-        $this->assertNotNull($inactive);
 
         // 25 天不活跃 + 提前 7 天提醒（30-7=23 天阈值）→ 触发提醒
         $this->artisanCmd('monit:users-deletion-reminder')->assertSuccessful();
@@ -263,7 +266,7 @@ class M22Test extends TestCase
         $this->artisanCmd('monit:housekeeping-cleanup')->assertSuccessful();
 
         $this->assertSame(1, DB::table('account_logs')->count());
-        $this->assertSame('login', DB::table('account_logs')->first()->type);
+        $this->assertSame('login', Typed::string(DB::table('account_logs')->first()?->type));
     }
 
     /* ---------------- 访客导出 ---------------- */

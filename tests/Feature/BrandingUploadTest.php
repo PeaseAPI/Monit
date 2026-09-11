@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -52,11 +53,11 @@ class BrandingUploadTest extends TestCase
         Settings::flush();
         // 验证 URL 字段已设置为 /storage/branding/... 格式
         $logoUrl = Settings::get('branding.logo_url', '');
-        $this->assertStringStartsWith('/storage/branding/', $logoUrl);
-        $this->assertStringContainsString('.png', $logoUrl);
+        $this->assertStringStartsWith('/storage/branding/', Typed::string($logoUrl));
+        $this->assertStringContainsString('.png', Typed::string($logoUrl));
 
         // 验证文件实际存在于 public disk
-        $path = str_replace('/storage/', '', $logoUrl);
+        $path = str_replace('/storage/', '', Typed::string($logoUrl));
         Storage::disk('public')->assertExists($path);
     }
 
@@ -76,7 +77,7 @@ class BrandingUploadTest extends TestCase
 
         Settings::flush();
         $faviconUrl = Settings::get('branding.favicon_url', '');
-        $this->assertStringStartsWith('/storage/branding/', $faviconUrl);
+        $this->assertStringStartsWith('/storage/branding/', Typed::string($faviconUrl));
     }
 
     #[Test]
@@ -95,7 +96,7 @@ class BrandingUploadTest extends TestCase
 
         Settings::flush();
         $logoDarkUrl = Settings::get('branding.logo_dark_url', '');
-        $this->assertStringStartsWith('/storage/branding/', $logoDarkUrl);
+        $this->assertStringStartsWith('/storage/branding/', Typed::string($logoDarkUrl));
     }
 
     #[Test]
@@ -139,7 +140,7 @@ class BrandingUploadTest extends TestCase
         // 上传优先：URL 应该被本地路径覆盖
         Settings::flush();
         $logoUrl = Settings::get('branding.logo_url', '');
-        $this->assertStringStartsWith('/storage/branding/', $logoUrl);
+        $this->assertStringStartsWith('/storage/branding/', Typed::string($logoUrl));
     }
 
     #[Test]

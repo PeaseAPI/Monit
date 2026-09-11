@@ -78,7 +78,7 @@ class TicketSystemTest extends TestCase
         ])->assertSessionHas('success');
 
         $this->assertSame(Ticket::STATUS_ANSWERED, $this->freshModel($ticket)->status);
-        Mail::assertSent(TicketRepliedToUser::class, fn ($mail) => $mail->ticket->ticket_id === $ticket->ticket_id);
+        Mail::assertSent(TicketRepliedToUser::class, fn (TicketRepliedToUser $mail) => $mail->ticket->ticket_id === $ticket->ticket_id);
     }
 
     public function test_user_reply_notifies_admins_and_reopens_ticket(): void
@@ -86,9 +86,12 @@ class TicketSystemTest extends TestCase
         Mail::fake();
         $this->makeAdmin();
         $ticket = $this->makeTicket($this->makeUser());
+
         $ticket->update(['status' => Ticket::STATUS_ANSWERED]);
 
-        $this->actingAs($ticket->user)->post('/tickets/'.$ticket->ticket_id.'/reply', [
+        $ticketUser = $ticket->user;
+        $this->assertNotNull($ticketUser);
+        $this->actingAs($ticketUser)->post('/tickets/'.$ticket->ticket_id.'/reply', [
             'message' => '仍然没有数据，请再帮忙看看。',
         ])->assertSessionHas('success');
 
@@ -108,9 +111,12 @@ class TicketSystemTest extends TestCase
     public function test_closed_ticket_cannot_be_replied(): void
     {
         $ticket = $this->makeTicket($this->makeUser());
+
         $ticket->update(['status' => Ticket::STATUS_CLOSED]);
 
-        $this->actingAs($ticket->user)->post('/tickets/'.$ticket->ticket_id.'/reply', [
+        $ticketUser = $ticket->user;
+        $this->assertNotNull($ticketUser);
+        $this->actingAs($ticketUser)->post('/tickets/'.$ticket->ticket_id.'/reply', [
             'message' => '再回复一条',
         ])->assertSessionHasErrors('message');
     }

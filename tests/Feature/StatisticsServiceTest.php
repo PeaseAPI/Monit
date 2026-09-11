@@ -9,6 +9,7 @@ use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
 use App\Services\StatisticsService;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
@@ -91,7 +92,7 @@ class StatisticsServiceTest extends TestCase
         $this->assertSame(3, $o['pageviews']);
         $this->assertSame(2, $o['visitors']);
         $this->assertSame(2, $o['sessions']);
-        $this->assertSame(50.0, (float) $o['bounce_rate']);
+        $this->assertSame(50.0, Typed::float($o['bounce_rate']));
     }
 
     public function test_breakdown_groups_and_orders(): void

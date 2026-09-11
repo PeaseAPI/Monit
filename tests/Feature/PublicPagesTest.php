@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -14,6 +15,9 @@ class PublicPagesTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function publicRoutes(): array
     {
         return [
@@ -90,7 +94,7 @@ class PublicPagesTest extends TestCase
     {
         // 规格 §15.3/§19：全新实例 /install 向导可用（无 lock 且无管理员）
         // 回归：routes/web.php 曾缺失 use InstallController 导致 /install 500
-        @unlink(config('monit.install_lock'));
+        @unlink(Typed::string(config('monit.install_lock')));
         $this->get('/install')->assertOk();
     }
 }

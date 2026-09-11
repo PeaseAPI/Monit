@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\ViewErrorBag;
 use Tests\TestCase;
 
 /**
@@ -50,9 +51,11 @@ class SocialSecurityTest extends TestCase
             ->assertRedirect(route('login'))
             ->assertSessionHasErrors('oauth');
 
+        $errorsBag = session('errors');
+        $this->assertInstanceOf(ViewErrorBag::class, $errorsBag);
         $this->assertSame(
             __('auth.oauth_state_mismatch'),
-            session('errors')->first('oauth'),
+            $errorsBag->getBag('default')->first('oauth'),
             '伪造 state 必须在触碰任何 token 端点之前被拒绝'
         );
         $this->assertGuest('web');
@@ -128,7 +131,8 @@ class SocialSecurityTest extends TestCase
             'email' => 'victim@x.com',
         ]))->assertRedirect(route('login'));
 
-        $this->assertGuest('web', '拼接歧义签名不得冒充受害者登录');
+        // 拼接歧义签名不得冒充受害者登录
+        $this->assertGuest('web');
     }
 
     public function test_sso_delimited_signature_logs_in(): void
@@ -168,8 +172,8 @@ class SocialSecurityTest extends TestCase
         $method->setAccessible(true);
 
         $makeToken = function (array $payload): string {
-            $header = rtrim(strtr(base64_encode(json_encode(['alg' => 'ES256'])), '+/', '-_'), '=');
-            $body = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+            $header = rtrim(strtr(base64_encode((string) json_encode(['alg' => 'ES256'])), '+/', '-_'), '=');
+            $body = rtrim(strtr(base64_encode((string) json_encode($payload)), '+/', '-_'), '=');
 
             return $header.'.'.$body.'.sig';
         };
@@ -184,7 +188,7 @@ class SocialSecurityTest extends TestCase
         $own = $method->invoke($controller, $makeToken([
             'sub' => 'apple-user-2', 'email' => 'user@x.com', 'aud' => 'com.monit.app',
         ]));
-        $this->assertNotNull($own);
+        $this->assertIsArray($own);
         $this->assertSame('user@x.com', $own['email']);
     }
 }

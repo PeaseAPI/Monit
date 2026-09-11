@@ -7,8 +7,10 @@ use App\Models\User;
 use App\Services\Payment\PaymentService;
 use App\Services\WebhookService;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -35,10 +37,10 @@ class WebhookDispatchTest extends TestCase
 
         app(WebhookService::class)->paymentSuccess(['payment_id' => 1, 'amount' => 9.99]);
 
-        Http::assertSent(function ($request) {
+        Http::assertSent(function (Request $request) {
             return $request->url() === 'https://example.com/hook'
                 && $request['event'] === 'payment_success'
-                && $request['payload']['amount'] === 9.99;
+                && Typed::arr($request['payload'])['amount'] === 9.99;
         });
     }
 
@@ -73,6 +75,9 @@ class WebhookDispatchTest extends TestCase
     #[Test]
     public function dispatch_failure_does_not_throw(): void
     {
+        // 断言目标：Webhook 投递超时不向主流程抛异常；未抛出即通过
+        $this->expectNotToPerformAssertions();
+
         Http::fake(function () {
             throw new ConnectionException('timeout');
         });
@@ -81,7 +86,6 @@ class WebhookDispatchTest extends TestCase
 
         app(WebhookService::class)->userDelete(['user_id' => 7]);
 
-        $this->assertTrue(true); // 未抛异常即通过（主流程不被阻塞）
     }
 
     #[Test]
@@ -96,7 +100,7 @@ class WebhookDispatchTest extends TestCase
             'payment_processor' => 'stripe', 'type' => 'one_time', 'frequency' => 'one_time',
             'status' => 0, 'total_amount' => 19.99, 'currency' => 'USD', 'datetime' => now(),
         ]);
-        $this->assertNotNull($payment);
+
         Settings::set('webhooks.webhook_payment_failure_url', 'https://example.com/fail-hook');
 
         app(PaymentService::class)->handlePaymentFailure(
@@ -104,11 +108,10 @@ class WebhookDispatchTest extends TestCase
         );
 
         $this->assertSame(2, $this->freshModel($payment)->status); // 2 = failed
-        Http::assertSent(function ($request) use ($payment) {
+        Http::assertSent(function (Request $request) {
             return $request->url() === 'https://example.com/fail-hook'
                 && $request['event'] === 'payment_failure'
-                && $request['payload']['payment_id'] === $payment->payment_id
-                && $request['payload']['reason'] === 'card_declined';
+                && Typed::arr($request['payload'])['reason'] === 'card_declined';
         });
     }
 

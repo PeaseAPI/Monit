@@ -19,13 +19,15 @@ class QueryCountRegressionTest extends TestCase
 {
     use RefreshDatabase;
 
+    private static int $userSeq = 0;
+
     /**
      * @param  array<string, mixed>  $overrides
      */
     protected function makeUser(array $overrides = []): User
     {
-        static $seq = 0;
-        $seq++;
+        self::$userSeq++;
+        $seq = self::$userSeq;
 
         return User::create(array_merge([
             'name' => "User{$seq}", 'email' => "n1-{$seq}@example.test",

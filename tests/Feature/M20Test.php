@@ -9,6 +9,7 @@ use App\Services\Ai\AiService;
 use App\Services\Payment\PaymentService;
 use App\Support\Currency;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -159,9 +160,9 @@ class M20Test extends TestCase
         ])->assertRedirect();
 
         $stored = Settings::get('payment.currencies');
-        $stored = is_string($stored) ? json_decode($stored, true) : $stored;
+        $stored = Typed::arr(is_string($stored) ? $this->decodeJson($stored) : $stored);
         $this->assertSame(['AUD'], array_keys($stored));
-        $this->assertSame(0.21, (float) $stored['AUD']['rate']);
+        $this->assertSame(0.21, Typed::float(Typed::arr($stored['AUD'])['rate']));
     }
 
     /* ---------------- §12.6 AI 接入 ---------------- */
@@ -238,7 +239,7 @@ class M20Test extends TestCase
         $response = $this->actingAs($user)->postJson("/stats/{$website->website_id}/ai-insight", ['range' => 7]);
         $response->assertOk();
         $this->assertSame('log', $response->json('provider'));
-        $this->assertStringContainsString('网站「AI 站点」', $response->json('insight'));
+        $this->assertStringContainsString('网站「AI 站点」', Typed::string($response->json('insight')));
 
         // 非本人网站 → 403（can:own）
         $other = $this->makeUser(['email' => 'other@m20.dev']);

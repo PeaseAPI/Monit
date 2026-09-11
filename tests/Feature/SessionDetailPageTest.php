@@ -59,7 +59,7 @@ class SessionDetailPageTest extends TestCase
             ->get(route('stats.session', [$website, $session->session_id]))
             ->assertOk()
             ->assertSee('/pricing', false)
-            ->assertSee($session->session_uuid, false);
+            ->assertSee((string) $session->session_uuid, false);
     }
 
     public function test_session_detail_denied_for_other_users(): void

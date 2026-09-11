@@ -69,6 +69,7 @@ class CodeRedemptionTest extends TestCase
         $code->refresh();
 
         $this->assertSame('pro', $user->plan_id);
+        $this->assertNotNull($user->plan_expiration_date);
         $this->assertEqualsWithDelta(now()->addDays(30)->timestamp, $user->plan_expiration_date->timestamp, 5);
         $this->assertSame(1, $code->redeemed);
         $this->assertDatabaseHas('redeemed_codes', ['code_id' => $code->code_id, 'user_id' => $user->user_id]);
@@ -116,6 +117,9 @@ class CodeRedemptionTest extends TestCase
         $this->assertSame('account.invalid_code', $disabled->redemptionIssue($user));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function stackingScenarios(): array
     {
         return [
@@ -146,6 +150,7 @@ class CodeRedemptionTest extends TestCase
             ? now()->addDays(5)->addDays($daysIn)->timestamp
             : now()->addDays($daysIn)->timestamp;
 
+        $this->assertNotNull($user->plan_expiration_date);
         $this->assertEqualsWithDelta($expected, $user->plan_expiration_date->timestamp, 5);
     }
 
@@ -159,6 +164,8 @@ class CodeRedemptionTest extends TestCase
 
         $response->assertRedirect();
         $this->assertSame('pro', $user->refresh()->plan_id);
-        $this->assertSame(1, Code::first()->redeemed);
+        $redeemedCode = Code::first();
+        $this->assertNotNull($redeemedCode);
+        $this->assertSame(1, $redeemedCode->redeemed);
     }
 }

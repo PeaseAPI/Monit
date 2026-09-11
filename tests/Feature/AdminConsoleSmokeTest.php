@@ -21,6 +21,8 @@ class AdminConsoleSmokeTest extends TestCase
 
     /**
      * 已知返回非 200 的路由（302 跳转 / 特殊参数），逐个列出而非一刀切跳过
+     *
+     * @var list<string>
      */
     protected array $allowedRedirects = [
         'admin.settings.clear-cache', // POST 路由名，不会出现在 GET 集合

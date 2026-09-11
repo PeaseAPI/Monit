@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Testing\PendingCommand;
 
@@ -64,5 +65,33 @@ abstract class TestCase extends BaseTestCase
         $this->assertInstanceOf(PendingCommand::class, $cmd);
 
         return $cmd;
+    }
+
+    /**
+     * 解析 JSON 并断言为关联数组（json_decode(..., true) 声明 mixed 的测试专用窄化）
+     *
+     * @return array<string, mixed>
+     */
+    protected function decodeJson(mixed $json): array
+    {
+        $data = json_decode(Typed::string($json), true);
+        $this->assertIsArray($data);
+
+        /** @var array<string, mixed> $data */
+        return $data;
+    }
+
+    /**
+     * 解析 JSON 并断言为数组列表（列表型 JSON 的测试专用窄化）
+     *
+     * @return list<array<string, mixed>>
+     */
+    protected function decodeJsonList(mixed $json): array
+    {
+        $data = json_decode(Typed::string($json), true);
+        $this->assertIsArray($data);
+
+        /** @var list<array<string, mixed>> $data */
+        return $data;
     }
 }

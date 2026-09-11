@@ -6,6 +6,7 @@ use App\Services\Seo\AuditEngine;
 use App\Services\Seo\Tools\DevTools;
 use App\Services\Seo\Tools\NetworkTools;
 use App\Services\Seo\Tools\SeoCheckTools;
+use App\Support\Typed;
 use Tests\TestCase;
 
 /**
@@ -52,7 +53,7 @@ class SeoSSRFGuardTest extends TestCase
         $result = (new SeoCheckTools)->robotsTxt(['url' => 'http://127.0.0.1:8888/robots.txt']);
 
         $this->assertFalse($result['ok']);
-        $this->assertStringContainsString('不允许抓取', (string) $result['error']);
+        $this->assertStringContainsString('不允许抓取', Typed::string($result['error']));
     }
 
     public function test_duplicate_content_tool_rejects_private_target(): void
@@ -63,7 +64,7 @@ class SeoSSRFGuardTest extends TestCase
         ]);
 
         $this->assertFalse($result['ok']);
-        $this->assertStringContainsString('不允许抓取', (string) $result['error']);
+        $this->assertStringContainsString('不允许抓取', Typed::string($result['error']));
     }
 
     public function test_redirect_trace_rejects_private_start(): void
@@ -71,7 +72,7 @@ class SeoSSRFGuardTest extends TestCase
         $result = (new NetworkTools)->redirectTrace(['url' => 'http://10.0.0.1/']);
 
         $this->assertFalse($result['ok']);
-        $this->assertStringContainsString('不允许抓取', (string) $result['error']);
+        $this->assertStringContainsString('不允许抓取', Typed::string($result['error']));
     }
 
     public function test_plaintext_email_tool_rejects_private_target(): void
@@ -79,6 +80,6 @@ class SeoSSRFGuardTest extends TestCase
         $result = (new DevTools)->plaintextEmail(['url' => 'http://127.0.0.1/']);
 
         $this->assertFalse($result['ok']);
-        $this->assertStringContainsString('不允许抓取', (string) $result['error']);
+        $this->assertStringContainsString('不允许抓取', Typed::string($result['error']));
     }
 }

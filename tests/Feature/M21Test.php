@@ -71,6 +71,9 @@ class M21Test extends TestCase
         ], $attrs));
     }
 
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
     protected function makeEvent(WebsiteVisitor $v, VisitorSession $s, string $type, string $path, array $attrs = []): SessionEvent
     {
         return SessionEvent::create(array_merge([

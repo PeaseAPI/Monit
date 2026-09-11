@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Services\WebhookService;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -95,7 +96,7 @@ class WebhookSsrfGuardTest extends TestCase
 
         app(WebhookService::class)->paymentSuccess(['payment_id' => 1]);
 
-        Http::assertSent(fn ($request) => $request->url() === 'https://example.com/hook');
+        Http::assertSent(fn (Request $request) => $request->url() === 'https://example.com/hook');
     }
 
     #[Test]
@@ -107,7 +108,7 @@ class WebhookSsrfGuardTest extends TestCase
 
         app(WebhookService::class)->paymentSuccess(['payment_id' => 1]);
 
-        Http::assertSent(fn ($request) => $request->url() === 'http://127.0.0.1:9000/hook');
+        Http::assertSent(fn (Request $request) => $request->url() === 'http://127.0.0.1:9000/hook');
     }
 
     #[Test]

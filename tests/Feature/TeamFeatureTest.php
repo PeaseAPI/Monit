@@ -68,7 +68,7 @@ class TeamFeatureTest extends TestCase
         ])->assertSessionHas('success');
 
         $member = TeamMember::where('team_id', $team->team_id)->where('user_email', 'invitee@team.test')->firstOrFail();
-        $this->assertNotNull($member);
+
         $this->assertSame([$website->website_id], $member->websites_ids);
         $this->assertSame(1, TeamMemberAssociation::where('team_member_id', $member->team_member_id)->count());
 

@@ -15,6 +15,9 @@ class PublicStatsPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param  array<string, mixed>  $websiteSettings
+     */
     private function fixture(array $websiteSettings = []): Website
     {
         $user = User::create([

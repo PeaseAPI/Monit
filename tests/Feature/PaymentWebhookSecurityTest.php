@@ -6,6 +6,7 @@ use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
 use App\Services\Payment\PaymentService;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
@@ -91,13 +92,13 @@ class PaymentWebhookSecurityTest extends TestCase
         $user = $this->makeUser();
         $payment = $this->makePaidPendingPayment($user);
 
-        $body = json_encode([
+        $body = Typed::string(json_encode([
             'type' => 'checkout.session.completed',
             'data' => ['object' => [
                 'id' => 'cs_x',
                 'metadata' => ['payment_id' => (string) $payment->payment_id],
             ]],
-        ]);
+        ]));
 
         $this->call('POST', '/webhooks/stripe', [], [], [], $this->transformHeadersToServerVars([
             'Content-Type' => 'application/json',
@@ -113,13 +114,13 @@ class PaymentWebhookSecurityTest extends TestCase
         $user = $this->makeUser();
         $payment = $this->makePaidPendingPayment($user);
 
-        $body = json_encode([
+        $body = Typed::string(json_encode([
             'type' => 'checkout.session.completed',
             'data' => ['object' => [
                 'id' => 'cs_x',
                 'metadata' => ['payment_id' => (string) $payment->payment_id],
             ]],
-        ]);
+        ]));
 
         $stale = time() - 3600;
         $sig = hash_hmac('sha256', $stale.'.'.$body, 'whsec_test');
@@ -136,7 +137,7 @@ class PaymentWebhookSecurityTest extends TestCase
         $user = $this->makeUser();
         $payment = $this->makePaidPendingPayment($user);
 
-        $body = json_encode([
+        $body = Typed::string(json_encode([
             'type' => 'checkout.session.completed',
             'data' => ['object' => [
                 'id' => 'cs_real',
@@ -145,7 +146,7 @@ class PaymentWebhookSecurityTest extends TestCase
                 'amount_total' => 999, // 9.99 USD in cents
                 'currency' => 'usd',
             ]],
-        ]);
+        ]));
 
         $t = time();
         $sig = hash_hmac('sha256', $t.'.'.$body, 'whsec_test');

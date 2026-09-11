@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -34,7 +35,7 @@ class ApiKeyEncryptionTest extends TestCase
         $this->assertNull($raw['api_key'], '明文列必须恒为 NULL');
         $this->assertSame(hash('sha256', $key), $raw['api_key_lookup']);
         $this->assertNotNull($raw['api_key_encrypted']);
-        $this->assertStringNotContainsString($key, (string) $raw['api_key_encrypted'], '密文中不得出现明文子串');
+        $this->assertStringNotContainsString($key, Typed::string($raw['api_key_encrypted']), '密文中不得出现明文子串');
         $this->assertSame($key, $user->api_key, '模型读取必须解密还原（UX 不变）');
     }
 
@@ -73,7 +74,7 @@ class ApiKeyEncryptionTest extends TestCase
 
         $raw = (array) DB::table('users')->where('user_id', $user->user_id)->first();
         $this->assertNull($raw['api_key']);
-        $this->assertStringNotContainsString($old, (string) $raw['api_key_encrypted']);
+        $this->assertStringNotContainsString($old, Typed::string($raw['api_key_encrypted']));
 
         $this->withHeader('Authorization', 'Bearer '.$new)->getJson('/api/v1/user')->assertOk();
         $this->withHeader('Authorization', 'Bearer '.$old)->getJson('/api/v1/user')->assertUnauthorized();
@@ -99,7 +100,6 @@ class ApiKeyEncryptionTest extends TestCase
     {
         $key = Str::random(60);
         $user = User::create($this->userPayload($key));
-        $this->assertNotNull($user);
 
         // 篡改密文（模拟 APP_KEY 变更后不可解）
         DB::table('users')->where('user_id', $user->user_id)->update(['api_key_encrypted' => 'garbage']);
@@ -107,6 +107,9 @@ class ApiKeyEncryptionTest extends TestCase
         $this->assertNull($this->freshModel($user)->api_key);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function userPayload(string $key): array
     {
         return [

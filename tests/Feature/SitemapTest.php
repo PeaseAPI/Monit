@@ -119,6 +119,6 @@ class SitemapTest extends TestCase
             ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')
             ->getContent();
 
-        $this->assertNotFalse(simplexml_load_string($xml), 'sitemap 应为合法 XML');
+        $this->assertNotFalse(simplexml_load_string((string) $xml), 'sitemap 应为合法 XML');
     }
 }

@@ -9,6 +9,7 @@ use App\Models\Website;
 use App\Models\WebsiteGoal;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use Ramsey\Uuid\Uuid;
@@ -69,11 +70,19 @@ class PixelTrackTest extends TestCase
         config(['monit.pixel.events_retention_days' => 365, 'monit.pixel.replays_retention_days' => 30]);
     }
 
+    /**
+     * @param  array<string, mixed>  $payload
+     * @param  array<string, mixed>  $server
+     * @return TestResponse<Response>
+     */
     protected function track(array $payload, array $server = []): TestResponse
     {
         return $this->post('/pixel-track/px_test_key_123', ['data' => json_encode($payload)], $server);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function basePayload(string $type): array
     {
         return [
@@ -183,16 +192,17 @@ class PixelTrackTest extends TestCase
         $this->assertGreaterThan(0, $heatmap->desktop_size);
 
         // 验证快照数据可被正确读取和解压
+        /** @var object{data: string}|null $snapshotRow */
         $snapshotRow = DB::selectOne(
             'SELECT data FROM heatmaps_snapshots WHERE snapshot_id = ?',
             [$heatmap->snapshot_id_desktop],
         );
         $this->assertNotNull($snapshotRow);
-        $this->assertNotNull($snapshotRow->data);
+
         $decompressed = @gzdecode($snapshotRow->data);
         $this->assertNotFalse($decompressed, 'Snapshot data should be valid gzencode compressed');
-        $snapshotData = json_decode($decompressed, true);
-        $this->assertIsArray($snapshotData);
+        $snapshotData = $this->decodeJson($decompressed);
+
         $this->assertArrayHasKey('events', $snapshotData);
 
         // 点击坐标
@@ -241,17 +251,17 @@ class PixelTrackTest extends TestCase
         // 精确匹配路径正常返回
         $r1 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path='.urlencode('/about'));
         $r1->assertStatus(200);
-        $this->assertSame($heatmap->heatmap_id, json_decode((string) $r1->getContent(), true)['heatmap_id']);
+        $this->assertSame($heatmap->heatmap_id, $this->decodeJson((string) $r1->getContent())['heatmap_id']);
 
         // 带 query 的访问路径 → pathname 回退匹配到纯路径热图
         $r2 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path='.urlencode('/about?utm_source=newsletter'));
         $r2->assertStatus(200);
-        $this->assertSame($heatmap->heatmap_id, json_decode((string) $r2->getContent(), true)['heatmap_id']);
+        $this->assertSame($heatmap->heatmap_id, $this->decodeJson((string) $r2->getContent())['heatmap_id']);
 
         // 无匹配路径 → 响应不含 heatmap_id 键
         $r3 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path='.urlencode('/missing?x=1'));
         $r3->assertStatus(200);
-        $this->assertArrayNotHasKey('heatmap_id', json_decode((string) $r3->getContent(), true));
+        $this->assertArrayNotHasKey('heatmap_id', $this->decodeJson((string) $r3->getContent()));
     }
 
     /**
@@ -266,16 +276,18 @@ class PixelTrackTest extends TestCase
         // 缺键 = 不限 → 启用
         $r1 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=/');
         $r1->assertStatus(200);
-        $this->assertTrue(json_decode((string) $r1->getContent(), true)['replay_enabled']);
+        $this->assertTrue($this->decodeJson((string) $r1->getContent())['replay_enabled']);
 
         // 显式 0 = 禁用
-        $this->website->user->forceFill([
+        $planUser = $this->website->user;
+        $this->assertNotNull($planUser);
+        $planUser->forceFill([
             'plan_settings' => ['sessions_events_limit' => -1, 'sessions_replays_limit' => 0],
         ])->save();
 
         $r2 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=/');
         $r2->assertStatus(200);
-        $this->assertFalse(json_decode((string) $r2->getContent(), true)['replay_enabled']);
+        $this->assertFalse($this->decodeJson((string) $r2->getContent())['replay_enabled']);
     }
 
     public function test_replay_data_stored_in_db(): void
@@ -309,16 +321,17 @@ class PixelTrackTest extends TestCase
         $this->assertGreaterThan(0, $replay->size);
 
         // 4. 验证 data 列（LONGBLOB）有压缩数据，可被正确解压
+        /** @var object{data: string}|null $row */
         $row = DB::selectOne(
             'SELECT data FROM sessions_replays WHERE replay_id = ?',
             [$replay->replay_id],
         );
         $this->assertNotNull($row);
-        $this->assertNotNull($row->data, 'Replay data column should not be null');
+
         $decompressed = @gzdecode($row->data);
         $this->assertNotFalse($decompressed, 'Replay data should be valid gzencode compressed');
-        $storedEvents = json_decode($decompressed, true);
-        $this->assertIsArray($storedEvents);
+        $storedEvents = $this->decodeJson($decompressed);
+
         // 数据格式为事件数组
         $this->assertCount(3, $storedEvents);
 
@@ -335,12 +348,14 @@ class PixelTrackTest extends TestCase
         $replay->refresh();
         $this->assertEquals(5, $replay->events);
 
+        /** @var object{data: string}|null $row */
         $row = DB::selectOne(
             'SELECT data FROM sessions_replays WHERE replay_id = ?',
             [$replay->replay_id],
         );
+        $this->assertNotNull($row);
         $decompressed = @(string) gzdecode($row->data);
-        $allEvents = json_decode($decompressed, true);
+        $allEvents = $this->decodeJson($decompressed);
         $this->assertCount(5, $allEvents);
     }
 
@@ -381,6 +396,7 @@ class PixelTrackTest extends TestCase
     public function test_precheck_plan_limit_blocks_events(): void
     {
         $user = $this->website->user;
+        $this->assertNotNull($user);
         $user->plan_settings = ['sessions_events_limit' => 5];
         $user->save();
         $this->website->update(['current_month_sessions_events' => 5]);

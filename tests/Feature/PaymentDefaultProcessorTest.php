@@ -94,8 +94,10 @@ class PaymentDefaultProcessorTest extends TestCase
             ])
             ->assertSessionHasNoErrors();
 
+        $paidUser = auth()->user();
+        $this->assertNotNull($paidUser);
         $this->assertDatabaseHas('payments', [
-            'user_id' => auth()->user()->user_id,
+            'user_id' => $paidUser->user_id,
             'payment_processor' => 'offline',
         ]);
     }

@@ -7,6 +7,7 @@ use App\Models\TeamMember;
 use App\Models\TeamMemberAssociation;
 use App\Models\User;
 use App\Models\Website;
+use App\Support\Typed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -63,7 +64,7 @@ class WebsiteAjaxTenantIsolationTest extends TestCase
             ->getJson('/websites-ajax?search=shop');
 
         $response->assertOk();
-        $hosts = collect($response->json('data'))->pluck('host')->all();
+        $hosts = collect(Typed::arr($response->json('data')))->pluck('host')->all();
         $this->assertSame(['alice-shop.test'], $hosts);
     }
 
@@ -85,7 +86,7 @@ class WebsiteAjaxTenantIsolationTest extends TestCase
             ->getJson('/websites-ajax?search=blog');
 
         $response->assertOk();
-        $hosts = collect($response->json('data'))->pluck('host')->all();
+        $hosts = collect(Typed::arr($response->json('data')))->pluck('host')->all();
         $this->assertSame(['alice-blog.test'], $hosts);
     }
 
@@ -96,7 +97,7 @@ class WebsiteAjaxTenantIsolationTest extends TestCase
             ->getJson('/websites-ajax');
 
         $response->assertOk();
-        $hosts = collect($response->json('data'))->pluck('host')->all();
+        $hosts = collect(Typed::arr($response->json('data')))->pluck('host')->all();
         $this->assertSame(['bob-shop.test'], $hosts);
     }
 

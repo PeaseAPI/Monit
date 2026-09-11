@@ -16,6 +16,8 @@ use App\Services\Seo\NotificationDispatcher;
 use App\Services\Seo\SitemapMonitor;
 use App\Services\Seo\ToolRunner;
 use App\Support\Settings;
+use App\Support\Typed;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -56,7 +58,9 @@ class M26SeoTest extends TestCase
         $registry = app(AuditTestRegistry::class);
 
         // 当前注册表：49 个核心测试项（7 分类；外部条件项 requires 未配置时自动跳过）
+        $this->assertIsArray(config('seo.tests'));
         $this->assertCount(49, config('seo.tests'));
+        $this->assertIsArray(config('seo.categories'));
         $this->assertCount(7, config('seo.categories'));
         $this->assertGreaterThanOrEqual(49, $registry->all());
     }
@@ -64,7 +68,7 @@ class M26SeoTest extends TestCase
     public function test_tools_registry_has_86_entries(): void
     {
         // 86 项工具注册（含双名合并项；条件项默认未配置 API key 不入目录）
-        $this->assertSame(86, count(config('seo.tools')));
+        $this->assertSame(86, count(Typed::arr(config('seo.tools'))));
 
         $catalog = app(ToolRunner::class)->catalog();
 
@@ -166,7 +170,9 @@ class M26SeoTest extends TestCase
 
         $response->assertSee('listed.test');
         $response->assertDontSee('hidden.test');
-        $this->assertSame(1, $response->viewData('audits')->total());
+        $audits = $response->viewData('audits');
+        $this->assertInstanceOf(LengthAwarePaginator::class, $audits);
+        $this->assertSame(1, $audits->total());
     }
 
     public function test_owner_can_update_share_settings(): void
@@ -228,7 +234,7 @@ class M26SeoTest extends TestCase
 
     public function test_tool_quota_zero_blocks_usage(): void
     {
-        $this->user->forceFill(['plan_settings' => array_merge((array) $this->user->plan_settings, ['seo_tools_limit' => 0])])->save();
+        $this->user->forceFill(['plan_settings' => array_merge($this->user->plan_settings, ['seo_tools_limit' => 0])])->save();
 
         $this->actingAs($this->user)
             ->post(route('seo.tools.process', 'md5_generator'), ['input' => ['text' => 'abc']])
@@ -242,7 +248,7 @@ class M26SeoTest extends TestCase
         // 0=禁批量（seo_bulk_limit）：提前拦截并提示，而非入队 0 个任务后
         // 返回「已入队」成功提示误导用户；sitemap 闭包同理不得静默空转
         Queue::fake();
-        $this->user->forceFill(['plan_settings' => array_merge((array) $this->user->plan_settings, ['seo_bulk_limit' => 0])])->save();
+        $this->user->forceFill(['plan_settings' => array_merge($this->user->plan_settings, ['seo_bulk_limit' => 0])])->save();
 
         $this->actingAs($this->user)
             ->post(route('seo.audits.store'), [
@@ -551,11 +557,11 @@ class M26SeoTest extends TestCase
         Settings::set('seo.sitemap_monitor_is_enabled', false);
         Settings::set('seo.domain_monitor_is_enabled', false);
 
-        $this->artisan('monit:seo-sitemaps-check')
+        $this->artisanCmd('monit:seo-sitemaps-check')
             ->expectsOutputToContain('Sitemap 监控已停用')
             ->assertSuccessful();
 
-        $this->artisan('monit:seo-domains-monitor')
+        $this->artisanCmd('monit:seo-domains-monitor')
             ->expectsOutputToContain('域名监控已停用')
             ->assertSuccessful();
     }
@@ -581,14 +587,14 @@ class M26SeoTest extends TestCase
 
     public function test_seo_language_keys_present_in_all_locales(): void
     {
-        $en = json_decode((string) file_get_contents(lang_path('en.json')), true);
+        $en = $this->decodeJson((string) file_get_contents(lang_path('en.json')));
 
         foreach (['seo.view_report', 'seo.audits_title', 'seo.tools_title', 'seo.handlers_title', 'seo.quota_exceeded'] as $key) {
             $this->assertArrayHasKey($key, $en);
         }
 
         foreach (['zh_CN', 'zh_TW', 'ru', 'be', 'ms'] as $locale) {
-            $data = json_decode((string) file_get_contents(lang_path($locale.'.json')), true);
+            $data = $this->decodeJson((string) file_get_contents(lang_path($locale.'.json')));
             $this->assertSame(array_keys($en), array_keys($data), $locale.' 键集与 en 不一致');
         }
     }

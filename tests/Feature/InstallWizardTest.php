@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\EnvWriter;
 use App\Support\InstallState;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -27,7 +28,7 @@ class InstallWizardTest extends TestCase
 
         // 覆盖基类默认状态：模拟「全新实例」
         $lock = config('monit.install_lock');
-        if (file_exists($lock)) {
+        if (is_string($lock) && file_exists($lock)) {
             @unlink($lock);
         }
 
@@ -174,15 +175,8 @@ class InstallWizardTest extends TestCase
             ->assertSee('Access denied');
 
         // 正确凭据（phpunit.xml 提供的测试库连接）→ ok:true + 版本号
-        $cfg = config('database.connections.mysql');
-        $this->postJson('/install/test-db', [
-            'host' => $cfg['host'],
-            'port' => (int) $cfg['port'],
-            'database' => $cfg['database'],
-            'username' => $cfg['username'],
-            'password' => (string) $cfg['password'],
-        ])->assertOk()->assertJsonPath('ok', true)
-            ->assertJsonStructure(['message', 'version']);
+        $cfg = Typed::arr(config('database.connections.mysql'));
+        $this->postJson('/install/test-db', ['host' => $cfg['host'], 'port' => Typed::int($cfg['port']), 'database' => $cfg['database'], 'username' => $cfg['username'], 'password' => Typed::string($cfg['password'])])->assertOk()->assertJsonPath('ok', true)->assertJsonStructure(['message', 'version']);
     }
 
     public function test_database_step_writes_env_and_migrates(): void
@@ -193,14 +187,8 @@ class InstallWizardTest extends TestCase
         // 模拟 config 缓存场景：APP_KEY 为空也应被向导补齐
         config(['app.key' => null]);
 
-        $cfg = config('database.connections.mysql');
-        $this->post('/install/database', [
-            'host' => $cfg['host'],
-            'port' => (int) $cfg['port'],
-            'database' => $cfg['database'],
-            'username' => $cfg['username'],
-            'password' => (string) $cfg['password'],
-        ])->assertRedirect(route('install.admin'));
+        $cfg = Typed::arr(config('database.connections.mysql'));
+        $this->post('/install/database', ['host' => $cfg['host'], 'port' => Typed::int($cfg['port']), 'database' => $cfg['database'], 'username' => $cfg['username'], 'password' => Typed::string($cfg['password'])])->assertRedirect(route('install.admin'));
 
         $env = (string) file_get_contents($this->tmpEnv);
         $this->assertStringContainsString('DB_CONNECTION=mysql', $env);
@@ -256,7 +244,7 @@ class InstallWizardTest extends TestCase
         );
 
         // 安装锁写入：向导失效、业务路由放行
-        $this->assertFileExists(config('monit.install_lock'));
+        $this->assertFileExists(Typed::string(config('monit.install_lock')));
         $this->get('/install')->assertRedirect('/');
         $this->get('/')->assertOk();
     }
@@ -295,7 +283,7 @@ class InstallWizardTest extends TestCase
             ->assertOk()
             ->assertSee('安装完成')
             ->assertSee('finish@example.com')
-            ->assertSee('MySQL · '.config('database.connections.mysql.database'));
+            ->assertSee('MySQL · '.Typed::string(config('database.connections.mysql.database')));
     }
 
     public function test_finish_page_redirects_to_wizard_when_not_installed(): void

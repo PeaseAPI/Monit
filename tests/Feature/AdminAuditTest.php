@@ -42,6 +42,9 @@ class AdminAuditTest extends TestCase
         ], $overrides));
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     private function logsOf(User $user, string $action): array
     {
         return AccountLog::where('user_id', $user->user_id)

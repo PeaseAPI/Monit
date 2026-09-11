@@ -26,7 +26,7 @@ class InstallSecurityTest extends TestCase
         parent::setUp();
 
         $lock = config('monit.install_lock');
-        if (file_exists($lock)) {
+        if (is_string($lock) && file_exists($lock)) {
             @unlink($lock);
         }
 
@@ -92,6 +92,7 @@ class InstallSecurityTest extends TestCase
 
         // 模拟另一请求正在执行第 4 步（持有互斥锁未释放）
         $mutex = fopen(storage_path('framework/install-mutex.lock'), 'c');
+        $this->assertIsResource($mutex);
         flock($mutex, LOCK_EX);
 
         try {

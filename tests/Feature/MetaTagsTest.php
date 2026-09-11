@@ -60,13 +60,7 @@ class MetaTagsTest extends TestCase
 
     public function test_index_og_title_falls_back_to_site_name_when_no_title_section(): void
     {
-        $html = $this->get('/')->assertOk()->getContent();
-
-        // 首页未声明 title section → og:title 退化为站名（不硬编码工具页文案）
-        $this->assertMatchesRegularExpression(
-            '#<meta property="og:title" content="'.preg_quote(Brand::name(), '#').'"#',
-            $html
-        );
+        $html = $this->get('/')->assertOk()->getContent();  // 首页未声明 title section → og:title 退化为站名（不硬编码工具页文案） $this->assertMatchesRegularExpression( '#<meta property="og:title" content="'.preg_quote(Brand::name(), '#').'"#', (string) $html);
     }
 
     public function test_blog_post_meta_uses_description_field_and_canonical(): void

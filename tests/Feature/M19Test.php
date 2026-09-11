@@ -78,8 +78,8 @@ class M19Test extends TestCase
         $response = $this->actingAs($admin)->get('/admin/logs/download');
 
         $response->assertStatus(200);
-        $this->assertStringContainsString('monit-logs-', $response->headers->get('Content-Disposition'));
-        $this->assertStringContainsString('text/csv', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString('monit-logs-', (string) $response->headers->get('Content-Disposition'));
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('Content-Type'));
         $this->assertStringContainsString('m19.download_test', $response->streamedContent());
     }
 

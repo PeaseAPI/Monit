@@ -7,6 +7,7 @@ use App\Services\LoginLockout;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\ViewErrorBag;
 use Tests\TestCase;
 
 /**
@@ -72,9 +73,11 @@ class LoginLockoutTest extends TestCase
         $response = $this->post('/login', ['email' => $user->email, 'password' => 'secret123']);
 
         $response->assertSessionHasErrors('email');
+        $errorsBag = session('errors');
+        $this->assertInstanceOf(ViewErrorBag::class, $errorsBag);
         $this->assertSame(
             __('auth.login_locked'),
-            session('errors')->first('email'),
+            $errorsBag->getBag('default')->first('email'),
             '锁定期间应返回明确的锁定提示'
         );
     }

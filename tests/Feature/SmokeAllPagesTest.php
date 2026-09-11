@@ -28,9 +28,6 @@ class SmokeAllPagesTest extends TestCase
 
     private User $user;
 
-    /** 必然非 200 但属正常业务语义的路径（403 守卫/重装守卫/资源型） */
-    private array $allowedNon2xx = ['cron'];
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -60,7 +57,7 @@ class SmokeAllPagesTest extends TestCase
     private function webGetRoutes(): array
     {
         $out = [];
-        foreach ($this->app['router']->getRoutes() as $route) {
+        foreach ($this->app['router']->getRoutes()->getRoutes() as $route) {
             /** @var Route $route */
             if (! in_array('GET', $route->methods(), true)) {
                 continue;
@@ -77,7 +74,7 @@ class SmokeAllPagesTest extends TestCase
 
     private function pageIsHealthy(string $content): bool
     {
-        return ! preg_match('/Whoops|Fatal error|ParseError|Undefined (variable|property|index|array key)/i', $content);
+        return preg_match('/Whoops|Fatal error|ParseError|Undefined (variable|property|index|array key)/i', $content) !== 1;
     }
 
     public function test_all_pages_as_admin_have_no_server_errors(): void
@@ -100,7 +97,7 @@ class SmokeAllPagesTest extends TestCase
 
                 continue;
             }
-            if ($status === 200 && ! $this->pageIsHealthy($response->getContent())) {
+            if ($status === 200 && ! $this->pageIsHealthy((string) $response->getContent())) {
                 $failures[] = "$uri -> 200 但内容含 PHP 错误痕迹";
             }
         }
@@ -136,7 +133,7 @@ class SmokeAllPagesTest extends TestCase
 
                 continue;
             }
-            if ($status === 200 && ! $this->pageIsHealthy($response->getContent())) {
+            if ($status === 200 && ! $this->pageIsHealthy((string) $response->getContent())) {
                 $failures[] = "$uri -> 200 但内容含 PHP 错误痕迹";
             }
         }
@@ -161,7 +158,7 @@ class SmokeAllPagesTest extends TestCase
 
                     continue;
                 }
-                if ($status === 200 && ! $this->pageIsHealthy($response->getContent())) {
+                if ($status === 200 && ! $this->pageIsHealthy((string) $response->getContent())) {
                     $failures[] = "[$role] $uri -> 200 但内容含 PHP 错误痕迹";
                 }
             }

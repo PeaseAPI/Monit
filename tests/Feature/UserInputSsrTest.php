@@ -168,7 +168,6 @@ class UserInputSsrTest extends TestCase
             'host' => 'example.com', 'scheme' => 'https',
             'is_enabled' => true, 'datetime' => now(),
         ]);
-        $this->assertNotNull($domain);
 
         $this->actingAs($this->user)
             ->put('/domains', [
