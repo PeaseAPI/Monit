@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\PaymentController;
 use App\Models\Plan;
 use App\Models\User;
 use App\Support\Settings;
@@ -103,10 +104,10 @@ class PaymentDefaultProcessorTest extends TestCase
     {
         // 无凭据时 mollie 不可用
         config(['services.mollie' => ['key' => '']]);
-        $this->assertNotContains('mollie', \App\Http\Controllers\PaymentController::enabledProcessors());
+        $this->assertNotContains('mollie', PaymentController::enabledProcessors());
 
         // 配置凭据后可用
         config(['services.mollie' => ['key' => 'test_api_key']]);
-        $this->assertContains('mollie', \App\Http\Controllers\PaymentController::enabledProcessors());
+        $this->assertContains('mollie', PaymentController::enabledProcessors());
     }
 }

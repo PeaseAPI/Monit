@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * SEO 关键词排名跟踪
@@ -57,7 +58,7 @@ class SeoKeyword extends Model
     /**
      * 下次应检查时间（调度扫描依据）
      */
-    public function nextCheckAt(): ?\Illuminate\Support\Carbon
+    public function nextCheckAt(): ?Carbon
     {
         if (! $this->is_enabled || $this->check_interval === 'never') {
             return null;

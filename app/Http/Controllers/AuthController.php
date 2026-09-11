@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
@@ -45,7 +46,7 @@ class AuthController extends Controller
     public static function smsLoginVerifyEnabled(): bool
     {
         return SmsService::scenarioEnabled('phone_login')
-            && filter_var(\App\Support\Settings::get('sms.sms_login_verify_enabled', false), FILTER_VALIDATE_BOOLEAN);
+            && filter_var(Settings::get('sms.sms_login_verify_enabled', false), FILTER_VALIDATE_BOOLEAN);
     }
 
     /**
@@ -453,7 +454,7 @@ class AuthController extends Controller
             try {
                 Mail::to($user->email)->send(new WelcomeUser($user));
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('welcome_email_failed', ['error' => $e->getMessage()]);
+                Log::warning('welcome_email_failed', ['error' => $e->getMessage()]);
             }
         }
 

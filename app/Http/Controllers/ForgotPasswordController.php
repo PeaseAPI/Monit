@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ResetPassword;
 use App\Models\User;
 use App\Services\LoginLockout;
 use App\Services\Sms\SmsService;
-use App\Mail\ResetPassword;
+use App\Support\Captcha;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class ForgotPasswordController extends Controller
     public function sendResetLinkEmail(Request $request): RedirectResponse
     {
         // 人机验证（captcha.captcha_on_lost_password）
-        if (\App\Support\Captcha::enabled('lost_password') && ! \App\Support\Captcha::verify(\App\Support\Captcha::tokenFrom($request->all()))) {
+        if (Captcha::enabled('lost_password') && ! Captcha::verify(Captcha::tokenFrom($request->all()))) {
             return back()->withInput($request->only('email'))
                 ->withErrors(['captcha' => __('validation.captcha_failed')]);
         }

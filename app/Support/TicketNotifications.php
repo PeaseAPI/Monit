@@ -2,8 +2,8 @@
 
 namespace App\Support;
 
-use App\Mail\TicketUserRepliedToAdmin;
 use App\Mail\TicketSubmittedToAdmin;
+use App\Mail\TicketUserRepliedToAdmin;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;

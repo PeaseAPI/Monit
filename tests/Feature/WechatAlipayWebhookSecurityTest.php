@@ -279,4 +279,3 @@ class WechatAlipayWebhookSecurityTest extends TestCase
         $this->assertSame('pro', $user->fresh()->plan_id);
     }
 }
-

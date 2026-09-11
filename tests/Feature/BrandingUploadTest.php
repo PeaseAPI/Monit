@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -23,7 +24,7 @@ class BrandingUploadTest extends TestCase
     {
         parent::setUp();
         Storage::fake('public');
-        $admin = \App\Models\User::create([
+        $admin = User::create([
             'name' => 'Admin Test',
             'email' => 'admin@branding-upload.test',
             'password' => bcrypt('secret123'),
@@ -155,4 +156,3 @@ class BrandingUploadTest extends TestCase
         $response->assertSessionHasErrors('logo_upload');
     }
 }
-

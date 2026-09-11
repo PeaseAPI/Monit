@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Ticket;
 use App\Models\TicketReply;
+use App\Support\Settings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -21,14 +22,14 @@ class TicketRepliedToUser extends Mailable
     public function build(): static
     {
         // Reply-To 留站内收件箱（配置了入站邮箱时），管理员直接回邮件即入工单
-        $inbound = trim((string) \App\Support\Settings::get('tickets.inbound_email', ''));
+        $inbound = trim((string) Settings::get('tickets.inbound_email', ''));
         $mailable = $this->subject('Re: ['.$this->ticket->code().'] '.$this->ticket->subject)
             ->markdown('emails.ticket-message')
             ->with([
                 'ticket' => $this->ticket,
                 'heading' => __('msg.ticket_user_replied_heading'),
                 'message' => $this->reply->message,
-                'actionUrl' => \App\Support\Settings::get('tickets.inbound_email') !== null && $this->ticket->user_id
+                'actionUrl' => Settings::get('tickets.inbound_email') !== null && $this->ticket->user_id
                     ? route('tickets.show', $this->ticket->ticket_id)
                     : route('login'),
                 'actionText' => __('msg.ticket_user_view'),

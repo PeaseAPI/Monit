@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AccountLog;
 use App\Support\Csv;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -36,7 +37,7 @@ class AdminLogs extends Controller
     /**
      * 列表/下载共用的过滤查询构造
      *
-     * @return \Illuminate\Database\Eloquent\Builder<AccountLog>
+     * @return Builder<AccountLog>
      */
     private function buildQuery(Request $request)
     {

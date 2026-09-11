@@ -331,8 +331,8 @@ class PixelTracker
             // 回访时刷新地理 / UA 数据：早期版本未写入这些列的旧行、
             // 以及库升级后 GeoIP 数据变化的访客都能借此补齐（修复"未知"地区不更新问题）
             ['last_date', 'ip', 'continent_code', 'country_code', 'city_name',
-             'os_name', 'os_version', 'browser_name', 'browser_version',
-             'browser_language', 'browser_timezone', 'screen_resolution', 'device_type', 'theme']
+                'os_name', 'os_version', 'browser_name', 'browser_version',
+                'browser_language', 'browser_timezone', 'screen_resolution', 'device_type', 'theme']
         );
     }
 
@@ -607,7 +607,7 @@ class PixelTracker
                 // 0（落地页明确宣传「该套餐无回放」）或超限时一律拒收——
                 // 原实现「>0 才检查」会把 0（禁用）误放行，造成配额绕过。
                 // 缺键 ?? -1 = 不限：对齐 sessions_events_limit 的既有模式
-                //（custom 用户 plan_settings 不与 plan_defaults 合并，未配置即不加限）。
+                // （custom 用户 plan_settings 不与 plan_defaults 合并，未配置即不加限）。
                 $replayLimit = $this->website->user?->getPlanSettings()['sessions_replays_limit'] ?? -1;
                 $replayAllowed = ($replayLimit === -1)
                     || ($replayLimit > 0 && $this->website->current_month_sessions_replays < $replayLimit);
@@ -964,7 +964,7 @@ class PixelTracker
     protected function clientIp(): string
     {
         // X-Forwarded-For 的信任判定已由 TrustProxies 中间件统一处理
-        //（AppServiceProvider::boot 依据 TRUSTED_PROXIES 配置；不可信来源的
+        // （AppServiceProvider::boot 依据 TRUSTED_PROXIES 配置；不可信来源的
         // 伪造头不会影响 ip()）。此处禁止再自行解析原始 XFF 头——否则直连
         // 部署时攻击者仍可伪造访客 IP 污染统计/绕过 IP 级逻辑。
         return $this->request->ip() ?? '0.0.0.0';

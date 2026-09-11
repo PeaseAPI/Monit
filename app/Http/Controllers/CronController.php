@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\SessionReplay;
 use App\Models\User;
 use App\Models\VisitorSession;
+use App\Services\WebhookService;
+use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -23,7 +25,7 @@ class CronController extends Controller
      */
     protected function authorized(Request $request): bool
     {
-        $expected = trim((string) \App\Support\Settings::get('cron.cron_key', '')) ?: (string) config('app.cron_key');
+        $expected = trim((string) Settings::get('cron.cron_key', '')) ?: (string) config('app.cron_key');
 
         if ($expected === '') {
             return false;
@@ -45,7 +47,7 @@ class CronController extends Controller
         }
 
         // Webhook：cron 开始（webhooks.webhooks_cron_start）
-        app(\App\Services\WebhookService::class)->cronStart();
+        app(WebhookService::class)->cronStart();
 
         $results = [];
         $results['users_plan_expiration'] = $this->usersPlanExpiration();
@@ -57,7 +59,7 @@ class CronController extends Controller
         $results['email_reports'] = $this->emailReports();
 
         // Webhook：cron 结束（webhooks.webhooks_cron_end）
-        app(\App\Services\WebhookService::class)->cronEnd($results);
+        app(WebhookService::class)->cronEnd($results);
 
         return response()->json(['status' => 'ok', 'results' => $results]);
     }
@@ -103,7 +105,7 @@ class CronController extends Controller
      */
     protected function cronTaskOn(string $key): bool
     {
-        $value = \App\Support\Settings::get('cron.'.$key);
+        $value = Settings::get('cron.'.$key);
 
         return $value === null || in_array($value, [true, 1, '1', 'true', 'on'], true);
     }

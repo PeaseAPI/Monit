@@ -88,7 +88,7 @@ class SitemapTest extends TestCase
         $this->assertStringNotContainsString('/blog/draft-post', $xml);
     }
 
-    public function test_已发布_CMS_页带_lastmod_且未发布不收录(): void
+    public function test_已发布_cm_s_页带_lastmod_且未发布不收录(): void
     {
         Page::create([
             'user_id' => 1,
@@ -113,7 +113,7 @@ class SitemapTest extends TestCase
         $this->assertStringNotContainsString('/page/hidden-page', $xml);
     }
 
-    public function test_输出为合法_Xml(): void
+    public function test_输出为合法_xml(): void
     {
         $xml = $this->get('/sitemap.xml')->assertStatus(200)
             ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')

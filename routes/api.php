@@ -67,28 +67,28 @@ Route::prefix('v1')->middleware('api.key')->group(function (): void {
     Route::delete('/websites/{website}', [ApiWebsiteController::class, 'destroy']);
 
     // 数据查询（路由级所有权校验 · 安全审计周期 #19：can:own,website 为第一道
-// 防线，控制器内 authorizeWebsite 保留作纵深防御——新增方法不再可能漏检）
-Route::middleware('can:own,website')->group(function (): void {
-    Route::get('/websites/{website}/realtime', [AnalyticsController::class, 'realtime']);
-    Route::get('/websites/{website}/visitors', [AnalyticsController::class, 'visitors']);
-    Route::get('/websites/{website}/events', [AnalyticsController::class, 'events']);
-    Route::get('/websites/{website}/metrics', [AnalyticsController::class, 'metrics']);
-    Route::get('/websites/{website}/top-pages', [AnalyticsController::class, 'topPages']);
-    Route::get('/websites/{website}/top-referrers', [AnalyticsController::class, 'topReferrers']);
-    Route::get('/websites/{website}/top-countries', [AnalyticsController::class, 'topCountries']);
-    Route::get('/websites/{website}/top-browsers', [AnalyticsController::class, 'topBrowsers']);
-    Route::get('/websites/{website}/top-devices', [AnalyticsController::class, 'topDevices']);
-    Route::get('/websites/{website}/top-operating-systems', [AnalyticsController::class, 'topOperatingSystems']);
-    Route::get('/websites/{website}/sessions', [AnalyticsController::class, 'sessions']);
-    Route::get('/websites/{website}/goals', [AnalyticsController::class, 'goals']);
-    Route::get('/websites/{website}/utm', [AnalyticsController::class, 'utm']);
+    // 防线，控制器内 authorizeWebsite 保留作纵深防御——新增方法不再可能漏检）
+    Route::middleware('can:own,website')->group(function (): void {
+        Route::get('/websites/{website}/realtime', [AnalyticsController::class, 'realtime']);
+        Route::get('/websites/{website}/visitors', [AnalyticsController::class, 'visitors']);
+        Route::get('/websites/{website}/events', [AnalyticsController::class, 'events']);
+        Route::get('/websites/{website}/metrics', [AnalyticsController::class, 'metrics']);
+        Route::get('/websites/{website}/top-pages', [AnalyticsController::class, 'topPages']);
+        Route::get('/websites/{website}/top-referrers', [AnalyticsController::class, 'topReferrers']);
+        Route::get('/websites/{website}/top-countries', [AnalyticsController::class, 'topCountries']);
+        Route::get('/websites/{website}/top-browsers', [AnalyticsController::class, 'topBrowsers']);
+        Route::get('/websites/{website}/top-devices', [AnalyticsController::class, 'topDevices']);
+        Route::get('/websites/{website}/top-operating-systems', [AnalyticsController::class, 'topOperatingSystems']);
+        Route::get('/websites/{website}/sessions', [AnalyticsController::class, 'sessions']);
+        Route::get('/websites/{website}/goals', [AnalyticsController::class, 'goals']);
+        Route::get('/websites/{website}/utm', [AnalyticsController::class, 'utm']);
 
-    // 统计聚合 / 双模式页面浏览 / 回放（规格书 §8：statistics、pageviews-*、replays）
-    Route::get('/websites/{website}/statistics', [AnalyticsController::class, 'statistics']);
-    Route::get('/websites/{website}/pageviews-advanced', [AnalyticsController::class, 'pageviewsAdvanced']);
-    Route::get('/websites/{website}/pageviews-lightweight', [AnalyticsController::class, 'pageviewsLightweight']);
-    Route::get('/websites/{website}/replays', [AnalyticsController::class, 'replays']);
-});
+        // 统计聚合 / 双模式页面浏览 / 回放（规格书 §8：statistics、pageviews-*、replays）
+        Route::get('/websites/{website}/statistics', [AnalyticsController::class, 'statistics']);
+        Route::get('/websites/{website}/pageviews-advanced', [AnalyticsController::class, 'pageviewsAdvanced']);
+        Route::get('/websites/{website}/pageviews-lightweight', [AnalyticsController::class, 'pageviewsLightweight']);
+        Route::get('/websites/{website}/replays', [AnalyticsController::class, 'replays']);
+    });
 
     // 目标 CRUD（规格书 §8：/api/goals）
     Route::get('/websites/{website}/goals/list', [ResourcesController::class, 'goalsIndex']);

@@ -21,6 +21,7 @@ class DemoHeatmapReplaySeeder extends Seeder
         $website = Website::first();
         if (! $website) {
             $this->command->warn('No website found.');
+
             return;
         }
         $userId = $website->user_id;
@@ -31,39 +32,39 @@ class DemoHeatmapReplaySeeder extends Seeder
                 continue;
             }
 
-                        $heatmap = Heatmap::create([
+            $heatmap = Heatmap::create([
                 'website_id' => $website->website_id,
-                'path'       => $path,
-                'name'       => $path === '/' ? 'Homepage' : ltrim($path, '/'),
+                'path' => $path,
+                'name' => $path === '/' ? 'Homepage' : ltrim($path, '/'),
                 'is_enabled' => true,
-                'datetime'   => now(),
+                'datetime' => now(),
             ]);
 
             $snapshotEvents = $this->generateSnapshotEvents($path === '/' ? 'Homepage' : ltrim($path, '/'));
             $snap = HeatmapSnapshot::create([
                 'heatmap_id' => $heatmap->heatmap_id,
                 'website_id' => $website->website_id,
-                'type'       => 'desktop',
-                'data'       => gzencode(json_encode(['events' => $snapshotEvents, 'viewport' => ['width' => 1920, 'height' => 1080]]), 9),
-                'date'       => now()->toDateString(),
+                'type' => 'desktop',
+                'data' => gzencode(json_encode(['events' => $snapshotEvents, 'viewport' => ['width' => 1920, 'height' => 1080]]), 9),
+                'date' => now()->toDateString(),
             ]);
 
             $compressed = gzencode(json_encode(['events' => $snapshotEvents, 'viewport' => ['width' => 1920, 'height' => 1080]]), 9);
             $heatmap->update([
                 'snapshot_id_desktop' => $snap->snapshot_id,
-                'desktop_size'        => strlen($compressed),
+                'desktop_size' => strlen($compressed),
             ]);
 
             // Click data
             for ($i = 0; $i < 30; $i++) {
                 HeatmapSnapshotClick::create([
-                    'website_id'      => $website->website_id,
-                    'snapshot_id'     => $snap->snapshot_id,
-                    'x_normalized'    => round(mt_rand(5, 95) + mt_rand(0, 100) / 100, 2),
-                    'y_normalized'    => round(mt_rand(5, 95) + mt_rand(0, 100) / 100, 2),
-                    'count'           => mt_rand(1, 5),
+                    'website_id' => $website->website_id,
+                    'snapshot_id' => $snap->snapshot_id,
+                    'x_normalized' => round(mt_rand(5, 95) + mt_rand(0, 100) / 100, 2),
+                    'y_normalized' => round(mt_rand(5, 95) + mt_rand(0, 100) / 100, 2),
+                    'count' => mt_rand(1, 5),
                     'expiration_date' => now()->addDays(90)->toDateString(),
-                    'datetime'        => now()->subHours(mt_rand(1, 72)),
+                    'datetime' => now()->subHours(mt_rand(1, 72)),
                 ]);
             }
 
@@ -71,13 +72,13 @@ class DemoHeatmapReplaySeeder extends Seeder
             foreach ([10, 25, 50, 75, 90, 100] as $pct) {
                 for ($j = 0; $j < mt_rand(2, 8); $j++) {
                     HeatmapSnapshotScroll::create([
-                        'website_id'        => $website->website_id,
-                        'snapshot_id'       => $snap->snapshot_id,
+                        'website_id' => $website->website_id,
+                        'snapshot_id' => $snap->snapshot_id,
                         'event_uuid_binary' => Uuid::uuid4()->getBytes(),
-                        'max_scroll'        => $pct,
-                        'expiration_date'   => now()->addDays(90)->toDateString(),
-                        'last_datetime'     => now()->subHours(mt_rand(1, 72)),
-                        'datetime'          => now()->subHours(mt_rand(1, 72)),
+                        'max_scroll' => $pct,
+                        'expiration_date' => now()->addDays(90)->toDateString(),
+                        'last_datetime' => now()->subHours(mt_rand(1, 72)),
+                        'datetime' => now()->subHours(mt_rand(1, 72)),
                     ]);
                 }
             }
@@ -85,37 +86,37 @@ class DemoHeatmapReplaySeeder extends Seeder
         // ── Session Replays ───────────────────────────────────
         for ($r = 0; $r < 5; $r++) {
             $visitor = WebsiteVisitor::create([
-                'website_id'           => $website->website_id,
-                'visitor_uuid_binary'  => Uuid::uuid4()->getBytes(),
-                'ip'                   => long2ip(mt_rand(ip2long('1.0.0.0'), ip2long('223.255.255.255'))),
-                'continent_code'       => 'AS',
-                'country_code'         => 'CN',
-                'city_name'            => ['北京', '上海', '广州', '深圳', '杭州'][mt_rand(0, 4)],
-                'os_name'              => ['Windows', 'macOS', 'Linux'][mt_rand(0, 2)],
-                'browser_name'         => ['Chrome', 'Firefox', 'Safari'][mt_rand(0, 2)],
-                'device_type'          => 'desktop',
-                'date'                 => now()->subHours(mt_rand(1, 72)),
-                'last_date'            => now(),
+                'website_id' => $website->website_id,
+                'visitor_uuid_binary' => Uuid::uuid4()->getBytes(),
+                'ip' => long2ip(mt_rand(ip2long('1.0.0.0'), ip2long('223.255.255.255'))),
+                'continent_code' => 'AS',
+                'country_code' => 'CN',
+                'city_name' => ['北京', '上海', '广州', '深圳', '杭州'][mt_rand(0, 4)],
+                'os_name' => ['Windows', 'macOS', 'Linux'][mt_rand(0, 2)],
+                'browser_name' => ['Chrome', 'Firefox', 'Safari'][mt_rand(0, 2)],
+                'device_type' => 'desktop',
+                'date' => now()->subHours(mt_rand(1, 72)),
+                'last_date' => now(),
             ]);
 
             $session = VisitorSession::create([
                 'session_uuid_binary' => Uuid::uuid4()->getBytes(),
-                'visitor_id'          => $visitor->visitor_id,
-                'website_id'          => $website->website_id,
-                'date'                => now()->subHours(mt_rand(1, 72)),
-                'total_events'        => mt_rand(5, 30),
+                'visitor_id' => $visitor->visitor_id,
+                'website_id' => $website->website_id,
+                'date' => now()->subHours(mt_rand(1, 72)),
+                'total_events' => mt_rand(5, 30),
             ]);
 
             SessionReplay::create([
-                'session_id'      => $session->session_id,
-                'visitor_id'      => $visitor->visitor_id,
-                'website_id'      => $website->website_id,
-                'is_offloaded'    => false,
-                'datetime'        => now()->subHours(mt_rand(1, 72)),
+                'session_id' => $session->session_id,
+                'visitor_id' => $visitor->visitor_id,
+                'website_id' => $website->website_id,
+                'is_offloaded' => false,
+                'datetime' => now()->subHours(mt_rand(1, 72)),
             ]);
 
             $events = $this->generateRrwebEvents();
-            $key = 'session_replay_chunk_' . md5($session->session_id . '_0_' . uniqid('', true));
+            $key = 'session_replay_chunk_'.md5($session->session_id.'_0_'.uniqid('', true));
             Cache::put($key, $events, now()->addDays(30));
             Cache::put("session_replay_keys_{$session->session_id}", [$key], now()->addDays(30));
         }
@@ -123,7 +124,7 @@ class DemoHeatmapReplaySeeder extends Seeder
         $this->command->info('Demo data created!');
     }
 
-        protected function generateRrwebEvents(): array
+    protected function generateRrwebEvents(): array
     {
         $ts = now()->subMinutes(5)->getPreciseTimestamp(3);
 
@@ -214,7 +215,7 @@ class DemoHeatmapReplaySeeder extends Seeder
             }
         }
 
-                return $events;
+        return $events;
     }
 
     /**
@@ -228,7 +229,7 @@ class DemoHeatmapReplaySeeder extends Seeder
         return [
             [
                 'type' => 4,
-                'data' => ['href' => 'https://example.com/' . ($pageName === 'Homepage' ? '' : $pageName), 'width' => 1920, 'height' => 1080],
+                'data' => ['href' => 'https://example.com/'.($pageName === 'Homepage' ? '' : $pageName), 'width' => 1920, 'height' => 1080],
                 'timestamp' => $ts,
             ],
             [
@@ -241,7 +242,7 @@ class DemoHeatmapReplaySeeder extends Seeder
                                 [
                                     'type' => 1, 'name' => 'head', 'childNodes' => [
                                         ['type' => 1, 'name' => 'title', 'childNodes' => [
-                                            ['type' => 3, 'textContent' => $pageName . ' - Example'],
+                                            ['type' => 3, 'textContent' => $pageName.' - Example'],
                                         ]],
                                         ['type' => 1, 'name' => 'style', 'attributes' => ['type' => 'text/css'], 'childNodes' => [
                                             ['type' => 3, 'textContent' => 'body{font-family:system-ui,sans-serif;margin:0;padding:40px;color:#333}h1{color:#1a1a1a;margin-bottom:16px}p{line-height:1.6;margin-bottom:12px}nav{margin-bottom:24px}nav a{margin-right:16px;color:#0066cc}'],
@@ -257,7 +258,7 @@ class DemoHeatmapReplaySeeder extends Seeder
                                         ],
                                         [
                                             'type' => 1, 'name' => 'p', 'childNodes' => [
-                                                ['type' => 3, 'textContent' => 'This is the ' . strtolower($pageName) . ' page content.'],
+                                                ['type' => 3, 'textContent' => 'This is the '.strtolower($pageName).' page content.'],
                                             ],
                                         ],
                                     ],

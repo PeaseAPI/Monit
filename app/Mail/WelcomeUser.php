@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\User;
+use App\Support\Brand;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -20,12 +21,12 @@ class WelcomeUser extends Mailable
 
     public function build(): static
     {
-        return $this->subject(__('msg.welcome_email_subject', ['site' => \App\Support\Brand::name()]))
+        return $this->subject(__('msg.welcome_email_subject', ['site' => Brand::name()]))
             ->markdown('emails.welcome-user')
             ->with([
                 'user' => $this->user,
                 'loginUrl' => route('login'),
-                'siteName' => \App\Support\Brand::name(),
+                'siteName' => Brand::name(),
             ]);
     }
 }

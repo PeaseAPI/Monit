@@ -33,7 +33,7 @@ class LoginLockoutTest extends TestCase
     protected function tearDown(): void
     {
         // Settings 静态快照跨测试残留（DB 事务回滚但 static::$cached 不回滚）
-        \App\Support\Settings::flush();
+        Settings::flush();
         parent::tearDown();
     }
 

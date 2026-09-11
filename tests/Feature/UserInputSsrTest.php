@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Domain;
 use App\Models\User;
+use App\Models\Website;
 use App\Services\WebPushService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -78,7 +79,7 @@ class UserInputSsrTest extends TestCase
 
     public function test_subscribe_accepts_valid_push_endpoint(): void
     {
-        $website = \App\Models\Website::create([
+        $website = Website::create([
             'user_id' => $this->user->user_id,
             'pixel_key' => 'px_t17', 'name' => 'Site', 'scheme' => 'https',
             'host' => 'site.test', 'tracking_type' => 'lightweight', 'is_enabled' => true,

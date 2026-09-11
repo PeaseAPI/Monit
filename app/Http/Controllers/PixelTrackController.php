@@ -54,7 +54,7 @@ class PixelTrackController extends Controller
             } else {
                 // 未命中 或 坏缓存（database 驱动 value 列截断产生的 __PHP_Incomplete_Class 等）：
                 // 回源重建并覆盖坏条目——直接使用坏对象会触发 TypeError 逐请求上报
-                //（关联：PixelTracker::handle 强类型 Website 参数；生产 cache.value 需 mediumtext）
+                // （关联：PixelTracker::handle 强类型 Website 参数；生产 cache.value 需 mediumtext）
                 //
                 // 负向限流：每 IP 未命中回源次数限流（config: website_miss_rate_limit / 分钟）。
                 // 命中缓存的正常流量零开销；随机 pixel_key 扫描因每请求必 miss 被快速熔断，
@@ -90,7 +90,7 @@ class PixelTrackController extends Controller
         }
 
         // 简单跳过原因计数（供 Admin 观测，不记录 PII）
-                if ($reason !== 'untracked') {
+        if ($reason !== 'untracked') {
             Log::channel('single')->debug('pixel skipped: '.$reason);
         }
 
@@ -146,7 +146,7 @@ class PixelTrackController extends Controller
 
         if (! $heatmap) {
             // 通配符匹配 /path/*
-                        $heatmap = Heatmap::where('website_id', $website->website_id)
+            $heatmap = Heatmap::where('website_id', $website->website_id)
                 ->where('is_enabled', true)
                 ->whereRaw('? LIKE CONCAT(REPLACE(path, \'*\', \'%\'))', [$path])
                 ->first();

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -22,7 +23,7 @@ use Tests\TestCase;
  */
 class AvatarUploadTest extends TestCase
 {
-    use \Illuminate\Foundation\Testing\RefreshDatabase;
+    use RefreshDatabase;
 
     /** @var string[] 测试期间落盘的文件，tearDown 清理 */
     private array $written = [];
@@ -99,7 +100,7 @@ class AvatarUploadTest extends TestCase
         foreach (['phtml', 'phar', 'shtml', 'html', 'php5', 'php7', 'pht', 'svg'] as $ext) {
             $file = $this->attackFile(
                 'avatar.'.$ext,
-                "GIF89a<html><script>alert(document.domain)</script>"
+                'GIF89a<html><script>alert(document.domain)</script>'
             );
 
             $this->postProfile($user, ['avatar' => $file])

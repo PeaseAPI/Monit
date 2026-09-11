@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Heatmap;
-use App\Models\HeatmapSnapshot;
 use App\Models\HeatmapSnapshotClick;
 use App\Models\HeatmapSnapshotScroll;
 use App\Models\Website;
@@ -113,7 +112,7 @@ class HeatmapController extends Controller
             }
         }
 
-                return view('stats.heatmaps.show', compact('website', 'heatmap', 'clicks', 'scrolls', 'device', 'hasSnapshot', 'hasLegacySnapshot'));
+        return view('stats.heatmaps.show', compact('website', 'heatmap', 'clicks', 'scrolls', 'device', 'hasSnapshot', 'hasLegacySnapshot'));
     }
 
     public function update(Request $request): RedirectResponse

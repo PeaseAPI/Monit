@@ -87,7 +87,7 @@ class ToolRunner
         try {
             return $this->instance($class)->{$meta['handler']}($input);
         } catch (\Throwable $e) {
-            Log::error("SEO tool {$slug} error: " . $e->getMessage(), [
+            Log::error("SEO tool {$slug} error: ".$e->getMessage(), [
                 'exception' => $e,
             ]);
 

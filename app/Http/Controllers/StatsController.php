@@ -6,11 +6,11 @@ use App\Models\LightweightEvent;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
-use App\Support\Csv;
 use App\Services\Ai\AiService;
 use App\Services\StatisticsService;
 use App\Support\ContinentNames;
 use App\Support\CountryNames;
+use App\Support\Csv;
 use App\Support\LocaleNames;
 use App\Support\TimezoneNames;
 use Illuminate\Http\Request;
@@ -96,7 +96,7 @@ class StatsController extends Controller
 
         $stats = StatisticsService::for($website)->lastDays($range)->filters($filters);
 
-                $locale = app()->getLocale();
+        $locale = app()->getLocale();
 
         return view('stats.index', [
             'website' => $website,
@@ -106,7 +106,7 @@ class StatsController extends Controller
             'series' => $stats->dailySeries(),
             'topPaths' => $stats->breakdown('path'),
             'topReferrers' => $stats->breakdown('referrer_host'),
-            'topCountries' => array_map(fn ($item) => array_merge($item, ['label' => CountryNames::flag($item['key']) . ' ' . CountryNames::name($item['key'], $locale)]), $stats->breakdown('country_code', 8)),
+            'topCountries' => array_map(fn ($item) => array_merge($item, ['label' => CountryNames::flag($item['key']).' '.CountryNames::name($item['key'], $locale)]), $stats->breakdown('country_code', 8)),
             'topDevices' => $stats->breakdown('device_type', 4),
             'topBrowsers' => $stats->breakdown('browser_name', 4),
             'topOs' => $stats->breakdown('os_name', 4),
@@ -315,7 +315,7 @@ class StatsController extends Controller
         $stats = StatisticsService::for($website)->lastDays($range);
         $locale = app()->getLocale();
         $topCountries = array_map(function ($item) use ($locale) {
-            $item['label'] = CountryNames::flag($item['key']) . ' ' . CountryNames::name($item['key'], $locale);
+            $item['label'] = CountryNames::flag($item['key']).' '.CountryNames::name($item['key'], $locale);
 
             return $item;
         }, $stats->breakdown('country_code', 50));

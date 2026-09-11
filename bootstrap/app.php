@@ -1,10 +1,11 @@
 <?php
 
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\ApplyPlatformHeaders;
 use App\Http\Middleware\AuthenticateApiKey;
 use App\Http\Middleware\CheckMaintenance;
-use App\Http\Middleware\EnsureInstalled;
 use App\Http\Middleware\EnforcePlanLimits;
+use App\Http\Middleware\EnsureInstalled;
 use App\Http\Middleware\EnsureUserActive;
 use App\Http\Middleware\SeoFeatureEnabled;
 use App\Http\Middleware\SetLocale;
@@ -49,7 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // 注：TrustProxies 不在此配置——withMiddleware 闭包在 HTTP kernel 构造期执行
-        //（早于 .env/config 加载，env() 只能拿到默认值）；实际配置见
+        // （早于 .env/config 加载，env() 只能拿到默认值）；实际配置见
         // AppServiceProvider::boot()（provider boot 阶段 .env 已加载、中间件未执行）
 
         // 维护模式（规格书 §6.1）：settings main.maintenance_is_enabled 开启时非管理员跳转维护页
@@ -60,7 +61,7 @@ return Application::configure(basePath: dirname(__DIR__))
             CheckMaintenance::class,
             EnsureUserActive::class,
             SetLocale::class,
-            \App\Http\Middleware\ApplyPlatformHeaders::class,
+            ApplyPlatformHeaders::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

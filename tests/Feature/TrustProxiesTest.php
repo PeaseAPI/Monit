@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Providers\AppServiceProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -79,7 +79,7 @@ class TrustProxiesTest extends TestCase
         $this->assertSame('*', $this->trustedProxies());
     }
 
-    public function test_逗号分隔_CIDR_列表(): void
+    public function test_逗号分隔_cid_r_列表(): void
     {
         $this->rebootWith('10.0.0.0/8, 192.168.1.1 ,172.16.0.0/12');
 
@@ -89,13 +89,13 @@ class TrustProxiesTest extends TestCase
         );
     }
 
-    public function test_默认配置下可信来源_XFF_生效(): void
+    public function test_默认配置下可信来源_xf_f_生效(): void
     {
         // 测试客户端 REMOTE_ADDR=127.0.0.1 属 private 可信代理 → XFF 解析为客户端 IP
         $this->assertSame('8.8.8.8', $this->missRequestIp());
     }
 
-    public function test_none_时伪造_XFF_被忽略(): void
+    public function test_none_时伪造_xf_f_被忽略(): void
     {
         $this->rebootWith('none');
 

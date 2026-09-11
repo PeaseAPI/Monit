@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\DashboardView;
 use App\Models\Domain;
 use App\Models\InternalNotification;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\Website;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -191,7 +193,7 @@ class UserNavFeaturesTest extends TestCase
     {
         $user = $this->user();
 
-        \App\Models\Website::create([
+        Website::create([
             'user_id' => $user->user_id,
             'pixel_key' => 'px_nav_1', 'name' => 'Nav Site',
             'scheme' => 'https', 'host' => 'nav.test',
@@ -210,7 +212,7 @@ class UserNavFeaturesTest extends TestCase
             'order' => 1,
         ])->assertRedirect();
 
-        $view = \App\Models\DashboardView::where('user_id', $user->user_id)->first();
+        $view = DashboardView::where('user_id', $user->user_id)->first();
         $this->assertNotNull($view);
         $this->assertSame(['widgets' => ['visitors', 'pageviews']], $view->settings);
     }

@@ -25,7 +25,7 @@ class AiService
     public const PROVIDERS = ['aliyun_bailian', 'tencent_hunyuan', 'volcengine_ark', 'openai_compatible', 'log'];
 
     /** AI 功能总开关 */
-        public static function isEnabled(): bool
+    public static function isEnabled(): bool
     {
         return filter_var(Settings::get('ai.ai_is_enabled', false), FILTER_VALIDATE_BOOLEAN);
     }

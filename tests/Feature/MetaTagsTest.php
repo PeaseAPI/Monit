@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\BlogPost;
 use App\Models\Page;
 use App\Models\User;
+use App\Support\Brand;
 use Database\Seeders\ProductionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -47,7 +48,7 @@ class MetaTagsTest extends TestCase
         $this->assertStringContainsString('<meta property="og:url" content="'.route('seo.landing').'"', $html);
         $this->assertStringContainsString('<meta property="og:description" content="'.__('seo.landing_description').'"', $html);
         // og:title 跟随 title section：页面标题 + 分隔符 + 站名
-        $expectedOgTitle = __('seo.landing_title').' '.\App\Support\Brand::titleSeparator().' '.\App\Support\Brand::name();
+        $expectedOgTitle = __('seo.landing_title').' '.Brand::titleSeparator().' '.Brand::name();
         $this->assertMatchesRegularExpression(
             '#<meta property="og:title" content="'.preg_quote($expectedOgTitle, '#').'"#',
             $html,
@@ -63,7 +64,7 @@ class MetaTagsTest extends TestCase
 
         // 首页未声明 title section → og:title 退化为站名（不硬编码工具页文案）
         $this->assertMatchesRegularExpression(
-            '#<meta property="og:title" content="'.preg_quote(\App\Support\Brand::name(), '#').'"#',
+            '#<meta property="og:title" content="'.preg_quote(Brand::name(), '#').'"#',
             $html
         );
     }
@@ -95,7 +96,7 @@ class MetaTagsTest extends TestCase
         $this->assertStringContainsString('<meta property="og:url" content="'.route('blog.post', 'meta-test-post').'">', $html);
         $this->assertStringContainsString('<title>Meta 测试文章', $html);
         $this->assertMatchesRegularExpression(
-            '#<meta property="og:title" content="Meta 测试文章 '.preg_quote(\App\Support\Brand::titleSeparator(), '#').' '.preg_quote(\App\Support\Brand::name(), '#').'"#',
+            '#<meta property="og:title" content="Meta 测试文章 '.preg_quote(Brand::titleSeparator(), '#').' '.preg_quote(Brand::name(), '#').'"#',
             $html
         );
     }

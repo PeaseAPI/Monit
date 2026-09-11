@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\Heatmap;
+use App\Models\SessionReplay;
 use App\Models\User;
 use App\Models\Website;
 use App\Models\WebsiteGoal;
+use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
@@ -180,7 +183,7 @@ class PixelTrackTest extends TestCase
         $this->assertGreaterThan(0, $heatmap->desktop_size);
 
         // 验证快照数据可被正确读取和解压
-        $snapshotRow = \Illuminate\Support\Facades\DB::selectOne(
+        $snapshotRow = DB::selectOne(
             'SELECT data FROM heatmaps_snapshots WHERE snapshot_id = ?',
             [$heatmap->snapshot_id_desktop],
         );
@@ -236,17 +239,17 @@ class PixelTrackTest extends TestCase
         ]);
 
         // 精确匹配路径正常返回
-        $r1 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=' . urlencode('/about'));
+        $r1 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path='.urlencode('/about'));
         $r1->assertStatus(200);
         $this->assertSame($heatmap->heatmap_id, json_decode($r1->getContent(), true)['heatmap_id']);
 
         // 带 query 的访问路径 → pathname 回退匹配到纯路径热图
-        $r2 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=' . urlencode('/about?utm_source=newsletter'));
+        $r2 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path='.urlencode('/about?utm_source=newsletter'));
         $r2->assertStatus(200);
         $this->assertSame($heatmap->heatmap_id, json_decode($r2->getContent(), true)['heatmap_id']);
 
         // 无匹配路径 → 响应不含 heatmap_id 键
-        $r3 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=' . urlencode('/missing?x=1'));
+        $r3 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path='.urlencode('/missing?x=1'));
         $r3->assertStatus(200);
         $this->assertArrayNotHasKey('heatmap_id', json_decode($r3->getContent(), true));
     }
@@ -258,7 +261,7 @@ class PixelTrackTest extends TestCase
      */
     public function test_heatmap_check_replay_enabled_respects_plan_quota_zero(): void
     {
-        \App\Support\Settings::set('analytics.sessions_replays_is_enabled', 'true');
+        Settings::set('analytics.sessions_replays_is_enabled', 'true');
 
         // 缺键 = 不限 → 启用
         $r1 = $this->get('/pixel-track/px_test_key_123?action=heatmap_check&path=/');
@@ -300,13 +303,13 @@ class PixelTrackTest extends TestCase
         // 3. 验证 SessionReplay 记录已创建，events 和 size 字段非空
         $this->assertDatabaseCount('sessions_replays', 1);
 
-        $replay = \App\Models\SessionReplay::first();
+        $replay = SessionReplay::first();
         $this->assertNotNull($replay);
         $this->assertEquals(3, $replay->events);
         $this->assertGreaterThan(0, $replay->size);
 
         // 4. 验证 data 列（LONGBLOB）有压缩数据，可被正确解压
-        $row = \Illuminate\Support\Facades\DB::selectOne(
+        $row = DB::selectOne(
             'SELECT data FROM sessions_replays WHERE replay_id = ?',
             [$replay->replay_id],
         );
@@ -332,7 +335,7 @@ class PixelTrackTest extends TestCase
         $replay->refresh();
         $this->assertEquals(5, $replay->events);
 
-        $row = \Illuminate\Support\Facades\DB::selectOne(
+        $row = DB::selectOne(
             'SELECT data FROM sessions_replays WHERE replay_id = ?',
             [$replay->replay_id],
         );

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Tests\TestCase;
 
 /**
@@ -38,8 +39,9 @@ class AdminPagesSmokeTest extends TestCase
             $response = $this->get($route->uri());
 
             // 流式下载类响应（导出/备份）无 status() 方法，跳过状态断言
-            if ($response->baseResponse instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
+            if ($response->baseResponse instanceof StreamedResponse) {
                 $checked++;
+
                 continue;
             }
 

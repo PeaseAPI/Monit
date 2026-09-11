@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\SocialLoginController;
 use App\Models\User;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -162,13 +163,14 @@ class SocialSecurityTest extends TestCase
     {
         config(['services.apple.client_id' => 'com.monit.app']);
 
-        $controller = new \App\Http\Controllers\SocialLoginController;
+        $controller = new SocialLoginController;
         $method = new \ReflectionMethod($controller, 'getAppleUserInfo');
         $method->setAccessible(true);
 
         $makeToken = function (array $payload): string {
             $header = rtrim(strtr(base64_encode(json_encode(['alg' => 'ES256'])), '+/', '-_'), '=');
             $body = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+
             return $header.'.'.$body.'.sig';
         };
 

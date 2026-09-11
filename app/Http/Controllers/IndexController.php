@@ -6,10 +6,14 @@ use App\Mail\ContactMessage;
 use App\Models\BlogPost;
 use App\Models\HelpArticle;
 use App\Models\HelpCategory;
+use App\Models\LightweightEvent;
 use App\Models\Page;
 use App\Models\Plan;
+use App\Models\SessionEvent;
 use App\Models\User;
+use App\Models\Website;
 use App\Support\Brand;
+use App\Support\Captcha;
 use App\Support\Currency;
 use App\Support\Settings;
 use Illuminate\Http\Request;
@@ -50,8 +54,8 @@ class IndexController extends Controller
 
         // 平台统计徽章（原站 hero 下方 "9 websites / 44K pageviews"）：1 分钟缓存
         $stats = cache()->remember('landing.stats', 60, fn () => [
-            'websites' => \App\Models\Website::count(),
-            'pageviews' => \App\Models\SessionEvent::count() + \App\Models\LightweightEvent::count(),
+            'websites' => Website::count(),
+            'pageviews' => SessionEvent::count() + LightweightEvent::count(),
         ]);
 
         // M23 模板机制：落地页主题由后台 branding.landing_theme 控制，
@@ -188,7 +192,7 @@ class IndexController extends Controller
     public function contactSend(Request $request)
     {
         // 人机验证（captcha.captcha_on_contact）
-        if (\App\Support\Captcha::enabled('contact') && ! \App\Support\Captcha::verify(\App\Support\Captcha::tokenFrom($request->all()))) {
+        if (Captcha::enabled('contact') && ! Captcha::verify(Captcha::tokenFrom($request->all()))) {
             return back()->withErrors(['captcha' => __('validation.captcha_failed')]);
         }
 
@@ -274,7 +278,6 @@ class IndexController extends Controller
         return response()->json(['ok' => true], 204);
     }
 
-    
     /**
      * 邮件退订（规格书 §6.1：/unsubscribe，HMAC 签名链接）
      */

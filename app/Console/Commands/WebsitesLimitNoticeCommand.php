@@ -89,7 +89,7 @@ class WebsitesLimitNoticeCommand extends Command
 
                     // 标志必须在邮件成功入队后才置位：queue 抛异常（队列连接故障等）
                     // 时不标记，下一轮 Cron 重试，避免「已标记但从未发出」的通知静默丢失
-                    //（修复前 update 在 try 外无条件执行，队列挂掉即通知丢失整月）
+                    // （修复前 update 在 try 外无条件执行，队列挂掉即通知丢失整月）
                     $website->update([$meta['flag'] => true]);
                     $sent++;
                 } catch (\Throwable $e) {

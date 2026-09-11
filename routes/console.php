@@ -101,4 +101,3 @@ Schedule::command('queue:work --stop-when-empty --sleep=0 --tries=1 --timeout=12
     ->everyMinute()
     ->name('queue-drain-fallback')
     ->withoutOverlapping(10);
-

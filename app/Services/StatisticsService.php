@@ -383,7 +383,7 @@ class StatisticsService
                 ->whereBetween('date', [$this->startDate, $this->endDate])
                 ->whereNotNull('visitor_uuid')
                 ->groupBy('visitor_uuid')
-                                ->selectRaw("HEX(visitor_uuid) as visitor_uuid,
+                ->selectRaw("HEX(visitor_uuid) as visitor_uuid,
                     COUNT(*) as total_events,
                     MIN(date) as first_date,
                     MAX(date) as last_date,
@@ -429,7 +429,7 @@ class StatisticsService
             ->limit($limit)
             ->get();
 
-                return collect($rows)->map(fn ($row) => [
+        return collect($rows)->map(fn ($row) => [
             'visitor_id' => (int) $row->visitor_id,
             'visitor_uuid' => strtolower((string) $row->visitor_uuid),
             'country_code' => $row->country_code,

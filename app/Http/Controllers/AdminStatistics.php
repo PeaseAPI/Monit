@@ -8,8 +8,8 @@ use App\Models\User;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 管理后台 - 统计概览
@@ -43,7 +43,7 @@ class AdminStatistics extends Controller
             ->all();
         $byCountry = User::whereNotNull('country')->where('country', '!=', '')
             ->groupBy('country')->selectRaw('country, count(*) as count')->orderByDesc('count')->limit(20)->get();
-                $dailyActiveUsers = [];
+        $dailyActiveUsers = [];
         for ($i = 29; $i >= 0; $i--) {
             $date = now()->subDays($i)->format('Y-m-d');
             $nextDay = now()->subDays($i - 1)->format('Y-m-d');
@@ -65,7 +65,7 @@ class AdminStatistics extends Controller
         $stats = [];
         foreach ($tables as $table) {
             try {
-                                $stats[$table] = DB::table($table)->count();
+                $stats[$table] = DB::table($table)->count();
             } catch (\Throwable) {
                 $stats[$table] = -1;
             }
@@ -152,7 +152,7 @@ class AdminStatistics extends Controller
             $s += $f->getSize();
         }
 
-return $s;
+        return $s;
     }
 
     private function dirFileCount(string $path): int
@@ -164,7 +164,7 @@ return $s;
             }
         }
 
-return $c;
+        return $c;
     }
 
     private function getGrowthData(string $model, int $days): array

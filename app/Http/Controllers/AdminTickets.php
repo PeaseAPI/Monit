@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\TicketRepliedToUser;
 use App\Models\Ticket;
 use App\Models\TicketReply;
 use Illuminate\Http\RedirectResponse;
@@ -67,7 +68,7 @@ class AdminTickets extends Controller
 
         // 通知提交人（登录用户或游客邮箱）：登录查看详情 / 游客邮件往来
         try {
-            Mail::to($ticket->email)->send(new \App\Mail\TicketRepliedToUser($ticket, $reply));
+            Mail::to($ticket->email)->send(new TicketRepliedToUser($ticket, $reply));
         } catch (\Throwable $e) {
             report($e);
         }

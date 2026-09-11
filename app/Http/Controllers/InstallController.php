@@ -484,18 +484,14 @@ class InstallController extends Controller
     protected function translateDbError(string $raw): string
     {
         return match (true) {
-            str_contains($raw, 'Access denied for user')
-                => 'MySQL 用户名或密码错误（Access denied）。请核对后重试。原始错误：'.$raw,
+            str_contains($raw, 'Access denied for user') => 'MySQL 用户名或密码错误（Access denied）。请核对后重试。原始错误：'.$raw,
             str_contains($raw, '[2002]')
                 || str_contains($raw, 'Connection refused')
                 || str_contains($raw, 'server has gone away')
-                || str_contains($raw, 'No such file or directory')
-                => '无法连接 MySQL 服务器：请检查主机地址与端口是否正确、MySQL 是否在运行、防火墙/安全组是否放行。原始错误：'.$raw,
+                || str_contains($raw, 'No such file or directory') => '无法连接 MySQL 服务器：请检查主机地址与端口是否正确、MySQL 是否在运行、防火墙/安全组是否放行。原始错误：'.$raw,
             str_contains($raw, 'Unknown database')
-                || str_contains($raw, '[1049]')
-                => '数据库不存在且无法自动创建。请先手动建库后重试。原始错误：'.$raw,
-            str_contains($raw, 'could not find driver')
-                => 'PHP 缺少 pdo_mysql 数据库驱动扩展。原始错误：'.$raw,
+                || str_contains($raw, '[1049]') => '数据库不存在且无法自动创建。请先手动建库后重试。原始错误：'.$raw,
+            str_contains($raw, 'could not find driver') => 'PHP 缺少 pdo_mysql 数据库驱动扩展。原始错误：'.$raw,
             default => '数据库连接失败：'.$raw,
         };
     }
@@ -749,4 +745,3 @@ class InstallController extends Controller
         ]);
     }
 }
-

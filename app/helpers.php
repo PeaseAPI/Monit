@@ -1,5 +1,7 @@
 <?php
 
+use App\Support\Settings;
+
 if (! function_exists('settings')) {
     /**
      * 读取系统设置（settings 表 → 缓存对象树）
@@ -11,7 +13,7 @@ if (! function_exists('settings')) {
      */
     function settings(): stdClass
     {
-        return \App\Support\Settings::load();
+        return Settings::load();
     }
 }
 
@@ -23,6 +25,6 @@ if (! function_exists('settings_get')) {
      */
     function settings_get(string $key, mixed $default = null): mixed
     {
-        return \App\Support\Settings::get($key, $default);
+        return Settings::get($key, $default);
     }
 }

@@ -103,7 +103,7 @@ class WebPushService
     ): bool {
         // SSRF 纵深防御（安全审计周期 #17）：订阅入口已做 https + 非私网
         // 校验，此处兜底拦截存量脏 endpoint——不安全目标一律不发起连接
-        //（区别于连接失败：lastResults 保持空 = 未尝试）
+        // （区别于连接失败：lastResults 保持空 = 未尝试）
         if (! WebhookSignature::isSafeHttpUrl($endpoint)) {
             return false;
         }

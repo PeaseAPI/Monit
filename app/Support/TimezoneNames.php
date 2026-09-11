@@ -46,7 +46,7 @@ class TimezoneNames
 
             foreach ($replacements as $prefix => $replacement) {
                 if (str_starts_with($tz, $prefix)) {
-                    return $replacement . substr($tz, strlen($prefix));
+                    return $replacement.substr($tz, strlen($prefix));
                 }
             }
         }

@@ -382,7 +382,7 @@ class PaymentAmountTamperTest extends TestCase
 
     /* ---------------- helper 单元 ---------------- */
 
-        #[Test]
+    #[Test]
     public function major_units_handles_zero_decimal_currencies(): void
     {
         $this->assertSame(1000.0, PaymentService::majorUnits(1000, 'JPY'));
@@ -393,11 +393,11 @@ class PaymentAmountTamperTest extends TestCase
     }
 
     /* ------------------------------------------------------------------ */
-    /*  安全审计周期 #19：Stripe / PayPal / Mollie 金额防篡改校验           */
+    /*  安全审计周期 #19：Stripe / PayPal / Mollie 金额防篡改校验 */
     /* ------------------------------------------------------------------ */
 
     #[Test]
-        public function stripe_rejects_tampered_amount(): void
+    public function stripe_rejects_tampered_amount(): void
     {
         config()->set('services.stripe.webhook_secret', 'whsec_c19');
 
@@ -475,7 +475,7 @@ class PaymentAmountTamperTest extends TestCase
             'Stripe-Signature' => "t={$timestamp},v1={$signature}",
         ]), $body)->assertOk();
 
-                $this->assertSame(0, (int) $payment->fresh()->status);
+        $this->assertSame(0, (int) $payment->fresh()->status);
     }
 
     /* ---------------- Mollie（amount.value：主单位，API 回查） ---------------- */
@@ -527,7 +527,7 @@ class PaymentAmountTamperTest extends TestCase
             'currency' => 'EUR', 'datetime' => now(),
         ]);
 
-                $service = app(PaymentService::class);
+        $service = app(PaymentService::class);
         $this->assertFalse(
             $service->verifyGatewayAmount($payment->payment_id, 9.99, 'USD', 'mollie')
         );
@@ -631,4 +631,3 @@ class PaymentAmountTamperTest extends TestCase
         $this->assertSame(0, (int) $payment->fresh()->status);
     }
 }
-

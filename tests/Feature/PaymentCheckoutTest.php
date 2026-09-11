@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Http\Controllers\PaymentController;
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -37,7 +38,7 @@ class PaymentCheckoutTest extends TestCase
         $this->makePlan();
         $user = $this->makeUser();
         // A2：仅后台启用的处理器可见（此处启用 offline，凭据型均未配置）
-        \App\Support\Settings::set('payment.offline_is_enabled', 'true');
+        Settings::set('payment.offline_is_enabled', 'true');
 
         $response = $this->actingAs($user)->get('/payments');
 

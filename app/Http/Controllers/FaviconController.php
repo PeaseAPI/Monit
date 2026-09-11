@@ -37,10 +37,10 @@ class FaviconController extends Controller
             // storage 公开盘 或 public 目录（限定图片扩展，防任意文件读取）
             foreach ([storage_path('app/public/'.urldecode($path)), public_path(urldecode($path))] as $file) {
                 if (is_file($file) && preg_match('/\.(ico|png|jpg|jpeg|gif|svg|webp)$/i', $file)) {
-                    return (new Response(file_get_contents($file), 200, [
+                    return new Response(file_get_contents($file), 200, [
                         'Content-Type' => $this->mimeType($file),
                         'Cache-Control' => 'public, max-age=3600',
-                    ]));
+                    ]);
                 }
             }
         }

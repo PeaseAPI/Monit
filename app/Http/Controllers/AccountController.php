@@ -6,6 +6,7 @@ use App\Models\Code;
 use App\Services\Sms\SmsService;
 use App\Services\TotpService;
 use App\Services\WebhookService;
+use App\Support\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -27,7 +28,7 @@ class AccountController extends Controller
         // 已启用的社交登录提供商（用户反馈 #14：账号页展示可用的第三方登录方式）
         $socialProviders = [];
         foreach (['qq', 'wechat', 'weibo', 'gitee', 'feishu', 'google', 'github', 'facebook', 'discord', 'linkedin', 'microsoft', 'apple', 'twitter'] as $provider) {
-            $raw = \App\Support\Settings::get('socials.'.$provider);
+            $raw = Settings::get('socials.'.$provider);
             $config = is_string($raw) ? (json_decode($raw, true) ?? []) : (array) $raw;
 
             if (! empty($config['is_enabled'])) {
@@ -57,7 +58,7 @@ class AccountController extends Controller
      */
     public function update(Request $request)
     {
-        $avatarMax = (int) (\App\Support\Settings::get('main.avatar_size_limit') ?: 512);
+        $avatarMax = (int) (Settings::get('main.avatar_size_limit') ?: 512);
 
         $user = $request->user();
         $emailChanged = strtolower((string) $request->input('email')) !== strtolower((string) $user->email);
@@ -105,7 +106,7 @@ class AccountController extends Controller
             // image/mimes 规则只做内容嗅探（finfo）——「GIF89a 头 + HTML」的多态
             // 文件可整体通过验证；若按原始扩展名落盘 public/uploads/avatars/
             // （Web 直达目录）→ .html/.shtml 被浏览器按 text/html 渲染即存储 XSS
-            //（.php 系另有 Laravel shouldBlockPhpUpload 兜底，此处白名单为根本防线）。
+            // （.php 系另有 Laravel shouldBlockPhpUpload 兜底，此处白名单为根本防线）。
             $ext = strtolower(trim($file->getClientOriginalExtension()));
             if (! in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
                 throw ValidationException::withMessages([
@@ -127,7 +128,7 @@ class AccountController extends Controller
         // ---- 账单信息（users.billng JSON 列，仅合并提交的字段） ----
         $billing = $user->billing ?? [];
         foreach (['billing_type', 'billing_name', 'billing_address', 'billing_city', 'billing_state',
-                     'billing_county', 'billing_zip', 'billing_country', 'billing_phone', 'billing_tax_id', 'billing_notes'] as $field) {
+            'billing_county', 'billing_zip', 'billing_country', 'billing_phone', 'billing_tax_id', 'billing_notes'] as $field) {
             if (array_key_exists($field, $validated)) {
                 $key = substr($field, 8); // 去掉 billing_ 前缀
                 $billing[$key] = $validated[$field] !== '' ? $validated[$field] : null;

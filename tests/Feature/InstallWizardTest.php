@@ -6,6 +6,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Support\EnvWriter;
 use App\Support\InstallState;
+use App\Support\Settings;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -86,7 +87,7 @@ class InstallWizardTest extends TestCase
     }
 
     /* ------------------------------------------------------------------ */
-    /* 守卫与步骤渲染                                                       */
+    /* 守卫与步骤渲染 */
     /* ------------------------------------------------------------------ */
 
     public function test_uninstalled_visitors_are_redirected_to_wizard(): void
@@ -127,7 +128,7 @@ class InstallWizardTest extends TestCase
     }
 
     /* ------------------------------------------------------------------ */
-    /* 第 3 步：数据库（MySQL 唯一）                                        */
+    /* 第 3 步：数据库（MySQL 唯一） */
     /* ------------------------------------------------------------------ */
 
     public function test_database_step_rejects_missing_fields(): void
@@ -170,7 +171,7 @@ class InstallWizardTest extends TestCase
             'username' => 'root',
             'password' => 'definitely-wrong',
         ])->assertOk()->assertJsonPath('ok', false)
-          ->assertSee('Access denied');
+            ->assertSee('Access denied');
 
         // 正确凭据（phpunit.xml 提供的测试库连接）→ ok:true + 版本号
         $cfg = config('database.connections.mysql');
@@ -181,7 +182,7 @@ class InstallWizardTest extends TestCase
             'username' => $cfg['username'],
             'password' => (string) $cfg['password'],
         ])->assertOk()->assertJsonPath('ok', true)
-          ->assertJsonStructure(['message', 'version']);
+            ->assertJsonStructure(['message', 'version']);
     }
 
     public function test_database_step_writes_env_and_migrates(): void
@@ -215,7 +216,7 @@ class InstallWizardTest extends TestCase
     }
 
     /* ------------------------------------------------------------------ */
-    /* 第 4/5 步：站点与管理员 → 完成页                                     */
+    /* 第 4/5 步：站点与管理员 → 完成页 */
     /* ------------------------------------------------------------------ */
 
     public function test_admin_step_creates_admin_seeds_core_data_and_locks(): void
@@ -245,8 +246,8 @@ class InstallWizardTest extends TestCase
 
         // 核心数据（套餐/站点设置）由向导入库并覆盖
         $this->assertGreaterThanOrEqual(2, Plan::count());
-        $this->assertSame('测试统计平台', \App\Support\Settings::get('site_name'));
-        $this->assertSame('https://stats.example.com', \App\Support\Settings::get('site_url'));
+        $this->assertSame('测试统计平台', Settings::get('site_name'));
+        $this->assertSame('https://stats.example.com', Settings::get('site_url'));
 
         // APP_URL 以用户填写为准写入 .env
         $this->assertStringContainsString(
@@ -272,9 +273,9 @@ class InstallWizardTest extends TestCase
             'password' => 'secret-password',
             'password_confirmation' => 'different-password',
         ])->assertOk()
-          ->assertViewHas('step', 'admin')
-          ->assertSee('请填写网站名称')
-          ->assertSee('两次输入的密码不一致');
+            ->assertViewHas('step', 'admin')
+            ->assertSee('请填写网站名称')
+            ->assertSee('两次输入的密码不一致');
     }
 
     public function test_finish_page_renders_summary_after_install(): void

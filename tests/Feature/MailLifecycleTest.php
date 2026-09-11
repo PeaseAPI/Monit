@@ -7,6 +7,7 @@ use App\Jobs\SendEmailReport;
 use App\Mail\ActivateUser;
 use App\Mail\PlanDowngraded;
 use App\Mail\ResetPassword;
+use App\Mail\WelcomeUser;
 use App\Models\Broadcast;
 use App\Models\User;
 use App\Models\Website;
@@ -50,8 +51,8 @@ class MailLifecycleTest extends TestCase
         $this->assertNull($user->email_activation_code);
 
         // 免激活注册：不发激活邮件，但发送欢迎邮件（users.welcome_email_is_enabled 默认开）
-        Mail::assertSent(\App\Mail\WelcomeUser::class);
-        Mail::assertNotSent(\App\Mail\ActivateUser::class);
+        Mail::assertSent(WelcomeUser::class);
+        Mail::assertNotSent(ActivateUser::class);
     }
 
     public function test_register_sends_activation_email_when_enabled(): void

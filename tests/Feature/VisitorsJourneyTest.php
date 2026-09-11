@@ -6,7 +6,6 @@ use App\Models\LightweightEvent;
 use App\Models\User;
 use App\Models\Website;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
@@ -121,4 +120,3 @@ class VisitorsJourneyTest extends TestCase
             ->assertNotFound();
     }
 }
-

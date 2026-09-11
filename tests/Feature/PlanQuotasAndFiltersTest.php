@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\DashboardView;
 use App\Models\GoalConversion;
 use App\Models\SessionEvent;
+use App\Models\SessionReplay;
 use App\Models\User;
 use App\Models\VisitorSession;
 use App\Models\Website;
@@ -12,11 +13,13 @@ use App\Models\WebsiteGoal;
 use App\Models\WebsiteVisitor;
 use App\Services\PlanLimitService;
 use App\Services\StatisticsService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
+
 /**
  * M16 配额与过滤器补齐（规格 §5.3 goal_id 过滤 / §10.2 dashboard_views_limit + sessions_replays_limit）
  */
@@ -233,7 +236,7 @@ class PlanQuotasAndFiltersTest extends TestCase
     public function test_replay_quota_exhausted_marks_limit_notice(): void
     {
         // 配额耗尽（区别于 0=禁用）：拒收 + 标记 plan_sessions_replays_limit_notice
-        //（对齐 sessions_events_limit 超限行为，WebsitesLimitNoticeCommand 依赖该标记汇总通知）
+        // （对齐 sessions_events_limit 超限行为，WebsitesLimitNoticeCommand 依赖该标记汇总通知）
         $user = User::create([
             'name' => 'RN', 'email' => 'rn@example.com', 'password' => bcrypt('x'),
             'status' => 1, 'plan_id' => 'custom',
@@ -308,12 +311,12 @@ class PlanQuotasAndFiltersTest extends TestCase
         $replay = ['session_id' => $session->session_id, 'visitor_id' => $visitor->visitor_id,
             'website_id' => $website->website_id, 'datetime' => now()];
 
-        \App\Models\SessionReplay::create($replay);
+        SessionReplay::create($replay);
 
         try {
-            \App\Models\SessionReplay::create($replay);
+            SessionReplay::create($replay);
             $this->fail('sessions_replays.session_id 唯一索引缺失：并发首建会产生重复回放行');
-        } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+        } catch (UniqueConstraintViolationException) {
             $this->assertTrue(true);
         }
     }
@@ -323,7 +326,7 @@ class PlanQuotasAndFiltersTest extends TestCase
     public function test_event_children_rejected_when_limit_is_zero(): void
     {
         // events_children_limit=0 = 无此功能：拒收 + 不标记通知 + 计数不增
-        //（原实现完全不检查且计数从未递增，0 配置被静默绕过）
+        // （原实现完全不检查且计数从未递增，0 配置被静默绕过）
         $user = User::create([
             'name' => 'EZ', 'email' => 'ez@example.com', 'password' => bcrypt('x'),
             'status' => 1, 'plan_id' => 'custom',
@@ -365,7 +368,7 @@ class PlanQuotasAndFiltersTest extends TestCase
     public function test_event_children_quota_exhausted_marks_limit_notice(): void
     {
         // 配额耗尽（区别于 0=禁用）：拒收 + 标记 plan_events_children_limit_notice
-        //（WebsitesLimitNoticeCommand 依赖该标记汇总通知；计数列此前从未递增导致其比较恒为假）
+        // （WebsitesLimitNoticeCommand 依赖该标记汇总通知；计数列此前从未递增导致其比较恒为假）
         $user = User::create([
             'name' => 'EN', 'email' => 'en@example.com', 'password' => bcrypt('x'),
             'status' => 1, 'plan_id' => 'custom',
@@ -526,7 +529,7 @@ class PlanQuotasAndFiltersTest extends TestCase
     public function test_limit_notice_skips_disabled_zero_limit(): void
     {
         // 0 = 功能禁用：通知 Cron 不得把「禁用」当成「限额 0 已超限」误发邮件
-        //（生产 Plus 套餐 sessions_replays_limit=0；与采集侧 0 不标记语义一致）
+        // （生产 Plus 套餐 sessions_replays_limit=0；与采集侧 0 不标记语义一致）
         $user = User::create([
             'name' => 'ZD', 'email' => 'zd@example.com', 'password' => bcrypt('x'),
             'status' => 1, 'plan_id' => 'custom',

@@ -3,7 +3,6 @@
 use App\Http\Controllers\AccountApiController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountPaymentsController;
-use App\Support\Settings;
 use App\Http\Controllers\AccountPlanController;
 use App\Http\Controllers\AccountPreferencesController;
 use App\Http\Controllers\ActivationController;
@@ -12,13 +11,11 @@ use App\Http\Controllers\AdminAnnotations;
 use App\Http\Controllers\AdminBlogPosts;
 use App\Http\Controllers\AdminBlogPostsCategories;
 use App\Http\Controllers\AdminBroadcasts;
-use App\Http\Controllers\AdminHelpArticles;
-use App\Http\Controllers\AdminHelpCategories;
-use App\Http\Controllers\AdminTickets;
 use App\Http\Controllers\AdminCodes;
-use App\Http\Controllers\CaptchaController;
 use App\Http\Controllers\AdminDomains;
 use App\Http\Controllers\AdminHeatmaps;
+use App\Http\Controllers\AdminHelpArticles;
+use App\Http\Controllers\AdminHelpCategories;
 use App\Http\Controllers\AdminIndex;
 use App\Http\Controllers\AdminInvoice;
 use App\Http\Controllers\AdminLanguages;
@@ -33,11 +30,11 @@ use App\Http\Controllers\AdminPlugins;
 use App\Http\Controllers\AdminPushSubscribers;
 use App\Http\Controllers\AdminRedeemedCodes;
 use App\Http\Controllers\AdminReplays;
-use App\Http\Controllers\WebsiteSwitchController;
 use App\Http\Controllers\AdminSettings;
 use App\Http\Controllers\AdminStatistics;
 use App\Http\Controllers\AdminTaxes;
 use App\Http\Controllers\AdminTeams;
+use App\Http\Controllers\AdminTickets;
 use App\Http\Controllers\AdminUserCreate;
 use App\Http\Controllers\AdminUsers;
 use App\Http\Controllers\AdminUsersLogs;
@@ -47,6 +44,7 @@ use App\Http\Controllers\AdminWebsites;
 use App\Http\Controllers\AffiliateController;
 use App\Http\Controllers\AnnotationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CaptchaController;
 use App\Http\Controllers\CronController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardViewController;
@@ -80,6 +78,7 @@ use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\VisitorController;
+use App\Http\Controllers\WebhookEmailController;
 use App\Http\Controllers\WebhookMollieController;
 use App\Http\Controllers\WebhookPaymentController;
 use App\Http\Controllers\WebhookPaystackController;
@@ -87,10 +86,13 @@ use App\Http\Controllers\WebhookRazorpayController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\WebsiteSeoController;
 use App\Http\Controllers\WebsitesImportController;
+use App\Http\Controllers\WebsiteSwitchController;
 use App\Http\Middleware\SeoGuestAccess;
 use App\Models\PushNotificationSubscriber;
 use App\Models\Setting;
 use App\Services\DynamicOgImageService;
+use App\Services\WebPushService;
+use App\Support\Settings;
 use App\Support\WebhookSignature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -105,7 +107,7 @@ use Illuminate\Support\Facades\Route;
 
 // 支付网关 Webhook（无需 CSRF，外部服务回调）
 Route::post('/webhooks/stripe', [PaymentController::class, 'stripeWebhook'])->name('webhooks.stripe');
-Route::post('/webhooks/email', \App\Http\Controllers\WebhookEmailController::class)->name('webhooks.email');
+Route::post('/webhooks/email', WebhookEmailController::class)->name('webhooks.email');
 Route::post('/webhooks/paypal', [PaymentController::class, 'paypalWebhook'])->name('webhooks.paypal');
 
 // 更多支付 Webhook 路由（规格书 §11：22 处理器）
@@ -382,7 +384,7 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('/stats/heatmaps/{heatmapId}', [HeatmapController::class, 'destroy'])->name('stats.heatmaps.destroy');
 
     // 会话回放
-        Route::get('/stats/{website}/replays', [ReplayController::class, 'index'])
+    Route::get('/stats/{website}/replays', [ReplayController::class, 'index'])
         ->middleware('can:own,website')->name('stats.replays');
     Route::get('/stats/{website}/replays/{replayId}', [ReplayController::class, 'show'])
         ->middleware('can:own,website')->name('stats.replays.show');
@@ -408,8 +410,8 @@ Route::middleware('auth')->group(function (): void {
     // SEO：审计（M26，融合方案 §8.1；seo.feature:audits 受后台 seo 组总开关控制）
     Route::get('/seo/audits', [SeoAuditController::class, 'index'])->middleware('seo.feature:audits')->name('seo.audits');
     Route::post('/seo/audits', [SeoAuditController::class, 'store'])->middleware('seo.feature:audits', 'throttle:10,1,seo-analyze')->name('seo.audits.store');
-        Route::post('/seo/audits/{seoAudit}/share', [SeoAuditController::class, 'share'])->middleware('seo.feature:audits')->name('seo.audits.share');
-        Route::post('/seo/audits/{seoAudit}/ai-summary', [SeoAuditController::class, 'aiSummary'])->middleware('seo.feature:audits')->name('seo.audits.ai');
+    Route::post('/seo/audits/{seoAudit}/share', [SeoAuditController::class, 'share'])->middleware('seo.feature:audits')->name('seo.audits.share');
+    Route::post('/seo/audits/{seoAudit}/ai-summary', [SeoAuditController::class, 'aiSummary'])->middleware('seo.feature:audits')->name('seo.audits.ai');
     Route::post('/seo/audits/{seoAudit}/refresh', [SeoAuditController::class, 'refresh'])->middleware('seo.feature:audits')->name('seo.audits.refresh');
     Route::post('/seo/audits/bulk-refresh', [SeoAuditController::class, 'bulkRefresh'])->middleware('seo.feature:audits')->name('seo.audits.bulk-refresh');
     Route::get('/seo/audits/compare', [SeoAuditController::class, 'compare'])->middleware('seo.feature:audits')->name('seo.audits.compare');
@@ -711,18 +713,18 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     Route::delete('/admin/tickets/{ticketId}', [AdminTickets::class, 'destroy'])->name('admin.tickets.destroy');
 
     // 帮助中心后台管理（A3：分类 + 文章 CRUD）
-    Route::get('/admin/help-categories', [\App\Http\Controllers\AdminHelpCategories::class, 'index'])->name('admin.help-categories.index');
-    Route::post('/admin/help-categories', [\App\Http\Controllers\AdminHelpCategories::class, 'store'])->name('admin.help-categories.store');
-    Route::put('/admin/help-categories/{categoryId}', [\App\Http\Controllers\AdminHelpCategories::class, 'update'])->name('admin.help-categories.update');
-    Route::delete('/admin/help-categories/{categoryId}', [\App\Http\Controllers\AdminHelpCategories::class, 'destroy'])->name('admin.help-categories.destroy');
+    Route::get('/admin/help-categories', [AdminHelpCategories::class, 'index'])->name('admin.help-categories.index');
+    Route::post('/admin/help-categories', [AdminHelpCategories::class, 'store'])->name('admin.help-categories.store');
+    Route::put('/admin/help-categories/{categoryId}', [AdminHelpCategories::class, 'update'])->name('admin.help-categories.update');
+    Route::delete('/admin/help-categories/{categoryId}', [AdminHelpCategories::class, 'destroy'])->name('admin.help-categories.destroy');
 
-    Route::get('/admin/help-articles', [\App\Http\Controllers\AdminHelpArticles::class, 'index'])->name('admin.help-articles.index');
-    Route::get('/admin/help-articles/create', [\App\Http\Controllers\AdminHelpArticles::class, 'create'])->name('admin.help-articles.create');
-    Route::post('/admin/help-articles', [\App\Http\Controllers\AdminHelpArticles::class, 'store'])->name('admin.help-articles.store');
-    Route::get('/admin/help-articles/{articleId}/edit', [\App\Http\Controllers\AdminHelpArticles::class, 'edit'])->name('admin.help-articles.edit');
-    Route::put('/admin/help-articles/{articleId}', [\App\Http\Controllers\AdminHelpArticles::class, 'update'])->name('admin.help-articles.update');
-    Route::put('/admin/help-articles/{articleId}/toggle-publish', [\App\Http\Controllers\AdminHelpArticles::class, 'togglePublish'])->name('admin.help-articles.toggle-publish');
-    Route::delete('/admin/help-articles/{articleId}', [\App\Http\Controllers\AdminHelpArticles::class, 'destroy'])->name('admin.help-articles.destroy');
+    Route::get('/admin/help-articles', [AdminHelpArticles::class, 'index'])->name('admin.help-articles.index');
+    Route::get('/admin/help-articles/create', [AdminHelpArticles::class, 'create'])->name('admin.help-articles.create');
+    Route::post('/admin/help-articles', [AdminHelpArticles::class, 'store'])->name('admin.help-articles.store');
+    Route::get('/admin/help-articles/{articleId}/edit', [AdminHelpArticles::class, 'edit'])->name('admin.help-articles.edit');
+    Route::put('/admin/help-articles/{articleId}', [AdminHelpArticles::class, 'update'])->name('admin.help-articles.update');
+    Route::put('/admin/help-articles/{articleId}/toggle-publish', [AdminHelpArticles::class, 'togglePublish'])->name('admin.help-articles.toggle-publish');
+    Route::delete('/admin/help-articles/{articleId}', [AdminHelpArticles::class, 'destroy'])->name('admin.help-articles.destroy');
 
     // 平台级数据管理（规格书 §6.3.5：AdminAnnotations、AdminHeatmaps、AdminReplays）
     Route::get('/admin/annotations', [AdminAnnotations::class, 'index'])->name('admin.annotations.index');
@@ -783,7 +785,6 @@ Route::get('/cron/{task}', [CronController::class, 'task'])->whereIn('task', ['e
 // 安装向导路由已移至 routes/install.php（无中间件注册，见 bootstrap/app.php）：
 // 未安装时 Session 表/APP_KEY 未就绪，走 web 组会 500；EnsureInstalled 中间件负责未安装拦截
 
-
 // ========================================
 // 插件端点（规格书 §14）
 // ========================================
@@ -820,12 +821,12 @@ Route::post('/push-notifications/subscribe', function (Request $request) {
         // 此前仅 required|url，认证用户可注册 http://192.168.1.1/x 之类
         // 内网目标，广播发送时平台向其 POST。复用 WebhookSignature 的
         // 私网/保留地址判定（字面 IP 直接判定，域名 DNS 解析后判定）
-        'endpoint' => ['required', 'url:https', 'max:2048', function (string $attribute, mixed $value, \Closure $fail) {
+        'endpoint' => ['required', 'url:https', 'max:2048', function (string $attribute, mixed $value, Closure $fail) {
             if (! WebhookSignature::isSafeHttpUrl((string) $value)) {
                 $fail(__('validation.url', ['attribute' => $attribute]));
             }
             // 域名白名单（安全审计周期 #19）：仅接受浏览器厂商官方推送服务
-            if (! app(\App\Services\WebPushService::class)->isEndpointAllowed((string) $value)) {
+            if (! app(WebPushService::class)->isEndpointAllowed((string) $value)) {
                 $fail(__('validation.push_endpoint_not_allowed'));
             }
         }],
@@ -837,7 +838,7 @@ Route::post('/push-notifications/subscribe', function (Request $request) {
         'keys.p256dh' => ['required', 'string'],
     ]);
     PushNotificationSubscriber::create([
-                'user_id' => Auth::id(),
+        'user_id' => Auth::id(),
         'website_id' => $validated['website_id'],
         'endpoint' => $validated['endpoint'],
         'keys_auth' => $validated['keys']['auth'],
@@ -854,7 +855,7 @@ Route::post('/push-notifications/unsubscribe', function (Request $request) {
         'endpoint' => ['required', 'url'],
     ]);
 
-        PushNotificationSubscriber::where('user_id', Auth::id())
+    PushNotificationSubscriber::where('user_id', Auth::id())
         ->where('endpoint', $validated['endpoint'])
         ->delete();
 
@@ -870,7 +871,7 @@ Route::get('/dynamic-og-images/{type}/{id}', function (string $type, int $id) {
 
 // 404 兜底路由（规格书 §6.1：/not-found；main.not_found_url 配置时跳转外部页面）
 Route::fallback(function () {
-    if ($url = trim((string) \App\Support\Settings::get('main.not_found_url', ''))) {
+    if ($url = trim((string) Settings::get('main.not_found_url', ''))) {
         return redirect()->away($url, 302);
     }
 

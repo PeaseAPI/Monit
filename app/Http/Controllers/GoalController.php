@@ -54,7 +54,7 @@ class GoalController extends Controller
             'name' => $validated['name'] ?? $validated['key'],
             'is_enabled' => $request->boolean('is_enabled', true),
         ]);
-        
+
         return redirect()->route('stats.goals', ['website' => $website->website_id])
             ->with('success', __('msg.goal_created'));
     }

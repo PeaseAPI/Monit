@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DashboardView;
 use App\Models\Website;
 use App\Services\StatisticsService;
 use Illuminate\Http\Request;
@@ -36,7 +37,7 @@ class DashboardController extends Controller
         $stats = StatisticsService::for($website)->lastDays($range);
 
         // 保存的仪表盘视图（§6.2.1：DashboardViews，用户可切换/管理）
-        $savedViews = \App\Models\DashboardView::where('user_id', $user->user_id)
+        $savedViews = DashboardView::where('user_id', $user->user_id)
             ->orderBy('order')
             ->orderBy('dashboard_view_id')
             ->get();

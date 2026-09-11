@@ -131,7 +131,6 @@ class HeatmapReplayE2ETest extends TestCase
         $ajax->assertOk()->assertJsonCount(1, 'clicks')->assertJsonCount(1, 'scrolls');
     }
 
-
     public function test_replay_chunk_pipeline_stores_and_serves_events(): void
     {
         $sessionUuid = Str::uuid()->toString();
@@ -183,4 +182,3 @@ class HeatmapReplayE2ETest extends TestCase
         $this->assertFalse($check->json('replay_enabled'));
     }
 }
-

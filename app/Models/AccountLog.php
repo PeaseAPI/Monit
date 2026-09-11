@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $log_id
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $continent_code
  * @property string $country_code
  * @property string $city_name
- * @property \Illuminate\Support\Carbon|null $datetime
+ * @property Carbon|null $datetime
  * @property User|null $user
  */
 class AccountLog extends Model

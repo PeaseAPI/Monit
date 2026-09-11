@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Tests\TestCase;
 
 /**
@@ -51,7 +52,7 @@ class AdminConsoleSmokeTest extends TestCase
             $response = $this->actingAs($admin)->get(route($name));
             // StreamedResponse（如日志下载）无 status 断言接口，视为可达；
             // 302 允许：如 push-subscribers 在插件未启用时引导跳转插件页
-            $status = $response->baseResponse instanceof \Symfony\Component\HttpFoundation\StreamedResponse
+            $status = $response->baseResponse instanceof StreamedResponse
                 ? 200
                 : $response->status();
             $this->assertTrue(

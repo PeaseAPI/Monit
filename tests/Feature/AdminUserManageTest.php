@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Plan;
 use App\Models\User;
+use App\Support\Currency;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 /**
@@ -95,9 +97,8 @@ class AdminUserManageTest extends TestCase
         $this->assertTrue((bool) $user->plan_settings['email_reports_is_enabled']);
         $this->assertFalse((bool) $user->plan_settings['no_ads']);
         $this->assertSame(['csv', 'pdf'], $user->plan_settings['export']);
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('new-password-1', $user->password));
+        $this->assertTrue(Hash::check('new-password-1', $user->password));
     }
-
 
     public function test_update_rejects_mismatched_password_confirmation(): void
     {
@@ -195,8 +196,8 @@ class AdminUserManageTest extends TestCase
 
     public function test_currency_cny_formats_with_yuan_suffix(): void
     {
-        $this->assertSame('9.00 元', \App\Support\Currency::format(9, 'CNY'));
-        $this->assertSame('$0.14', \App\Support\Currency::format(0.14, 'USD'));
+        $this->assertSame('9.00 元', Currency::format(9, 'CNY'));
+        $this->assertSame('$0.14', Currency::format(0.14, 'USD'));
     }
 
     public function test_update_preserves_keys_outside_form_and_accepts_seo_keys(): void

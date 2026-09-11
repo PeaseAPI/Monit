@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\GeoIp;
 use App\Services\LicenseManager;
 use App\Support\EnvWriter;
 use App\Support\PaymentGatewayCatalog;
@@ -273,7 +274,7 @@ class AdminSettings extends Controller
             'settings_count' => Setting::count(),
             // GeoIP 库状态（用户反馈 #2：国家/大洲显示"未知"的排查入口——
             // 未放置 mmdb 库文件时地理维度全部为空，页面提示一键修复命令）
-            'geoip_available' => app(\App\Services\GeoIp::class)->isAvailable(),
+            'geoip_available' => app(GeoIp::class)->isAvailable(),
             'geoip_path' => (string) config('services.geoip.mmdb_path'),
         ];
     }
@@ -905,7 +906,7 @@ class AdminSettings extends Controller
                 ]);
             }
 
-            $filename = Str::random(16) . '.' . $ext;
+            $filename = Str::random(16).'.'.$ext;
 
             // 删除旧文件（如有）
             $oldUrl = $validated[$urlField] ?? Settings::get("branding.{$urlField}", '');
@@ -922,7 +923,7 @@ class AdminSettings extends Controller
             $path = $file->storeAs('branding', $filename, 'public');
 
             // 用本地 URL 覆盖 URL 字段
-            $validated[$urlField] = '/storage/' . $path;
+            $validated[$urlField] = '/storage/'.$path;
         }
 
         // 移除上传字段（非 settings 表字段）

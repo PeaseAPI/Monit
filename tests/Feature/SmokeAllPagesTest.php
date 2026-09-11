@@ -97,6 +97,7 @@ class SmokeAllPagesTest extends TestCase
 
             if ($status >= 500 && ! $isMaintenancePage) {
                 $failures[] = "$uri -> $status";
+
                 continue;
             }
             if ($status === 200 && ! $this->pageIsHealthy($response->getContent())) {
@@ -132,6 +133,7 @@ class SmokeAllPagesTest extends TestCase
 
             if ($status >= 500 && ! $isMaintenancePage) {
                 $failures[] = "$uri -> $status";
+
                 continue;
             }
             if ($status === 200 && ! $this->pageIsHealthy($response->getContent())) {
@@ -156,6 +158,7 @@ class SmokeAllPagesTest extends TestCase
                 $status = $response->status();
                 if ($status >= 500) {
                     $failures[] = "[$role] $uri -> $status";
+
                     continue;
                 }
                 if ($status === 200 && ! $this->pageIsHealthy($response->getContent())) {

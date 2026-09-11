@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Domain;
+use App\Services\Seo\DomainMonitor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -62,7 +63,7 @@ class DomainController extends Controller
         // DomainMonitor 内部已容错，监控列仍由 cron 后续补齐
         if ($domain->monitor_is_enabled) {
             try {
-                app(\App\Services\Seo\DomainMonitor::class)->refresh($domain);
+                app(DomainMonitor::class)->refresh($domain);
             } catch (\Throwable) {
                 // whois 暂时不可达不影响添加流程
             }

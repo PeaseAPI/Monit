@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\DomainController;
 use App\Models\User;
-use App\Models\Website;
+use App\Services\GeoIp;
 use App\Services\Sms\SmsService;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -79,7 +81,7 @@ class Tasks25RegressionTest extends TestCase
         // show() 调用 accessState 并根据结果处理
         $this->assertStringContainsString('$this->accessState($request, $seoAudit)', $source);
         // 非作者+非公开 → 403（但 uploader_key 匹配的访客已在上层被视为作者）
-        $this->assertStringContainsString("abort(403", $source);
+        $this->assertStringContainsString('abort(403', $source);
         // 密码保护 → 转到解锁页
         $this->assertStringContainsString("'password'", $source);
     }
@@ -105,7 +107,7 @@ class Tasks25RegressionTest extends TestCase
     public function item_10_analyze_route_exists_for_guests(): void
     {
         // 验证 /seo/analyze 路由已注册且受 seo.feature:audits 控制
-        $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName('seo.analyze');
+        $route = Route::getRoutes()->getByName('seo.analyze');
         $this->assertNotNull($route, 'seo.analyze route should exist');
         $this->assertStringContainsString('SeoAuditController@analyze', ltrim($route->getAction('uses'), '\\'));
     }
@@ -114,7 +116,7 @@ class Tasks25RegressionTest extends TestCase
     public function item_10_seo_audits_store_route_exists(): void
     {
         // 验证 POST /seo/audits 路由已注册
-        $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName('seo.audits.store');
+        $route = Route::getRoutes()->getByName('seo.audits.store');
         $this->assertNotNull($route, 'seo.audits.store route should exist');
         $this->assertSame('POST', $route->methods()[0]);
     }
@@ -166,7 +168,7 @@ class Tasks25RegressionTest extends TestCase
     {
         config(['services.geoip.mmdb_path' => storage_path('app/geoip/missing-'.uniqid().'.mmdb')]);
 
-        $result = (new \App\Services\GeoIp)->lookup('8.8.8.8');
+        $result = (new GeoIp)->lookup('8.8.8.8');
 
         $this->assertNull($result['country_code']);
         $this->assertNull($result['continent_code']);
@@ -175,14 +177,14 @@ class Tasks25RegressionTest extends TestCase
     #[Test]
     public function item_6_continent_fallback_mapping_works(): void
     {
-        $this->assertSame('AS', \App\Services\GeoIp::continentFromCountry('CN'));
-        $this->assertSame('EU', \App\Services\GeoIp::continentFromCountry('DE'));
-        $this->assertNull(\App\Services\GeoIp::continentFromCountry(null));
+        $this->assertSame('AS', GeoIp::continentFromCountry('CN'));
+        $this->assertSame('EU', GeoIp::continentFromCountry('DE'));
+        $this->assertNull(GeoIp::continentFromCountry(null));
     }
 
     /* ========== #7: 热图添加不再 500（datetime 显式赋值） ========== */
 
-            #[Test]
+    #[Test]
     public function item_7_heatmap_store_assigns_datetime(): void
     {
         // 验证 HeatmapController::store 源码中显式赋值 datetime（修复 NOT NULL 500）
@@ -216,7 +218,7 @@ class Tasks25RegressionTest extends TestCase
     public function item_9_domain_store_calls_whois_immediately(): void
     {
         $source = file_get_contents(
-            (new \ReflectionMethod(\App\Http\Controllers\DomainController::class, 'store'))->getFileName()
+            (new \ReflectionMethod(DomainController::class, 'store'))->getFileName()
         );
 
         $this->assertStringContainsString('DomainMonitor', $source);
@@ -463,4 +465,3 @@ class Tasks25RegressionTest extends TestCase
         $this->assertStringContainsString('GeoIP', $content);
     }
 }
-

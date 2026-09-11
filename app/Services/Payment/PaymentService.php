@@ -2,9 +2,11 @@
 
 namespace App\Services\Payment;
 
+use App\Http\Controllers\PaymentController;
 use App\Models\Code;
 use App\Models\Payment;
 use App\Models\Plan;
+use App\Models\Tax;
 use App\Models\User;
 use App\Services\WebhookService;
 use App\Support\Currency;
@@ -117,8 +119,8 @@ class PaymentService
         // value_type=percentage 按比例 / fixed 固定额；countries 空 = 全球适用
         $taxesAmount = 0;
 
-        if (\App\Http\Controllers\PaymentController::taxesEnabled() && $billingCountry = strtoupper(trim((string) ($user->billing['country'] ?? '')))) {
-            foreach (\App\Models\Tax::all() as $tax) {
+        if (PaymentController::taxesEnabled() && $billingCountry = strtoupper(trim((string) ($user->billing['country'] ?? '')))) {
+            foreach (Tax::all() as $tax) {
                 $countries = array_map(
                     fn ($c) => strtoupper(trim((string) $c)),
                     (array) ($tax->countries ?? [])

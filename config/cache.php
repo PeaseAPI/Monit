@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+use App\Models\Website;
 use Illuminate\Support\Str;
 
 return [
@@ -135,8 +137,8 @@ return [
     */
 
     'serializable_classes' => [
-        \App\Models\Website::class,
-        \App\Models\User::class,
+        Website::class,
+        User::class,
     ],
 
 ];

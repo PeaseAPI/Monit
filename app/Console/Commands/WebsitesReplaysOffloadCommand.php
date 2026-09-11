@@ -61,7 +61,7 @@ class WebsitesReplaysOffloadCommand extends Command
         foreach ($replays as $replay) {
             $session = $replay->session;
 
-                        // 优先从 DB data 列读取回放事件（gzencode 压缩，最可靠）
+            // 优先从 DB data 列读取回放事件（gzencode 压缩，最可靠）
             $events = [];
             $row = DB::selectOne(
                 'SELECT data FROM sessions_replays WHERE replay_id = ?',
