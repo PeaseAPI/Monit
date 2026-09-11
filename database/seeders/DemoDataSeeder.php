@@ -65,7 +65,7 @@ class DemoDataSeeder extends Seeder
             ]
         );
 
-        $this->command?->info('✅ 用户：admin / pro / free（密码均为 password）');
+        $this->command->info('✅ 用户：admin / pro / free（密码均为 password）');
         $this->seedWebsites($proUser, $freeUser);
 
         // 热图 + 会话回放演示数据
@@ -110,7 +110,7 @@ class DemoDataSeeder extends Seeder
             ]
         );
 
-        $this->command?->info('✅ 网站：4 个（pro×3 + free×1）');
+        $this->command->info('✅ 网站：4 个（pro×3 + free×1）');
         $this->seedVisitors($websites[0]);
         $this->seedGoals($websites[0], $proUser);
         $this->seedPayments($proUser, $freeUser);
@@ -143,7 +143,7 @@ class DemoDataSeeder extends Seeder
                 ]);
             }
         }
-        $this->command?->info('✅ 访客：约 '.WebsiteVisitor::where('website_id', $site->website_id)->count().' 条');
+        $this->command->info('✅ 访客：约 '.WebsiteVisitor::where('website_id', $site->website_id)->count().' 条');
     }
 
     protected function seedGoals(Website $site, User $user): void
@@ -194,7 +194,7 @@ class DemoDataSeeder extends Seeder
             'is_enabled' => true, 'datetime' => now(),
         ]);
 
-        $this->command?->info('✅ 目标：3 / 标注：3 / 出站点击：4 / 热图：1');
+        $this->command->info('✅ 目标：3 / 标注：3 / 出站点击：4 / 热图：1');
     }
 
     protected function seedPayments(User $proUser, User $freeUser): void
@@ -215,7 +215,7 @@ class DemoDataSeeder extends Seeder
                 'datetime' => now()->subDays(rand(1, 30)),
             ]);
         }
-        $this->command?->info('✅ 支付：3 条');
+        $this->command->info('✅ 支付：3 条');
     }
 
     protected function seedTeams(User $proUser, User $freeUser): void
@@ -241,7 +241,7 @@ class DemoDataSeeder extends Seeder
                 'access' => ['read'], 'status' => 0, 'datetime' => now(),
             ]
         );
-        $this->command?->info('✅ 团队：1 个（含 2 成员）');
+        $this->command->info('✅ 团队：1 个（含 2 成员）');
     }
 
     protected function seedMisc(User $proUser, Website $site, User $freeUser): void
@@ -264,12 +264,12 @@ class DemoDataSeeder extends Seeder
             'is_read' => true, 'datetime' => now()->subDays(2),
         ]);
 
-        $this->command?->info('✅ 域名：1 / 通知：2');
+        $this->command->info('✅ 域名：1 / 通知：2');
 
-        $this->command?->info('');
-        $this->command?->info('🎉 演示数据填充完成！');
-        $this->command?->info('管理员: admin@monit.dev / password');
-        $this->command?->info('专业用户: pro@monit.dev / password');
-        $this->command?->info('免费用户: free@monit.dev / password');
+        $this->command->info('');
+        $this->command->info('🎉 演示数据填充完成！');
+        $this->command->info('管理员: admin@monit.dev / password');
+        $this->command->info('专业用户: pro@monit.dev / password');
+        $this->command->info('免费用户: free@monit.dev / password');
     }
 }

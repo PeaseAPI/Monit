@@ -100,6 +100,6 @@ class CoreDataSeeder extends Seeder
 
         cache()->forget('monit.settings');
 
-        $this->command?->info('已写入套餐：free、pro；平台设置 '.count($settings).' 项。');
+        $this->command->info('已写入套餐：free、pro；平台设置 '.count($settings).' 项。');
     }
 }

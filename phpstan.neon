@@ -12,3 +12,11 @@ parameters:
         - database
     bootstrapFiles:
         - phpstan-bootstrap.php
+    ignoreErrors:
+        -
+            # nullsafe.neverNull 是 phpstan 2.1 的风格规则：对 `?->prop ?? $default` 模式，
+            # 官方建议改写为 `->prop ?? $default`（依赖 PHP 对 null 属性读取返回 null 的语义），
+            # 但该写法在左值为 null 时会产生运行时 Warning。本项目的 ?-> 是有意的防御式写法，
+            # 语义清晰且无副作用，故显式忽略该规则（区别于 baseline：此处是规则裁剪而非错误待修）。
+            message: '#^Using nullsafe property access "[^"]+" on left side of \?\? is unnecessary\. Use \-> instead\.$#'
+            identifier: nullsafe.neverNull

@@ -5,743 +5,417 @@ parameters:
 			identifier: nullCoalesce.variable
 			count: 1
 			path: app/Console/Commands/AutoDeleteUnconfirmedUsersCommand.php
+
 		-
 			message: '#^Cannot call method isToday\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: app/Console/Commands/Seo/SeoDomainsMonitor.php
-		-
-			message: '#^Cannot call method gt\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Console/Commands/Seo/SeoSitemapsCheck.php
+
 		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 1
 			path: app/Http/Controllers/AdminIndex.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\User\:\:\$count\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/AdminStatistics.php
+
 		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 3
 			path: app/Http/Controllers/AdminStatistics.php
+
 		-
 			message: '#^Method App\\Http\\Controllers\\FaviconController\:\:__invoke\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
 			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/FaviconController.php
-		-
-			message: '#^Cannot call method lt\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Http/Controllers/ForgotPasswordController.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\Page\:\:\$updated_at\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/IndexController.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\Plan\:\:\$landing_currency\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/IndexController.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\Plan\:\:\$landing_price\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/IndexController.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\Plan\:\:\$landing_price_annual\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/IndexController.php
-		-
-			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Http/Controllers/InstallController.php
+
 		-
 			message: '#^Cannot call method format\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: app/Http/Controllers/InvoiceController.php
+
 		-
 			message: '#^Parameter \#1 \$string of function str_pad expects string, int given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/InvoiceController.php
-		-
-			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Http/Controllers/InvoiceController.php
-		-
-			message: '#^Offset ''public_statistics…'' on non\-falsy\-string in empty\(\) does not exist\.$#'
-			identifier: empty.offset
-			count: 1
-			path: app/Http/Controllers/PublicStatisticsController.php
-		-
-			message: '#^Offset ''public_statistics…'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Http/Controllers/PublicStatisticsController.php
-		-
-			message: '#^Result of && is always false\.$#'
-			identifier: booleanAnd.alwaysFalse
-			count: 2
-			path: app/Http/Controllers/PublicStatisticsController.php
-		-
-			message: '#^Strict comparison using \!\=\= between '''' and '''' will always evaluate to false\.$#'
-			identifier: notIdentical.alwaysFalse
-			count: 1
-			path: app/Http/Controllers/PublicStatisticsController.php
+
 		-
 			message: '#^Job class App\\Jobs\\Seo\\SeoAiSummaryJob constructor invoked with 2 parameters in App\\Jobs\\Seo\\SeoAiSummaryJob\:\:dispatch\(\), 1 required\.$#'
 			identifier: arguments.count
 			count: 1
 			path: app/Http/Controllers/SeoAuditController.php
+
 		-
 			message: '#^Offset ''urls'' on array\{ok\: bool, urls\: array\<string\>, error\?\: string\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Http/Controllers/SeoAuditController.php
+
 		-
 			message: '#^Cannot call method format\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 2
 			path: app/Http/Controllers/SeoBacklinkController.php
-		-
-			message: '#^Using nullsafe property access "\?\-\>host" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Http/Controllers/SpotlightController.php
-		-
-			message: '#^Using nullsafe property access "\?\-\>path" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Http/Controllers/SpotlightController.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\Website\:\:\$domain\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/StatsController.php
+
 		-
 			message: '#^Offset ''count'' on array\{key\: string, count\: int\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Http/Controllers/StatsController.php
+
 		-
 			message: '#^Offset ''label'' on array\{key\: string, count\: int\} on left side of \?\? does not exist\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Http/Controllers/StatsController.php
+
 		-
 			message: '#^Offset ''name'' on array\{key\: string, count\: int\} on left side of \?\? does not exist\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Http/Controllers/StatsController.php
+
 		-
 			message: '#^Offset ''value'' on array\{key\: string, count\: int\} on left side of \?\? does not exist\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Http/Controllers/StatsController.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\PushNotificationCampaign\:\:\$content\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Jobs/SendPushNotificationCampaign.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\PushNotificationCampaign\:\:\$target_users\.$#'
 			identifier: property.notFound
 			count: 2
 			path: app/Jobs/SendPushNotificationCampaign.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\PushNotificationSubscriber\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Jobs/SendPushNotificationCampaign.php
+
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,string\>\:\:map\(\) expects callable\(string, int\)\: non\-falsy\-string, Closure\(array, string\)\: non\-falsy\-string given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Jobs/Seo/SeoAiSummaryJob.php
+
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,string\>\:\:reject\(\) expects bool\|\(callable\(string, int\)\: bool\)\|string, Closure\(array\)\: mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Jobs/Seo/SeoAiSummaryJob.php
-		-
-			message: '#^Cannot call method isFuture\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Models/Code.php
-		-
-			message: '#^Call to function in_array\(\) with arguments string, array\{\} and true will always evaluate to false\.$#'
-			identifier: function.impossibleType
-			count: 1
-			path: app/Models/NotificationHandler.php
-		-
-			message: '#^Offset ''events'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Models/NotificationHandler.php
+
 		-
 			message: '#^Offset ''category'' on string on left side of \?\? does not exist\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Models/SeoAudit.php
+
 		-
 			message: '#^Method App\\Models\\SeoKeyword\:\:nextCheckAt\(\) should return Illuminate\\Support\\Carbon\|null but returns Carbon\\Carbon\|null\.$#'
 			identifier: return.type
 			count: 1
 			path: app/Models/SeoKeyword.php
-		-
-			message: '#^Using nullsafe property access "\?\-\>settings" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Models/User.php
-		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Services/DynamicOgImageService.php
-		-
-			message: '#^Using nullsafe property access "\?\-\>title" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 2
-			path: app/Services/DynamicOgImageService.php
+
 		-
 			message: '#^Match arm comparison between 1 and 1 is always true\.$#'
 			identifier: match.alwaysTrue
 			count: 1
 			path: app/Services/ImageOptimizer.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/CryptoComProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/CryptoComProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/CryptoComProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/CryptoComProcessor.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/FlutterwaveProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/FlutterwaveProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/FlutterwaveProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/FlutterwaveProcessor.php
-		-
-			message: '#^Offset ''TRY'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/IyzicoProcessor.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/IyzicoProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/IyzicoProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/IyzicoProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/IyzicoProcessor.php
-		-
-			message: '#^Offset ''EUR'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/KlarnaProcessor.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/KlarnaProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/KlarnaProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/KlarnaProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/KlarnaProcessor.php
-		-
-			message: '#^Offset ''lemonsqueezy…'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/LemonsqueezyProcessor.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/MercadoPagoProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/MercadoPagoProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/MercadoPagoProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/MercadoPagoProcessor.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/MidtransProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/MidtransProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/MidtransProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/MidtransProcessor.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/MyFatoorahProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/MyFatoorahProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/MyFatoorahProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/MyFatoorahProcessor.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/OnePayProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/OnePayProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/OnePayProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/OnePayProcessor.php
-		-
-			message: '#^Offset ''paddle_product_id'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/PaddleProcessor.php
-		-
-			message: '#^Offset ''PLN'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/PayUProcessor.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/PayUProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/PayUProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/PayUProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/PayUProcessor.php
-		-
-			message: '#^Offset ''country'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/PaymentService.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/PlisioProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/PlisioProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/PlisioProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/PlisioProcessor.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/RevolutProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/RevolutProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/RevolutProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/RevolutProcessor.php
-		-
-			message: '#^Offset ''RUB'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/YooKassaProcessor.php
-		-
-			message: '#^Offset ''USD'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/YooKassaProcessor.php
-		-
-			message: '#^Offset ''annual'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/YooKassaProcessor.php
-		-
-			message: '#^Offset ''lifetime'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Payment/YooKassaProcessor.php
-		-
-			message: '#^Offset ''monthly'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Services/Payment/YooKassaProcessor.php
+
 		-
 			message: '#^Cannot call method diffInSeconds\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: app/Services/PixelTracker.php
+
 		-
 			message: '#^Offset 0 on array\{list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Services/Seo/AuditContext.php
+
 		-
 			message: '#^Offset ''category'' on array\{passed\: bool, importance\: string, category\: string\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Services/Seo/AuditScore.php
+
 		-
 			message: '#^Offset ''importance'' on array\{passed\: bool, importance\: string, category\: string\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Services/Seo/AuditScore.php
+
 		-
 			message: '#^Offset 1 on array\{list\<string\>, list\<non\-empty\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Services/Seo/DomainMonitor.php
-		-
-			message: '#^Offset ''webhook_url'' on array\{\}\|array\{string\} on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 3
-			path: app/Services/Seo/NotificationDispatcher.php
-		-
-			message: '#^Offset ''seo_sitemap_urls'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/Seo/SitemapMonitor.php
+
 		-
 			message: '#^Offset 0 on array\{list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Services/Seo/Tests/ContentTests.php
+
 		-
 			message: '#^Offset 1 on array\{list\<string\>, list\<non\-falsy\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Services/Seo/Tests/ContentTests.php
+
 		-
 			message: '#^Offset 0 on array\{list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 2
 			path: app/Services/Seo/Tests/MetaTests.php
+
 		-
 			message: '#^Offset 0 on array\{list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Services/Seo/Tests/PerformanceTests.php
+
 		-
 			message: '#^Offset ''host'' on array\{scheme\?\: string, host\: string, port\?\: int\<0, 65535\>, user\?\: string, pass\?\: string, path\?\: string, query\?\: string, fragment\?\: string\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Services/Seo/Tools/DevTools.php
+
 		-
 			message: '#^Offset 1 on array\{list\<string\>, list\<non\-falsy\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Services/Seo/Tools/DevTools.php
+
 		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 1
 			path: app/Services/Seo/Tools/SeoCheckTools.php
+
 		-
 			message: '#^Offset 0 on array\{list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 3
 			path: app/Services/Seo/Tools/SeoCheckTools.php
+
 		-
 			message: '#^Offset 1 on array\{list\<string\>, list\<non\-empty\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 3
 			path: app/Services/Seo/Tools/SeoCheckTools.php
+
 		-
 			message: '#^Offset 1 on array\{list\<string\>, list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 2
 			path: app/Services/Seo/Tools/SeoCheckTools.php
+
 		-
 			message: '#^Unsafe usage of new static\(\)\.$#'
 			identifier: new.static
 			count: 1
 			path: app/Services/Sms/AliyunSmsProvider.php
+
 		-
 			message: '#^Unsafe usage of new static\(\)\.$#'
 			identifier: new.static
 			count: 1
 			path: app/Services/Sms/TencentSmsProvider.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\LightweightEvent\:\:\$c\.$#'
 			identifier: property.notFound
 			count: 2
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\LightweightEvent\:\:\$k\.$#'
 			identifier: property.notFound
 			count: 3
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\LightweightEvent\:\:\$m\.$#'
 			identifier: property.notFound
 			count: 2
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\LightweightEvent\:\:\$total\.$#'
 			identifier: property.notFound
 			count: 6
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\LightweightEvent\|App\\Models\\SessionEvent\:\:\$day\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\LightweightEvent\|App\\Models\\SessionEvent\:\:\$dow\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\LightweightEvent\|App\\Models\\SessionEvent\:\:\$h\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\LightweightEvent\|App\\Models\\SessionEvent\:\:\$pageviews\.$#'
 			identifier: property.notFound
 			count: 3
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\LightweightEvent\|App\\Models\\SessionEvent\:\:\$visitors\.$#'
 			identifier: property.notFound
 			count: 3
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\OutboundClick\:\:\$k\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\OutboundClick\:\:\$total\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\SessionEvent\:\:\$k\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\SessionEvent\:\:\$total\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Access to an undefined property App\\Models\\VisitorSession\:\:\$sessions\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
 			identifier: larastan.noUnnecessaryCollectionCall
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Method App\\Services\\StatisticsService\:\:topVisitors\(\) should return array\<int, array\{visitor_id\: int, visitor_uuid\: string, country_code\: string, device_type\: string, os_name\: string, browser_name\: string, total_events\: int, last_date\: string\}\> but returns array\<int, array\{visitor_id\: null, visitor_uuid\: string, country_code\: mixed, city_name\: mixed, device_type\: mixed, os_name\: mixed, browser_name\: mixed, total_events\: int, \.\.\.\}\>\.$#'
 			identifier: return.type
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Method App\\Services\\StatisticsService\:\:utmAnalysis\(\) should return array\<int, array\{key\: string, source\: string, medium\: string, campaign\: string, count\: int\}\> but returns list\<array\{key\: non\-falsy\-string, type\: ''utm_campaign''\|''utm_medium''\|''utm_source'', count\: int\}\>\.$#'
 			identifier: return.type
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Strict comparison using \!\=\= between non\-falsy\-string and '''' will always evaluate to true\.$#'
 			identifier: notIdentical.alwaysTrue
 			count: 2
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Unsafe usage of new static\(\)\.$#'
 			identifier: new.static
 			count: 1
 			path: app/Services/StatisticsService.php
+
 		-
 			message: '#^Array has 2 duplicate keys with value ''Safari'' \(''Safari'', ''Safari''\)\.$#'
 			identifier: array.duplicateKey
 			count: 1
 			path: app/Services/UserAgentParser.php
+
 		-
 			message: '#^Offset 1 on array\{non\-falsy\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Services/UserAgentParser.php
+
 		-
 			message: '#^Unsafe usage of new static\(\)\.$#'
 			identifier: new.static
 			count: 1
 			path: app/Services/UserAgentParser.php
+
 		-
 			message: '#^Offset string on string\|null on left side of \?\? does not exist\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Support/PluginManager.php
-		-
-			message: '#^Using nullsafe property access "\?\-\>is_active" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Support/PluginManager.php
-		-
-			message: '#^Using nullsafe property access "\?\-\>is_installed" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Support/PluginManager.php
-		-
-			message: '#^Using nullsafe property access "\?\-\>settings" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Support/PluginManager.php
+
 		-
 			message: '#^Strict comparison using \!\=\= between string and false will always evaluate to true\.$#'
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: app/Support/WebhookSignature.php
+
 		-
 			message: '#^Call to an undefined method Illuminate\\Database\\Schema\\ForeignKeyDefinition\:\:after\(\)\.$#'
 			identifier: method.notFound
 			count: 1
 			path: database/migrations/2026_08_28_000001_add_monit_fields_to_users_table.php
-		-
-			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Console\\Command\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: database/seeders/CoreDataSeeder.php
-		-
-			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Console\\Command\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 12
-			path: database/seeders/DemoDataSeeder.php
-		-
-			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Console\\Command\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: database/seeders/ProductionSeeder.php

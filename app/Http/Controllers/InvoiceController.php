@@ -50,7 +50,7 @@ class InvoiceController extends Controller
 
         $data = [
             'invoice_number' => 'INV-'.str_pad($payment->payment_id, 6, '0', STR_PAD_LEFT),
-            'date' => $payment->datetime?->format('Y-m-d') ?? now()->format('Y-m-d'),
+            'date' => $payment->datetime->format('Y-m-d') ?? now()->format('Y-m-d'),
             'user' => $user,
             'payment' => $payment,
             'plan' => $plan,

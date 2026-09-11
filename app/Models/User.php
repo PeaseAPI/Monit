@@ -8,10 +8,63 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Throwable;
 
+/**
+ * @property int $user_id
+ * @property int $type
+ * @property string $name
+ * @property string $email
+ * @property string|null $password
+ * @property array<string, mixed> $billing
+ * @property array<string, mixed> $plan_settings
+ * @property array<string, mixed> $preferences
+ * @property string|null $email_activation_code
+ * @property string|null $lost_password_code
+ * @property Carbon|null $lost_password_sent_at
+ * @property Carbon|null $email_verified_at
+ * @property bool $is_newsletter_subscribed
+ * @property string|null $phone
+ * @property Carbon|null $phone_verified_at
+ * @property string $plan_id
+ * @property Carbon|null $plan_expiration_date
+ * @property bool $plan_trial_done
+ * @property bool $plan_expiry_reminder
+ * @property bool $user_deletion_reminder
+ * @property string|null $referral_key
+ * @property string|null $referred_by
+ * @property bool $referred_by_has_converted
+ * @property string|null $payment_subscription_id
+ * @property string|null $payment_processor
+ * @property float|null $payment_total_amount
+ * @property string|null $payment_currency
+ * @property string|null $language
+ * @property string|null $timezone
+ * @property int $status
+ * @property string|null $source
+ * @property string|null $ip
+ * @property string|null $latitude
+ * @property string|null $longitude
+ * @property string|null $continent_code
+ * @property string|null $country
+ * @property string|null $city_name
+ * @property string|null $device_type
+ * @property string|null $os_name
+ * @property string|null $browser_name
+ * @property Carbon|null $last_activity
+ * @property int $total_logins
+ * @property string|null $avatar
+ * @property string|null $anti_phishing_code
+ * @property string|null $twofa_token
+ * @property bool $twofa_is_enabled
+ * @property string|null $remember_token
+ * @property Plan|null $plan
+ * @property string|null $api_key_lookup
+ * @property string|null $api_key_encrypted
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */

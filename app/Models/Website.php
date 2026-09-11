@@ -5,8 +5,52 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * @property int $website_id
+ * @property int $user_id
+ * @property int|null $domain_id
+ * @property string $pixel_key
+ * @property string|null $name
+ * @property string $scheme
+ * @property string $host
+ * @property string|null $path
+ * @property string $tracking_type
+ * @property bool $is_enabled
+ * @property bool $bot_exclusion_is_enabled
+ * @property bool $query_parameters_tracking_is_enabled
+ * @property string|null $excluded_ips
+ * @property bool $events_children_is_enabled
+ * @property bool $sessions_replays_is_enabled
+ * @property bool $websites_heatmaps_is_enabled
+ * @property bool $ip_tracking_is_enabled
+ * @property int $current_month_sessions_events
+ * @property int $current_month_events_children
+ * @property int $current_month_sessions_replays
+ * @property int $last_24_hours_pageviews
+ * @property int $last_7_days_pageviews
+ * @property string|null $timezone
+ * @property bool $email_reports_is_enabled
+ * @property Carbon|null $email_reports_last_date
+ * @property array<string, mixed> $settings
+ * @property bool $plan_sessions_events_limit_notice
+ * @property bool $plan_events_children_limit_notice
+ * @property bool $plan_sessions_replays_limit_notice
+ * @property string|null $stats_month
+ * @property string $seo_audit_check_interval
+ * @property bool $seo_notifications_enabled
+ * @property string|null $seo_notifications_mode
+ * @property Carbon|null $seo_next_audit_at
+ * @property Carbon|null $seo_last_audit_at
+ * @property string|null $seo_sitemap_url
+ * @property string $seo_sitemap_check_interval
+ * @property string|null $seo_sitemap_urls_hash
+ * @property Carbon|null $seo_sitemap_checked_at
+ * @property float|null $seo_avg_score
+ * @property int $seo_total_audits
+ */
 class Website extends Model
 {
     protected $primaryKey = 'website_id';

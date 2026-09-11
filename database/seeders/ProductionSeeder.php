@@ -40,7 +40,7 @@ class ProductionSeeder extends Seeder
 
         cache()->forget('monit.settings');
 
-        $this->command?->info('已导入生产配置：套餐 plus/pro/ultra（CNY+USD 双币）、税费 2 项、品牌设置项。');
+        $this->command->info('已导入生产配置：套餐 plus/pro/ultra（CNY+USD 双币）、税费 2 项、品牌设置项。');
     }
 
     /** @return array<int, array<string, mixed>> */

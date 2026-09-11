@@ -9,6 +9,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * SEO 事件通知处理器
  * type：email / webhook / slack / discord / telegram / pushover / ntfy / gotify
  * settings：各渠道参数（webhook_url / token / chat_id 等）+ events（订阅事件列表）
+ *
+ * @property int $notification_handler_id
+ * @property int $user_id
+ * @property string $name
+ * @property string $type
+ * @property array<string, mixed> $settings
+ * @property bool $is_enabled
+ * @property \Illuminate\Support\Carbon|null $last_sent_at
  */
 class NotificationHandler extends Model
 {
