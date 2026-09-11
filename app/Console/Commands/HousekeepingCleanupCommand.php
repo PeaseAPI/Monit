@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 日常数据清理 Cron（原版 users_logs_cleanup + internal_notifications_cleanup + logs_cleanup，规格书 §13.1 M22）
@@ -19,12 +20,12 @@ class HousekeepingCleanupCommand extends Command
     public function handle(): int
     {
         // 1. account_logs 90 天（原版 users_logs_cleanup）
-        $logsDeleted = \DB::table('account_logs')
+        $logsDeleted = DB::table('account_logs')
             ->where('datetime', '<', now()->subDays(90))
             ->delete();
 
         // 2. internal_notifications 30 天（原版 internal_notifications_cleanup，只清已读避免误删未读）
-        $notificationsDeleted = \DB::table('internal_notifications')
+        $notificationsDeleted = DB::table('internal_notifications')
             ->where('datetime', '<', now()->subDays(30))
             ->delete();
 

@@ -7,6 +7,7 @@ use App\Models\Website;
 use App\Services\StatisticsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * API v1 - 数据分析接口
@@ -240,7 +241,7 @@ class AnalyticsController
         $limit = min(200, max(1, (int) $request->query('limit', 50)));
         [$start, $end] = $this->resolveRangeDates($range);
 
-        $rows = \DB::table('sessions_events')
+        $rows = DB::table('sessions_events')
             ->where('website_id', $website->website_id)
             ->whereBetween('date', [$start, $end])
             ->whereIn('type', ['landing_page', 'pageview'])
@@ -274,7 +275,7 @@ class AnalyticsController
         $limit = min(200, max(1, (int) $request->query('limit', 50)));
         [$start, $end] = $this->resolveRangeDates($range);
 
-        $rows = \DB::table('lightweight_events')
+        $rows = DB::table('lightweight_events')
             ->where('website_id', $website->website_id)
             ->whereBetween('date', [$start, $end])
             ->whereIn('type', ['landing_page', 'pageview'])
