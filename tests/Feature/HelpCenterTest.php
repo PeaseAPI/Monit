@@ -84,8 +84,8 @@ class HelpCenterTest extends TestCase
         ])->assertSessionHas('success');
 
         $article = HelpArticle::where('title', '留空URL文章')->firstOrFail();
-        $this->assertNotSame('', (string) $article->url);
-        $this->assertMatchesRegularExpression('/^[a-z0-9-]+$/', (string) $article->url);
+        $this->assertNotSame('', $article->url);
+        $this->assertMatchesRegularExpression('/^[a-z0-9-]+$/', $article->url);
     }
 
     public function test_unpublished_articles_are_hidden_from_public(): void

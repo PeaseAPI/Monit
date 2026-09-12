@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Setting;
 use App\Models\User;
 use App\Support\Typed;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 /**
  * 自动删除未确认用户 Cron
@@ -22,7 +22,7 @@ class AutoDeleteUnconfirmedUsersCommand extends Command
     {
         // 从 settings 读取配置（后台「用户设置」组保存的 users.auto_delete_unconfirmed_users，
         // 天数语义：0/空 = 关闭，>0 = 未确认用户保留天数）
-        $settingsValue = DB::table('settings')
+        $settingsValue = Setting::query()
             ->where('key', 'users.auto_delete_unconfirmed_users')
             ->value('value');
 

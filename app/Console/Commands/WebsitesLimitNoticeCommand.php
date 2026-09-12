@@ -3,11 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Mail\PlanLimitNotice;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\Website;
 use App\Support\Typed;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -47,7 +47,7 @@ class WebsitesLimitNoticeCommand extends Command
 
     public function handle(): int
     {
-        $enabled = DB::table('settings')->where('key', 'analytics.email_notices_is_enabled')->value('value');
+        $enabled = Setting::query()->where('key', 'analytics.email_notices_is_enabled')->value('value');
 
         if (! (bool) $enabled || $enabled === 'false') {
             $this->info('配额通知邮件功能未启用');

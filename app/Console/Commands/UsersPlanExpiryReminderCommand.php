@@ -3,9 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Mail\PlanExpiryReminder;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -21,7 +21,7 @@ class UsersPlanExpiryReminderCommand extends Command
     public function handle(): int
     {
         // 检查是否启用
-        $isEnabled = DB::table('settings')
+        $isEnabled = Setting::query()
             ->where('key', 'payment.user_plan_expiry_reminder')
             ->value('value');
 

@@ -3,10 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Mail\AutoDeleteInactiveUsers;
+use App\Models\Setting;
 use App\Models\User;
 use App\Support\Typed;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -21,7 +21,7 @@ class AutoDeleteInactiveUsersCommand extends Command
 
     public function handle(): int
     {
-        $days = Typed::int(DB::table('settings')->where('key', 'users.auto_delete_inactive_users')->value('value') ?? 0);
+        $days = Typed::int(Setting::query()->where('key', 'users.auto_delete_inactive_users')->value('value') ?? 0);
 
         if ($days < 1) {
             $this->info('自动删除不活跃用户功能未启用');
