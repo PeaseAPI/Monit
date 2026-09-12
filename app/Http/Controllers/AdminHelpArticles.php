@@ -85,7 +85,9 @@ class AdminHelpArticles extends Controller
      */
     private function validated(Request $request): array
     {
-        return Typed::arr($request->validate([
+        // array_merge 保证右侧覆盖左侧：url 恒由 title 生成（留空提交时 ConvertEmptyStringsToNull
+        // 会把 url 置 null，数组联合 + 不会覆盖已存在的 null 键 → 数据库 NOT NULL 约束 500）
+        return array_merge(Typed::arr($request->validate([
             'title' => ['required', 'string', 'max:256'],
             'url' => ['nullable', 'string', 'max:256'],
             'category_id' => ['nullable', 'integer', 'exists:help_categories,category_id'],
@@ -93,11 +95,11 @@ class AdminHelpArticles extends Controller
             'description' => ['nullable', 'string', 'max:1024'],
             'order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_published' => ['boolean'],
-        ])) + [
+        ])), [
             'url' => Str::slug(Typed::string($request->input('title') ?? '')).'-'.Str::lower(Str::random(6)),
             'is_published' => $request->boolean('is_published', false),
             'order' => Typed::int($request->input('order') ?? 0),
             'category_id' => $request->filled('category_id') ? Typed::int($request->input('category_id')) : null,
-        ];
+        ]);
     }
 }

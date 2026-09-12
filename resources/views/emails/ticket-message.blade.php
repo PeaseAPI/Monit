@@ -2,7 +2,7 @@
 @component('mail::message')
 # {{ $heading }}
 
-**{{ __('msg.ticket_code') }}**: {{ $ticket->code }}
+**{{ __('msg.ticket_code') }}**: {{ $ticket->code() }}
 **{{ __('msg.ticket_subject') }}**: {{ $ticket->subject }}
 **{{ __('msg.ticket_category') }}**: {{ __('tickets.category_'.$ticket->category) }} · {{ __('tickets.priority_'.$ticket->priority) }}
 

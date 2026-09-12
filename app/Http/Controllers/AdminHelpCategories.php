@@ -59,11 +59,13 @@ class AdminHelpCategories extends Controller
      */
     private function validated(Request $request): array
     {
-        return Typed::arr($request->validate([
+        // array_merge：请求留空经 ConvertEmptyStringsToNull 变 null 时，数组联合 + 不会覆盖已存在的键，
+        // 导致右侧默认值（order/icon 兜底）失效而显式插入 null 触发 NOT NULL 500
+        return array_merge(Typed::arr($request->validate([
             'title' => ['required', 'string', 'max:64'],
             'url' => ['required', 'string', 'max:256', 'regex:/^[a-z0-9-]+$/'],
             'icon' => ['nullable', 'string', 'max:32'],
             'order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-        ])) + ['order' => Typed::int($request->input('order') ?? 0), 'icon' => Typed::string($request->input('icon') ?? 'book')];
+        ])), ['order' => Typed::int($request->input('order') ?? 0), 'icon' => Typed::string($request->input('icon') ?? 'book')]);
     }
 }

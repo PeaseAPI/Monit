@@ -70,6 +70,24 @@ class HelpCenterTest extends TestCase
         $this->assertSame(1, $this->freshModel($article)->views);
     }
 
+    /** M28 回归：文章 url 留空提交时由 title 自动生成 slug（数组联合 + 曾致 null 触发 NOT NULL 500） */
+    public function test_article_create_with_empty_url_generates_slug(): void
+    {
+        $admin = $this->makeUser(['type' => 1, 'email' => 'hc-admin2@help.test']);
+
+        $this->actingAs($admin)->post('/admin/help-articles', [
+            'title' => '留空URL文章',
+            'content' => '<p>正文内容</p>',
+            'url' => '',
+            'description' => '',
+            'order' => '',
+        ])->assertSessionHas('success');
+
+        $article = HelpArticle::where('title', '留空URL文章')->firstOrFail();
+        $this->assertNotSame('', (string) $article->url);
+        $this->assertMatchesRegularExpression('/^[a-z0-9-]+$/', (string) $article->url);
+    }
+
     public function test_unpublished_articles_are_hidden_from_public(): void
     {
         $admin = $this->makeUser(['type' => 1, 'email' => 'hc-admin2@help.test']);

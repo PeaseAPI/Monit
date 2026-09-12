@@ -96,15 +96,16 @@ class AdminBlogPosts extends Controller
      */
     protected function validated(Request $request): array
     {
-        return Typed::arr($request->validate([
+        // array_merge：url 留空为 null 时数组联合 + 不覆盖已存在键，url 恒由 title 生成的兜底失效 → NOT NULL 500
+        return array_merge(Typed::arr($request->validate([
             'title' => ['required', 'string', 'max:256'],
             'url' => ['nullable', 'string', 'max:256'],
             'content' => ['required', 'string'],
             'description' => ['nullable', 'string', 'max:1024'],
             'is_published' => ['boolean'],
-        ])) + [
+        ])), [
             'url' => Str::slug(Typed::string($request->input('title') ?? '')).'-'.Str::lower(Str::random(6)),
             'is_published' => $request->boolean('is_published', false),
-        ];
+        ]);
     }
 }

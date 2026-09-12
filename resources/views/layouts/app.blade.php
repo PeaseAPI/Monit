@@ -317,7 +317,7 @@
                     </div>
                 @endif
 
-                @if ($errors->any())
+                @if (isset($errors) && $errors->any())
                     <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                         <ul class="list-inside list-disc space-y-1">
                             @foreach ($errors->all() as $error)

@@ -163,4 +163,29 @@ class TicketSystemTest extends TestCase
         $this->assertSame(1, $ticket->replies()->count());
         Mail::assertSent(TicketSubmittedToAdmin::class);
     }
+
+    /** M28 回归：工单通知邮件必须真实渲染（Mail::fake 不渲染视图，曾漏过 $ticket->code 属性访问炸邮件发送） */
+    public function test_ticket_notification_emails_render_with_code(): void
+    {
+        $admin = $this->makeAdmin();
+        $user = $this->makeUser();
+        $ticket = $this->makeTicket($user);
+
+        $submitted = (new TicketSubmittedToAdmin($ticket, '新工单正文'))->render();
+        $this->assertStringContainsString($ticket->code(), $submitted);
+
+        $staffReply = TicketReply::create([
+            'ticket_id' => $ticket->ticket_id, 'user_id' => $admin->user_id,
+            'is_staff' => true, 'message' => '已收到，请检查代码', 'via' => 'web', 'datetime' => now(),
+        ]);
+        $repliedToUser = (new TicketRepliedToUser($ticket, $staffReply))->render();
+        $this->assertStringContainsString($ticket->code(), $repliedToUser);
+
+        $userReply = TicketReply::create([
+            'ticket_id' => $ticket->ticket_id, 'user_id' => $user->user_id,
+            'is_staff' => false, 'message' => '补充环境信息', 'via' => 'web', 'datetime' => now(),
+        ]);
+        $userReplied = (new TicketUserRepliedToAdmin($ticket, $userReply))->render();
+        $this->assertStringContainsString($ticket->code(), $userReplied);
+    }
 }

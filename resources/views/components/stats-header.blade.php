@@ -1,4 +1,4 @@
-@props(['website', 'title', 'backRoute' => 'stats.index', 'backLabel' => null])
+@props(['website', 'title' => '', 'backRoute' => 'stats.index', 'backLabel' => null])
 <div class="mb-6 flex items-center justify-between">
     <div>
         <a href="{{ route($backRoute, $website->website_id) }}" class="text-sm text-zinc-500 hover:underline">&larr; {{ $backLabel ?? __('stats.back_to_overview') }}</a>

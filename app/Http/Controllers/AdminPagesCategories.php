@@ -59,10 +59,11 @@ class AdminPagesCategories extends Controller
      */
     private function validated(Request $request): array
     {
-        return Typed::arr($request->validate([
+        // array_merge：order 留空为 null 时数组联合 + 不覆盖已存在键，默认 0 失效 → NOT NULL 500
+        return array_merge(Typed::arr($request->validate([
             'title' => ['required', 'string', 'max:64'],
             'url' => ['required', 'string', 'max:256', 'regex:/^[a-z0-9-]+$/'],
             'order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-        ])) + ['order' => Typed::int($request->input('order') ?? 0)];
+        ])), ['order' => Typed::int($request->input('order') ?? 0)]);
     }
 }
