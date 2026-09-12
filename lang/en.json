@@ -549,6 +549,8 @@
     "admin.plugin_version": "Version",
     "admin.plugins_active": "Active",
     "admin.plugins_confirm_uninstall": "Uninstalling removes plugin data. Continue?",
+    "admin.plugins_lifecycle": "Plugins must be installed first (creates plugin data and default settings), then activated to take effect. Deactivating keeps data; uninstalling deletes all plugin data.",
+    "admin.plugins_add_hint": "To add a plugin, upload its directory (with config.php) to the plugins/ directory on the server and refresh this page.",
     "admin.plugins_desc": "Install / activate / deactivate / uninstall plugins (spec §14).",
     "admin.plugins_empty": "No plugins found. Place plugins into the plugins/ directory and refresh.",
     "admin.plugins_not_found": "Plugin not found",

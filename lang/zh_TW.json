@@ -549,6 +549,8 @@
     "admin.plugin_version": "版本",
     "admin.plugins_active": "已啟用",
     "admin.plugins_confirm_uninstall": "解除安裝將刪除外掛資料，確定繼續？",
+    "admin.plugins_lifecycle": "外掛需先「安裝」（寫入外掛資料與預設設定），再「啟用」後功能才生效；停用保留資料；解除安裝將刪除外掛全部資料。",
+    "admin.plugins_add_hint": "新增外掛：將外掛目錄（含 config.php）上傳至伺服器的 plugins/ 目錄後重新整理本頁。",
     "admin.plugins_desc": "安裝 / 啟用 / 停用 / 解除安裝外掛（規格書 §14）。",
     "admin.plugins_empty": "外掛目錄為空。將外掛放入 plugins/ 目錄後刷新此頁。",
     "admin.plugins_not_found": "外掛不存在",

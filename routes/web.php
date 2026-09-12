@@ -89,7 +89,6 @@ use App\Http\Controllers\WebsitesImportController;
 use App\Http\Controllers\WebsiteSwitchController;
 use App\Http\Middleware\SeoGuestAccess;
 use App\Models\PushNotificationSubscriber;
-use App\Models\Setting;
 use App\Services\DynamicOgImageService;
 use App\Services\WebPushService;
 use App\Support\Settings;
@@ -789,31 +788,12 @@ Route::get('/cron/{task}', [CronController::class, 'task'])->whereIn('task', ['e
 // ========================================
 // 插件端点（规格书 §14）
 // ========================================
-
-// PWA 插件（规格书 §14.6）
-Route::get('/pwa/manifest.json', function () {
-    $settings = Setting::getGroup('pwa');
-
-    return response()->json([
-        'name' => $settings['name'] ?? config('app.name'),
-        'short_name' => $settings['short_name'] ?? 'Monit',
-        'description' => $settings['description'] ?? '',
-        'start_url' => '/',
-        'display' => 'standalone',
-        'theme_color' => $settings['theme_color'] ?? '#4f46e5',
-        'background_color' => $settings['background_color'] ?? '#ffffff',
-        'icons' => $settings['icons'] ?? [],
-    ]);
-})->name('pwa.manifest');
-
-// PWA Service Worker（规格书 §14.6）
-Route::get('/pwa/sw.js', function () {
-    $content = view('pwa.sw')->render();
-
-    return response($content)
-        ->header('Content-Type', 'application/javascript')
-        ->header('Service-Worker-Allowed', '/');
-})->name('pwa.sw');
+// PWA 的 /pwa/manifest.json 与 /pwa/sw.js 由 plugins/pwa/init.php 注册（isActive
+// 守卫 + plugins 表设置）。此处曾硬编码同 URI 路由直读 settings 表 pwa 组：
+// 因路由加载晚于插件注册而将其覆盖，导致①插件管理页的 PWA 设置保存后永不生效、
+// ②停用/卸载插件后端点仍对外暴露、③manifest 丢 start_url 与正确 Content-Type。
+// 已删除，统一走插件状态机。其余插件端点（push 订阅、动态 OG）保持不变：
+// push 的 web 版含端点白名单审计（#17/#19）且 unsubscribe 为唯一实现。
 
 // Push Notifications 前端订阅（规格书 §14.5）
 Route::post('/push-notifications/subscribe', function (Request $request) {

@@ -549,6 +549,8 @@
     "admin.plugin_version": "版本",
     "admin.plugins_active": "已激活",
     "admin.plugins_confirm_uninstall": "卸载将删除插件数据，确定继续？",
+    "admin.plugins_lifecycle": "插件需先「安装」（写入插件数据与默认配置），再「激活」后功能才生效；停用保留数据；卸载将删除插件全部数据。",
+    "admin.plugins_add_hint": "新增插件：将插件目录（含 config.php）上传至服务器的 plugins/ 目录后刷新本页。",
     "admin.plugins_desc": "安装 / 激活 / 停用 / 卸载插件（规格书 §14）。",
     "admin.plugins_empty": "插件目录为空。将插件放入 plugins/ 目录后刷新此页。",
     "admin.plugins_not_found": "插件不存在",
