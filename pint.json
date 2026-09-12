@@ -1,0 +1,6 @@
+{
+    "preset": "laravel",
+    "notPath": [
+        "app/Support/ip2region/Searcher.class.php"
+    ]
+}

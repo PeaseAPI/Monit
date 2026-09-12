@@ -52,6 +52,27 @@ class GeoIpTest extends TestCase
         $this->assertSame('NA', $result['continent_code']);
     }
 
+    public function test_lookup_prefers_ip2region_chinese_names_for_china_ip(): void
+    {
+        $xdb = config('services.geoip.ip2region_path');
+
+        if (! is_string($xdb) || $xdb === '' || ! is_file($xdb)) {
+            $this->markTestSkipped('本地未放置 ip2region xdb（storage/app/geoip/ip2region.xdb），跳过中文省市断言');
+        }
+
+        // mmdb 指向缺失文件：证明中国 IP 的省/市来自 ip2region 而非 mmdb
+        config(['services.geoip.mmdb_path' => storage_path('app/geoip/definitely-missing-'.uniqid().'.mmdb')]);
+
+        $result = (new GeoIp)->lookup('223.5.5.5');
+
+        $this->assertSame('CN', $result['country_code']);
+        $this->assertSame('AS', $result['continent_code']);
+        $this->assertNotNull($result['region_name']);
+        $this->assertSame(1, preg_match('/[\x{4e00}-\x{9fff}]/u', $result['region_name']), '省份应为中文（ip2region）');
+        $this->assertNotNull($result['city_name']);
+        $this->assertSame(1, preg_match('/[\x{4e00}-\x{9fff}]/u', $result['city_name']), '城市应为中文（ip2region）');
+    }
+
     public function test_continent_fallback_mapping(): void
     {
         $this->assertSame('AS', GeoIp::continentFromCountry('CN'));

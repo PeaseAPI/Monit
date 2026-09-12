@@ -306,20 +306,18 @@ return [
 
     /*
     |----------------------------------------------------------------------
-    | GeoIP（访客国家/大洲识别）
+    | GeoIP（访客国家/大洲/省/市识别）
     |----------------------------------------------------------------------
-    | 使用本地 MaxMind mmdb 库（GeoLite2 / db-ip country lite 均可）。
+    | 国家/大洲/省/市（海外）：本地 MaxMind mmdb 库（GeoLite2 / db-ip 均可）。
     | 免费库下载（免注册，每月更新）：
-    |   curl -L https://download.db-ip.com/free/dbip-country-lite-$(date +%Y-%m).mmdb.gz \
-    |     | gunzip > storage/app/geoip/country.mmdb
-    | 免费城市库下载（免注册，每月更新；必须用 city 库，country 库无 city 字段
-    | 只能识别到国家）：
-    |     curl -L https://download.db-ip.com/free/dbip-city-lite-$(date +%Y-%m).mmdb.gz \
-    |     | gunzip > storage/app/geoip/country.mmdb
+    |   php artisan geoip:update
+    | 中国 IP 中文省/市：ip2region 离线库（db-ip 免费库省市只有英文名），
+    | 同样由 geoip:update 下载；两个库路径均可用 env 覆盖。
     | 未放置库文件时国家维度显示为空，不影响其余采集。
     */
     'geoip' => [
         'mmdb_path' => env('GEOIP_MMDB_PATH') ?? storage_path('app/geoip/country.mmdb'),
+        'ip2region_path' => env('GEOIP_IP2REGION_PATH') ?? storage_path('app/geoip/ip2region.xdb'),
     ],
 
     /*

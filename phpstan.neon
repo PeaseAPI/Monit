@@ -34,3 +34,9 @@ parameters:
             # 语义清晰且无副作用，故显式忽略该规则（区别于 baseline：此处是规则裁剪而非错误待修）。
             message: '#^Using nullsafe property access "[^"]+" on left side of \?\? is unnecessary\. Use \-> instead\.$#'
             identifier: nullsafe.neverNull
+    excludePaths:
+        analyseAndScan:
+            # ip2region 官方 binding 原样引入（无类型声明的老式代码，上游维护），
+            # 不做静态分析；升级时随上游整文件覆盖。调用侧（App\Support\Ip2Region）
+            # 以运行时 require_once 加载并对动态调用行内豁免（@phpstan-ignore）。
+            - app/Support/ip2region/Searcher.class.php

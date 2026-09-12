@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\Ip2Region;
 use App\Support\Typed;
 use MaxMind\Db\Reader;
 
@@ -18,7 +19,13 @@ use MaxMind\Db\Reader;
  *   回退为仅显示国家——满足「优先城市、无法判定才只显示国家」的展示要求
  * - 未放置库文件时静默返回空结果（国家显示为未知，不影响采集）
  *
- * 关联：PixelTracker（写入 continent_code/country_code）、CountryNames（展示层国名/国旗）
+ * 中国 IP 中文省/市（ip2region）：db-ip 免费库的 city/subdivisions 只有英文名
+ * （names 无 zh-CN），中国访客省市会显示 Beijing/Hangzhou 等拼音。接入
+ * ip2region 离线中文库（storage/app/geoip/ip2region.xdb，geoip:update 自动
+ * 下载）后，中国 IP 且能给出省/市时优先采用其结果，其余情况回退 mmdb。
+ *
+ * 关联：PixelTracker（写入 continent_code/country_code）、CountryNames（展示层国名/国旗）、
+ *       App\Support\Ip2Region（中国 IP 中文省/市）
  */
 class GeoIp
 {
@@ -41,6 +48,19 @@ class GeoIp
         ];
 
         if (($ip === null || $ip === '') || filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return $result;
+        }
+
+        // 中国 IP 优先 ip2region：db-ip city lite 无中文名（names 无 zh-CN），
+        // ip2region 直接给出中文省/市（如 浙江省/杭州市）；未命中时回退 mmdb
+        $cn = Ip2Region::lookup($ip);
+
+        if ($cn !== null) {
+            $result['country_code'] = $cn['country_code'];
+            $result['continent_code'] = static::continentFromCountry($cn['country_code']);
+            $result['region_name'] = $cn['region_name'];
+            $result['city_name'] = $cn['city_name'];
+
             return $result;
         }
 

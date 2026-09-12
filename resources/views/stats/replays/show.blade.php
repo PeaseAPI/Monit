@@ -151,14 +151,31 @@ function sanitizeRrwebEvents(events) {
             container.appendChild(playerRoot);
 
             // 视口高度随容器宽度自适应（约 16:10，钳制 420-760px），替代固定 480px 裁剪
-            const playerHeight = Math.max(420, Math.min(760, Math.round(container.clientWidth * 0.62)));
+            let playerWidth = container.clientWidth;
+            let playerHeight = Math.max(420, Math.min(760, Math.round(playerWidth * 0.62)));
+
+            // 访客真实视口（rrweb Meta 事件 type=4 记录录制时的窗口宽高）：
+            // 手机端按原视口尺寸渲染（如 375x812），不再放大到容器宽导致画面
+            // 超长；页内滚动由回放事件驱动自动跟随访客滚动。桌面端视口宽于
+            // 容器时按容器宽等比缩小；竖屏超高钳制 1000px 防异常数据。
+            if (Array.isArray(events)) {
+                for (let i = 0; i < events.length; i++) {
+                    const ev = events[i];
+                    if (ev && ev.type === 4 && ev.data && ev.data.width > 0 && ev.data.height > 0) {
+                        const scale = Math.min(container.clientWidth / ev.data.width, 1);
+                        playerWidth = Math.round(ev.data.width * scale);
+                        playerHeight = Math.min(1000, Math.round(ev.data.height * scale));
+                        break;
+                    }
+                }
+            }
 
             try {
                 new rrwebPlayer({
                     target: playerRoot,
                     props: {
                         events: events,
-                        width: container.clientWidth,
+                        width: playerWidth,
                         height: playerHeight,
                         autoPlay: false,
                         showController: true,
