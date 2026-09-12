@@ -1,8 +1,10 @@
 <?php
 
-use App\Support\Settings;
-
 /**
- * Offload 停用入口：关闭功能标记（Cron offload 任务据此停止）
+ * Offload 停用钩子（空操作）。
+ *
+ * 配置源统一：Cron offload 任务停止依据是插件激活态
+ * （PluginManager::isActive），原停用写入的 offload.is_enabled
+ * 为零消费死键，不再维护。
  */
-Settings::set('offload.is_enabled', false);
+

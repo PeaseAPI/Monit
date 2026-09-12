@@ -10,11 +10,8 @@
 use App\Models\ImageOptimizerStat;
 use App\Services\ImageOptimizer;
 use App\Support\PluginManager;
-use App\Support\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
-Settings::set('image_optimizer.is_enabled', true);
 
 /* ---------------- 上传拦截 hook（规格书 §14.9 uploads_upload() 拦截） ---------------- */
 

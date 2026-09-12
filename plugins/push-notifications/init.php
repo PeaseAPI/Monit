@@ -13,12 +13,9 @@ use App\Models\PushNotificationSubscriber;
 use App\Models\Website;
 use App\Services\WebPushService;
 use App\Support\PluginManager;
-use App\Support\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-
-Settings::set('push_notifications.is_enabled', true);
 
 /* ---------------- 订阅端点 ---------------- */
 
