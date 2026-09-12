@@ -145,6 +145,14 @@
                 <span class="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-500">{{ __('msg.domain_seo_no_website') }}</span>
             @endif
         </div>
+
+        {{-- SerpApi 未配置醒目横幅：自动排名不会刷新，避免用户误以为功能故障（二十七轮） --}}
+        @if(! \App\Services\Seo\RankTracker::configured())
+            <div class="mt-4 rounded-xl bg-amber-50 px-4 py-3">
+                <p class="text-sm font-medium text-amber-700">{{ __('seo.serpapi_not_configured') }}</p>
+                <p class="mt-1 text-xs text-amber-600/90">{{ __('seo.serpapi_not_configured_note') }}</p>
+            </div>
+        @endif
     </div>
 
     {{-- Actions --}}

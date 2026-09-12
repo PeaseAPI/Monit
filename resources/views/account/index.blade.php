@@ -59,6 +59,12 @@
                 </div>
                 @if($user->phone)
                     <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs text-emerald-700">{{ __('account.bound') }}</span>
+                @elseif(\App\Services\Sms\SmsService::scenarioEnabled('phone_bind'))
+                    {{-- 主资料区内联绑定入口：复用页尾 phone-bind-modal（M17），点击打开弹窗 --}}
+                    <button type="button" onclick="openPhoneBindModal()"
+                        class="rounded-xl bg-brand-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-700">
+                        {{ __('account.phone_bind_btn') }}
+                    </button>
                 @endif
             </div>
             <div class="px-6 py-3.5">

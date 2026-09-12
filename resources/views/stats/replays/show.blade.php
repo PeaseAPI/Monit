@@ -78,7 +78,7 @@
         <div class="px-6 py-4 border-b border-zinc-100">
             <h2 class="text-lg font-semibold text-zinc-800">{{ __('stats.replay_player') }}</h2>
         </div>
-        <div id="replay-container" class="relative bg-zinc-900" style="min-height:480px" data-events-url="{{ route('stats.replays.events', [$website->website_id, $replay->replay_id]) }}">
+        <div id="replay-container" class="relative bg-zinc-100" style="min-height:480px" data-events-url="{{ route('stats.replays.events', [$website->website_id, $replay->replay_id]) }}">
             <div id="replay-loading" class="absolute inset-0 flex items-center justify-center">
                 <div class="text-center">
                     <svg class="mx-auto h-8 w-8 animate-spin text-brand-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
@@ -148,6 +148,8 @@ function sanitizeRrwebEvents(events) {
             // 不再叠加自定义按钮——修复播放键与时间戳重叠、控制区拥挤问题
             const playerRoot = document.createElement('div');
             playerRoot.style.width = '100%';
+            // 播放器居中：手机/竖屏录制的播放器宽度小于容器时，避免一侧露出死黑/空白区
+            playerRoot.style.margin = '0 auto';
             container.appendChild(playerRoot);
 
             // 视口高度随容器宽度自适应（约 16:10，钳制 420-760px），替代固定 480px 裁剪
@@ -169,6 +171,10 @@ function sanitizeRrwebEvents(events) {
                     }
                 }
             }
+
+            // 容器高度贴合播放器实际高度（含 rrweb-player 底部控制条约 56px），
+            // 消除固定 min-height:480px 在小视口播放器下多出的深色/空白块
+            container.style.minHeight = Math.max(240, Math.round(playerHeight + 56)) + 'px';
 
             try {
                 new rrwebPlayer({

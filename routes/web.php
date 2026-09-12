@@ -168,14 +168,23 @@ Route::get('/sitemap.xml', [IndexController::class, 'sitemap'])->name('sitemap.x
 Route::get('/terms', [IndexController::class, 'terms'])->name('terms');
 Route::get('/privacy', [IndexController::class, 'privacy'])->name('privacy');
 
-// M23 静态文档页兜道路由：Nginx/Apache 通常直接服务 public/docs/*.html，
-// 该路由保证未配置静态直服（或测试）环境同样可访问。
+Route::get('/docs', function () {
+    return view('docs.index');
+})->name('docs.index');
+Route::get('/docs/install.html', function () {
+    return view('docs.install');
+})->name('docs.install');
+Route::get('/docs/usage.html', function () {
+    return view('docs.usage');
+})->name('docs.usage');
+// M23 静态文档页兜道路由升级（M27）：docs 三页已迁移为 Blade 视图（统一全站头尾布局），
+// public/docs/*.html 已删除，本路由为主服务路径；兼容旧 .html 后缀 URL，未知页 404
 Route::get('/docs/{page}', function (string $page) {
-    $file = public_path('docs/'.basename($page));
-    abort_unless(is_file($file), 404);
-    abort_unless(str_ends_with($file, '.html'), 404);
+    $view = 'docs.'.str_replace('.html', '', basename($page));
 
-    return response()->file($file, ['Content-Type' => 'text/html; charset=UTF-8']);
+    return in_array($view, ['docs.index', 'docs.install', 'docs.usage'], true) && view()->exists($view)
+        ? view($view)
+        : abort(404);
 })->where('page', '[A-Za-z0-9_-]+\.html')->name('docs.static');
 Route::post('/cookie-consent', [IndexController::class, 'cookieConsent'])->name('cookie.consent');
 Route::get('/unsubscribe', [IndexController::class, 'unsubscribe'])->name('unsubscribe');
