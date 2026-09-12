@@ -19,7 +19,6 @@
             'maps' => __('admin.settings_maps'),
         ],
         __('admin.nav_section_manage') => [
-            'theme' => __('admin.settings_theme'),
             'branding' => __('admin.settings_branding'),
             'custom' => __('admin.settings_custom'),
             'custom_images' => __('admin.settings_custom_images'),
@@ -81,7 +80,7 @@
             $readonlyTabs = ['cache', 'health', 'support'];
         @endphp
 
-        @foreach(['main','users','content','analytics','seo','maps','tickets','theme','branding','custom','custom_images','ads','cookie_consent','socials','announcements','payment','payment_gateways','business','plan_free','plan_guest','plan_custom','affiliate','smtp','sms','ai','captcha','email_notifications','internal_notifications','webhooks','offload','cron','cache','health','support'] as $tab)
+        @foreach(['main','users','content','analytics','seo','maps','tickets','branding','custom','custom_images','ads','cookie_consent','socials','announcements','payment','payment_gateways','business','plan_free','plan_guest','plan_custom','affiliate','smtp','sms','ai','captcha','email_notifications','internal_notifications','webhooks','offload','cron','cache','health','support'] as $tab)
         <div class="settings-panel hidden" id="panel-{{ $tab }}">
             @if(in_array($tab, $readonlyTabs, true))
                 @include("admin.settings.partials.{$tab}", ['settings' => $settings[$tab] ?? []])

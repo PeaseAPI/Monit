@@ -659,10 +659,8 @@ class AdminSettings extends Controller
                 'ads_is_enabled' => 'boolean',
                 'ads_header' => 'nullable|string',
                 'ads_footer' => 'nullable|string',
-                // ↓ 原版对标补充（66 分析 / AltumCode）
-                'ad_blocker_detector_is_enabled' => 'boolean',
-                'ad_blocker_detector_lock_is_enabled' => 'boolean',
-                'ad_blocker_detector_delay' => 'nullable|integer|min:0|max:10000',
+                // ad_blocker_detector_* 已移除：广告拦截检测功能未实现，三键零运行时消费
+                // （二十轮读键审计），迁移 2026_09_12_000004 清理残键
             ],
             'announcements' => [
                 'announcements_is_enabled' => 'boolean',
@@ -723,12 +721,6 @@ class AdminSettings extends Controller
                 'webhooks_domain_new' => 'boolean',
                 'webhooks_domain_update' => 'boolean',
                 'wait_for_response_domains' => 'nullable|string|max:4096',
-            ],
-            'theme' => [
-                'theme' => 'nullable|string|max:64',
-                'primary_color' => 'nullable|string|max:7',
-                'secondary_color' => 'nullable|string|max:7',
-                'white_label_is_enabled' => 'boolean',
             ],
             'cron' => [
                 'cron_key' => 'nullable|string|max:64',
