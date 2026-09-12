@@ -229,8 +229,8 @@ class M22Test extends TestCase
     {
         Mail::fake();
 
-        DB::table('settings')->updateOrInsert(['key' => 'auto_delete_inactive_users'], ['value' => 30]);
-        DB::table('settings')->updateOrInsert(['key' => 'user_deletion_reminder'], ['value' => 7]);
+        DB::table('settings')->updateOrInsert(['key' => 'users.auto_delete_inactive_users'], ['value' => 30]);
+        DB::table('settings')->updateOrInsert(['key' => 'users.user_deletion_reminder'], ['value' => 7]);
 
         $inactive = User::create([
             'name' => 'Inactive', 'email' => 'inactive@example.com',

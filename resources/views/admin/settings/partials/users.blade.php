@@ -9,14 +9,6 @@
         <div class="settings-section-body">
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">{{ __('settings.users.t_4df241') }}</span>
-                    <span class="settings-field-row-hint">{{ __('settings.users.t_74e506') }}</span>
-                </span>
-                <input type="checkbox" name="register_is_enabled" value="1" class="input-toggle"
-                    {{ filter_var($settings['users.register_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            </label>
-            <label class="settings-field-row">
-                <span class="min-w-0">
                     <span class="settings-field-row-label">{{ __('settings.users.t_0a1e72') }}</span>
                     <span class="settings-field-row-hint">{{ __('settings.users.t_7418fb') }}</span>
                 </span>
@@ -39,22 +31,6 @@
                 <input type="checkbox" name="user_registration_require_consent" value="1" class="input-toggle"
                     {{ filter_var($settings['users.user_registration_require_consent'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
-            <label class="settings-field-row">
-                <span class="min-w-0">
-                    <span class="settings-field-row-label">{{ __('settings.users.t_8d6dfb') }}</span>
-                    <span class="settings-field-row-hint">{{ __('settings.users.t_45877b') }}</span>
-                </span>
-                <input type="checkbox" name="register_display_newsletter_checkbox" value="1" class="input-toggle"
-                    {{ filter_var($settings['users.register_display_newsletter_checkbox'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            </label>
-            <label class="settings-field-row">
-                <span class="min-w-0">
-                    <span class="settings-field-row-label">{{ __('settings.users.t_0e2bd4') }}</span>
-                    <span class="settings-field-row-hint">{{ __('settings.users.t_b156cd') }}</span>
-                </span>
-                <input type="checkbox" name="account_display_newsletter_checkbox" value="1" class="input-toggle"
-                    {{ filter_var($settings['users.account_display_newsletter_checkbox'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            </label>
         </div>
     </section>
     <section class="settings-section">
@@ -73,14 +49,6 @@
                 <input type="checkbox" name="two_fa_is_enabled" value="1" class="input-toggle"
                     {{ filter_var($settings['users.two_fa_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
-            <label class="settings-field-row">
-                <span class="min-w-0">
-                    <span class="settings-field-row-label">{{ __('settings.users.t_6b6ce0') }}</span>
-                    <span class="settings-field-row-hint">{{ __('settings.users.t_208028') }}</span>
-                </span>
-                <input type="checkbox" name="login_rememberme_checkbox_is_checked" value="1" class="input-toggle"
-                    {{ filter_var($settings['users.login_rememberme_checkbox_is_checked'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            </label>
             <div>
                 <label class="form-label">{{ __('settings.users.t_19329d') }}</label>
                 <input type="number" name="login_rememberme_cookie_days" class="form-input" value="{{ old('login_rememberme_cookie_days', $settings['users.login_rememberme_cookie_days'] ?? '30') }}" placeholder="30">
@@ -96,35 +64,21 @@
             </div>
         </div>
         <div class="settings-section-body">
-            <label class="settings-field-row">
-                <span class="min-w-0">
-                    <span class="settings-field-row-label">{{ __('settings.users.t_435434') }}</span>
-                    <span class="settings-field-row-hint">{{ __('settings.users.t_804628') }}</span>
-                </span>
-                <input type="checkbox" name="auto_delete_unconfirmed_users" value="1" class="input-toggle"
-                    {{ filter_var($settings['users.auto_delete_unconfirmed_users'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            </label>
             <div>
-                <label class="form-label">{{ __('settings.users.t_df0373') }}</label>
-                <input type="number" name="auto_delete_unconfirmed_users_days" class="form-input" value="{{ old('auto_delete_unconfirmed_users_days', $settings['users.auto_delete_unconfirmed_users_days'] ?? '3') }}" placeholder="3">
-                <p class="form-hint">{{ __('settings.users.t_1aa1f9') }}</p>
+                <label class="form-label">{{ __('settings.users.t_435434') }}</label>
+                <input type="number" name="auto_delete_unconfirmed_users" class="form-input" value="{{ old('auto_delete_unconfirmed_users', $settings['users.auto_delete_unconfirmed_users'] ?? '0') }}" placeholder="0" min="0" max="3650">
+                <p class="form-hint">{{ __('settings.users.t_df0373') }}{{ __('settings.users.t_1aa1f9') }}</p>
             </div>
-            <label class="settings-field-row">
-                <span class="min-w-0">
-                    <span class="settings-field-row-label">{{ __('settings.users.t_a55cc6') }}</span>
-                    <span class="settings-field-row-hint">{{ __('settings.users.t_d1e534') }}</span>
-                </span>
-                <input type="checkbox" name="auto_delete_inactive_users" value="1" class="input-toggle"
-                    {{ filter_var($settings['users.auto_delete_inactive_users'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            </label>
-            <label class="settings-field-row">
-                <span class="min-w-0">
-                    <span class="settings-field-row-label">{{ __('settings.users.t_799601') }}</span>
-                    <span class="settings-field-row-hint">{{ __('settings.users.t_085935') }}</span>
-                </span>
-                <input type="checkbox" name="user_deletion_reminder" value="1" class="input-toggle"
-                    {{ filter_var($settings['users.user_deletion_reminder'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            </label>
+            <div>
+                <label class="form-label">{{ __('settings.users.t_a55cc6') }}</label>
+                <input type="number" name="auto_delete_inactive_users" class="form-input" value="{{ old('auto_delete_inactive_users', $settings['users.auto_delete_inactive_users'] ?? '0') }}" placeholder="0" min="0" max="3650">
+                <p class="form-hint">{{ __('settings.users.t_d1e534') }}</p>
+            </div>
+            <div>
+                <label class="form-label">{{ __('settings.users.t_799601') }}</label>
+                <input type="number" name="user_deletion_reminder" class="form-input" value="{{ old('user_deletion_reminder', $settings['users.user_deletion_reminder'] ?? '7') }}" placeholder="7" min="1" max="90">
+                <p class="form-hint">{{ __('settings.users.t_085935') }}</p>
+            </div>
         </div>
     </section>
     <section class="settings-section">
@@ -262,24 +216,6 @@
                 <input type="number" name="register_lockout_time" class="form-input" value="{{ old('register_lockout_time', $settings['users.register_lockout_time'] ?? '60') }}" placeholder="60">
                 <p class="form-hint">{{ __('settings.users.t_a62cdd') }}</p>
             </div>
-        </div>
-    </section>
-    <section class="settings-section">
-        <div class="settings-section-header">
-            <div>
-                <h3 class="settings-section-title">{{ __('settings.users.t_556f67') }}</h3>
-                <p class="settings-section-desc">{{ __('settings.users.t_1edffd') }}</p>
-            </div>
-        </div>
-        <div class="settings-section-body">
-            <label class="settings-field-row">
-                <span class="min-w-0">
-                    <span class="settings-field-row-label">{{ __('settings.users.t_6da09c') }}</span>
-                    <span class="settings-field-row-hint">{{ __('settings.users.t_0d2691') }}</span>
-                </span>
-                <input type="checkbox" name="api_is_enabled" value="1" class="input-toggle"
-                    {{ filter_var($settings['users.api_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            </label>
         </div>
     </section>
 </div>

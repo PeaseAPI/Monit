@@ -20,9 +20,10 @@ class AutoDeleteUnconfirmedUsersCommand extends Command
 
     public function handle(): int
     {
-        // 从 settings 读取配置
+        // 从 settings 读取配置（后台「用户设置」组保存的 users.auto_delete_unconfirmed_users，
+        // 天数语义：0/空 = 关闭，>0 = 未确认用户保留天数）
         $settingsValue = DB::table('settings')
-            ->where('key', 'main.auto_delete_unconfirmed_users')
+            ->where('key', 'users.auto_delete_unconfirmed_users')
             ->value('value');
 
         if (! (bool) $settingsValue) {

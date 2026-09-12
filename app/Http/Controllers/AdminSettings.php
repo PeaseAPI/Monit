@@ -458,17 +458,16 @@ class AdminSettings extends Controller
                 'serpapi_api_key' => 'nullable|string|max:256',
             ],
             'users' => [
-                'register_is_enabled' => 'boolean',
                 'email_activation_is_enabled' => 'boolean',
-                'auto_delete_unconfirmed_users' => 'boolean',
-                'auto_delete_unconfirmed_users_days' => 'nullable|integer|min:1',
-                'user_deletion_reminder' => 'boolean',
+                // 自动删除未确认用户：天数语义（0=关闭）——Cron 单键双语义（原版形态）
+                'auto_delete_unconfirmed_users' => 'nullable|integer|min:0|max:3650',
+                // 自动删除不活跃用户：天数（0=关闭）；user_deletion_reminder：提前提醒天数
+                'auto_delete_inactive_users' => 'nullable|integer|min:0|max:3650',
+                'user_deletion_reminder' => 'nullable|integer|min:1|max:90',
                 'two_fa_is_enabled' => 'boolean',
-                'api_is_enabled' => 'boolean',
                 'user_registration_require_consent' => 'boolean',
                 // ↓ 原版对标补充（66 分析 / AltumCode）
                 'welcome_email_is_enabled' => 'boolean',
-                'auto_delete_inactive_users' => 'boolean',
                 'blacklisted_domains' => 'nullable|string|max:4096',
                 'blacklisted_ips' => 'nullable|string|max:4096',
                 'blacklisted_countries' => 'nullable|string|max:512',
@@ -484,9 +483,6 @@ class AdminSettings extends Controller
                 'register_lockout_is_enabled' => 'boolean',
                 'register_lockout_max_registrations' => 'nullable|integer|min:1|max:1000',
                 'register_lockout_time' => 'nullable|integer|min:10|max:10080',
-                'register_display_newsletter_checkbox' => 'boolean',
-                'account_display_newsletter_checkbox' => 'boolean',
-                'login_rememberme_checkbox_is_checked' => 'boolean',
                 'login_rememberme_cookie_days' => 'nullable|integer|min:1|max:365',
             ],
             // 发票抬头企业信息（原库 settings.business 组 16 字段全量）

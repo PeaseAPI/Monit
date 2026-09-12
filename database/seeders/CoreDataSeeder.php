@@ -63,21 +63,18 @@ class CoreDataSeeder extends Seeder
         }
 
         // ---------- 平台设置 ----------
+        // 键格式约定：除 site_name/site_url（InstallController 安装完成页消费）外
+        // 一律点分分组键，与后台设置组、运行时读取方严格对齐。
         $settings = [
             'site_name' => 'Monit',
             'site_url' => config('app.url'),
-            'default_language' => 'zh_CN',
-            'default_timezone' => 'Asia/Shanghai',
-            'user_registration_is_enabled' => true,
-            'admin_user_registration_notification_is_enabled' => false,
-            'email_verification_is_enabled' => false,
-            'last_cron_execution' => now()->toISOString(),
-            'items_per_page' => 25,
-            'email_reports_is_enabled' => false,
+            'main.default_language' => 'zh_CN',
+            'main.default_timezone' => 'Asia/Shanghai',
             // M22：原版 Cron 任务开关（规格书 §13.1）
             'email_notices_is_enabled' => true,
-            'auto_delete_inactive_users' => 0,   // 0 = 关闭；>0 = 天数
-            'user_deletion_reminder' => 7,       // 删除前提醒天数
+            'users.auto_delete_inactive_users' => 0,      // 0 = 关闭；>0 = 不活跃天数
+            'users.user_deletion_reminder' => 7,          // 删除前提前提醒天数
+            'users.auto_delete_unconfirmed_users' => 0,   // 0 = 关闭；>0 = 未确认用户保留天数
             // 维护模式默认关闭（CheckMaintenance 中间件读取）
             'main.maintenance_is_enabled' => 'false',
 
