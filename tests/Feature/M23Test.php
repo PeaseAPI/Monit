@@ -116,12 +116,16 @@ class M23Test extends TestCase
         $this->assertSame('https://cdn.example.com/dark.png', Brand::logoUrl(true));
     }
 
-    /** 静态文档页：产品/安装/使用 3 个 HTML 可直接访问 */
+    /** 静态文档页：产品/安装/使用 3 个 HTML 可直接访问（M28：主路径去 .html，旧后缀 301 兼容） */
     public function test_static_docs_pages_accessible(): void
     {
-        foreach (['index', 'install', 'usage'] as $page) {
-            $this->get("/docs/{$page}.html")->assertOk();
+        // index 页主路径即 /docs（无 /docs/index 独立路由）
+        $paths = ['index' => '/docs', 'install' => '/docs/install', 'usage' => '/docs/usage'];
+        foreach ($paths as $page => $path) {
+            $this->get($path)->assertOk();
+            $this->get("/docs/{$page}.html")->assertStatus(301);
         }
+        $this->get('/docs/nope.html')->assertNotFound();
     }
 
     /** 跟踪优化：pixel 端点 204 + 无 Session Cookie（无中间件路由组） */
