@@ -632,11 +632,8 @@
     "admin.settings_custom": "Свой код",
     "admin.settings_custom_images": "Ізображенія бренда",
     "admin.settings_desc": "Кіраванне глобальной конфігураціей сістэмы",
-    "admin.settings_dynamic_og_images": "Дінаміческіе OG-ізображенія",
     "admin.settings_email_notifications": "Email-паведамленні",
-    "admin.settings_email_shield": "Абарона e-mail",
     "admin.settings_health": "Стан",
-    "admin.settings_image_optimizer": "Оптімізатор ізображеній",
     "admin.settings_internal_notifications": "Внутренніе паведамленні",
     "admin.settings_main": "Основные",
     "admin.settings_maps": "Карты",
@@ -646,8 +643,6 @@
     "admin.settings_plan_custom": "Карыстальнікскій тарыф",
     "admin.settings_plan_free": "Тарыф Free",
     "admin.settings_plan_guest": "Гостевой тарыф",
-    "admin.settings_push_notifications": "Push Notifications",
-    "admin.settings_pwa": "PWA",
     "admin.settings_section": "Settings",
     "admin.settings_seo": "SEO",
     "admin.settings_sms": "SMS",
@@ -3463,5 +3458,6 @@
     "teams.send_invitation": "Send Invitation",
     "stats.session_detail": "Дэтэлі сэансу",
     "auth.sms_code_required_for_login": "Для ўваходу патрабуецца SMS-код пацверджання.",
-    "validation.push_endpoint_not_allowed": "Гэта канчатковая кропка push адсутнічае ў спісе дазволеных."
+    "validation.push_endpoint_not_allowed": "Гэта канчатковая кропка push адсутнічае ў спісе дазволеных.",
+    "settings.offload.config_source_hint": "配置源优先级：本组设置 → Offload 插件页设置 → config/services.php 环境变量（app/Support/ObjectStorage.php 三层回落）"
 }

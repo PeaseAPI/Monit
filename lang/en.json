@@ -632,11 +632,8 @@
     "admin.settings_custom": "Custom Code",
     "admin.settings_custom_images": "Branding Images",
     "admin.settings_desc": "Manage global system configuration",
-    "admin.settings_dynamic_og_images": "Dynamic OG Images",
     "admin.settings_email_notifications": "Email Notifications",
-    "admin.settings_email_shield": "Email Shield",
     "admin.settings_health": "Health",
-    "admin.settings_image_optimizer": "Image Optimizer",
     "admin.settings_internal_notifications": "Internal Notifications",
     "admin.settings_main": "General",
     "admin.settings_maps": "Maps",
@@ -646,8 +643,6 @@
     "admin.settings_plan_custom": "Custom Plan",
     "admin.settings_plan_free": "Free Plan",
     "admin.settings_plan_guest": "Guest Plan",
-    "admin.settings_push_notifications": "Push Notifications",
-    "admin.settings_pwa": "PWA",
     "admin.settings_section": "Settings",
     "admin.settings_seo": "SEO",
     "admin.settings_sms": "SMS verification",
@@ -3463,5 +3458,6 @@
     "teams.send_invitation": "Send Invitation",
     "stats.session_detail": "Session detail",
     "auth.sms_code_required_for_login": "SMS verification code is required to log in.",
-    "validation.push_endpoint_not_allowed": "This push endpoint is not on the allow-list."
+    "validation.push_endpoint_not_allowed": "This push endpoint is not on the allow-list.",
+    "settings.offload.config_source_hint": "配置源优先级：本组设置 → Offload 插件页设置 → config/services.php 环境变量（app/Support/ObjectStorage.php 三层回落）"
 }

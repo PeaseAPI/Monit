@@ -1,5 +1,6 @@
 <div class="space-y-6">
     <p class="text-sm text-zinc-500">{{ __('settings.offload.t_f6ef68') }}</p>
+    <p class="text-xs text-zinc-400">{{ __('settings.offload.config_source_hint') }}</p>
 
     <div class="space-y-4">
         <label class="flex items-center gap-2">

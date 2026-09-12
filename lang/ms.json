@@ -632,11 +632,8 @@
     "admin.settings_custom": "Custom Code",
     "admin.settings_custom_images": "Branding Images",
     "admin.settings_desc": "Urus konfigurasi global sistem",
-    "admin.settings_dynamic_og_images": "Dynamic OG Images",
     "admin.settings_email_notifications": "Email Notifications",
-    "admin.settings_email_shield": "Perisai E-mel",
     "admin.settings_health": "Kesihatan",
-    "admin.settings_image_optimizer": "Image Optimizer",
     "admin.settings_internal_notifications": "Internal Notifications",
     "admin.settings_main": "Utama",
     "admin.settings_maps": "Peta",
@@ -646,8 +643,6 @@
     "admin.settings_plan_custom": "Custom Plan",
     "admin.settings_plan_free": "Free Plan",
     "admin.settings_plan_guest": "Guest Plan",
-    "admin.settings_push_notifications": "Push Notifications",
-    "admin.settings_pwa": "PWA",
     "admin.settings_section": "Settings",
     "admin.settings_seo": "SEO",
     "admin.settings_sms": "SMS verification",
@@ -3463,5 +3458,6 @@
     "teams.send_invitation": "Send Invitation",
     "stats.session_detail": "Butiran sesi",
     "auth.sms_code_required_for_login": "Kod pengesahan SMS diperlukan untuk log masuk.",
-    "validation.push_endpoint_not_allowed": "Titik hujung tolakan ini tidak berada dalam senarai dibenarkan."
+    "validation.push_endpoint_not_allowed": "Titik hujung tolakan ini tidak berada dalam senarai dibenarkan.",
+    "settings.offload.config_source_hint": "配置源优先级：本组设置 → Offload 插件页设置 → config/services.php 环境变量（app/Support/ObjectStorage.php 三层回落）"
 }

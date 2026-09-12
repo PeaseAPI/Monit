@@ -632,11 +632,8 @@
     "admin.settings_custom": "Свой код",
     "admin.settings_custom_images": "Изображения бренда",
     "admin.settings_desc": "Управление глобальной конфигурацией системы",
-    "admin.settings_dynamic_og_images": "Динамические OG-изображения",
     "admin.settings_email_notifications": "Email-уведомления",
-    "admin.settings_email_shield": "Защита e-mail",
     "admin.settings_health": "Состояние",
-    "admin.settings_image_optimizer": "Оптимизатор изображений",
     "admin.settings_internal_notifications": "Внутренние уведомления",
     "admin.settings_main": "Основные",
     "admin.settings_maps": "Карты",
@@ -646,8 +643,6 @@
     "admin.settings_plan_custom": "Пользовательский тариф",
     "admin.settings_plan_free": "Тариф Free",
     "admin.settings_plan_guest": "Гостевой тариф",
-    "admin.settings_push_notifications": "Push Notifications",
-    "admin.settings_pwa": "PWA",
     "admin.settings_section": "Settings",
     "admin.settings_seo": "SEO",
     "admin.settings_sms": "SMS",
@@ -3463,5 +3458,6 @@
     "teams.send_invitation": "Send Invitation",
     "stats.session_detail": "Детали сессии",
     "auth.sms_code_required_for_login": "Для входа требуется SMS-код подтверждения.",
-    "validation.push_endpoint_not_allowed": "Эта конечная точка push отсутствует в списке разрешённых."
+    "validation.push_endpoint_not_allowed": "Эта конечная точка push отсутствует в списке разрешённых.",
+    "settings.offload.config_source_hint": "配置源优先级：本组设置 → Offload 插件页设置 → config/services.php 环境变量（app/Support/ObjectStorage.php 三层回落）"
 }

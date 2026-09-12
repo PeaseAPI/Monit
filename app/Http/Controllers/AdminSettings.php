@@ -354,11 +354,6 @@ class AdminSettings extends Controller
             'plan_custom' => $this->getGroup('plan_custom'),
             'affiliate' => $this->getGroup('affiliate'),
             'offload' => $this->getGroup('offload'),
-            'image_optimizer' => $this->getGroup('image_optimizer'),
-            'email_shield' => $this->getGroup('email_shield'),
-            'dynamic_og_images' => $this->getGroup('dynamic_og_images'),
-            'pwa' => $this->getGroup('pwa'),
-            'push_notifications' => $this->getGroup('push_notifications'),
         ];
     }
 
@@ -832,67 +827,6 @@ class AdminSettings extends Controller
                 'offload_cos_bucket' => 'nullable|string|max:128',
                 'offload_cos_region' => 'nullable|string|max:64',
                 'offload_cdn_url' => 'nullable|string|max:512',
-            ],
-            'image_optimizer' => [
-                'image_optimizer_is_enabled' => 'boolean',
-                'image_optimizer_quality' => 'nullable|integer|min:1|max:100',
-                'image_optimizer_keep_original' => 'boolean',
-                'image_optimizer_auto_optimize' => 'boolean',
-                // ↓ 原版对标补充（66 分析 / AltumCode）
-                'image_optimizer_provider' => 'nullable|string|in:local,imagerypro',
-                'image_optimizer_statistics_is_enabled' => 'boolean',
-                'image_optimizer_imagerypro_api_key' => 'nullable|string|max:256',
-            ],
-            'email_shield' => [
-                'email_shield_is_enabled' => 'boolean',
-                // ↓ 原版对标补充（66 分析 / AltumCode）
-                'email_shield_statistics_is_enabled' => 'boolean',
-                'email_shield_api_key' => 'nullable|string|max:256',
-                'email_shield_whitelisted_domains' => 'nullable|string|max:4096',
-            ],
-            'dynamic_og_images' => [
-                'dynamic_og_images_is_enabled' => 'boolean',
-                // ↓ 原版对标补充（66 分析 / AltumCode）
-                'dynamic_og_images_api_key' => 'nullable|string|max:256',
-                'dynamic_og_images_imagerypro_api_key' => 'nullable|string|max:256',
-                'dynamic_og_images_quality' => 'nullable|integer|min:1|max:100',
-                'dynamic_og_images_title' => 'nullable|string|max:256',
-                'dynamic_og_images_title_color' => 'nullable|string|max:7',
-                'dynamic_og_images_background_color' => 'nullable|string|max:7',
-                'dynamic_og_images_screenshot_image_border_radius' => 'nullable|integer|min:0|max:64',
-                'dynamic_og_images_refresh_interval' => 'nullable|integer|min:0|max:100000',
-            ],
-            'pwa' => [
-                'pwa_is_enabled' => 'boolean',
-                'pwa_name' => 'nullable|string|max:128',
-                'pwa_short_name' => 'nullable|string|max:32',
-                'pwa_description' => 'nullable|string|max:256',
-                'pwa_theme_color' => 'nullable|string|max:7',
-                'pwa_background_color' => 'nullable|string|max:7',
-                // ↓ 原版对标补充（66 分析 / AltumCode）
-                'pwa_display_install_bar' => 'boolean',
-                'pwa_display_install_bar_for_guests' => 'boolean',
-                'pwa_is_fullscreen' => 'boolean',
-                'pwa_dynamic_splash_screen' => 'boolean',
-                'pwa_display_install_bar_delay' => 'nullable|integer|min:0|max:60000',
-                'pwa_display_install_bar_minimum_pageviews_count' => 'nullable|integer|min:0|max:1000',
-                'pwa_app_start_url' => 'nullable|string|max:512',
-            ],
-            'push_notifications' => [
-                'push_notifications_is_enabled' => 'boolean',
-                'push_notifications_public_key' => 'nullable|string|max:256',
-                'push_notifications_private_key' => 'nullable|string|max:256',
-                'push_notifications_vapid_subject' => 'nullable|string|max:256',
-                'push_notifications_subscribers_limit' => 'nullable|integer|min:1',
-                'push_notifications_campaigns_limit' => 'nullable|integer|min:1',
-                // ↓ 原版对标补充（66 分析 / AltumCode）
-                'push_notifications_guests_is_enabled' => 'boolean',
-                'ask_to_subscribe_is_enabled' => 'boolean',
-                'ask_to_subscribe_delay' => 'nullable|integer|min:0|max:60000',
-                'ask_to_subscribe_delay_minimum_pageviews_count' => 'nullable|integer|min:0|max:1000',
-                'notifications_per_cron' => 'nullable|integer|min:1|max:10000',
-                'notifications_per_cron_batch' => 'nullable|integer|min:1|max:1000',
-                'notifications_per_cron_batch_concurrently' => 'nullable|integer|min:1|max:50',
             ],
             default => [],
         };

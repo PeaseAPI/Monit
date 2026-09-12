@@ -47,8 +47,13 @@ class SettingsGroupsTest extends TestCase
             ->assertSee('清空缓存')
             ->assertSee('产品版本')
             ->assertSee('发票信息')
-            ->assertSee('id="panel-email_shield"', false)
-            ->assertSee('启用邮箱防护');
+            // 配置源统一专项：五个死配置组 tab 已移除（运行时读 plugins 表，
+            // settings 死配置永不生效），断言不存在以防回归
+            ->assertDontSee('id="panel-pwa"', false)
+            ->assertDontSee('id="panel-email_shield"', false)
+            ->assertDontSee('id="panel-image_optimizer"', false)
+            ->assertDontSee('id="panel-dynamic_og_images"', false)
+            ->assertDontSee('id="panel-push_notifications"', false);
     }
 
     /* ---------------- business 组保存 ---------------- */

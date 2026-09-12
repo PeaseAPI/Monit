@@ -632,11 +632,8 @@
     "admin.settings_custom": "自定义代码",
     "admin.settings_custom_images": "品牌图片",
     "admin.settings_desc": "管理系统全局配置",
-    "admin.settings_dynamic_og_images": "动态 OG 图片",
     "admin.settings_email_notifications": "邮件通知",
-    "admin.settings_email_shield": "邮箱防采集",
     "admin.settings_health": "健康检查",
-    "admin.settings_image_optimizer": "图片优化",
     "admin.settings_internal_notifications": "站内通知",
     "admin.settings_main": "常规",
     "admin.settings_maps": "地图",
@@ -646,8 +643,6 @@
     "admin.settings_plan_custom": "自定义套餐",
     "admin.settings_plan_free": "免费套餐",
     "admin.settings_plan_guest": "访客套餐",
-    "admin.settings_push_notifications": "推送通知",
-    "admin.settings_pwa": "PWA",
     "admin.settings_section": "设置",
     "admin.settings_seo": "SEO 设置",
     "admin.settings_sms": "短信验证",
@@ -3463,5 +3458,6 @@
     "teams.send_invitation": "发送邀请",
     "stats.session_detail": "会话详情",
     "auth.sms_code_required_for_login": "登录需要短信验证码。",
-    "validation.push_endpoint_not_allowed": "该推送端点不在允许列表中。"
+    "validation.push_endpoint_not_allowed": "该推送端点不在允许列表中。",
+    "settings.offload.config_source_hint": "配置源优先级：本组设置 → Offload 插件页设置 → config/services.php 环境变量（app/Support/ObjectStorage.php 三层回落）"
 }
