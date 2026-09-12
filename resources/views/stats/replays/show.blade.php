@@ -100,6 +100,32 @@
 <link rel="stylesheet" href="{{ asset('assets/pixel/rrweb-player.min.css') }}?v=20260912">
 <script src="{{ asset('assets/pixel/rrweb-player.min.js') }}"></script>
 <script>
+// 安全清洗：置空快照中所有 <script> 节点的内容与外链/内嵌文档
+// （与 heatmaps 页 sanitizeRrwebEvents 保持一致，防快照脚本在回放 iframe 中执行）
+function sanitizeRrwebEvents(events) {
+    function strip(node) {
+        if (!node || typeof node !== 'object') return;
+        const tag = String(node.tagName || '').toLowerCase();
+        if (node.type === 2 && tag === 'script') {
+            node.childNodes = [];
+            if (node.attrs) { node.attrs.src = ''; node.attrs.srcdoc = ''; }
+            return;
+        }
+        if (node.type === 2 && tag === 'iframe' && node.attrs) {
+            node.attrs.srcdoc = '';
+        }
+        const kids = node.childNodes;
+        if (Array.isArray(kids)) { for (let i = 0; i < kids.length; i++) strip(kids[i]); }
+    }
+    if (!Array.isArray(events)) return events;
+    events.forEach(function (ev) {
+        const d = ev && ev.data;
+        if (!d) return;
+        if (d.node) strip(d.node);
+        if (Array.isArray(d.adds)) d.adds.forEach(function (a) { if (a && a.node) strip(a.node); });
+    });
+    return events;
+}
 (function () {
     const eventsUrl = document.getElementById('replay-container').dataset.eventsUrl;
     const loading = document.getElementById('replay-loading');
@@ -109,6 +135,10 @@
     fetch(eventsUrl)
         .then(r => r.ok ? r.json() : [])
         .then(events => {
+            // 回放前清洗快照中的脚本节点（含访客浏览器/扩展注入的 inline script），
+            // 防止其在同源 iframe 中重新编译执行（Safari "Can't create duplicate
+            // variable" 之类 SyntaxError 的根因之一），详见 sanitizeRrwebEvents 注释
+            if (Array.isArray(events)) sanitizeRrwebEvents(events);
             loading.style.display = 'none';
             if (!events || events.length === 0) {
                 empty.style.display = '';
@@ -132,7 +162,9 @@
                         height: playerHeight,
                         autoPlay: false,
                         showController: true,
-                        UNSAFE_replayCanvas: true,
+                        // 不开启 UNSAFE_replayCanvas：rrweb 会因此给 sandbox 追加
+                        // allow-scripts，令快照中脚本在回放 iframe 里执行；采集端
+                        // 未开启 recordCanvas，开启无收益。
                     },
                 });
             } catch (e) {

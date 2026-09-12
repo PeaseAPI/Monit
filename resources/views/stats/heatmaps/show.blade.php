@@ -111,6 +111,38 @@ function switchTab(tab) {
     }
 }
 
+// 安全清洗：置空快照中所有 <script> 节点的内容与外链/内嵌文档。
+// 背景：采集端会把访客页面 DOM（含访客浏览器/扩展注入的 inline script，
+// 如 SafariAppExtensionPage/browsersApi 桥接脚本）完整序列化；若原样回放，
+// 这些脚本会在同源 iframe 里重新编译执行（Safari 报 "Can't create duplicate
+// variable" 之类 SyntaxError，每次播放/拖动进度重复触发，且存在脚本注入与
+// 统计污染风险）。配合 rrweb 默认 sandbox="allow-same-origin"（查看端不开
+// UNSAFE_replayCanvas，rrweb 便不会向 sandbox 追加 allow-scripts）形成双保险。
+function sanitizeRrwebEvents(events) {
+    function strip(node) {
+        if (!node || typeof node !== 'object') return;
+        const tag = String(node.tagName || '').toLowerCase();
+        if (node.type === 2 && tag === 'script') {
+            node.childNodes = [];
+            if (node.attrs) { node.attrs.src = ''; node.attrs.srcdoc = ''; }
+            return;
+        }
+        if (node.type === 2 && tag === 'iframe' && node.attrs) {
+            node.attrs.srcdoc = ''; // 嵌套文档由子节点快照重建，防 srcdoc 内脚本
+        }
+        const kids = node.childNodes;
+        if (Array.isArray(kids)) { for (let i = 0; i < kids.length; i++) strip(kids[i]); }
+    }
+    if (!Array.isArray(events)) return events;
+    events.forEach(function (ev) {
+        const d = ev && ev.data;
+        if (!d) return;
+        if (d.node) strip(d.node); // FullSnapshot 根节点
+        if (Array.isArray(d.adds)) d.adds.forEach(function (a) { if (a && a.node) strip(a.node); }); // Mutation 增量
+    });
+    return events;
+}
+
 function initSnapshotReplayer(containerId, onReady) {
     fetch(snapshotUrl)
         .then(r => r.ok ? r.json() : [])
@@ -140,6 +172,9 @@ function initSnapshotReplayer(containerId, onReady) {
                 return;
             }
 
+            // 回放前清洗快照中的脚本节点（见 sanitizeRrwebEvents 注释）
+            sanitizeRrwebEvents(snapshotData);
+
             const container = document.getElementById(containerId);
             if (!container) { if (onReady) onReady(null); return; }
             const panel = container.parentElement; // 画布/遮罩以该 relative 容器为定位基准
@@ -167,7 +202,9 @@ function initSnapshotReplayer(containerId, onReady) {
                         height: initHeight,
                         autoPlay: true,
                         showController: false,
-                        UNSAFE_replayCanvas: true,
+                        // 不要开启 UNSAFE_replayCanvas：rrweb 会因此给回放 iframe 的
+                        // sandbox 追加 allow-scripts，导致快照中（含访客扩展注入）的
+                        // 脚本重新编译执行；且采集端未开 recordCanvas，开启无任何收益。
                     },
                 });
 
