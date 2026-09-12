@@ -23,7 +23,8 @@ class PlanExpiryReminder extends Mailable
             ->markdown('emails.plan-expiry-reminder')
             ->with([
                 'user' => $this->user,
-                'planName' => $this->user->plan_id,
+                // 套餐显示名称而非 plan_id 数字；套餐被删时回退 plan_id
+                'planName' => $this->user->plan?->name ?? (string) $this->user->plan_id,
                 'expirationDate' => $this->user->plan_expiration_date,
             ]);
     }
