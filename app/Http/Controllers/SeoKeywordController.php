@@ -90,7 +90,7 @@ class SeoKeywordController extends Controller
             return back()->withErrors(['keyword' => __('seo.keyword_exists')]);
         }
 
-        SeoKeyword::create([
+        $keyword = SeoKeyword::create([
             'user_id' => $this->user()->user_id,
             'website_id' => $validated['website_id'],
             'keyword' => trim(Typed::string($validated['keyword'])),
@@ -101,6 +101,16 @@ class SeoKeywordController extends Controller
             'check_interval' => $validated['check_interval'] ?? 'weekly',
             'is_enabled' => true,
         ]);
+
+        // 用户反馈：首次添加应立刻获取一次排名（SerpApi 已配置时同步查询；
+        // 失败不影响添加流程，后续 cron 每小时扫描 / 手动「立即刷新」可补齐）
+        if (RankTracker::configured()) {
+            try {
+                app(RankTracker::class)->check($keyword);
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
 
         return back()->with('success', __('seo.keyword_added'));
     }

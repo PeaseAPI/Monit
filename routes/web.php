@@ -406,6 +406,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/domains/create', [DomainController::class, 'create'])->name('domains.create');
     Route::post('/domains', [DomainController::class, 'store'])->middleware('plan_limit:domains_limit')->name('domains.store');
     Route::get('/domains/{domainId}', [DomainController::class, 'show'])->name('domains.show');
+    Route::post('/domains/{domainId}/refresh', [DomainController::class, 'refresh'])->name('domains.refresh');
     Route::put('/domains', [DomainController::class, 'update'])->name('domains.update');
     Route::delete('/domains/{domainId}', [DomainController::class, 'destroy'])->name('domains.destroy');
 

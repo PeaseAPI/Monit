@@ -58,23 +58,24 @@ class DomainController extends Controller
             return back()->withErrors(['host' => __('msg.domain_exists')])->withInput();
         }
 
+        // 显式开启监控（DB 列默认 1 不会回填模型属性——此前依赖 $domain->monitor_is_enabled
+        // 判断恒为 null，导致「添加即查 whois」被跳过，详情页 registrar/到期全空）
         $domain = Domain::create([
             'user_id' => $this->user()->user_id,
             'host' => $host,
             'scheme' => 'https',
             'is_enabled' => true,
+            'monitor_is_enabled' => true,
             'datetime' => now(),
         ]);
 
         // 添加即查 whois（用户反馈 #9）：注册商/到期日期无需等次日 cron
         // （06:30 才跑 monit:seo-domains-monitor）；查询失败静默——
         // DomainMonitor 内部已容错，监控列仍由 cron 后续补齐
-        if ($domain->monitor_is_enabled) {
-            try {
-                app(DomainMonitor::class)->refresh($domain);
-            } catch (\Throwable) {
-                // whois 暂时不可达不影响添加流程
-            }
+        try {
+            app(DomainMonitor::class)->refresh($domain);
+        } catch (\Throwable) {
+            // whois 暂时不可达不影响添加流程
         }
 
         return redirect()->route('domains.index')
@@ -89,6 +90,26 @@ class DomainController extends Controller
         $domain = $this->user()->domains()->findOrFail($domainId);
 
         return view('domains.show', compact('domain'));
+    }
+
+    /**
+     * 立即刷新 WHOIS（详情页手动触发，无需等每日 06:30 cron）
+     */
+    public function refresh(Request $request, int $domainId): RedirectResponse
+    {
+        $domain = $this->user()->domains()->findOrFail($domainId);
+
+        if (! $domain->monitor_is_enabled) {
+            return back()->with('error', __('msg.domain_refresh_disabled'));
+        }
+
+        $daysLeft = app(DomainMonitor::class)->refresh($domain);
+
+        if ($daysLeft === null) {
+            return back()->with('error', __('msg.domain_refresh_failed'));
+        }
+
+        return back()->with('success', __('msg.domain_refreshed', ['days' => $daysLeft]));
     }
 
     public function update(Request $request): RedirectResponse

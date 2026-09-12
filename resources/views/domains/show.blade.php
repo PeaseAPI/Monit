@@ -37,12 +37,22 @@
 
     {{-- WHOIS / Monitor Info --}}
     <div class="mb-6 rounded-2xl border border-zinc-200 bg-white p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-zinc-800">{{ __('msg.domain_whois_title') }}</h2>
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2">
+                <h2 class="text-lg font-semibold text-zinc-800">{{ __('msg.domain_whois_title') }}</h2>
+                @if($domain->monitor_is_enabled)
+                    <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">{{ __('msg.monitoring_on') }}</span>
+                @else
+                    <span class="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">{{ __('msg.monitoring_off') }}</span>
+                @endif
+            </div>
             @if($domain->monitor_is_enabled)
-                <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">{{ __('msg.monitoring_on') }}</span>
-            @else
-                <span class="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">{{ __('msg.monitoring_off') }}</span>
+                <form method="POST" action="{{ route('domains.refresh', $domain->domain_id) }}">
+                    @csrf
+                    <button type="submit" class="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
+                        {{ __('msg.domain_refresh') }}
+                    </button>
+                </form>
             @endif
         </div>
 
