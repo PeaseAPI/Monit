@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 /**
@@ -45,5 +46,31 @@ class CronEndpointTest extends TestCase
 
         // 子任务同样要求 key
         $this->getJson('/cron/broadcasts')->assertStatus(403);
+    }
+
+    public function test_cron_records_last_run(): void
+    {
+        config(['app.cron_key' => 'secret-key-123']);
+
+        $this->getJson('/cron?key=secret-key-123')->assertOk()->assertJson(['status' => 'ok']);
+
+        // 执行记录写读闭环（后台 /admin 概览健康条读取）
+        $this->assertDatabaseHas('settings', ['key' => 'cron.last_run_at']);
+        $this->assertDatabaseHas('settings', ['key' => 'cron.last_run_results']);
+    }
+
+    public function test_cron_lock_prevents_concurrent_run(): void
+    {
+        config(['app.cron_key' => 'secret-key-123']);
+
+        // 手动占住锁 → 并发触发应 429 busy（防双调度双发）
+        $lock = Cache::lock('cron:index', 55);
+        $lock->get();
+
+        try {
+            $this->getJson('/cron?key=secret-key-123')->assertStatus(429)->assertJson(['status' => 'busy']);
+        } finally {
+            $lock->release();
+        }
     }
 }

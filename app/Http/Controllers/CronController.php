@@ -11,6 +11,7 @@ use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * 定时任务端点（规格书 §13）
@@ -40,6 +41,8 @@ class CronController extends Controller
     /**
      * 主 Cron 入口（规格书 §13：/cron）
      * 需要 ?key=CRON_KEY 鉴权
+     * 分布式锁防重入（TTL 55s < 调度间隔 60s：崩溃自愈）；运行后写 cron.last_run_at
+     * 执行记录（后台 /admin 概览健康条读取，写读闭环）
      */
     public function index(Request $request): JsonResponse
     {
@@ -47,27 +50,42 @@ class CronController extends Controller
             return response()->json(['error' => 'Invalid cron key'], 403);
         }
 
-        // Webhook：cron 开始（webhooks.webhooks_cron_start）
-        app(WebhookService::class)->cronStart();
+        $lock = Cache::lock('cron:index', 55);
 
-        $results = [];
-        $results['users_plan_expiration'] = $this->usersPlanExpiration();
-        $results['auto_delete_unconfirmed'] = $this->autoDeleteUnconfirmedUsers();
-        $results['websites_replays_cleanup'] = $this->websitesReplaysCleanup();
-        $results['analytics_cleanup'] = $this->analyticsCleanup();
-        $results['users_plan_expiry_reminder'] = $this->usersPlanExpiryReminder();
-        $results['broadcasts'] = $this->broadcasts();
-        $results['email_reports'] = $this->emailReports();
+        if (! (bool) $lock->get()) {
+            return response()->json(['status' => 'busy'], 429);
+        }
 
-        // Webhook：cron 结束（webhooks.webhooks_cron_end）
-        app(WebhookService::class)->cronEnd($results);
+        try {
+            // Webhook：cron 开始（webhooks.webhooks_cron_start）
+            app(WebhookService::class)->cronStart();
 
-        return response()->json(['status' => 'ok', 'results' => $results]);
+            $results = [];
+            $results['users_plan_expiration'] = $this->usersPlanExpiration();
+            $results['auto_delete_unconfirmed'] = $this->autoDeleteUnconfirmedUsers();
+            $results['websites_replays_cleanup'] = $this->websitesReplaysCleanup();
+            $results['analytics_cleanup'] = $this->analyticsCleanup();
+            $results['users_plan_expiry_reminder'] = $this->usersPlanExpiryReminder();
+            $results['broadcasts'] = $this->broadcasts();
+            $results['email_reports'] = $this->emailReports();
+
+            // Webhook：cron 结束（webhooks.webhooks_cron_end）
+            app(WebhookService::class)->cronEnd($results);
+
+            // 执行记录（后台 /admin 概览 Cron 健康条读取）
+            Settings::set('cron.last_run_at', now()->toDateTimeString());
+            Settings::set('cron.last_run_results', json_encode($results));
+
+            return response()->json(['status' => 'ok', 'results' => $results]);
+        } finally {
+            $lock->release();
+        }
     }
 
     /**
      * 子任务入口（规格 §13.1：/cron/email_reports、/cron/broadcasts、/cron/push_notifications）
      * 供外部调度器（宝塔/cron-tab）按不同频率分别调用
+     * 独立分布式锁：防同任务并发双发（broadcasts 邮件尤其敏感）
      */
     public function task(Request $request, string $task): JsonResponse
     {
@@ -75,30 +93,40 @@ class CronController extends Controller
             return response()->json(['error' => 'Invalid cron key'], 403);
         }
 
-        // 子任务开关（cron.cron_email_reports / cron_broadcasts / cron_push_notifications，默认开启）
-        $enabled = match ($task) {
-            'email_reports' => $this->cronTaskOn('cron_email_reports'),
-            'broadcasts' => $this->cronTaskOn('cron_broadcasts'),
-            'push_notifications' => $this->cronTaskOn('cron_push_notifications'),
-            default => true,
-        };
+        $lock = Cache::lock('cron:task:'.$task, 55);
 
-        if (! $enabled) {
-            return response()->json(['status' => 'skipped', 'task' => $task, 'reason' => 'disabled']);
+        if (! (bool) $lock->get()) {
+            return response()->json(['status' => 'busy'], 429);
         }
 
-        $result = match ($task) {
-            'email_reports' => $this->emailReports(),
-            'broadcasts' => $this->broadcasts(),
-            'push_notifications' => Artisan::call('monit:push-notifications-campaigns'),
-            default => null,
-        };
+        try {
+            // 子任务开关（cron.cron_email_reports / cron_broadcasts / cron_push_notifications，默认开启）
+            $enabled = match ($task) {
+                'email_reports' => $this->cronTaskOn('cron_email_reports'),
+                'broadcasts' => $this->cronTaskOn('cron_broadcasts'),
+                'push_notifications' => $this->cronTaskOn('cron_push_notifications'),
+                default => true,
+            };
 
-        if ($result === null) {
-            return response()->json(['error' => 'Unknown task'], 404);
+            if (! $enabled) {
+                return response()->json(['status' => 'skipped', 'task' => $task, 'reason' => 'disabled']);
+            }
+
+            $result = match ($task) {
+                'email_reports' => $this->emailReports(),
+                'broadcasts' => $this->broadcasts(),
+                'push_notifications' => Artisan::call('monit:push-notifications-campaigns'),
+                default => null,
+            };
+
+            if ($result === null) {
+                return response()->json(['error' => 'Unknown task'], 404);
+            }
+
+            return response()->json(['status' => 'ok', 'task' => $task, 'result' => $result]);
+        } finally {
+            $lock->release();
         }
-
-        return response()->json(['status' => 'ok', 'task' => $task, 'result' => $result]);
     }
 
     /**

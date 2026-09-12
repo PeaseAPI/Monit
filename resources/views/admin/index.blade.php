@@ -46,6 +46,30 @@
     </a>
 </div>
 
+{{-- Cron 健康状态条（CronController 运行写入；调度瘫痪时红色可见）--}}
+@php
+    $cronTone = match ($cronHealth['state']) {
+        'ok' => ['border' => 'border-emerald-200/80 bg-emerald-50/60', 'dot' => 'bg-emerald-500', 'text' => 'text-emerald-700'],
+        'stale' => ['border' => 'border-red-200/80 bg-red-50/60', 'dot' => 'bg-red-500', 'text' => 'text-red-700'],
+        default => ['border' => 'border-zinc-200/80 bg-zinc-50/60', 'dot' => 'bg-zinc-400', 'text' => 'text-zinc-500'],
+    };
+@endphp
+<div class="mt-4 flex items-center justify-between gap-3 rounded-2xl border px-5 py-3.5 text-sm {{ $cronTone['border'] }}">
+    <div class="flex items-center gap-2.5">
+        <span class="h-2 w-2 rounded-full {{ $cronTone['dot'] }}"></span>
+        <span class="font-semibold text-zinc-700">{{ __('admin.cron_health_label') }}</span>
+    </div>
+    <span class="text-xs font-medium {{ $cronTone['text'] }}">
+        @if ($cronHealth['state'] === 'never')
+            {{ __('admin.cron_health_never') }}
+        @elseif ($cronHealth['state'] === 'stale')
+            {{ __('admin.cron_health_stale', ['minutes' => $cronHealth['minutes']]) }}
+        @else
+            {{ __('admin.cron_health_ok', ['minutes' => $cronHealth['minutes']]) }}
+        @endif
+    </span>
+</div>
+
 {{-- 最新用户（对标原版 latest users：头像/状态/套餐/注册时间/操作）--}}
 <div class="mt-8 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white">
     <div class="flex items-center justify-between border-b border-zinc-100 px-6 py-4">

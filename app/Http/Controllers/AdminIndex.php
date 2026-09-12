@@ -9,6 +9,8 @@ use App\Models\SessionReplay;
 use App\Models\User;
 use App\Models\Website;
 use App\Models\WebsiteGoal;
+use App\Support\Settings;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 /**
@@ -73,8 +75,27 @@ class AdminIndex extends Controller
         // 最近支付
         $recentPayments = Payment::with('user')->orderByDesc('datetime')->limit(10)->get();
 
+        // Cron 健康状态（cron.last_run_at 由 CronController 每次运行写入）
+        // state: ok（3 分钟内有运行）/ stale（≥3 分钟未运行，调度疑似停摆）/ never（从未运行）
+        $lastRunAt = Settings::get('cron.last_run_at');
+        $cronHealth = ['state' => 'never', 'minutes' => null, 'last_run_at' => null];
+
+        if (is_string($lastRunAt) && $lastRunAt !== '') {
+            try {
+                $last = Carbon::parse($lastRunAt);
+                $minutes = (int) abs($last->diffInMinutes(now()));
+                $cronHealth = [
+                    'state' => $minutes < 3 ? 'ok' : 'stale',
+                    'minutes' => $minutes,
+                    'last_run_at' => $last->format('Y-m-d H:i'),
+                ];
+            } catch (\Throwable) {
+                // 不可解析的时间串按从未运行处理
+            }
+        }
+
         return view('admin.index', compact(
-            'stats', 'activeUsers', 'monthlyRevenue', 'recentUsers', 'recentPayments'
+            'stats', 'activeUsers', 'monthlyRevenue', 'recentUsers', 'recentPayments', 'cronHealth'
         ))->with('adminNav', 'dashboard');
     }
 }
