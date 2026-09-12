@@ -8,6 +8,7 @@ use App\Services\TotpService;
 use App\Services\WebhookService;
 use App\Support\Settings;
 use App\Support\Typed;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -232,17 +233,21 @@ class AccountController extends Controller
 
     /**
      * 绑定手机号（M17 §12.5）：验证码校验通过后写入 phone + phone_verified_at
-     *
-     * @return RedirectResponse
+     * M30：弹窗 AJAX 流（expectsJson）返回 JSON；表单流保持 redirect
      */
-    public function phoneBind(Request $request)
+    public function phoneBind(Request $request): RedirectResponse|JsonResponse
     {
         if (! SmsService::scenarioEnabled('phone_bind')) {
-            return back()->withErrors(['phone' => __('auth.sms_not_enabled')]);
+            $message = __('auth.sms_not_enabled');
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $message, 'errors' => ['phone' => [$message]]], 422)
+                : back()->withErrors(['phone' => $message]);
         }
 
         $validated = Typed::arr($request->validate([
-            'phone' => ['required', 'string', 'regex:/^1[3-9]\d{9}$/', 'unique:users,phone'],
+            // M30：换绑时忽略当前用户自身占用（重复提交同号不再误报「已被使用」）
+            'phone' => ['required', 'string', 'regex:/^1[3-9]\d{9}$/', 'unique:users,phone,'.$request->user()->user_id.',user_id'],
             'sms_code' => ['required', 'digits:6'],
         ], [
             'phone.required' => __('validation.phone_required'),
@@ -255,13 +260,21 @@ class AccountController extends Controller
         $phone = SmsService::normalizePhone(Typed::string($validated['phone']));
 
         if (! SmsService::verify($phone, 'phone_bind', Typed::string($validated['sms_code']))) {
-            return back()->withInput()->withErrors(['sms_code' => __('auth.sms_code_invalid')]);
+            $message = __('auth.sms_code_invalid');
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $message, 'errors' => ['sms_code' => [$message]]], 422)
+                : back()->withInput()->withErrors(['sms_code' => $message]);
         }
 
         $this->user()->forceFill([
             'phone' => $phone,
             'phone_verified_at' => now(),
         ])->save();
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'message' => __('account.phone_bound'), 'phone' => $phone]);
+        }
 
         return back()->with('success', __('account.phone_bound'));
     }

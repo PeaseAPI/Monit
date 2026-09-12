@@ -20,7 +20,7 @@ class WebsiteVisitor extends Model
 
     protected $fillable = [
         'website_id', 'visitor_uuid_binary', 'ip', 'custom_parameters',
-        'continent_code', 'country_code', 'city_name', 'os_name', 'os_version',
+        'continent_code', 'country_code', 'region_name', 'city_name', 'os_name', 'os_version',
         'browser_name', 'browser_version', 'browser_language', 'browser_timezone',
         'screen_resolution', 'device_type', 'theme', 'date', 'last_date',
         'total_sessions', 'last_event_id', 'goals_conversions_ids',

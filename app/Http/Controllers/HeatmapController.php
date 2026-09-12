@@ -6,6 +6,7 @@ use App\Models\Heatmap;
 use App\Models\HeatmapSnapshotClick;
 use App\Models\HeatmapSnapshotScroll;
 use App\Models\Website;
+use App\Services\HeatmapScreenshot;
 use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -38,7 +39,7 @@ class HeatmapController extends Controller
         return view('stats.heatmaps.create', compact('website'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, HeatmapScreenshot $screenshots): RedirectResponse
     {
         $validated = Typed::arr($request->validate([
             'website_id' => ['required', 'integer'],
@@ -50,13 +51,20 @@ class HeatmapController extends Controller
         $website = $this->user()->websites()->where('website_id', Typed::int($validated['website_id']))->firstOrFail();
 
         // datetime 列 NOT NULL 无默认值（模型 $timestamps=false），必须显式赋值，否则 SQL 报错 500
-        Heatmap::create([
+        $heatmap = Heatmap::create([
             'website_id' => $validated['website_id'],
             'path' => $validated['path'],
             'name' => $validated['name'],
             'is_enabled' => $request->boolean('is_enabled', true),
             'datetime' => now(),
         ]);
+
+        // 服务端标准视口截图（M30：桌面/平板/手机三端底图立即生成，不再等访客快照）
+        try {
+            $screenshots->captureAll($heatmap);
+        } catch (\Throwable) {
+            // 截图基础设施不可用时静默——详情页仍走访客 rrweb 快照
+        }
 
         return redirect()->route('stats.heatmaps', ['website' => $website->website_id])
             ->with('success', __('msg.heatmap_created'));
@@ -65,7 +73,7 @@ class HeatmapController extends Controller
     /**
      * @return View
      */
-    public function show(Request $request, Website $website, int $heatmapId)
+    public function show(Request $request, HeatmapScreenshot $screenshots, Website $website, int $heatmapId)
     {
         $heatmap = $website->heatmaps()->findOrFail($heatmapId);
 
@@ -126,7 +134,29 @@ class HeatmapController extends Controller
             }
         }
 
-        return view('stats.heatmaps.show', compact('website', 'heatmap', 'clicks', 'scrolls', 'device', 'hasSnapshot', 'hasLegacySnapshot'));
+        return view('stats.heatmaps.show', compact('website', 'heatmap', 'clicks', 'scrolls', 'device', 'hasSnapshot', 'hasLegacySnapshot'))
+            ->with('shotUrl', $screenshots->url($heatmap, $device));
+    }
+
+    /**
+     * 重新生成服务端标准视口截图（M30）：device=all 截三端，或指定单端
+     */
+    public function screenshot(Request $request, HeatmapScreenshot $screenshots, Website $website, int $heatmapId): RedirectResponse
+    {
+        $heatmap = $website->heatmaps()->findOrFail($heatmapId);
+
+        $device = Typed::string($request->input('device', 'all'));
+        try {
+            if ($device === 'all') {
+                $screenshots->captureAll($heatmap);
+            } elseif (isset(HeatmapScreenshot::VIEWPORTS[$device])) {
+                $screenshots->capture($heatmap, $device);
+            }
+        } catch (\Throwable) {
+            return back()->withErrors(['device' => __('stats.heatmap_shot_failed')]);
+        }
+
+        return back()->with('success', __('stats.heatmap_shot_refreshed'));
     }
 
     public function update(Request $request): RedirectResponse

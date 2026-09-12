@@ -81,8 +81,13 @@ Schedule::command('monit:seo-keywords-refresh')->hourly();
 // 每日 05:30：反链活性重验（抓源页匹配目标站链接，标记 active/lost）
 Schedule::command('monit:seo-backlinks-verify')->dailyAt('05:30');
 
-// 每月 1 日 02:00：GeoIP 数据库更新（db-ip.com 免费 country lite）
+// 每月 1 日 02:00：GeoIP 数据库更新（db-ip.com 免费 city lite，含国家/省份/城市）
 Schedule::command('geoip:update')->monthlyOn(1, '02:00');
+
+// ---------- M30：热图服务端标准视口截图 ----------
+
+// 每日 05:10：刷新全部启用热图的三端截图（桌面 1366 / 平板 768 / 手机 375）
+Schedule::command('monit:heatmap-screenshots')->dailyAt('05:10');
 
 /*
 |--------------------------------------------------------------------------

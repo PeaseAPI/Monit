@@ -27,13 +27,14 @@ class GeoIp
     protected bool $readerFailed = false;
 
     /**
-     * @return array{continent_code: ?string, country_code: ?string, city_name: ?string, latitude: ?float, longitude: ?float}
+     * @return array{continent_code: ?string, country_code: ?string, region_name: ?string, city_name: ?string, latitude: ?float, longitude: ?float}
      */
     public function lookup(?string $ip): array
     {
         $result = [
             'continent_code' => null,
             'country_code' => null,
+            'region_name' => null,
             'city_name' => null,
             'latitude' => null,
             'longitude' => null,
@@ -49,8 +50,16 @@ class GeoIp
             $result['country_code'] = Typed::stringOrNull(data_get($record, 'country.iso_code'));
             $result['continent_code'] = Typed::stringOrNull(data_get($record, 'continent.code'))
                 ?? static::continentFromCountry($result['country_code']);
-            $result['city_name'] = Typed::stringOrNull(data_get($record, 'city.names.zh-CN')
-                ?? data_get($record, 'city.names.en'));
+            // 省/州（city 库 subdivisions 数组的第一项为最高级行政区，中国即省级）
+            $result['region_name'] = static::firstNonEmpty(
+                data_get($record, 'subdivisions.0.names.zh-CN'),
+                data_get($record, 'subdivisions.0.names.en'),
+                data_get($record, 'subdivisions.0.iso_code'),
+            );
+            $result['city_name'] = static::firstNonEmpty(
+                data_get($record, 'city.names.zh-CN'),
+                data_get($record, 'city.names.en'),
+            );
             $latitude = data_get($record, 'location.latitude');
             $longitude = data_get($record, 'location.longitude');
             $result['latitude'] = $latitude === null ? null : Typed::float($latitude);
@@ -58,6 +67,22 @@ class GeoIp
         }
 
         return $result;
+    }
+
+    /**
+     * 取首个非空标量值（mmdb 记录键缺失/非字符串时回退下一候选）
+     */
+    protected static function firstNonEmpty(mixed ...$candidates): ?string
+    {
+        foreach ($candidates as $candidate) {
+            $value = Typed::stringOrNull($candidate);
+
+            if ($value !== null && $value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     /**

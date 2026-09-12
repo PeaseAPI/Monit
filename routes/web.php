@@ -380,6 +380,8 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/stats/heatmaps', [HeatmapController::class, 'store'])->middleware('plan_limit:websites_heatmaps_limit')->name('stats.heatmaps.store');
     Route::get('/stats/{website}/heatmaps/{heatmapId}', [HeatmapController::class, 'show'])
         ->middleware('can:own,website')->name('stats.heatmaps.show');
+    Route::post('/stats/{website}/heatmaps/{heatmapId}/screenshot', [HeatmapController::class, 'screenshot'])
+        ->middleware('can:own,website')->name('stats.heatmaps.screenshot');
     Route::put('/stats/heatmaps', [HeatmapController::class, 'update'])->name('stats.heatmaps.update');
     Route::delete('/stats/heatmaps/{heatmapId}', [HeatmapController::class, 'destroy'])->name('stats.heatmaps.destroy');
 

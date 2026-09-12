@@ -3434,5 +3434,17 @@
   "admin.cron_health_label": "Scheduled tasks",
   "admin.cron_health_ok": "OK · ran :minutes min ago",
   "admin.cron_health_stale": "Stalled · no run for :minutes min",
-  "admin.cron_health_never": "Never ran"
+  "admin.cron_health_never": "Never ran",
+  "account.phone_change_btn": "Изменить номер телефона",
+  "account.phone_modal_hint": "Введите номер телефона, нажмите «Получить код», затем введите код из SMS и отправьте.",
+  "stats.heatmap_shot_refresh": "Обновить скриншоты (ПК/планшет/мобильный)",
+  "stats.heatmap_shot_refreshed": "Скриншоты стандартных разрешений созданы для всех устройств",
+  "stats.heatmap_shot_failed": "Не удалось создать скриншот. Убедитесь, что установлен chrome-headless-shell (HEATMAP_CHROME_BIN).",
+  "seo.rank_history": "История позиций (последние 10 проверок)",
+  "seo.rank_source_auto": "авто",
+  "seo.rank_source_manual": "вручную",
+  "msg.domain_seo_title": "Мониторинг позиций ключевых слов",
+  "msg.domain_seo_desc": "Отслеживайте позиции этого домена в Google / Bing / Baidu по расписанию",
+  "msg.domain_seo_view": "Открыть мониторинг позиций",
+  "msg.domain_seo_no_website": "Домен ещё не привязан к сайту платформы"
 }

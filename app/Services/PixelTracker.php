@@ -208,6 +208,7 @@ class PixelTracker
             'utm_campaign' => $this->extractUtm($query, 'utm_campaign'),
             'continent_code' => $geo['continent_code'],
             'country_code' => $geo['country_code'],
+            'region_name' => $geo['region_name'],
             'city_name' => $geo['city_name'],
             'os_name' => $osName,
             'browser_name' => $browserName,
@@ -338,7 +339,7 @@ class PixelTracker
             ['website_id', 'visitor_uuid_binary'],
             // 回访时刷新地理 / UA 数据：早期版本未写入这些列的旧行、
             // 以及库升级后 GeoIP 数据变化的访客都能借此补齐（修复"未知"地区不更新问题）
-            ['last_date', 'ip', 'continent_code', 'country_code', 'city_name',
+            ['last_date', 'ip', 'continent_code', 'country_code', 'region_name', 'city_name',
                 'os_name', 'os_version', 'browser_name', 'browser_version',
                 'browser_language', 'browser_timezone', 'screen_resolution', 'device_type', 'theme']
         );

@@ -87,8 +87,30 @@
             @forelse ($keywords as $kw)
                 <tr class="{{ $kw->is_enabled ? '' : 'opacity-50' }}">
                     <td class="px-6 py-3">
-                        <p class="font-medium text-zinc-900">{{ $kw->keyword }}</p>
+                        <details>
+                            <summary class="cursor-pointer list-none">
+                                <p class="font-medium text-zinc-900 hover:text-brand-600">{{ $kw->keyword }}</p>
+                            </summary>
+                        </details>
                         <p class="mt-0.5 text-xs text-zinc-500">{{ $kw->website?->host ?? '—' }} · {{ $kw->device }} · {{ $kw->locale }}</p>
+                        @if(($recentRanks[$kw->seo_keyword_id] ?? collect())->isNotEmpty())
+                        <details class="mt-1">
+                            <summary class="cursor-pointer list-none text-xs text-indigo-600 hover:underline">{{ __('seo.rank_history') }}</summary>
+                            <ol class="mt-2 space-y-1.5 rounded-xl border border-zinc-100 bg-zinc-50 p-3">
+                                @foreach ($recentRanks[$kw->seo_keyword_id] as $rank)
+                                    <li class="flex items-center gap-2 text-xs text-zinc-600">
+                                        <span class="inline-block w-28 shrink-0 text-zinc-400">{{ optional($rank->checked_at)->format('m-d H:i') }}</span>
+                                        <span class="font-semibold {{ $rank->position === null ? 'text-zinc-400' : ($rank->position <= 10 ? 'text-emerald-600' : 'text-zinc-800') }}">{{ $rank->position ?? __('seo.not_ranked') }}</span>
+                                        <span class="text-zinc-300">·</span>
+                                        <span class="text-zinc-400">{{ $rank->source === 'auto' ? __('seo.rank_source_auto') : __('seo.rank_source_manual') }}</span>
+                                        @if($rank->url_found)
+                                            <span class="truncate text-zinc-400">{{ \Illuminate\Support\Str::limit((string) parse_url($rank->url_found, PHP_URL_HOST), 32) }}</span>
+                                        @endif
+                                    </li>
+                                @endforeach
+                            </ol>
+                        </details>
+                        @endif
                     </td>
                     <td class="px-6 py-3 capitalize text-zinc-600">{{ $kw->search_engine }}</td>
                     <td class="px-6 py-3">

@@ -3434,5 +3434,17 @@
   "admin.cron_health_label": "Scheduled tasks",
   "admin.cron_health_ok": "OK · ran :minutes min ago",
   "admin.cron_health_stale": "Stalled · no run for :minutes min",
-  "admin.cron_health_never": "Never ran"
+  "admin.cron_health_never": "Never ran",
+  "account.phone_change_btn": "Tukar nombor telefon",
+  "account.phone_modal_hint": "Masukkan nombor telefon, tekan \"Dapatkan kod\", kemudian masukkan kod SMS dan hantar untuk mengikat.",
+  "stats.heatmap_shot_refresh": "Muat semula tangkapan skrin (desktop/tablet/mudah alih)",
+  "stats.heatmap_shot_refreshed": "Tangkapan skrin viewport standard dijana untuk semua peranti",
+  "stats.heatmap_shot_failed": "Tangkapan skrin gagal. Pastikan chrome-headless-shell dipasang (HEATMAP_CHROME_BIN).",
+  "seo.rank_history": "Sejarah kedudukan (10 semakan terakhir)",
+  "seo.rank_source_auto": "auto",
+  "seo.rank_source_manual": "manual",
+  "msg.domain_seo_title": "Pemantauan Kedudukan Kata Kunci SEO",
+  "msg.domain_seo_desc": "Jejak perubahan kedudukan domain ini di Google / Bing / Baidu dengan semakan kata kunci berkala",
+  "msg.domain_seo_view": "Lihat kedudukan kata kunci",
+  "msg.domain_seo_no_website": "Domain ini belum dipautkan ke laman platform"
 }

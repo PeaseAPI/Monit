@@ -49,7 +49,7 @@ class LightweightEvent extends Model
     protected $fillable = [
         'website_id', 'visitor_uuid', 'type', 'path', 'referrer_host', 'referrer_path',
         'utm_source', 'utm_medium', 'utm_campaign', 'continent_code',
-        'country_code', 'city_name', 'os_name', 'browser_name',
+        'country_code', 'region_name', 'city_name', 'os_name', 'browser_name',
         'browser_language', 'browser_timezone', 'screen_resolution',
         'device_type', 'theme', 'date', 'expiration_date',
     ];

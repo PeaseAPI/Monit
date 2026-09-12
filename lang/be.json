@@ -3434,5 +3434,17 @@
   "admin.cron_health_label": "Scheduled tasks",
   "admin.cron_health_ok": "OK · ran :minutes min ago",
   "admin.cron_health_stale": "Stalled · no run for :minutes min",
-  "admin.cron_health_never": "Never ran"
+  "admin.cron_health_never": "Never ran",
+  "account.phone_change_btn": "Змяніць нумар тэлефона",
+  "account.phone_modal_hint": "Увядзіце нумар тэлефона, націсніце «Атрымаць код», потым увядзіце код з SMS і адпраўце.",
+  "stats.heatmap_shot_refresh": "Абнавіць скрыншоты (ПК/планшэт/мабільны)",
+  "stats.heatmap_shot_refreshed": "Скрыншоты стандартных разглядак створаны для ўсіх прылад",
+  "stats.heatmap_shot_failed": "Не ўдалося стварыць скрыншот. Пераканайцеся, што ўсталяваны chrome-headless-shell (HEATMAP_CHROME_BIN).",
+  "seo.rank_history": "Гісторыя пазіцый (апошнія 10 праверак)",
+  "seo.rank_source_auto": "аўто",
+  "seo.rank_source_manual": "ўручную",
+  "msg.domain_seo_title": "Маніторынг пазіцый ключавых слоў",
+  "msg.domain_seo_desc": "Адсочвайце пазіцыі гэтага дамена ў Google / Bing / Baidu па раскладзе",
+  "msg.domain_seo_view": "Адкрыць маніторынг пазіцый",
+  "msg.domain_seo_no_website": "Дамен яшчэ не прывязаны да сайта платформы"
 }

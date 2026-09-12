@@ -3434,5 +3434,17 @@
   "admin.cron_health_label": "Scheduled tasks",
   "admin.cron_health_ok": "OK · ran :minutes min ago",
   "admin.cron_health_stale": "Stalled · no run for :minutes min",
-  "admin.cron_health_never": "Never ran"
+  "admin.cron_health_never": "Never ran",
+  "account.phone_change_btn": "Change phone number",
+  "account.phone_modal_hint": "Enter your phone number, tap \"Get code\", then enter the SMS code and submit to bind.",
+  "stats.heatmap_shot_refresh": "Refresh screenshots (desktop/tablet/mobile)",
+  "stats.heatmap_shot_refreshed": "Standard-viewport screenshots generated for all devices",
+  "stats.heatmap_shot_failed": "Screenshot failed. Make sure chrome-headless-shell is installed (HEATMAP_CHROME_BIN).",
+  "seo.rank_history": "Rank history (last 10 checks)",
+  "seo.rank_source_auto": "auto",
+  "seo.rank_source_manual": "manual",
+  "msg.domain_seo_title": "SEO Keyword Rank Monitoring",
+  "msg.domain_seo_desc": "Track this domain's ranking changes on Google / Bing / Baidu with scheduled keyword checks",
+  "msg.domain_seo_view": "View keyword rankings",
+  "msg.domain_seo_no_website": "This domain is not linked to a platform website yet"
 }

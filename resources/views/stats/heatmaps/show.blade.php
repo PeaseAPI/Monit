@@ -12,13 +12,20 @@
         <button id="tab-scrolls" onclick="switchTab('scrolls')" class="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200">{{ __('stats.heatmap_scroll_data') }}</button>
     </div>
     {{-- Device selector --}}
-    <div class="mb-4 flex gap-2">
+    <div class="mb-4 flex flex-wrap items-center gap-2">
         @foreach(['desktop' => '🖥', 'tablet' => '📱', 'mobile' => '📲'] as $d => $icon)
             <a href="{{ route('stats.heatmaps.show', [$website->website_id, $heatmap->heatmap_id]) }}?device={{ $d }}"
                class="rounded-lg px-3 py-1.5 text-sm {{ $device === $d ? 'bg-brand-600 text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' }}">
                 {{ $icon }} {{ ucfirst($d) }}
             </a>
         @endforeach
+        <form method="POST" action="{{ route('stats.heatmaps.screenshot', [$website->website_id, $heatmap->heatmap_id]) }}" class="ml-auto">
+            @csrf
+            <input type="hidden" name="device" value="all">
+            <button type="submit" class="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50">
+                {{ __('stats.heatmap_shot_refresh') }}
+            </button>
+        </form>
     </div>
     {{-- Click heatmap --}}
     <div id="panel-clicks" class="rounded-2xl border border-zinc-200 bg-white">
@@ -26,9 +33,14 @@
             <p class="text-sm text-zinc-500">{{ __('stats.heatmap_click_data') }}: {{ $clicks->count() }} {{ __('stats.groups') }}</p>
         </div>
         <div class="relative" style="min-height:400px">
-            <div id="click-replayer-root" class="pointer-events-none" style="min-height:400px"></div>
-            <canvas id="click-canvas" class="absolute inset-0 h-full w-full" style="pointer-events:none;z-index:10"></canvas>
-                                    <div id="click-no-snapshot" class="absolute inset-0 flex items-center justify-center bg-zinc-50 {{ ($hasSnapshot || $hasLegacySnapshot) ? 'hidden' : '' }}">
+            @if($shotUrl)
+            {{-- 服务端标准视口截图底图（M30：桌面 1366 / 平板 768 / 手机 375） --}}
+            <img id="click-shot-img" src="{{ $shotUrl }}" alt=""
+                 class="block w-full" style="height:auto">
+            @endif
+            <div id="click-replayer-root" class="pointer-events-none {{ $shotUrl ? 'hidden' : '' }}" style="min-height:400px"></div>
+            <canvas id="click-canvas" class="absolute top-0 left-0 {{ $shotUrl ? '' : 'inset-0 h-full w-full' }}" style="pointer-events:none;z-index:10;width:{{ $shotUrl ? '100%' : 'auto' }};height:{{ $shotUrl ? 'auto' : '100%' }}"></canvas>
+                                    <div id="click-no-snapshot" class="absolute inset-0 flex items-center justify-center bg-zinc-50 {{ ($hasSnapshot || $hasLegacySnapshot || $shotUrl) ? 'hidden' : '' }}">
                 <div class="text-center">
                     <svg class="mx-auto h-12 w-12 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
                     <p class="mt-3 text-sm text-zinc-500">{{ __('stats.heatmap_waiting_snapshot') }}</p>
@@ -54,9 +66,13 @@
             <p class="text-sm text-zinc-500">{{ __('stats.heatmap_scroll_data') }}: {{ count($scrolls) }} {{ __('stats.groups') }}</p>
         </div>
         <div class="relative" style="min-height:560px">
-            <div id="scroll-replayer-root" class="pointer-events-none" style="min-height:560px"></div>
-            <canvas id="scroll-canvas" class="absolute inset-0 h-full w-full" style="pointer-events:none;z-index:10"></canvas>
-                                    <div id="scroll-no-snapshot" class="absolute inset-0 flex items-center justify-center bg-zinc-50 {{ ($hasSnapshot || $hasLegacySnapshot) ? 'hidden' : '' }}">
+            @if($shotUrl)
+            <img id="scroll-shot-img" src="{{ $shotUrl }}" alt=""
+                 class="block w-full" style="height:auto">
+            @endif
+            <div id="scroll-replayer-root" class="pointer-events-none {{ $shotUrl ? 'hidden' : '' }}" style="min-height:560px"></div>
+            <canvas id="scroll-canvas" class="absolute top-0 left-0 {{ $shotUrl ? '' : 'inset-0 h-full w-full' }}" style="pointer-events:none;z-index:10;width:{{ $shotUrl ? '100%' : 'auto' }};height:{{ $shotUrl ? 'auto' : '100%' }}"></canvas>
+                                    <div id="scroll-no-snapshot" class="absolute inset-0 flex items-center justify-center bg-zinc-50 {{ ($hasSnapshot || $hasLegacySnapshot || $shotUrl) ? 'hidden' : '' }}">
                 <div class="text-center">
                     <svg class="mx-auto h-12 w-12 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
                     <p class="mt-3 text-sm text-zinc-400">{{ __('stats.no_scroll_data') }}</p>
@@ -261,12 +277,25 @@ function initSnapshotReplayer(containerId, onReady) {
         .catch(() => { if (onReady) onReady(null); });
 }
 
+function syncCanvasSize(canvas) {
+    const container = canvas.parentElement;
+    // M30：截图底图模式以图片自然尺寸为画布像素基准（点击 y_normalized 按页面全高归一化，
+    // 截图已经过底部空白裁剪 → 近似全页，坐标可直接映射）；否则退回容器尺寸
+    const shotImg = container ? container.querySelector('img[id$="-shot-img"]') : null;
+    if (shotImg && shotImg.naturalWidth > 0) {
+        canvas.width = shotImg.naturalWidth;
+        canvas.height = shotImg.naturalHeight;
+    } else {
+        canvas.width = container.offsetWidth;
+        canvas.height = container.offsetHeight;
+    }
+}
+
 function drawClickHeatmap() {
     const canvas = document.getElementById('click-canvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const container = canvas.parentElement;
-    canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
+    syncCanvasSize(canvas);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!clicksData.length) { ctx.fillStyle = '#a1a1aa'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(mapMeta.no_data_text, canvas.width / 2, canvas.height / 2); return; }
     const maxCount = Math.max(...clicksData.map(c => parseInt(c.count) || 1));
@@ -286,8 +315,7 @@ function drawScrollHeatmap() {
     const canvas = document.getElementById('scroll-canvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const container = canvas.parentElement;
-    canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
+    syncCanvasSize(canvas);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const entries = Object.entries(scrollsData);
     if (!entries.length) { ctx.fillStyle = '#a1a1aa'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(mapMeta.noScrollDataText, canvas.width / 2, canvas.height / 2); return; }
@@ -307,8 +335,26 @@ function drawScrollHeatmap() {
 }
 
 window.addEventListener('load', () => {
-    clickReplayer = initSnapshotReplayer('click-replayer-root', () => { drawClickHeatmap(); });
-    scrollReplayer = initSnapshotReplayer('scroll-replayer-root', () => { drawScrollHeatmap(); });
+    const shotImg = document.getElementById('click-shot-img');
+    if (shotImg) {
+        // M30：服务端标准视口截图已生成 → 图片底图模式（跳过 rrweb 重放）
+        const bootShot = () => {
+            shotImg.onerror = () => {
+                // 截图文件被删除/不可达 → 回退 rrweb 重放
+                location.reload();
+            };
+            drawClickHeatmap();
+            drawScrollHeatmap();
+        };
+        if (shotImg.complete && shotImg.naturalWidth > 0) {
+            bootShot();
+        } else {
+            shotImg.onload = bootShot;
+        }
+    } else {
+        clickReplayer = initSnapshotReplayer('click-replayer-root', () => { drawClickHeatmap(); });
+        scrollReplayer = initSnapshotReplayer('scroll-replayer-root', () => { drawScrollHeatmap(); });
+    }
 });
 window.addEventListener('resize', () => { drawClickHeatmap(); drawScrollHeatmap(); });
 </script>

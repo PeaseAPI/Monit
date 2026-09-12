@@ -7,14 +7,18 @@ use Illuminate\Console\Command;
 
 /**
  * GeoIP 数据库更新命令
- * 下载 db-ip.com 免费国家库到 storage/app/geoip/country.mmdb
+ * 下载 db-ip.com 免费城市库到 storage/app/geoip/country.mmdb
  * 用法：php artisan geoip:update
+ *
+ * M30：country lite 无 city/subdivisions 字段（线上曾因用 country 库导致
+ * 「只显示国家、无省市」），改为下载 city lite（~60MB，含省/州与城市中文名），
+ * 路径保持 services.geoip.mmdb_path 不变，country 用途（国家/大洲）完全兼容。
  */
 class GeoipUpdateCommand extends Command
 {
     protected $signature = 'geoip:update {--force : 强制重新下载}';
 
-    protected $description = '下载/更新 GeoIP 国家数据库（db-ip.com 免费 country lite）';
+    protected $description = '下载/更新 GeoIP 城市数据库（db-ip.com 免费 city lite，含国家/省份/城市）';
 
     public function handle(): int
     {
@@ -49,8 +53,9 @@ class GeoipUpdateCommand extends Command
             return self::SUCCESS;
         }
 
-        $url = 'https://download.db-ip.com/free/dbip-country-lite-'.date('Y-m').'.mmdb.gz';
-        $this->info("正在下载：{$url}");
+        // M30：必须 city 库——country 库无 city/subdivisions 字段，省份/城市维度将永远为空
+        $url = 'https://download.db-ip.com/free/dbip-city-lite-'.date('Y-m').'.mmdb.gz';
+        $this->info("正在下载（城市库，含省份/城市）：{$url}");
 
         $gzData = @file_get_contents($url);
         if ($gzData === false) {

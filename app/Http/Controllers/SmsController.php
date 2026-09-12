@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Services\Sms\SmsService;
 use App\Support\Typed;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -25,7 +26,7 @@ class SmsController extends Controller
         'phone_bind' => 'phone_bind',
     ];
 
-    public function send(Request $request): RedirectResponse
+    public function send(Request $request): RedirectResponse|JsonResponse
     {
         $validated = Typed::arr($request->validate([
             'phone' => ['required', 'string', 'max:32'],
@@ -38,9 +39,14 @@ class SmsController extends Controller
         $purpose = Typed::string($validated['purpose']);
         $phone = SmsService::normalizePhone(Typed::string($validated['phone']));
 
+        // AJAX（弹窗绑定流程）时错误以 JSON 返回；表单流保持 redirect+errors
+        $failJson = fn (string $message) => $request->expectsJson()
+            ? response()->json(['message' => $message, 'errors' => ['phone' => [$message]]], 422)
+            : back()->withInput()->withErrors(['phone' => $message]);
+
         // 场景开关
         if (! SmsService::scenarioEnabled(Typed::string(static::SCENARIO_KEYS[$purpose] ?? ''))) {
-            return back()->withInput()->withErrors(['phone' => __('auth.sms_not_enabled')]);
+            return $failJson(__('auth.sms_not_enabled'));
         }
 
         // 绑定手机号需要登录态
@@ -50,12 +56,12 @@ class SmsController extends Controller
 
         // 注册：手机号不能已被占用
         if ($purpose === 'register' && User::where('phone', $phone)->exists()) {
-            return back()->withInput()->withErrors(['phone' => __('auth.phone_taken')]);
+            return $failJson(__('auth.phone_taken'));
         }
 
         // 登录 / 找回密码：手机号需已注册
         if (in_array($purpose, ['login', 'forgot_password'], true) && ! User::where('phone', $phone)->exists()) {
-            return back()->withInput()->withErrors(['phone' => __('auth.phone_not_found')]);
+            return $failJson(__('auth.phone_not_found'));
         }
 
         [$ok, $error] = SmsService::send($phone, $purpose);
@@ -67,7 +73,11 @@ class SmsController extends Controller
                 default => __('auth.sms_send_failed'),
             };
 
-            return back()->withInput()->withErrors(['phone' => $message]);
+            return $failJson($message);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'message' => __('auth.sms_code_sent')]);
         }
 
         return back()->with('sms_sent', true)->with('status', __('auth.sms_code_sent'));

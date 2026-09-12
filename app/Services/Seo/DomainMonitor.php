@@ -3,10 +3,16 @@
 namespace App\Services\Seo;
 
 use App\Models\Domain;
+use App\Support\Typed;
+use Illuminate\Support\Facades\Http;
 use Throwable;
 
 /**
- * 域名监控：whois 到期日 / registrar / NS（纯 socket 实现，无扩展依赖）
+ * 域名监控：whois 到期日 / registrar / NS
+ *
+ * 双通道（M30）：whois 43 端口是明文 TCP，部分云主机安全组/机房默认禁出站 43，
+ * 导致「注册商/到期时间获取不到」。whois 查询失败或解析不到期日时，
+ * 自动回退 RDAP（HTTP 443，rdap.org 引导至注册局 RDAP）——出门只需 443 放行。
  */
 class DomainMonitor
 {
@@ -14,6 +20,53 @@ class DomainMonitor
      * @return array{ok:bool, expiration_date?:string, registrar?:string|null, nameservers?:array<int, string>, error?:string}
      */
     public function whois(string $domain): array
+    {
+        $result = $this->socketWhois($domain);
+
+        // M30：43 端口被禁 / 解析失败 → RDAP（HTTP 443）回退，字段级择优合并
+        $rdap = $this->rdap($domain);
+
+        if ($rdap !== null) {
+            if (($result['expiration_date'] ?? null) === null && isset($rdap['expiration_date'])) {
+                $result['expiration_date'] = $rdap['expiration_date'];
+                unset($result['error']);
+            }
+            if (($result['registrar'] ?? null) === null && isset($rdap['registrar'])) {
+                $result['registrar'] = $rdap['registrar'];
+            }
+            if (($result['nameservers'] ?? null) === null && isset($rdap['nameservers'])) {
+                $result['nameservers'] = $rdap['nameservers'];
+            }
+
+            if (($result['ok'] ?? false) === false && isset($result['expiration_date'])) {
+                $result['ok'] = true;
+                unset($result['error']);
+            }
+        }
+
+        if (($result['expiration_date'] ?? null) === null) {
+            return [
+                'ok' => false,
+                'error' => $result['error'] ?? '未解析出到期日期',
+                'registrar' => $result['registrar'] ?? null,
+                'nameservers' => $result['nameservers'] ?? null,
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'expiration_date' => $result['expiration_date'],
+            'registrar' => $result['registrar'] ?? null,
+            'nameservers' => $result['nameservers'] ?? null,
+        ];
+    }
+
+    /**
+     * 传统 socket whois（43 端口）
+     *
+     * @return array{ok:bool, expiration_date?:string, registrar?:string|null, nameservers?:array<int, string>, error?:string}
+     */
+    protected function socketWhois(string $domain): array
     {
         $server = static::whoisServer($domain);
 
@@ -56,6 +109,92 @@ class DomainMonitor
             'registrar' => $registrar,
             'nameservers' => $nameservers,
         ];
+    }
+
+    /**
+     * RDAP 回退（M30）：HTTP 443 查询，rdap.org 302 引导至注册局 RDAP 端点
+     *
+     * @return array{expiration_date?:string, registrar?:string, nameservers?:array<int, string>}|null
+     */
+    public function rdap(string $domain): ?array
+    {
+        try {
+            $response = Http::timeout(15)->connectTimeout(8)->get('https://rdap.org/domain/'.rawurlencode(strtolower($domain)));
+
+            if ($response->failed()) {
+                return null;
+            }
+
+            $json = $response->json();
+            if (! is_array($json)) {
+                return null;
+            }
+
+            $result = [];
+
+            // events[].eventAction=expiration → eventDate（ISO8601 取日期部分）
+            foreach ((array) ($json['events'] ?? []) as $event) {
+                if ((string) ($event['eventAction'] ?? '') === 'expiration') {
+                    $date = Typed::stringOrNull($event['eventDate'] ?? null);
+                    if ($date !== null && preg_match('/(\d{4}-\d{2}-\d{2})/', $date, $m) > 0) {
+                        $result['expiration_date'] = $m[1];
+                    }
+
+                    break;
+                }
+            }
+
+            // entities[] roles 含 registrar → vcard fn / publicIds / handle
+            foreach ((array) ($json['entities'] ?? []) as $entity) {
+                if (in_array('registrar', (array) ($entity['roles'] ?? []), true)) {
+                    $registrar = static::vcardName($entity['vcard'] ?? null)
+                        ?? (is_array($entity['publicIds'] ?? null) && isset($entity['publicIds'][0]['identifier'])
+                            ? (string) $entity['publicIds'][0]['identifier']
+                            : null)
+                        ?? (isset($entity['handle']) ? (string) $entity['handle'] : null);
+
+                    if ($registrar !== null && $registrar !== '') {
+                        $result['registrar'] = mb_substr($registrar, 0, 128);
+                    }
+
+                    break;
+                }
+            }
+
+            // nameservers[].ldhName
+            $ns = [];
+            foreach ((array) ($json['nameservers'] ?? []) as $nameserver) {
+                $ldh = strtolower((string) ($nameserver['ldhName'] ?? ''));
+                if ($ldh !== '') {
+                    $ns[] = rtrim($ldh, '.');
+                }
+            }
+            if ($ns !== []) {
+                $result['nameservers'] = array_values(array_unique($ns));
+            }
+
+            return ($result === []) ? null : $result;
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * RDAP vcard 数组取 FN（显示名）
+     */
+    protected static function vcardName(mixed $vcard): ?string
+    {
+        if (! is_array($vcard) || ! is_array($vcard[1] ?? null)) {
+            return null;
+        }
+
+        foreach ($vcard[1] as $entry) {
+            if (is_array($entry) && ($entry[0] ?? null) === 'fn' && isset($entry[3])) {
+                return trim((string) $entry[3]);
+            }
+        }
+
+        return null;
     }
 
     /**

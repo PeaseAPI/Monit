@@ -20,6 +20,7 @@ class GeoIpTest extends TestCase
 
         $this->assertNull($result['country_code']);
         $this->assertNull($result['continent_code']);
+        $this->assertNull($result['region_name']);
         $this->assertNull($result['city_name']);
     }
 

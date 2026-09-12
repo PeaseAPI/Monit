@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SeoKeyword;
+use App\Models\SeoKeywordRank;
 use App\Models\Website;
 use App\Services\PlanLimitService;
 use App\Services\Seo\RankTracker;
@@ -28,6 +29,14 @@ class SeoKeywordController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        // M30：当前页关键词的最近排名快照（行内展开历史趋势，「监控中」不再无处可看）
+        $recentRanks = SeoKeywordRank::whereIn('seo_keyword_id', $keywords->getCollection()->pluck('seo_keyword_id'))
+            ->orderByDesc('checked_at')
+            ->limit(count($keywords) * 10 + 10)
+            ->get()
+            ->groupBy('seo_keyword_id')
+            ->map(fn ($group) => $group->take(10));
+
         $all = SeoKeyword::where('user_id', $this->user()->user_id)->whereNotNull('last_position')->get();
 
         $summary = [
@@ -43,6 +52,7 @@ class SeoKeywordController extends Controller
             'summary' => $summary,
             'websites' => Website::where('user_id', $this->user()->user_id)->orderBy('host')->get(['website_id', 'host']),
             'autoEnabled' => RankTracker::configured(),
+            'recentRanks' => $recentRanks,
         ]);
     }
 

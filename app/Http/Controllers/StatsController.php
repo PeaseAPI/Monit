@@ -468,7 +468,8 @@ class StatsController extends Controller
         return view('stats.top_cities', [
             'website' => $website,
             'range' => $range,
-            'topCities' => $stats->breakdown('city_name', 50),
+            // M30：省·市组合（如「广东省 · 广州」）；历史数据无省份时自动退化为纯城市
+            'topCities' => $stats->cityRegionBreakdown(50),
         ]);
     }
 

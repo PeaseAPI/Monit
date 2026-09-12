@@ -118,6 +118,25 @@
         </dl>
     </div>
 
+    {{-- SEO 关键词排名监控（M30：回答「监控中之后去哪里看监控内容」） --}}
+    @php($monitorWebsite = $domain->website)
+    <div class="mb-6 rounded-2xl border border-zinc-200 bg-white p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="text-lg font-semibold text-zinc-800">{{ __('msg.domain_seo_title') }}</h2>
+                <p class="mt-1 text-sm text-zinc-500">{{ __('msg.domain_seo_desc') }}</p>
+            </div>
+            @if($monitorWebsite !== null && (int) $monitorWebsite->user_id === (int) auth()->user()->user_id)
+                <a href="{{ route('seo.keywords', ['website' => $monitorWebsite->website_id]) }}"
+                   class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
+                    {{ __('msg.domain_seo_view') }}
+                </a>
+            @else
+                <span class="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-500">{{ __('msg.domain_seo_no_website') }}</span>
+            @endif
+        </div>
+    </div>
+
     {{-- Actions --}}
     <div class="flex gap-3">
         <form method="POST" action="{{ route('domains.update') }}">

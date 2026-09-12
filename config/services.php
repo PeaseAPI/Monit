@@ -324,6 +324,21 @@ return [
 
     /*
     |----------------------------------------------------------------------
+    | 热图服务端截图（M30：Tablet/Mobile 标准视口底图）
+    |----------------------------------------------------------------------
+    | chrome-headless-shell 二进制路径（chrome for testing 精简版，仅 headless 截图）：
+    |   国内镜像下载（版本号可换最新稳定版）：
+    |   https://registry.npmmirror.com/-/binary/chrome-for-testing/<ver>/linux64/chrome-headless-shell-linux64.zip
+    | 解压后指到 chrome-headless-shell 可执行文件；未配置时热图三端截图功能
+    | 自动停用（详情页回退 rrweb 访客快照底图）。
+    */
+    'heatmap' => [
+        'chrome_bin' => env('HEATMAP_CHROME_BIN', '/opt/chrome-headless/chrome-headless-shell'),
+        'timeout' => env('HEATMAP_CHROME_TIMEOUT', 90),
+    ],
+
+    /*
+    |----------------------------------------------------------------------
     | 平台出站 Webhook（WebhookService）
     |----------------------------------------------------------------------
     | SSRF 防御：默认拒绝环回/私网/链路本地（含云元数据）目标，
