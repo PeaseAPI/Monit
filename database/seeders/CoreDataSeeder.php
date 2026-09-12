@@ -70,8 +70,8 @@ class CoreDataSeeder extends Seeder
             'site_url' => config('app.url'),
             'main.default_language' => 'zh_CN',
             'main.default_timezone' => 'Asia/Shanghai',
-            // M22：原版 Cron 任务开关（规格书 §13.1）
-            'email_notices_is_enabled' => true,
+            // M22：原版 Cron 任务开关（规格书 §13.1）——后台「分析设置」组保存 analytics. 前缀
+            'analytics.email_notices_is_enabled' => true,
             'users.auto_delete_inactive_users' => 0,      // 0 = 关闭；>0 = 不活跃天数
             'users.user_deletion_reminder' => 7,          // 删除前提前提醒天数
             'users.auto_delete_unconfirmed_users' => 0,   // 0 = 关闭；>0 = 未确认用户保留天数

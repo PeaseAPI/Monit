@@ -89,7 +89,7 @@ class Settings
     }
 
     /**
-     * 读取设置（点分路径）：settings_get('main.title', 'Monit')
+     * 读取设置（点分路径）：settings_get('main.site_title', 'Monit')
      */
     public static function get(string $key, mixed $default = null): mixed
     {

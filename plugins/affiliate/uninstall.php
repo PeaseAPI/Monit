@@ -8,4 +8,3 @@
  * affiliate.is_enabled / commission_percentage 为零消费死键）。
  * 插件自身数据（plugins 表行）由插件管理器卸载流程清理。
  */
-

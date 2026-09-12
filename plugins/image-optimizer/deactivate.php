@@ -7,4 +7,3 @@
  * （激活态由 plugins.is_active 表达）；原停用写入的
  * image_optimizer.is_enabled 为零消费死键，不再维护。
  */
-

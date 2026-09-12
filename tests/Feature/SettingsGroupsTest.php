@@ -207,16 +207,16 @@ class SettingsGroupsTest extends TestCase
     {
         $admin = $this->makeUser(['email' => 'admin@taskc.dev', 'type' => 1]);
 
-        Settings::set('main.title', '缓存测试站点');
+        Settings::set('main.site_title', '缓存测试站点');
         // set 后需一次读取触发 Cache::remember 重建，此后条目存在
-        $this->assertSame('缓存测试站点', Settings::get('main.title'));
+        $this->assertSame('缓存测试站点', Settings::get('main.site_title'));
         $this->assertTrue(Cache::has('monit.settings'));
 
         $this->actingAs($admin)->post('/admin/settings/clear-cache')
             ->assertRedirect();
 
         $this->assertFalse(Cache::has('monit.settings'));
-        $this->assertSame('缓存测试站点', Settings::get('main.title'));
+        $this->assertSame('缓存测试站点', Settings::get('main.site_title'));
     }
 
     public function test_non_admin_cannot_clear_cache(): void

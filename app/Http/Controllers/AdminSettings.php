@@ -807,7 +807,8 @@ class AdminSettings extends Controller
                 'affiliate_withdrawal_notes' => 'nullable|string|max:2048',
             ],
             'offload' => [
-                'offload_is_enabled' => 'boolean',
+                // offload_is_enabled 已移除：零运行时消费的死开关（启用判据 = offload_storage_driver 配置），
+                // 迁移 2026_09_12_000003 清理残键
                 'offload_storage_driver' => 'nullable|string|in:s3,minio,custom,aliyun_oss,tencent_cos,local',
                 'offload_s3_key' => 'nullable|string|max:256',
                 'offload_s3_secret' => 'nullable|string|max:256',

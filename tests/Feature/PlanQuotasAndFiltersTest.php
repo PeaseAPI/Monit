@@ -518,7 +518,7 @@ class PlanQuotasAndFiltersTest extends TestCase
             'current_month_sessions_replays' => 100,
         ]);
 
-        DB::table('settings')->updateOrInsert(['key' => 'email_notices_is_enabled'], ['value' => true]);
+        DB::table('settings')->updateOrInsert(['key' => 'analytics.email_notices_is_enabled'], ['value' => true]);
 
         Mail::fake();
 
@@ -548,7 +548,7 @@ class PlanQuotasAndFiltersTest extends TestCase
             'current_month_sessions_replays' => 42,
         ]);
 
-        DB::table('settings')->updateOrInsert(['key' => 'email_notices_is_enabled'], ['value' => true]);
+        DB::table('settings')->updateOrInsert(['key' => 'analytics.email_notices_is_enabled'], ['value' => true]);
 
         Mail::fake();
 

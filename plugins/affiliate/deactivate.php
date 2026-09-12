@@ -8,4 +8,3 @@
  * 不再隐式改写设置（原写入的 affiliate.is_enabled 为零消费死键）。
  * 停用插件即关闭全部插件端点（路由激活态由 plugins.is_active 表达）。
  */
-

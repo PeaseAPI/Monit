@@ -66,7 +66,7 @@ class AdminInvoice extends Controller
         $taxId = Settings::get('business.tax_id');
 
         return [
-            'name' => Settings::get('business.brand_name') ?? Settings::get('main.title', 'Monit'),
+            'name' => Settings::get('business.brand_name') ?? Settings::get('main.site_title', 'Monit'),
             'legalName' => Settings::get('business.name'),
             'email' => Settings::get('business.email') ?? Settings::get('main.contact_email', config('mail.from.address')),
             'phone' => Settings::get('business.phone'),

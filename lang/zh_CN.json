@@ -2348,7 +2348,6 @@
     "settings.main.t_fefb77": "站点描述",
     "settings.maps.baidu_key_placeholder": "AK（浏览器端密钥）",
     "settings.offload.driver_switch_hint": "切换存储驱动将影响新文件保存位置，已有文件不会自动迁移。",
-    "settings.offload.enable_offload": "启用 Offload",
     "settings.offload.t_0a47a7": "启用 Offload",
     "settings.offload.t_163063": "自定义 S3 兼容",
     "settings.offload.t_78f88d": "CDN 前缀 URL",

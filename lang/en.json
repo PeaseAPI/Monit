@@ -2348,7 +2348,6 @@
     "settings.main.t_fefb77": "站点描述",
     "settings.maps.baidu_key_placeholder": "AK (Browser Key)",
     "settings.offload.driver_switch_hint": "Changing the storage driver will affect where new files are saved. Existing files are not migrated automatically.",
-    "settings.offload.enable_offload": "Enable Offload",
     "settings.offload.t_0a47a7": "启用 Offload",
     "settings.offload.t_163063": "自定义 S3 兼容",
     "settings.offload.t_78f88d": "CDN 前缀 URL",

@@ -1,7 +1,5 @@
 <?php
 
-use App\Support\PluginManager;
-
 /**
  * Affiliate 启动入口：注册插件端点。
  *
@@ -11,4 +9,3 @@ use App\Support\PluginManager;
  * 表写入开关（原 affiliate.is_enabled / commission_percentage
  * 为零消费死键，且每次请求触发一次 DB 写 + 缓存失效）。
  */
-

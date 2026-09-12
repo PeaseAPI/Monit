@@ -3,10 +3,6 @@
     <p class="text-xs text-zinc-400">{{ __('settings.offload.config_source_hint') }}</p>
 
     <div class="space-y-4">
-        <label class="flex items-center gap-2">
-            <input type="checkbox" name="offload_is_enabled" value="1" {{ filter_var($settings['offload.offload_is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-                        {{ __('settings.offload.enable_offload') }}
-        </label>
         <div>
             <label class="form-label">{{ __('settings.offload.t_dc935e') }}</label>
             <select name="offload_storage_driver" id="offload-storage-driver" class="form-select">

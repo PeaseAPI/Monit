@@ -2348,7 +2348,6 @@
     "settings.main.t_fefb77": "站点描述",
     "settings.maps.baidu_key_placeholder": "AK (ключ браўзэра)",
     "settings.offload.driver_switch_hint": "Змена драйвера сховішча ўплывае на размяшчэнне новых файлаў. Існуючыя файлы не пераносяцца аўтаматычна.",
-    "settings.offload.enable_offload": "Уключыць Offload",
     "settings.offload.t_0a47a7": "启用 Offload",
     "settings.offload.t_163063": "自定义 S3 兼容",
     "settings.offload.t_78f88d": "CDN 前缀 URL",

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Mail;
 
 /**
  * 站点配额超限通知 Cron（原版 websites_sessions_events_notice / events_children_notice / sessions_replays_notice 三合一，规格书 §13.1 M22）
- * 依赖 settings：email_notices_is_enabled
+ * 依赖 settings：analytics.email_notices_is_enabled
  * 站点 current_month_* 超过套餐限额且未提醒过 → 邮件 + plan_*_limit_notice=1
  */
 class WebsitesLimitNoticeCommand extends Command
@@ -47,7 +47,7 @@ class WebsitesLimitNoticeCommand extends Command
 
     public function handle(): int
     {
-        $enabled = DB::table('settings')->where('key', 'email_notices_is_enabled')->value('value');
+        $enabled = DB::table('settings')->where('key', 'analytics.email_notices_is_enabled')->value('value');
 
         if (! (bool) $enabled || $enabled === 'false') {
             $this->info('配额通知邮件功能未启用');

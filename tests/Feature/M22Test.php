@@ -214,7 +214,7 @@ class M22Test extends TestCase
     {
         Mail::fake();
 
-        DB::table('settings')->updateOrInsert(['key' => 'email_notices_is_enabled'], ['value' => true]);
+        DB::table('settings')->updateOrInsert(['key' => 'analytics.email_notices_is_enabled'], ['value' => true]);
 
         $this->user->forceFill(['plan_settings' => ['sessions_events_limit' => 5]])->save();
         $this->website->forceFill(['current_month_sessions_events' => 10, 'plan_sessions_events_limit_notice' => false])->save();

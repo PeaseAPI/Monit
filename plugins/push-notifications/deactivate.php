@@ -8,4 +8,3 @@
  * settings 表；原停用写入的 push_notifications.is_enabled
  * 为零消费死键，不再维护。
  */
-
