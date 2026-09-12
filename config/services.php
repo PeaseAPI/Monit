@@ -333,7 +333,7 @@ return [
     | 自动停用（详情页回退 rrweb 访客快照底图）。
     */
     'heatmap' => [
-        'chrome_bin' => env('HEATMAP_CHROME_BIN', '/opt/chrome-headless/chrome-headless-shell'),
+        'chrome_bin' => env('HEATMAP_CHROME_BIN', '/opt/chrome-headless/chrome-headless-shell-linux64/chrome-headless-shell'),
         'timeout' => env('HEATMAP_CHROME_TIMEOUT', 90),
     ],
 
