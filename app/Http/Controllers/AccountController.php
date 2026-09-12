@@ -247,7 +247,7 @@ class AccountController extends Controller
 
         $validated = Typed::arr($request->validate([
             // M30：换绑时忽略当前用户自身占用（重复提交同号不再误报「已被使用」）
-            'phone' => ['required', 'string', 'regex:/^1[3-9]\d{9}$/', 'unique:users,phone,'.$request->user()->user_id.',user_id'],
+            'phone' => ['required', 'string', 'regex:/^1[3-9]\d{9}$/', 'unique:users,phone,'.($request->user()?->user_id ?? 0).',user_id'],
             'sms_code' => ['required', 'digits:6'],
         ], [
             'phone.required' => __('validation.phone_required'),

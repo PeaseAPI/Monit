@@ -83,7 +83,7 @@ function tickPhoneCountdown() {
     const btn = document.getElementById('phone-send-code-btn');
     if (phoneCodeCountdown <= 0) {
         btn.disabled = false;
-        btn.textContent = {{ js(__('auth.get_sms_code')) }};
+        btn.textContent = @json(__('auth.get_sms_code'));
         return;
     }
     btn.disabled = true;
@@ -93,11 +93,11 @@ function tickPhoneCountdown() {
 }
 async function sendPhoneBindCode() {
     const phone = document.getElementById('phone-modal-number').value.trim();
-    if (!phone) { phoneModalError({{ js(__('validation.phone_required')) }}); return; }
+    if (!phone) { phoneModalError(@json(__('validation.phone_required'))); return; }
     const btn = document.getElementById('phone-send-code-btn');
     btn.disabled = true;
     try {
-        const response = await fetch({{ js(route('sms.send')) }}, {
+        const response = await fetch(@json(route('sms.send')), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({ phone: phone, purpose: 'phone_bind' }),
@@ -105,26 +105,26 @@ async function sendPhoneBindCode() {
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
             btn.disabled = false;
-            phoneModalError(extractErrorMessage(data, {{ js(__('auth.sms_send_failed')) }}));
+            phoneModalError(extractErrorMessage(data, @json(__('auth.sms_send_failed'))));
             return;
         }
-        phoneModalInfo(data.message || {{ js(__('auth.sms_code_sent')) }});
+        phoneModalInfo(data.message || @json(__('auth.sms_code_sent')));
         phoneCodeCountdown = 60;
         tickPhoneCountdown();
     } catch (e) {
         btn.disabled = false;
-        phoneModalError({{ js(__('auth.sms_send_failed')) }});
+        phoneModalError(@json(__('auth.sms_send_failed')));
     }
 }
 async function submitPhoneBind() {
     const phone = document.getElementById('phone-modal-number').value.trim();
     const code = document.getElementById('phone-modal-code').value.trim();
-    if (!phone) { phoneModalError({{ js(__('validation.phone_required')) }}); return; }
-    if (!code) { phoneModalError({{ js(__('validation.sms_code_required')) }}); return; }
+    if (!phone) { phoneModalError(@json(__('validation.phone_required'))); return; }
+    if (!code) { phoneModalError(@json(__('validation.sms_code_required'))); return; }
     const btn = document.getElementById('phone-bind-submit-btn');
     btn.disabled = true;
     try {
-        const response = await fetch({{ js(route('account.phone.bind')) }}, {
+        const response = await fetch(@json(route('account.phone.bind')), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({ phone: phone, sms_code: code }),
@@ -132,14 +132,14 @@ async function submitPhoneBind() {
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
             btn.disabled = false;
-            phoneModalError(extractErrorMessage(data, {{ js(__('auth.sms_code_invalid')) }}));
+            phoneModalError(extractErrorMessage(data, @json(__('auth.sms_code_invalid'))));
             return;
         }
-        phoneModalInfo(data.message || {{ js(__('account.phone_bound')) }});
+        phoneModalInfo(data.message || @json(__('account.phone_bound')));
         setTimeout(() => { window.location.reload(); }, 800);
     } catch (e) {
         btn.disabled = false;
-        phoneModalError({{ js(__('auth.sms_code_invalid')) }});
+        phoneModalError(@json(__('auth.sms_code_invalid')));
     }
 }
 document.getElementById('phone-bind-modal').addEventListener('click', (event) => {

@@ -34,9 +34,9 @@ class DomainMonitorRdapTest extends TestCase
         $result = (new DomainMonitor)->rdap('example.com');
 
         $this->assertNotNull($result);
-        $this->assertSame('2027-08-31', $result['expiration_date']);
-        $this->assertSame('Aliyun (Hangzhou) Co., Ltd.', $result['registrar']);
-        $this->assertSame(['ns1.aliyun.com', 'ns2.aliyun.com'], $result['nameservers']);
+        $this->assertSame('2027-08-31', $result['expiration_date'] ?? null);
+        $this->assertSame('Aliyun (Hangzhou) Co., Ltd.', $result['registrar'] ?? null);
+        $this->assertSame(['ns1.aliyun.com', 'ns2.aliyun.com'], $result['nameservers'] ?? null);
     }
 
     public function test_whois_falls_back_to_rdap_when_socket_channel_fails(): void
@@ -60,8 +60,8 @@ class DomainMonitorRdapTest extends TestCase
         $result = $monitor->whois('example.com');
 
         $this->assertTrue($result['ok']);
-        $this->assertSame('2027-01-15', $result['expiration_date']);
-        $this->assertSame('9999-XYZ', $result['registrar']);
+        $this->assertSame('2027-01-15', $result['expiration_date'] ?? null);
+        $this->assertSame('9999-XYZ', $result['registrar'] ?? null);
     }
 
     public function test_whois_prefers_socket_result_and_merges_missing_fields_from_rdap(): void
@@ -84,8 +84,8 @@ class DomainMonitorRdapTest extends TestCase
         $result = $monitor->whois('example.com');
 
         $this->assertTrue($result['ok']);
-        $this->assertSame('2028-12-31', $result['expiration_date']); // socket 值优先
-        $this->assertSame(['ns1.example.com'], $result['nameservers']);
+        $this->assertSame('2028-12-31', $result['expiration_date'] ?? null); // socket 值优先
+        $this->assertSame(['ns1.example.com'], $result['nameservers'] ?? null);
     }
 
     public function test_rdap_returns_null_on_http_error(): void

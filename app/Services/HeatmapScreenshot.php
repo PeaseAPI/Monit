@@ -71,7 +71,11 @@ class HeatmapScreenshot
      */
     public function capture(Heatmap $heatmap, string $device): ?string
     {
-        if (! isset(static::VIEWPORTS[$device])) {
+        $viewport = self::VIEWPORTS[$device] ?? null;
+        $captureHeight = self::CAPTURE_HEIGHTS[$device] ?? null;
+        $userAgent = self::USER_AGENTS[$device] ?? null;
+
+        if (! is_array($viewport) || $captureHeight === null || $userAgent === null) {
             return null;
         }
 
@@ -80,8 +84,13 @@ class HeatmapScreenshot
             return null;
         }
 
-        [$width] = static::VIEWPORTS[$device];
-        $height = static::CAPTURE_HEIGHTS[$device];
+        $website = $heatmap->website;
+        if ($website === null) {
+            return null;
+        }
+
+        $width = $viewport[0];
+        $height = $captureHeight;
 
         $dir = dirname($this->absolutePath($heatmap, $device));
         if (! is_dir($dir) && ! @mkdir($dir, 0755, true) && ! is_dir($dir)) {
@@ -89,7 +98,7 @@ class HeatmapScreenshot
         }
 
         $tmpPng = tempnam(sys_get_temp_dir(), 'hmshot').'.png';
-        $url = $heatmap->website->scheme.'://'.$heatmap->website->host.$heatmap->path;
+        $url = $website->scheme.'://'.$website->host.$heatmap->path;
         $timeout = Typed::int(config('services.heatmap.timeout') ?? 90);
 
         $command = sprintf(
@@ -98,7 +107,7 @@ class HeatmapScreenshot
             ' --virtual-time-budget=12000 --screenshot=%s %s 2>&1',
             $timeout,
             escapeshellarg($bin),
-            escapeshellarg(static::USER_AGENTS[$device]),
+            escapeshellarg($userAgent),
             $width,
             $height,
             escapeshellarg($tmpPng),
@@ -108,7 +117,9 @@ class HeatmapScreenshot
         $output = @shell_exec($command);
 
         if (! is_file($tmpPng) || filesize($tmpPng) === 0) {
-            is_string($output) && report(new \RuntimeException('heatmap screenshot failed: '.mb_substr($output, 0, 300)));
+            if (is_string($output)) {
+                report(new \RuntimeException('heatmap screenshot failed: '.mb_substr($output, 0, 300)));
+            }
 
             return null;
         }
@@ -133,7 +144,7 @@ class HeatmapScreenshot
     {
         $result = [];
 
-        foreach (array_keys(static::VIEWPORTS) as $device) {
+        foreach (['desktop', 'tablet', 'mobile'] as $device) {
             $result[$device] = $this->capture($heatmap, $device);
         }
 
@@ -168,7 +179,13 @@ class HeatmapScreenshot
         }
 
         $canvas = imagecreatetruecolor($width, $cropHeight);
-        $white = imagecolorallocate($canvas, 255, 255, 255);
+        $white = $canvas === false ? false : imagecolorallocate($canvas, 255, 255, 255);
+        if ($canvas === false || $white === false) {
+            imagedestroy($image);
+
+            return false;
+        }
+
         imagefill($canvas, 0, 0, $white);
         imagecopy($canvas, $image, 0, 0, 0, 0, $width, $cropHeight);
 
@@ -176,7 +193,7 @@ class HeatmapScreenshot
         imagedestroy($canvas);
         imagedestroy($image);
 
-        return (bool) $ok;
+        return $ok;
     }
 
     /**

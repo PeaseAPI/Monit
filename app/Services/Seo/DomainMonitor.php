@@ -17,7 +17,7 @@ use Throwable;
 class DomainMonitor
 {
     /**
-     * @return array{ok:bool, expiration_date?:string, registrar?:string|null, nameservers?:array<int, string>, error?:string}
+     * @return array{ok:bool, expiration_date?:string, registrar?:string|null, nameservers?:array<int, string>|null, error?:string}
      */
     public function whois(string $domain): array
     {
@@ -29,7 +29,6 @@ class DomainMonitor
         if ($rdap !== null) {
             if (($result['expiration_date'] ?? null) === null && isset($rdap['expiration_date'])) {
                 $result['expiration_date'] = $rdap['expiration_date'];
-                unset($result['error']);
             }
             if (($result['registrar'] ?? null) === null && isset($rdap['registrar'])) {
                 $result['registrar'] = $rdap['registrar'];
@@ -38,9 +37,8 @@ class DomainMonitor
                 $result['nameservers'] = $rdap['nameservers'];
             }
 
-            if (($result['ok'] ?? false) === false && isset($result['expiration_date'])) {
+            if ($result['ok'] === false && isset($result['expiration_date'])) {
                 $result['ok'] = true;
-                unset($result['error']);
             }
         }
 
@@ -64,7 +62,7 @@ class DomainMonitor
     /**
      * 传统 socket whois（43 端口）
      *
-     * @return array{ok:bool, expiration_date?:string, registrar?:string|null, nameservers?:array<int, string>, error?:string}
+     * @return array{ok:bool, expiration_date?:string, registrar?:string|null, nameservers?:array<int, string>|null, error?:string}
      */
     protected function socketWhois(string $domain): array
     {
@@ -133,25 +131,44 @@ class DomainMonitor
             $result = [];
 
             // events[].eventAction=expiration → eventDate（ISO8601 取日期部分）
-            foreach ((array) ($json['events'] ?? []) as $event) {
-                if ((string) ($event['eventAction'] ?? '') === 'expiration') {
-                    $date = Typed::stringOrNull($event['eventDate'] ?? null);
-                    if ($date !== null && preg_match('/(\d{4}-\d{2}-\d{2})/', $date, $m) > 0) {
-                        $result['expiration_date'] = $m[1];
+            $events = $json['events'] ?? null;
+            if (is_array($events)) {
+                foreach ($events as $event) {
+                    if (! is_array($event)) {
+                        continue;
                     }
 
-                    break;
+                    if (($event['eventAction'] ?? null) === 'expiration') {
+                        $date = Typed::stringOrNull($event['eventDate'] ?? null);
+                        if ($date !== null && preg_match('/(\d{4}-\d{2}-\d{2})/', $date, $m) > 0) {
+                            $result['expiration_date'] = $m[1];
+                        }
+
+                        break;
+                    }
                 }
             }
 
             // entities[] roles 含 registrar → vcard fn / publicIds / handle
-            foreach ((array) ($json['entities'] ?? []) as $entity) {
-                if (in_array('registrar', (array) ($entity['roles'] ?? []), true)) {
+            $entities = $json['entities'] ?? null;
+            if (is_array($entities)) {
+                foreach ($entities as $entity) {
+                    if (! is_array($entity)) {
+                        continue;
+                    }
+
+                    $roles = $entity['roles'] ?? null;
+                    if (! is_array($roles) || ! in_array('registrar', $roles, true)) {
+                        continue;
+                    }
+
+                    $publicIds = $entity['publicIds'] ?? null;
+                    $firstPublicId = is_array($publicIds) ? ($publicIds[0] ?? null) : null;
                     $registrar = static::vcardName($entity['vcard'] ?? null)
-                        ?? (is_array($entity['publicIds'] ?? null) && isset($entity['publicIds'][0]['identifier'])
-                            ? (string) $entity['publicIds'][0]['identifier']
+                        ?? (is_array($firstPublicId) && isset($firstPublicId['identifier'])
+                            ? Typed::stringOrNull($firstPublicId['identifier'])
                             : null)
-                        ?? (isset($entity['handle']) ? (string) $entity['handle'] : null);
+                        ?? Typed::stringOrNull($entity['handle'] ?? null);
 
                     if ($registrar !== null && $registrar !== '') {
                         $result['registrar'] = mb_substr($registrar, 0, 128);
@@ -162,15 +179,23 @@ class DomainMonitor
             }
 
             // nameservers[].ldhName
-            $ns = [];
-            foreach ((array) ($json['nameservers'] ?? []) as $nameserver) {
-                $ldh = strtolower((string) ($nameserver['ldhName'] ?? ''));
-                if ($ldh !== '') {
-                    $ns[] = rtrim($ldh, '.');
+            $rdapNameservers = $json['nameservers'] ?? null;
+            if (is_array($rdapNameservers)) {
+                $ns = [];
+                foreach ($rdapNameservers as $nameserver) {
+                    if (! is_array($nameserver)) {
+                        continue;
+                    }
+
+                    $ldh = strtolower(Typed::string($nameserver['ldhName'] ?? ''));
+                    if ($ldh !== '') {
+                        $ns[] = rtrim($ldh, '.');
+                    }
                 }
-            }
-            if ($ns !== []) {
-                $result['nameservers'] = array_values(array_unique($ns));
+
+                if ($ns !== []) {
+                    $result['nameservers'] = array_values(array_unique($ns));
+                }
             }
 
             return ($result === []) ? null : $result;
@@ -189,8 +214,13 @@ class DomainMonitor
         }
 
         foreach ($vcard[1] as $entry) {
-            if (is_array($entry) && ($entry[0] ?? null) === 'fn' && isset($entry[3])) {
-                return trim((string) $entry[3]);
+            if (! is_array($entry) || ($entry[0] ?? null) !== 'fn') {
+                continue;
+            }
+
+            $name = Typed::stringOrNull($entry[3] ?? null);
+            if ($name !== null) {
+                return trim($name);
             }
         }
 

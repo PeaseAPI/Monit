@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Heatmap;
 use App\Services\HeatmapScreenshot;
+use App\Support\Typed;
 use Illuminate\Console\Command;
 
 /**
@@ -21,8 +22,9 @@ class HeatmapShotsRefresh extends Command
 
     public function handle(HeatmapScreenshot $screenshots): int
     {
-        if (config('services.heatmap.chrome_bin') === null
-            || ! is_file((string) config('services.heatmap.chrome_bin'))) {
+        $bin = Typed::string(config('services.heatmap.chrome_bin') ?? '');
+
+        if ($bin === '' || ! is_file($bin)) {
             $this->warn('未配置 chrome-headless-shell（HEATMAP_CHROME_BIN），跳过截图刷新。');
 
             return self::SUCCESS;
@@ -45,7 +47,7 @@ class HeatmapShotsRefresh extends Command
         $query->orderBy('heatmap_id')->chunkById(20, function ($heatmaps) use (&$ok, $screenshots): void {
             foreach ($heatmaps as $heatmap) {
                 $result = $screenshots->captureAll($heatmap);
-                $generated = count(array_filter($result));
+                $generated = count(array_filter($result, fn ($url): bool => $url !== null));
                 $ok += ($generated > 0 ? 1 : 0);
                 $this->line("[{$heatmap->heatmap_id}] {$heatmap->path} => {$generated}/3 端截图成功");
             }
