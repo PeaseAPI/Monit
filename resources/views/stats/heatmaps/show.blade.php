@@ -73,7 +73,7 @@
         </div>
     </div>
 </div>
-<link rel="stylesheet" href="{{ asset('assets/pixel/rrweb-player.min.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/pixel/rrweb-player.min.css') }}?v=20260912">
 <script src="{{ asset('assets/pixel/rrweb-player.min.js') }}"></script>
 <script id="json-clicks" type="application/json">@json($clicks)</script>
 <script id="json-scrolls" type="application/json">@json($scrolls)</script>
@@ -142,22 +142,82 @@ function initSnapshotReplayer(containerId, onReady) {
 
             const container = document.getElementById(containerId);
             if (!container) { if (onReady) onReady(null); return; }
+            const panel = container.parentElement; // 画布/遮罩以该 relative 容器为定位基准
             const playerRoot = document.createElement('div');
             playerRoot.style.width = '100%';
             container.appendChild(playerRoot);
+
+            // 全页渲染：采集端坐标按整页归一化（pageX/scrollWidth、pageY/scrollHeight），
+            // FullSnapshot 也序列化了折叠线以下的完整 DOM，因此回放页必须：
+            // 1) 以快照 Meta 记录的访客真实视口宽度布局（保证响应式布局与坐标一致）；
+            // 2) 把 iframe 拉伸到重建文档的真实总高（而非固定 600px 只显示首屏）；
+            // 3) 按容器宽度整体等比缩放，使热图点位与页面内容严格对齐。
+            const metaEvent = snapshotData.find(e => e.type === 4) || {};
+            const pageWidth = Math.max(320, (metaEvent.data && metaEvent.data.width) || container.clientWidth || 1024);
+            const initHeight = (metaEvent.data && metaEvent.data.height) || 600;
+            let fullHeight = initHeight;
+            let rendered = false;
+
             try {
                 const replayer = new rrwebPlayer({
                     target: playerRoot,
                     props: {
                         events: snapshotData,
-                        width: container.clientWidth || 1024,
-                        height: 600,
+                        width: pageWidth,
+                        height: initHeight,
                         autoPlay: true,
                         showController: false,
                         UNSAFE_replayCanvas: true,
                     },
                 });
-                setTimeout(() => { try { replayer.pause(); } catch(e) {} if (onReady) onReady(replayer); }, 500);
+
+                const applyScale = () => {
+                    if (!rendered) return;
+                    const scale = container.clientWidth / pageWidth;
+                    const scaled = Math.round(fullHeight * scale);
+                    playerRoot.style.transformOrigin = '0 0';
+                    playerRoot.style.transform = 'scale(' + scale + ')';
+                    container.style.height = scaled + 'px';
+                    container.style.minHeight = scaled + 'px';
+                    if (panel && panel !== document.body) {
+                        panel.style.minHeight = scaled + 'px';
+                    }
+                    if (onReady) onReady(replayer);
+                };
+
+                // 图像异步加载会使文档高度变化 → 多次测量直至稳定，并触发画布重绘
+                const expandToFullPage = () => {
+                    try {
+                        const rp = replayer.getReplayer ? replayer.getReplayer() : replayer;
+                        const iframe = rp && rp.iframe;
+                        const doc = iframe && iframe.contentDocument;
+                        if (!doc || !doc.documentElement) return;
+                        const h = Math.max(
+                            doc.documentElement.scrollHeight || 0,
+                            (doc.body && doc.body.scrollHeight) || 0,
+                            doc.documentElement.offsetHeight || 0
+                        );
+                        if (h < 50) return;
+                        rendered = true;
+                        fullHeight = h;
+                        iframe.style.width = pageWidth + 'px';
+                        iframe.style.height = h + 'px';
+                        let el = iframe.parentElement;
+                        while (el && el !== playerRoot) {
+                            el.style.width = pageWidth + 'px';
+                            el.style.height = h + 'px';
+                            el = el.parentElement;
+                        }
+                        playerRoot.style.width = pageWidth + 'px';
+                        playerRoot.style.height = h + 'px';
+                        applyScale();
+                    } catch (e) { /* ignore */ }
+                };
+
+                setTimeout(() => { try { replayer.pause(); } catch (e) {} expandToFullPage(); }, 500);
+                setTimeout(expandToFullPage, 1500);
+                setTimeout(expandToFullPage, 3000);
+                window.addEventListener('resize', applyScale);
                 return replayer;
             } catch (e) { console.warn('rrwebPlayer init failed:', e); if (onReady) onReady(null); return null; }
         })

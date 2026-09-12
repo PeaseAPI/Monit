@@ -97,7 +97,7 @@
 </div>
 
 {{-- rrweb-player 自托管 + 初始化（国内 CDN 访问不稳定，改用同源静态资源） --}}
-<link rel="stylesheet" href="{{ asset('assets/pixel/rrweb-player.min.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/pixel/rrweb-player.min.css') }}?v=20260912">
 <script src="{{ asset('assets/pixel/rrweb-player.min.js') }}"></script>
 <script>
 (function () {
