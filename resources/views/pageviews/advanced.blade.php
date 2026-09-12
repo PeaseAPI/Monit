@@ -2,7 +2,7 @@
 @section('title', __('stats.pageviews_advanced'))
 @section('content')
 <div class="py-8">
-    @include('components.stats-header', ['website' => $website, 'range' => $range ?? 7])
+    <x-stats-header :website="$website" :title="__('stats.pageviews_advanced')" />
 
     <div class="mt-6 grid gap-4 sm:grid-cols-3">
         @include('components.stat-card', ['label' => __('stats.total_pageviews'), 'value' => $overview['pageviews'] ?? 0, 'change' => $overview['pageviews_change'] ?? null])

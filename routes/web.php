@@ -848,7 +848,7 @@ Route::get('/dynamic-og-images/{type}/{id}', function (string $type, int $id) {
     $imageService = app(DynamicOgImageService::class);
 
     return $imageService->generate($type, $id);
-})->name('dynamic-og-images.generate');
+})->whereNumber('id')->name('dynamic-og-images.generate');
 
 // 404 兜底路由（规格书 §6.1：/not-found；main.not_found_url 配置时跳转外部页面）
 Route::fallback(function () {

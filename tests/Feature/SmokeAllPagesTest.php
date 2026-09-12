@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Plan;
 use App\Models\User;
+use App\Models\Website;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Hash;
@@ -139,6 +140,56 @@ class SmokeAllPagesTest extends TestCase
         }
 
         $this->assertSame([], $failures, "普通用户访问存在异常页面：\n".implode("\n", $failures));
+    }
+
+    /**
+     * 带参数的 stats 子页冒烟（历史教训：SmokeAllPagesTest 只扫无参路由，
+     * /stats/{id}/pageviews-lightweight 因视图漏传 stats-header title 长期 500 无人发现）
+     */
+    public function test_带参数统计页面无服务器错误(): void
+    {
+        $this->actingAs($this->user);
+
+        $website = Website::create([
+            'user_id' => $this->user->user_id, 'pixel_key' => 'px_smoke_all',
+            'name' => 'Smoke All', 'scheme' => 'https', 'host' => 'smoke-all.test',
+            'tracking_type' => 'lightweight', 'is_enabled' => true,
+            'excluded_ips' => '', 'datetime' => now(),
+        ]);
+
+        $id = $website->website_id;
+        $uris = [
+            "/stats/$id",
+            "/stats/$id/pageviews-advanced",
+            "/stats/$id/pageviews-lightweight",
+            "/stats/$id/visitors",
+            "/stats/$id/events",
+            "/stats/$id/goals",
+            "/stats/$id/behavior",
+            "/stats/$id/referrers",
+            "/stats/$id/referral-categories",
+            "/stats/$id/outbound-clicks",
+            "/stats/$id/annotations",
+            "/stats/$id/heatmaps",
+            "/stats/$id/replays",
+        ];
+
+        $failures = [];
+        foreach ($uris as $uri) {
+            $response = $this->get($uri);
+            $status = $response->baseResponse->getStatusCode();
+
+            if ($status >= 500) {
+                $failures[] = "$uri -> $status";
+
+                continue;
+            }
+            if ($status === 200 && ! $this->pageIsHealthy((string) $response->getContent())) {
+                $failures[] = "$uri -> 200 但内容含 PHP 错误痕迹";
+            }
+        }
+
+        $this->assertSame([], $failures, "带参数统计页存在异常：\n".implode("\n", $failures));
     }
 
     public function test_api_v1_get_endpoints_with_bearer_key_have_no_server_errors(): void
