@@ -171,21 +171,23 @@ Route::get('/privacy', [IndexController::class, 'privacy'])->name('privacy');
 Route::get('/docs', function () {
     return view('docs.index');
 })->name('docs.index');
-Route::get('/docs/install.html', function () {
+Route::get('/docs/install', function () {
     return view('docs.install');
 })->name('docs.install');
-Route::get('/docs/usage.html', function () {
+Route::get('/docs/usage', function () {
     return view('docs.usage');
 })->name('docs.usage');
-// M23 静态文档页兜道路由升级（M27）：docs 三页已迁移为 Blade 视图（统一全站头尾布局），
-// public/docs/*.html 已删除，本路由为主服务路径；兼容旧 .html 后缀 URL，未知页 404
-Route::get('/docs/{page}', function (string $page) {
-    $view = 'docs.'.str_replace('.html', '', basename($page));
+// M23 静态文档页兜道路由升级（M27/二十八轮修正）：docs 三页已迁移为 Blade 视图（统一全站
+// 头尾布局），public/docs/*.html 已删除；主服务路径为干净 /docs/{page}，旧 .html 后缀 URL
+// 301 兼容跳转保外链/SEO，未知页 404
+Route::get('/docs/{page}.html', function (string $page) {
+    $known = ['index' => 'docs.index', 'install' => 'docs.install', 'usage' => 'docs.usage'];
+    if (! isset($known[$page])) {
+        abort(404);
+    }
 
-    return in_array($view, ['docs.index', 'docs.install', 'docs.usage'], true) && view()->exists($view)
-        ? view($view)
-        : abort(404);
-})->where('page', '[A-Za-z0-9_-]+\.html')->name('docs.static');
+    return redirect()->to(route($known[$page]), 301);
+})->where('page', '[A-Za-z0-9_-]+')->name('docs.static');
 Route::post('/cookie-consent', [IndexController::class, 'cookieConsent'])->name('cookie.consent');
 Route::get('/unsubscribe', [IndexController::class, 'unsubscribe'])->name('unsubscribe');
 Route::post('/unsubscribe', [IndexController::class, 'unsubscribePost'])->name('unsubscribe.post');
