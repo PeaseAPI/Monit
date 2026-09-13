@@ -139,14 +139,14 @@ function sanitizeRrwebEvents(events) {
         if (!node || typeof node !== 'object') return;
         const tag = String(node.tagName || '').toLowerCase();
         if (node.type === 2 && tag === 'script') {
+            // Safari 对 sandbox（无 allow-scripts）文档中出现的 <script> 元素
+            // 本身就会报 "Blocked script execution"——即使内容与 src 均已清空
+            // （堆栈落在 rrweb-player setupDom 构建文档阶段）。因此不能保留
+            // script 空壳：把节点变形为 <template>（inert：无脚本语义、无布局、
+            // 按 id 保留节点使后续 mutation 引用不失效），重建文档零 script。
+            node.tagName = 'template';
             node.childNodes = [];
             if (node.attrs) {
-                // 必须 delete 移除属性键而非置空字符串：置空会产生 src=""，
-                // rrweb rebuild 时 setAttribute('src','') 被浏览器解析为当前
-                // 文档 URL（about:blank 继承父文档 = 热图页自身），于是把整
-                // 页 HTML 当脚本请求执行 → 被 sandbox（无 allow-scripts）拦
-                // 截报 "Blocked script execution"。delete 后 rrweb 不再设置
-                // 该属性；内联脚本也已清空 childNodes。
                 delete node.attrs.src;
                 delete node.attrs.srcdoc;
             }
