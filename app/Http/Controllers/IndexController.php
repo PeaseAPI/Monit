@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\ContactMessage;
 use App\Models\BlogPost;
+use App\Models\BlogPostCategory;
 use App\Models\HelpArticle;
 use App\Models\HelpCategory;
 use App\Models\LightweightEvent;
@@ -70,6 +71,17 @@ class IndexController extends Controller
         // M23 模板机制：落地页主题由后台 branding.landing_theme 控制，
         // 视图解析 themes/{theme}/index.blade.php，不存在时回退 default 主题。
         // 二开新增主题：只需新建 resources/views/themes/{name}/index.blade.php 并在后台切换。
+        // 首页工具目录区块（对标 chinaz 工具墙）：复用工具中心 catalog（同样应用
+        // 后台停用/requires 过滤），按分类分组；preserveKeys=true 保留 slug 键
+        // （groupBy 重排数字索引会把卡片链接渲染成 /tools/0 导致 404，与 SeoToolController 同坑）。
+        // 可见性门控与顶部导航一致：总开关 + （登录用户 或 访客开放）。
+        $seoToolsVisible = Settings::get('seo.tools_is_enabled', true)
+            && (Auth::check() || in_array(Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true));
+        $seoTools = $seoToolsVisible
+            ? collect(app(\App\Services\Seo\ToolRunner::class)->catalog())
+                ->groupBy(fn (array $meta) => Typed::string($meta['category'] ?? 'dev'), true)
+            : collect();
+
         $theme = Brand::landingTheme();
         $view = "themes.{$theme}.index";
         if (! view()->exists($view)) {
@@ -81,6 +93,8 @@ class IndexController extends Controller
             'currency' => $currency,
             'currencies' => $currencies,
             'stats' => $stats,
+            'seoTools' => $seoTools,
+            'seoToolsVisible' => $seoToolsVisible,
         ]);
     }
 
@@ -93,12 +107,18 @@ class IndexController extends Controller
         abort_unless(self::contentOn('blog_is_enabled'), 404);
 
         $category = $request->query('category');
+        $categories = BlogPostCategory::orderBy('order')->get();
+
         $posts = BlogPost::where('is_published', true)
+            ->with('category')
             ->when($category, fn ($q) => $q->where('category_id', $category))
             ->orderByDesc('datetime')
             ->get();
 
-        return view('blog', compact('posts'));
+        // 最新一篇提为列表顶部特写大卡（分类筛选时保持纯列表，不再特写）
+        $featured = $category ? null : $posts->shift();
+
+        return view('blog', compact('posts', 'categories', 'featured', 'category'));
     }
 
     /**
@@ -108,9 +128,18 @@ class IndexController extends Controller
     {
         abort_unless(self::contentOn('blog_is_enabled'), 404);
 
-        $post = BlogPost::where('is_published', true)->where('url', $url)->firstOrFail();
+        $post = BlogPost::where('is_published', true)->where('url', $url)->with('category')->firstOrFail();
 
-        return view('blog_post', compact('post'));
+        // 相关文章：同分类优先（不含当前篇），无分类或不足时以最新补齐
+        $related = BlogPost::where('is_published', true)
+            ->where('post_id', '!=', $post->post_id)
+            ->when($post->category_id, fn ($q) => $q->where('category_id', $post->category_id))
+            ->orderByDesc('datetime')
+            ->with('category')
+            ->limit(3)
+            ->get();
+
+        return view('blog_post', compact('post', 'related'));
     }
 
     /**

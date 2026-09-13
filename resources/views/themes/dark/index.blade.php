@@ -192,6 +192,58 @@
         </div>
     </section>
 
+    {{-- ===== 免费 SEO 工具目录（与 default 主题同构，深色配色） ===== --}}
+    @if ($seoToolsVisible && $seoTools->isNotEmpty())
+    <section id="seo-tools" class="border-t border-zinc-800 bg-zinc-950 py-20 md:py-24">
+        <div class="mx-auto max-w-7xl px-6">
+            <div class="mx-auto max-w-2xl text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-zinc-50 md:text-4xl">{{ __('landing.nav_seo_tools') }}</h2>
+                <p class="mt-4 text-lg text-zinc-400">{{ __('landing.seo_tools_section_desc') }}</p>
+            </div>
+
+            @php
+                /* 分类图标（与 /tools 页 $catIcons 同源：Heroicons outline） */
+                $seoCatIcons = [
+                    'network'   => '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"/></svg>',
+                    'seo_check' => '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 8.25v6m3-3h-6"/></svg>',
+                    'preview'   => '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
+                    'minify'    => '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/></svg>',
+                    'text'      => '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>',
+                    'dev'       => '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>',
+                ];
+                $seoCatOrder = ['network', 'seo_check', 'preview', 'minify', 'text', 'dev'];
+            @endphp
+
+            <div class="mt-14 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                @foreach ($seoCatOrder as $seoCat)
+                    @php $seoCatTools = $seoTools->get($seoCat) ?? collect(); @endphp
+                    @if ($seoCatTools->isNotEmpty())
+                    <div class="group rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 transition hover:border-brand-500/40 hover:bg-zinc-900">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-950 text-brand-400 ring-1 ring-zinc-800 transition group-hover:bg-brand-600 group-hover:text-white group-hover:ring-brand-600">{!! $seoCatIcons[$seoCat] ?? $seoCatIcons['dev'] !!}</span>
+                            <h3 class="font-semibold text-zinc-100">{{ __("seo.tool_cat_{$seoCat}") }}</h3>
+                            <span class="ml-auto rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs font-medium tabular-nums text-zinc-400">{{ $seoCatTools->count() }}</span>
+                        </div>
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            @foreach ($seoCatTools as $slug => $meta)
+                                <a href="{{ route('seo.tools.show', $slug) }}" class="rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-sm text-zinc-300 transition hover:border-brand-500/50 hover:bg-brand-500/10 hover:text-brand-300">{{ __("seo.tool_name.{$slug}") }}</a>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                @endforeach
+            </div>
+
+            <div class="mt-10 text-center">
+                <a href="{{ route('seo.tools') }}" class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-500">
+                    {{ __('landing.seo_tools_view_all') }}
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                </a>
+            </div>
+        </div>
+    </section>
+    @endif
+
     {{-- ===== 功能矩阵 ===== --}}
     <section id="features" class="border-t border-zinc-800 bg-zinc-900/50 py-24">
         <div class="mx-auto max-w-7xl px-6">

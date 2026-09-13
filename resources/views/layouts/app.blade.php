@@ -89,9 +89,7 @@
                             ['key' => 'payments', 'route' => 'payments.index', 'label' => __('nav.payments'), 'icon' => 'card'],
                             // 推荐返佣：联盟停用时隐藏入口（array_filter 移除 null）
                             $affiliateEnabled ? ['key' => 'referrals', 'route' => 'referrals.index', 'label' => __('nav.referrals'), 'icon' => 'gift'] : null,
-                            // 帮助中心 + 工单入口（二十七轮：提升可发现性）
-                            ['key' => 'help', 'route' => 'help', 'label' => __('nav.help'), 'icon' => 'book'],
-                            ['key' => 'tickets', 'route' => 'tickets.create', 'label' => __('nav.tickets'), 'icon' => 'chat'],
+                            // 帮助/工单已上移至顶栏（通知铃铛左侧），不再占用侧栏位（三十八轮）
                             ['key' => 'notifications', 'route' => 'notifications.index', 'label' => __('nav.notifications'), 'icon' => 'bell', 'badge' => $unreadNotifications],
                             ['key' => 'account', 'route' => 'account.index', 'label' => __('nav.account'), 'icon' => 'user'],
                         ])
@@ -127,10 +125,6 @@
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75h6v6h-6v-6Zm10.5 0h6v6h-6v-6Zm-10.5 10.5h6v6h-6v-6Zm10.5 0h6v6h-6v-6Z"/></svg>
                         @elseif ($item['icon'] === 'play')
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m5.25 5.653 13.5 6.347-13.5 6.347V5.653Z"/></svg>
-                        @elseif ($item['icon'] === 'book')
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
-                        @elseif ($item['icon'] === 'chat')
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
                         @elseif ($item['icon'] === 'users')
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
                         @else
@@ -228,6 +222,15 @@
                 </details>
 
                 <div class="ml-auto flex items-center gap-1.5">
+                    {{-- 帮助中心 + 工单（三十八轮：自侧栏上移至顶栏，通知铃铛左侧） --}}
+                    <a href="{{ route('help') }}" title="{{ __('nav.help') }}"
+                       class="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
+                    </a>
+                    <a href="{{ route('tickets.index') }}" title="{{ __('nav.tickets') }}"
+                       class="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
+                    </a>
                     {{-- 通知铃铛 --}}
                     <a href="{{ route('notifications.index') }}" title="{{ __('nav.notifications') }}"
                        class="relative flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700">
@@ -297,6 +300,8 @@
                     @endif
                     <a href="{{ route('websites.index') }}" class="text-sm text-zinc-600">{{ __('Websites') }}</a>
                     <a href="{{ route('teams.index') }}" class="text-sm text-zinc-600">{{ __('nav.teams') }}</a>
+                    <a href="{{ route('help') }}" class="text-sm text-zinc-600">{{ __('nav.help') }}</a>
+                    <a href="{{ route('tickets.index') }}" class="text-sm text-zinc-600">{{ __('nav.tickets') }}</a>
                     <a href="{{ route('notifications.index') }}" class="relative text-sm text-zinc-600">{{ __('nav.notifications') }}
                         @php $unread = auth()->user()->internalNotifications()->where('is_read', false)->count(); @endphp
                         @if ($unread > 0)<span class="absolute -right-2 -top-1.5 rounded-full bg-rose-500 px-1.5 text-[10px] font-semibold leading-4 text-white">{{ $unread > 99 ? '99+' : $unread }}</span>@endif
