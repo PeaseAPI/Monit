@@ -19,6 +19,35 @@ class DomainMonitor
     /**
      * @return array{ok:bool, expiration_date?:string, registrar?:string|null, nameservers?:array<int, string>|null, error?:string}
      */
+    /**
+     * WHOIS 原始文本（供 WhoisParser 全字段解析；复用 socket whois 的
+     * 服务器选择 + iana 引导一跳逻辑，与 whois()/socketWhois() 互不影响）
+     */
+    public function rawQuery(string $domain): ?string
+    {
+        $server = static::whoisServer($domain);
+
+        if ($server === null) {
+            return null;
+        }
+
+        $raw = $this->query($server, $domain);
+
+        if ($raw === null) {
+            // whois.iana.org 引导跳转（与 socketWhois 同规则：目标须为合法 whois 主机、非自身、仅一跳）
+            $raw = $this->query('whois.iana.org', $domain);
+
+            if ($raw !== null
+                && preg_match('/whois:\s*(\S+)/i', $raw, $m) > 0
+                && strcasecmp($m[1], 'whois.iana.org') !== 0
+                && preg_match('/^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+\.?$/i', rtrim($m[1], '.')) > 0) {
+                $raw = $this->query($m[1], $domain) ?? $raw;
+            }
+        }
+
+        return $raw;
+    }
+
     public function whois(string $domain): array
     {
         $result = $this->socketWhois($domain);

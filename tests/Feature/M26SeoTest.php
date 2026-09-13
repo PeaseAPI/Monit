@@ -65,17 +65,19 @@ class M26SeoTest extends TestCase
         $this->assertGreaterThanOrEqual(49, $registry->all());
     }
 
-    public function test_tools_registry_has_86_entries(): void
+    public function test_tools_registry_has_99_entries(): void
     {
-        // 86 项工具注册（含双名合并项；条件项默认未配置 API key 不入目录）
-        $this->assertSame(86, count(Typed::arr(config('seo.tools'))));
+        // 99 项工具注册（86 基线 + round-38 对标 chinaz 新增 13 项；条件项默认未配置 API key 不入目录）
+        $this->assertSame(99, count(Typed::arr(config('seo.tools'))));
 
         $catalog = app(ToolRunner::class)->catalog();
 
         // 条件项（requires 未配置）被过滤
-        $this->assertLessThanOrEqual(86, count($catalog));
+        $this->assertLessThanOrEqual(99, count($catalog));
         $this->assertArrayNotHasKey('ahrefs_domain_rating', $catalog);
         $this->assertArrayHasKey('md5_generator', $catalog);
+        $this->assertArrayHasKey('dns_propagation', $catalog);
+        $this->assertArrayHasKey('whois_lookup', $catalog);
     }
 
     public function test_disabled_tools_are_hidden_from_catalog(): void

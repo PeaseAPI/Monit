@@ -111,8 +111,15 @@ return [
     'tools' => [
 
         // ---- 网络与域名 ----
-        'dns_lookup' => ['category' => 'network', 'handler' => 'dnsLookup', 'fields' => ['domain' => 'text']],
+        'dns_lookup' => ['category' => 'network', 'handler' => 'dnsLookup', 'fields' => ['domain' => 'text', 'type' => 'select:all,A,AAAA,CNAME,MX,NS,TXT,SOA,PTR,SRV,CAA']],
+        'dns_propagation' => ['category' => 'network', 'handler' => 'dnsPropagation', 'fields' => ['domain' => 'text']],
         'ip_lookup' => ['category' => 'network', 'handler' => 'ipLookup', 'fields' => ['ip' => 'text']],
+        'ip_batch_lookup' => ['category' => 'network', 'handler' => 'ipBatchLookup', 'fields' => ['text' => 'textarea']],
+        'ip_whois' => ['category' => 'network', 'handler' => 'ipWhois', 'fields' => ['ip' => 'text']],
+        'spider_check' => ['category' => 'network', 'handler' => 'spiderCheck', 'fields' => ['ip' => 'text', 'user_agent' => 'text']],
+        'port_scanner' => ['category' => 'network', 'handler' => 'portScanner', 'fields' => ['host' => 'text']],
+        'cdn_checker' => ['category' => 'network', 'handler' => 'cdnChecker', 'fields' => ['host' => 'text']],
+        'subdomain_scanner' => ['category' => 'network', 'handler' => 'subdomainScanner', 'fields' => ['domain' => 'text']],
         'ssl_lookup' => ['category' => 'network', 'handler' => 'sslLookup', 'fields' => ['host' => 'text']],
         'whois_lookup' => ['category' => 'network', 'handler' => 'whoisLookup', 'fields' => ['domain' => 'text']],
         'ping' => ['category' => 'network', 'handler' => 'ping', 'fields' => ['host' => 'text']],
@@ -128,6 +135,8 @@ return [
         'brotli_checker' => ['category' => 'network', 'handler' => 'brotliChecker', 'fields' => ['url' => 'url']],
         'google_cache_checker' => ['category' => 'network', 'handler' => 'googleCacheChecker', 'fields' => ['url' => 'url']],
         'idn_converter' => ['category' => 'network', 'handler' => 'idnConverter', 'fields' => ['domain' => 'text']],
+        'website_server_info' => ['category' => 'network', 'handler' => 'websiteServerInfo', 'fields' => ['url' => 'url']],
+        'source_viewer' => ['category' => 'network', 'handler' => 'sourceViewer', 'fields' => ['url' => 'url']],
         'website_text_extractor' => ['category' => 'network', 'handler' => 'textExtractor', 'fields' => ['url' => 'url']],
         'website_page_size_checker' => ['category' => 'network', 'handler' => 'pageSizeChecker', 'fields' => ['url' => 'url']],
 
@@ -165,6 +174,7 @@ return [
         'seo_score_checker' => ['category' => 'seo_check', 'handler' => 'seoScore', 'fields' => ['url' => 'url']],
         'duplicate_content_checker' => ['category' => 'seo_check', 'handler' => 'duplicateContent', 'fields' => ['url_a' => 'url', 'url_b' => 'url']],
         'email_protector' => ['category' => 'seo_check', 'handler' => 'emailProtector', 'fields' => ['email' => 'text']],
+        'backlink_checker' => ['category' => 'seo_check', 'handler' => 'backlinkChecker', 'fields' => ['url' => 'url', 'reverse' => 'text']],
 
         // ---- 搜索预览 ----
         'google_search_preview' => ['category' => 'preview', 'handler' => 'googlePreview', 'fields' => ['title' => 'text', 'url' => 'text', 'description' => 'text']],
@@ -191,6 +201,7 @@ return [
         'reading_time_calculator' => ['category' => 'text', 'handler' => 'readingTime', 'fields' => ['text' => 'textarea', 'wpm' => 'number']],
         'timestamp_converter' => ['category' => 'text', 'handler' => 'timestampConverter', 'fields' => ['value' => 'text']],
         'keyword_density_counter' => ['category' => 'text', 'handler' => 'keywordDensityText', 'fields' => ['text' => 'textarea', 'keyword' => 'text']],
+        'banned_words_checker' => ['category' => 'text', 'handler' => 'bannedWordsChecker', 'fields' => ['text' => 'textarea', 'custom' => 'textarea']],
 
         // ---- 开发者实用 ----
         'password_generator' => ['category' => 'dev', 'handler' => 'passwordGenerator', 'fields' => ['length' => 'number']],
@@ -206,6 +217,8 @@ return [
         'base64_converter' => ['category' => 'dev', 'handler' => 'base64Converter', 'fields' => ['text' => 'textarea', 'mode' => 'select:encode,decode']],
         'binary_converter' => ['category' => 'dev', 'handler' => 'binaryConverter', 'fields' => ['text' => 'text', 'mode' => 'select:encode,decode']],
         'plaintext_email_checker' => ['category' => 'dev', 'handler' => 'plaintextEmail', 'fields' => ['url' => 'url']],
+        'robots_generator' => ['category' => 'dev', 'handler' => 'robotsGenerator', 'fields' => ['policy' => 'select:allow,block', 'disallow' => 'textarea', 'allow' => 'textarea', 'sitemap' => 'text']],
+        'cipher_converter' => ['category' => 'dev', 'handler' => 'cipherConverter', 'fields' => ['text' => 'textarea', 'secret' => 'text', 'mode' => 'select:encrypt,decrypt']],
 
         // ---- 权重指标（条件工具，配置 API Key 后注册）----
         'ahrefs_domain_rating' => ['category' => 'seo_check', 'handler' => 'ahrefsDomainRating', 'fields' => ['domain' => 'text'], 'requires' => 'seo.ahrefs_api_key'],

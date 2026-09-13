@@ -354,4 +354,111 @@ class DevTools
             '风险' => ($emails !== []) ? '存在被爬虫收割风险' : '安全',
         ], 'text' => ($emails !== []) ? implode("\n", $emails) : null];
     }
+
+    /**
+     * robots.txt 生成器（对标 chinaz robots.txt 生成：选择用户代理与目录规则，
+     * 输出可直接部署到站点根目录的 robots.txt 文本）
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
+    public function robotsGenerator(array $in): array
+    {
+        $disallow = trim(Typed::string($in['disallow'] ?? ''));
+        $allow = trim(Typed::string($in['allow'] ?? ''));
+        $sitemap = trim(Typed::string($in['sitemap'] ?? ''));
+        $policy = Typed::string($in['policy'] ?? 'allow');
+
+        $lines = [];
+
+        if ($policy === 'block') {
+            // 全站禁止：主流搜索引擎分别声明
+            foreach (['*', 'Baiduspider', 'Googlebot', 'bingbot', 'Sogou web spider', '360Spider', 'YisouSpider'] as $agent) {
+                $lines[] = 'User-agent: '.$agent;
+                $lines[] = 'Disallow: /';
+                $lines[] = '';
+            }
+        } else {
+            $lines[] = 'User-agent: *';
+
+            foreach (preg_split('/[\r\n]+/', $disallow) ?: [] as $path) {
+                $path = trim($path);
+
+                if ($path !== '') {
+                    $lines[] = 'Disallow: '.(str_starts_with($path, '/') ? $path : '/'.$path);
+                }
+            }
+
+            foreach (preg_split('/[\r\n]+/', $allow) ?: [] as $path) {
+                $path = trim($path);
+
+                if ($path !== '') {
+                    $lines[] = 'Allow: '.(str_starts_with($path, '/') ? $path : '/'.$path);
+                }
+            }
+
+            if (end($lines) === 'User-agent: *') {
+                $lines[] = 'Disallow:';
+            }
+
+            $lines[] = '';
+        }
+
+        if ($sitemap !== '') {
+            $lines[] = 'Sitemap: '.$sitemap;
+            $lines[] = '';
+        }
+
+        $text = implode("\n", $lines);
+
+        return ['ok' => true, 'data' => [
+            '策略' => $policy === 'block' ? '全站禁止抓取' : '按目录规则',
+            '规则条数' => count(preg_grep('/^(Disallow|Allow):/', explode("\n", $text)) ?: []),
+            '部署位置' => '网站根目录（https://你的域名/robots.txt）',
+        ], 'text' => $text];
+    }
+
+    /**
+     * 对称加密解密（对标 chinaz 对称加密：AES-128-CBC，密钥由口令派生，
+     * 加解密可往返；密文 Base64 展示）
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
+    public function cipherConverter(array $in): array
+    {
+        $mode = Typed::string($in['mode'] ?? 'encrypt');
+        $text = Typed::string($in['text'] ?? '');
+        $secret = Typed::string($in['secret'] ?? '');
+
+        if ($text === '' || $secret === '') {
+            return ['ok' => false, 'error' => '请输入文本与密钥口令', 'data' => []];
+        }
+
+        if ($mode !== 'encrypt' && $mode !== 'decrypt') {
+            return ['ok' => false, 'error' => 'mode 仅支持 encrypt / decrypt', 'data' => []];
+        }
+
+        if (! function_exists('openssl_encrypt')) {
+            return ['ok' => false, 'error' => '环境未启用 OpenSSL 扩展', 'data' => []];
+        }
+
+        // 口令派生固定 key/iv（与常见在线 AES 工具一致，保证解密端可复现）
+        $key = substr(hash('sha256', $secret, true), 0, 16);
+        $iv = substr(hash('md5', 'monit-cipher-'.$secret, true), 0, 16);
+
+        $raw = $mode === 'encrypt'
+            ? openssl_encrypt($text, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv)
+            : openssl_decrypt(base64_decode(str_replace(' ', '+', $text), true) ?: '', 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
+
+        if ($raw === false || $raw === null) {
+            return ['ok' => false, 'error' => $mode === 'decrypt' ? '解密失败（密文或口令不正确）' : '加密失败', 'data' => []];
+        }
+
+        return ['ok' => true, 'data' => [
+            '算法' => 'AES-128-CBC（口令派生密钥）',
+            '操作' => $mode === 'encrypt' ? '加密' : '解密',
+            '结果' => $mode === 'encrypt' ? base64_encode((string) $raw) : $raw,
+        ], 'text' => $mode === 'encrypt' ? base64_encode((string) $raw) : $raw];
+    }
 }

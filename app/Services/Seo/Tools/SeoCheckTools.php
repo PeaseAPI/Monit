@@ -935,4 +935,89 @@ class SeoCheckTools
             'Domain Rating' => Typed::string($response->json('domain_rating') ?? '-'),
         ]];
     }
+
+    /**
+     * 友链检测（对标 chinaz 友链查询：抓首页出站链接，输出锚文本/URL/nofollow，
+     * 可选回链校验——对方是否也链回了你的站点）
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
+    public function backlinkChecker(array $in): array
+    {
+        $url = Typed::string($in['url'] ?? '');
+        $reverseDomain = strtolower(Typed::string($in['reverse'] ?? ''));
+        $reverseDomain = rtrim(preg_replace('#^https?://#', '', trim($reverseDomain)) ?? '', '/');
+
+        $page = $this->fetchPage(['url' => $url]);
+
+        if ($page['ok'] === false || $page['dom'] === null) {
+            return ['ok' => false, 'error' => $page['error'] ?? '页面抓取失败', 'data' => []];
+        }
+
+        $host = strtolower(parse_url(AuditEngine::normalizeUrl($url), PHP_URL_HOST) ?? '');
+
+        $outbound = [];
+        $external = 0;
+        $nofollow = 0;
+
+        foreach ($page['dom']->getElementsByTagName('a') as $a) {
+            /** @var \DOMElement $a */
+            $href = trim(Typed::string($a->getAttribute('href')));
+
+            if ($href === '' || str_starts_with($href, '#') || str_starts_with(strtolower($href), 'javascript:')) {
+                continue;
+            }
+
+            $parsed = parse_url($href, PHP_URL_HOST);
+
+            // 相对链接按站点主机处理
+            $target = $parsed !== null && $parsed !== '' ? strtolower($parsed) : $host;
+
+            if ($target === $host) {
+                continue; // 只统计出站（对外）链接
+            }
+
+            $external++;
+            $rel = strtolower(Typed::string($a->getAttribute('rel')));
+            $isNofollow = str_contains($rel, 'nofollow');
+            $anchor = trim(preg_replace('/\s+/u', ' ', $a->textContent) ?? '');
+
+            if ($isNofollow) {
+                $nofollow++;
+            }
+
+            $hasReverse = $reverseDomain !== '' && str_ends_with($target, $reverseDomain);
+            $outbound[] = [
+                'url' => $href,
+                'anchor' => mb_substr($anchor !== '' ? $anchor : '(无锚文本)', 0, 60),
+                'nofollow' => $isNofollow,
+                'reverse' => $hasReverse,
+            ];
+        }
+
+        $data = [
+            '检测页面' => AuditEngine::normalizeUrl($url),
+            '出站链接数' => $external,
+            'nofollow 数量' => $nofollow,
+        ];
+
+        $text = '';
+
+        foreach (array_slice($outbound, 0, 50) as $i => $link) {
+            $text .= ($i + 1).'. '.$link['anchor'].' → '.$link['url'].($link['nofollow'] ? ' [nofollow]' : '').($link['reverse'] ? ' [↩ 已回链]' : '')."\n";
+        }
+
+        if ($reverseDomain !== '') {
+            $found = array_values(array_filter($outbound, fn (array $l): bool => $l['reverse']));
+
+            $data['回链校验'] = $found !== []
+                ? '✅ 在 '.$host.' 首页发现指向 '.$reverseDomain.' 的链接（'.count($found).' 条）'
+                : '❌ 首页未发现指向 '.$reverseDomain.' 的链接（对方可能已下链/未上链）';
+        }
+
+        $data['说明'] = '仅列出前 50 条出站链接；回链校验输入你的域名即可判断友链是否互链';
+
+        return ['ok' => true, 'data' => $data, 'text' => $text !== '' ? rtrim($text) : '(无出站链接)'];
+    }
 }

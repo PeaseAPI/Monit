@@ -39,6 +39,11 @@
             <div>
                 <label class="form-label">{{ __('settings.seo.t_85e98d') }}</label>
                 <textarea name="seo_disabled_tools" rows="3" class="form-input w-full font-mono text-[13px]">{{ old('seo_disabled_tools', $settings['seo.seo_disabled_tools'] ?? '') }}</textarea>
+                <p class="mt-1 text-xs text-zinc-500">{{ __('seo.settings_disabled_tools_hint') }}</p>
+                <details class="mt-1 text-xs text-zinc-500">
+                    <summary class="cursor-pointer">{{ __('seo.settings_disabled_tools_list') }}</summary>
+                    <p class="mt-1 font-mono leading-5 break-all">{{ implode('，', array_keys(app(\App\Services\Seo\ToolRunner::class)->catalog())) }}</p>
+                </details>
                 <p class="form-hint">{{ __('settings.seo.t_0e744e') }}</p>
             </div>
     <section class="settings-section">

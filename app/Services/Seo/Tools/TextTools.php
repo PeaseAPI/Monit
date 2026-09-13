@@ -226,4 +226,71 @@ class TextTools
             '建议' => '理想密度为 1%-3%',
         ]];
     }
+
+    /**
+     * 违禁词检测（对标 chinaz 违禁词查询：新广告法极限词 + 常见灰产词，
+     * 内置基础词库 + 自定义词；返回命中词与位置，用于发布前自检）
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
+    public function bannedWordsChecker(array $in): array
+    {
+        $text = Typed::string($in['text'] ?? '');
+        $custom = Typed::string($in['custom'] ?? '');
+
+        if ($text === '' && $custom === '') {
+            return ['ok' => false, 'error' => '请输入待检测文本', 'data' => []];
+        }
+
+        // 基础词库：广告法极限用语 / 诱导与灰产常见词
+        $banned = [
+            '极限词' => ['最', '第一', '唯一', '首个', '顶级', '极品', '绝对', '终极', '最先进', '最高级',
+                '最优秀', '最好', '最大', '最低价', '最便宜', '史上', '全网最', '全国第一', '世界级', '宇宙级',
+                '100%有效', '彻底根治', '永不复发', '零风险', '无副作用', '立刻见效', '包治百病', '药到病除'],
+            '诱导词' => ['点击领奖', '全民免单', '点击有惊喜', '秒杀全网', '错过不再', '仅此一天',
+                '速来抢购', '全民疯抢', '再不抢就没'],
+            '灰产词' => ['代开发票', '办理证件', '办证', '枪支', '迷药', '麻醉药', '监听器', '窃听器',
+                '棋牌娱乐', '博彩', '六合彩', '时时彩', '外挂', '开挂', '破解版', '刷单', '刷钻', '刷粉',
+                '网赚', '日赚千元', '套现', '洗钱', '代孕', '高仿', '复刻表', 'A货', '水货', '翻墙软件',
+                '实名认证代过', '征信修复', '贷款包过', ' 秒批贷款'],
+        ];
+
+        if ($custom !== '') {
+            $banned['自定义'] = array_filter(array_map('trim', preg_split('/[\r\n,，]+/', $custom) ?: []));
+        }
+
+        $hits = [];
+        $totalHits = 0;
+
+        foreach ($banned as $category => $words) {
+            foreach ($words as $word) {
+                if ($word === '') {
+                    continue;
+                }
+
+                $count = mb_substr_count($text, $word);
+
+                if ($count > 0) {
+                    $pos = mb_strpos($text, $word);
+                    $context = mb_substr($text, max(0, $pos - 10), 30);
+                    $hits[] = $category.'：「'.$word.'」× '.$count.'（…'.$context.'…）';
+                    $totalHits += $count;
+                }
+            }
+        }
+
+        $data = [
+            '检测字数' => mb_strlen($text),
+            '命中词数' => count($hits),
+            '命中总次数' => $totalHits,
+            '风险等级' => $totalHits === 0 ? '低（未命中词库）' : ($totalHits <= 3 ? '中' : '高'),
+        ];
+
+        if ($hits !== []) {
+            $data['命中明细'] = '共 '.count($hits).' 类，见下方列表';
+        }
+
+        return ['ok' => true, 'data' => $data, 'text' => $hits !== [] ? implode("\n", array_slice($hits, 0, 100)) : '(未命中任何违禁词)'];
+    }
 }
