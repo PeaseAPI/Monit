@@ -22,7 +22,7 @@
                     <li><a href="{{ route('help') }}" class="transition hover:text-white">{{ __('landing.nav_help') }}</a></li>
                     <li><a href="{{ route('contact') }}" class="transition hover:text-white">{{ __('landing.footer_contact') }}</a></li>
                     @if (\App\Support\Settings::get('seo.tools_is_enabled', true)
-                        && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true)))
+                        && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access', true), [true, 'true', '1'], true)))
                     <li><a href="{{ route('seo.tools') }}" class="transition hover:text-white">{{ __('landing.nav_seo_tools') }}</a></li>
                     @endif
                     @if (filter_var(\App\Support\Settings::get('seo.audits_is_enabled', true), FILTER_VALIDATE_BOOLEAN))

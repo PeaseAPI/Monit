@@ -39,7 +39,7 @@
                 <a href="#showcase" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_showcase') }}</a>
                 <a href="#pricing" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_pricing') }}</a>
                 @if (\App\Support\Settings::get('seo.tools_is_enabled', true)
-                    && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true)))
+                    && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access', true), [true, 'true', '1'], true)))
                 <a href="{{ route('seo.tools') }}" class="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">{{ __('landing.nav_seo_tools') }}</a>
                 @endif
                 @if (filter_var(\App\Support\Settings::get('seo.audits_is_enabled', true), FILTER_VALIDATE_BOOLEAN))
@@ -619,7 +619,7 @@
                         <li><a href="{{ route('help') }}" class="transition hover:text-white">{{ __('landing.nav_help') }}</a></li>
                         <li><a href="{{ route('contact') }}" class="transition hover:text-white">{{ __('landing.footer_contact') }}</a></li>
                         @if (\App\Support\Settings::get('seo.tools_is_enabled', true)
-                            && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true)))
+                            && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access', true), [true, 'true', '1'], true)))
                         <li><a href="{{ route('seo.tools') }}" class="transition hover:text-white">{{ __('landing.nav_seo_tools') }}</a></li>
                         @endif
                         @if (filter_var(\App\Support\Settings::get('seo.audits_is_enabled', true), FILTER_VALIDATE_BOOLEAN))

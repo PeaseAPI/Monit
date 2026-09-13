@@ -4,7 +4,7 @@
     移动端用原生 <details> 汉堡菜单（无 JS 依赖）。 --}}
 @php
     $seoToolsVisible = \App\Support\Settings::get('seo.tools_is_enabled', true)
-        && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true));
+        && (auth()->check() || in_array(\App\Support\Settings::get('seo.tools_guest_access', true), [true, 'true', '1'], true));
     $seoDirectoryVisible = filter_var(\App\Support\Settings::get('seo.audits_is_enabled', true), FILTER_VALIDATE_BOOLEAN);
     $blogVisible = \App\Support\Settings::get('content.blog_is_enabled') === null
         || filter_var(\App\Support\Settings::get('content.blog_is_enabled'), FILTER_VALIDATE_BOOLEAN);

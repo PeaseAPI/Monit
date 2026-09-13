@@ -29,7 +29,7 @@
                     <span class="settings-field-row-hint">{{ __('settings.seo.t_a964f7') }}</span>
                 </span>
                 <input type="checkbox" name="tools_guest_access" value="1" class="input-toggle"
-                    {{ filter_var($settings['seo.tools_guest_access'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+                    {{ filter_var($settings['seo.tools_guest_access'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
             </label>
             <div>
                 <label class="form-label">{{ __('settings.seo.t_ca2634') }}</label>

@@ -76,7 +76,7 @@ class IndexController extends Controller
         // （groupBy 重排数字索引会把卡片链接渲染成 /tools/0 导致 404，与 SeoToolController 同坑）。
         // 可见性门控与顶部导航一致：总开关 + （登录用户 或 访客开放）。
         $seoToolsVisible = Settings::get('seo.tools_is_enabled', true)
-            && (Auth::check() || in_array(Settings::get('seo.tools_guest_access'), [true, 'true', '1'], true));
+            && (Auth::check() || in_array(Settings::get('seo.tools_guest_access', true), [true, 'true', '1'], true));
         $seoTools = $seoToolsVisible
             ? collect(app(\App\Services\Seo\ToolRunner::class)->catalog())
                 ->groupBy(fn (array $meta) => Typed::string($meta['category'] ?? 'dev'), true)

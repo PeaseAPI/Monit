@@ -1,5 +1,8 @@
 @extends('layouts.public')
 @section('main_class', 'w-full')
+@section('title', __('blog.title'))
+@section('meta_description', __('blog.subtitle'))
+@section('canonical', route('blog'))
 @section('content')
 @php
     /* 阅读时长估算：按正文字数 400 字/分钟，忽略 HTML 标签 */
