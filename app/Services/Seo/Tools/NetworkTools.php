@@ -10,6 +10,7 @@ use App\Support\CountryNames;
 use App\Support\Ip2Region;
 use App\Support\Typed;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -117,23 +118,34 @@ class NetworkTools
      * DNS TXT 与 whois:43 在大陆网络普遍不可达，实测被拦截）
      *
      * 返回 as（形如「AS15169 Google LLC」）/ isp 字段；status=success 才采用，
-     * 失败 / 超时 / 限速（免费版 45 次/分钟）静默返回 null 回退 Cymru。
+     * 失败 / 超时（实测该源延迟抖动 1.3~5.4s+）/ 限速（免费版 45 次/分钟）
+     * 静默返回 null 回退 Cymru。结果缓存：成功 7 天、失败 1 小时（IP 归属
+     * 基本不变；失败短缓存避免连续外呼惩罚），缓存值包一层数组以区分
+     * 「缓存了 null」与「未命中」。
      */
     protected static function ipApiValue(string $ip, string $field): ?string
     {
+        $key = 'ipapi:'.md5($ip).':'.$field;
+        $hit = Cache::get($key);
+
+        if (is_array($hit) && array_key_exists('v', $hit)) {
+            return Typed::stringOrNull($hit['v']);
+        }
+
+        $value = null;
         try {
-            $response = Http::timeout(5)->get('http://ip-api.com/json/'.$ip, ['fields' => 'status,'.$field]);
+            $response = Http::timeout(6)->get('http://ip-api.com/json/'.$ip, ['fields' => 'status,'.$field]);
+            if ($response->successful() && Typed::string($response->json('status')) === 'success') {
+                $candidate = trim(Typed::string($response->json($field)));
+                $value = $candidate !== '' ? $candidate : null;
+            }
         } catch (Throwable) {
-            return null;
+            $value = null;
         }
 
-        if (! $response->successful() || Typed::string($response->json('status')) !== 'success') {
-            return null;
-        }
+        Cache::put($key, ['v' => $value], $value !== null ? now()->addDays(7) : now()->addHour());
 
-        $value = trim(Typed::string($response->json($field)));
-
-        return $value !== '' ? $value : null;
+        return $value;
     }
 
     /**
