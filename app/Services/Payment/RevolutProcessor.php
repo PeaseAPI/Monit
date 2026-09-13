@@ -2,14 +2,15 @@
 
 namespace App\Services\Payment;
 
-use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
-use App\Support\Typed;
-use Illuminate\Http\Request;
 
 /**
  * Revolut 支付处理器（规格书 §11）
+ *
+ * 金额/币种统一来自 PaymentService::checkoutContext()（createOrder 创建的
+ * pending 订单），修复旧实现坏回退导致的 0 元订单与 USD 硬编码（#8）。
+ * order_id 即订单 external_id，webhook（/webhooks/revolut）按其匹配入账。
  */
 class RevolutProcessor
 {
@@ -18,12 +19,14 @@ class RevolutProcessor
      */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
+        $ctx = PaymentService::checkoutContext($user, $plan, 'revolut', $frequency);
+
         return [
             'processor' => 'revolut',
             'public_id' => config('services.revolut.public_id'),
-            'order_id' => 'monit-'.$user->user_id.'-'.time(),
-            'amount' => (int) ($this->getPrice($plan, $frequency) * 100),
-            'currency' => 'USD',
+            'order_id' => $ctx['order_ref'],
+            'amount' => (int) round(((float) $ctx['amount']) * 100),
+            'currency' => $ctx['currency'],
             'name' => $plan->name,
             'metadata' => [
                 'user_id' => $user->user_id,
@@ -32,53 +35,5 @@ class RevolutProcessor
             ],
         ];
     }
-
-    public function handleWebhook(Request $request): ?Payment
-    {
-        $event = $request->input('event');
-        if ($event !== 'ORDER_COMPLETED') {
-            return null;
-        }
-
-        $order = Typed::arr($request->input('order'));
-        $metadata = Typed::arr($order['metadata'] ?? []);
-
-        $user = User::query()->where('user_id', Typed::int($metadata['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', Typed::int($metadata['plan_id'] ?? 0))->first();
-
-        if ($user === null || $plan === null) {
-            return null;
-        }
-
-        $totalAmount = Typed::float($order['total_amount'] ?? 0) / 100;
-
-        return Payment::create([
-            'user_id' => $user->user_id,
-            'plan_id' => $plan->plan_id,
-            'processor' => 'revolut',
-            'payment_id_external' => Typed::stringOrNull($order['id'] ?? null),
-            'payment_frequency' => Typed::string($metadata['frequency'] ?? 'one_time'),
-            'payment_type' => 'one_time',
-            'base_amount' => $totalAmount,
-            'discount_amount' => 0,
-            'taxes_amount' => 0,
-            'total_amount' => $totalAmount,
-            'currency' => Typed::string($order['currency'] ?? 'USD'),
-            'email' => $user->email,
-            'name' => $user->name,
-            'datetime' => now(),
-        ]);
-    }
-
-    private function getPrice(Plan $plan, string $frequency): float
-    {
-        $prices = $plan->prices['USD'] ?? $plan->prices;
-
-        return (float) match ($frequency) {
-            'monthly' => $prices['monthly'] ?? 0,
-            'annual' => $prices['annual'] ?? 0,
-            'lifetime' => $prices['lifetime'] ?? 0,
-            default => $prices['monthly'] ?? 0,
-        };
-    }
 }
+

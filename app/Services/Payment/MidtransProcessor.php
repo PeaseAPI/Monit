@@ -2,14 +2,15 @@
 
 namespace App\Services\Payment;
 
-use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
-use App\Support\Typed;
-use Illuminate\Http\Request;
 
 /**
  * Midtrans 支付处理器（规格书 §11）
+ *
+ * 金额统一来自 PaymentService::checkoutContext()（createOrder 创建的
+ * pending 订单），修复旧实现坏回退导致的 0 元订单（#8）。
+ * order_id 即订单 external_id，webhook（/webhooks/midtrans）按其匹配入账。
  */
 class MidtransProcessor
 {
@@ -18,19 +19,19 @@ class MidtransProcessor
      */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
-        $serverKey = config('services.midtrans.server_key');
-        $clientKey = config('services.midtrans.client_key');
+        $ctx = PaymentService::checkoutContext($user, $plan, 'midtrans', $frequency);
 
         return [
             'processor' => 'midtrans',
-            'client_key' => $clientKey,
+            'client_key' => config('services.midtrans.client_key'),
+            'server_key' => config('services.midtrans.server_key'),
             'transaction_details' => [
-                'order_id' => 'monit-'.$user->user_id.'-'.time(),
-                'gross_amount' => $this->getPrice($plan, $frequency),
+                'order_id' => $ctx['order_ref'],
+                'gross_amount' => $ctx['amount'],
             ],
             'item_details' => [[
                 'id' => $plan->plan_id,
-                'price' => $this->getPrice($plan, $frequency),
+                'price' => $ctx['amount'],
                 'quantity' => 1,
                 'name' => $plan->name,
             ]],
@@ -45,49 +46,5 @@ class MidtransProcessor
             ]),
         ];
     }
-
-    public function handleWebhook(Request $request): ?Payment
-    {
-        $customField = Typed::arr(json_decode(Typed::string($request->input('custom_field1', '{}')), true));
-        $user = User::query()->where('user_id', Typed::int($customField['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', Typed::int($customField['plan_id'] ?? 0))->first();
-
-        if ($user === null || $plan === null) {
-            return null;
-        }
-
-        $status = $request->input('transaction_status');
-        if (! in_array($status, ['capture', 'settlement'], true)) {
-            return null;
-        }
-
-        return Payment::create([
-            'user_id' => $user->user_id,
-            'plan_id' => $plan->plan_id,
-            'processor' => 'midtrans',
-            'payment_id_external' => Typed::string($request->input('transaction_id')),
-            'payment_frequency' => Typed::string($customField['frequency'] ?? 'one_time'),
-            'payment_type' => 'one_time',
-            'base_amount' => Typed::float($request->input('gross_amount', 0)),
-            'discount_amount' => 0,
-            'taxes_amount' => 0,
-            'total_amount' => $request->input('gross_amount', 0),
-            'currency' => 'IDR',
-            'email' => $user->email,
-            'name' => $user->name,
-            'datetime' => now(),
-        ]);
-    }
-
-    private function getPrice(Plan $plan, string $frequency): float
-    {
-        $prices = $plan->prices['USD'] ?? $plan->prices;
-
-        return (float) match ($frequency) {
-            'monthly' => $prices['monthly'] ?? 0,
-            'annual' => $prices['annual'] ?? 0,
-            'lifetime' => $prices['lifetime'] ?? 0,
-            default => $prices['monthly'] ?? 0,
-        };
-    }
 }
+

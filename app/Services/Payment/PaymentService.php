@@ -172,6 +172,63 @@ class PaymentService
             'frequency' => $frequency,
         ];
     }
+    /**
+     * 通用托管结算型处理器（payu/iyzico 等 createCheckout 型）的结账上下文。
+     *
+     * 修复 0 元订单（#8）：
+     * - 金额/币种一律以 createOrder 创建的 pending 订单（Payment 行）为准，
+     *   处理器不再自行从 plans.prices 里"猜"价格（旧逻辑 TRY/USD 缺失时
+     *   回退到整个 prices 数组再取 monthly 键，得到 0.00，且币种硬编码
+     *   TRY/PLN/RUB 与订单币种错位）。
+     * - 订单不存在时（异常路径）用 Currency::planPrice 现算，无价则抛异常
+     *   （fail-closed，与 createOrder 口径一致，杜绝 0 元单）。
+     * - 生成的网关侧单号（order_ref）持久化到 payment.external_id，
+     *   WebhookPaymentController 按 external_id 匹配订单完成入账。
+     *
+     * @return array{payment: Payment, amount: float, currency: string, order_ref: string}
+     */
+    public static function checkoutContext(User $user, Plan $plan, string $processor, string $frequency): array
+    {
+        /** @var Payment|null $payment */
+        $payment = Payment::query()
+            ->where('user_id', $user->user_id)
+            ->where('plan_id', $plan->plan_id)
+            ->where('payment_processor', $processor)
+            ->where('status', 0)
+            ->orderByDesc('payment_id')
+            ->first();
+
+        if ($payment !== null) {
+            $amount = round((float) $payment->total_amount, 2);
+            $currency = strtoupper(Typed::string($payment->currency, Currency::default()));
+        } else {
+            // 兜底：无 pending 订单时按默认货币现算；无价不得下单
+            $currency = Currency::normalize($user->payment_currency ?? '');
+            $amount = Currency::planPrice($plan, $currency, $frequency)
+                ?? throw new \RuntimeException("plan_price_missing:{$plan->plan_id}:{$frequency}");
+            $amount = round($amount, 2);
+        }
+
+        $orderRef = 'monit-'.(($payment !== null) ? $payment->payment_id : 0).'-'.$user->user_id.'-'.time();
+
+        // 持久化网关单号 → webhook（handleExternalPaymentNotification）按 external_id 匹配入账
+        if ($payment !== null && (string) ($payment->external_id ?? '') === '') {
+            $payment->forceFill(['external_id' => $orderRef])->save();
+        }
+
+        return [
+            'payment' => $payment ?? new Payment([
+                'user_id' => $user->user_id,
+                'plan_id' => $plan->plan_id,
+                'payment_processor' => $processor,
+                'total_amount' => $amount,
+                'currency' => $currency,
+            ]),
+            'amount' => $amount,
+            'currency' => $currency,
+            'order_ref' => $orderRef,
+        ];
+    }
 
     /**
      * 支付成功回调处理（幂等：重复回调不重复累计/续期/派发）

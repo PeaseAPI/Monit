@@ -238,7 +238,6 @@
         </div>
     </div>
 
-    @include('account.partials.phone-bind-modal')
     @else
     {{-- 短信服务未开通：显示状态卡片而非静默消失（管理员附开通指引） --}}
     <div class="card mt-6">
@@ -319,6 +318,11 @@
     </div>
     </div>{{-- /tab:security --}}
     </div>
+
+    {{-- 手机号绑定弹窗（#9：必须放在所有 tab panel 之外 —— 原先埋在隐藏的 security 面板里，profile 页的绑定按钮打开时因祖先 display:none 永远不可见；两处入口（profile/security）共用。短信未开通时不渲染，避免弹窗 script 空引用） --}}
+    @if(\App\Services\Sms\SmsService::scenarioEnabled('phone_bind'))
+        @include('account.partials.phone-bind-modal')
+    @endif
 
     {{-- 标签页切换（hash 记忆 + 首个默认） --}}
     <script>

@@ -2,14 +2,16 @@
 
 namespace App\Services\Payment;
 
-use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
-use App\Support\Typed;
-use Illuminate\Http\Request;
 
 /**
  * iyzico 支付处理器（规格书 §11）
+ *
+ * 金额/币种/单号统一来自 PaymentService::checkoutContext()（createOrder 创建的
+ * pending 订单），修复旧实现 plans.prices 无 TRY/USD 直配价时回退整个 prices
+ * 数组再取 monthly 键导致的 0.00 元订单与 TRY 币种硬编码问题（#8）。
+ * conversation_id 即订单 external_id，webhook（/webhooks/iyzico）按其匹配入账。
  */
 class IyzicoProcessor
 {
@@ -18,15 +20,15 @@ class IyzicoProcessor
      */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
-        $baseUrl = config('services.iyzico.base_url', 'sandbox-api.iyzipay.com');
+        $ctx = PaymentService::checkoutContext($user, $plan, 'iyzico', $frequency);
 
         return [
             'processor' => 'iyzico',
-            'base_url' => $baseUrl,
-            'conversation_id' => 'monit-'.$user->user_id.'-'.time(),
-            'price' => $this->getPrice($plan, $frequency),
-            'paid_price' => $this->getPrice($plan, $frequency),
-            'currency' => 'TRY',
+            'base_url' => config('services.iyzico.base_url', 'sandbox-api.iyzipay.com'),
+            'conversation_id' => $ctx['order_ref'],
+            'price' => $ctx['amount'],
+            'paid_price' => $ctx['amount'],
+            'currency' => $ctx['currency'],
             'basket_id' => 'B'.time(),
             'buyer' => [
                 'id' => (string) $user->user_id,
@@ -39,7 +41,7 @@ class IyzicoProcessor
                 'category1' => 'SaaS',
                 'category2' => 'Analytics',
                 'itemType' => 'VIRTUAL',
-                'price' => $this->getPrice($plan, $frequency),
+                'price' => $ctx['amount'],
             ]],
             'metadata' => [
                 'user_id' => $user->user_id,
@@ -48,52 +50,5 @@ class IyzicoProcessor
             ],
         ];
     }
-
-    public function handleWebhook(Request $request): ?Payment
-    {
-        $status = $request->input('status');
-        if ($status !== 'SUCCESS') {
-            return null;
-        }
-
-        $conversationId = Typed::string($request->input('conversationId', ''));
-        $parts = explode('-', $conversationId);
-        $userId = $parts[1] ?? 0;
-
-        $user = User::query()->where('user_id', (int) ($userId))->first();
-        if ($user === null) {
-            return null;
-        }
-
-        $plan = Plan::query()->where('plan_id', (int) ($user->plan_id))->first();
-
-        return Payment::create([
-            'user_id' => $user->user_id,
-            'plan_id' => ($plan !== null) ? $plan->plan_id : 'free',
-            'processor' => 'iyzico',
-            'payment_id_external' => $request->input('paymentId'),
-            'payment_frequency' => 'one_time',
-            'payment_type' => 'one_time',
-            'base_amount' => $request->input('price', 0),
-            'discount_amount' => 0,
-            'taxes_amount' => 0,
-            'total_amount' => $request->input('paidPrice', 0),
-            'currency' => 'TRY',
-            'email' => $user->email,
-            'name' => $user->name,
-            'datetime' => now(),
-        ]);
-    }
-
-    private function getPrice(Plan $plan, string $frequency): float
-    {
-        $prices = $plan->prices['TRY'] ?? $plan->prices['USD'] ?? $plan->prices;
-
-        return (float) match ($frequency) {
-            'monthly' => $prices['monthly'] ?? 0,
-            'annual' => $prices['annual'] ?? 0,
-            'lifetime' => $prices['lifetime'] ?? 0,
-            default => $prices['monthly'] ?? 0,
-        };
-    }
 }
+

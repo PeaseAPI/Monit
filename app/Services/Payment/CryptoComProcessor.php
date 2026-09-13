@@ -2,14 +2,15 @@
 
 namespace App\Services\Payment;
 
-use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
-use App\Support\Typed;
-use Illuminate\Http\Request;
 
 /**
  * Crypto.com 支付处理器（规格书 §11）
+ *
+ * 金额/币种/单号统一来自 PaymentService::checkoutContext()（createOrder 创建的
+ * pending 订单），修复旧实现坏回退导致的 0 元订单（#8）。
+ * order_id 即订单 external_id，webhook（/webhooks/crypto）按其匹配入账。
  */
 class CryptoComProcessor
 {
@@ -18,12 +19,14 @@ class CryptoComProcessor
      */
     public function createCheckout(User $user, Plan $plan, string $frequency): array
     {
+        $ctx = PaymentService::checkoutContext($user, $plan, 'cryptocom', $frequency);
+
         return [
             'processor' => 'cryptocom',
             'merchant_id' => config('services.cryptocom.merchant_id'),
-            'order_id' => 'monit-'.$user->user_id.'-'.time(),
-            'amount' => $this->getPrice($plan, $frequency),
-            'currency' => 'USD',
+            'order_id' => $ctx['order_ref'],
+            'amount' => $ctx['amount'],
+            'currency' => $ctx['currency'],
             'description' => $plan->name,
             'metadata' => [
                 'user_id' => $user->user_id,
@@ -32,51 +35,5 @@ class CryptoComProcessor
             ],
         ];
     }
-
-    public function handleWebhook(Request $request): ?Payment
-    {
-        $event = $request->input('type');
-        if ($event !== 'payment.completed') {
-            return null;
-        }
-
-        $data = Typed::arr($request->input('data'));
-        $metadata = Typed::arr($data['metadata'] ?? []);
-
-        $user = User::query()->where('user_id', Typed::int($metadata['user_id'] ?? 0))->first();
-        $plan = Plan::query()->where('plan_id', Typed::int($metadata['plan_id'] ?? 0))->first();
-
-        if ($user === null || $plan === null) {
-            return null;
-        }
-
-        return Payment::create([
-            'user_id' => $user->user_id,
-            'plan_id' => $plan->plan_id,
-            'processor' => 'cryptocom',
-            'payment_id_external' => Typed::stringOrNull($data['payment_id'] ?? null),
-            'payment_frequency' => Typed::string($metadata['frequency'] ?? 'one_time'),
-            'payment_type' => 'one_time',
-            'base_amount' => Typed::float($data['amount'] ?? 0),
-            'discount_amount' => 0,
-            'taxes_amount' => 0,
-            'total_amount' => Typed::float($data['amount'] ?? 0),
-            'currency' => Typed::string($data['currency'] ?? 'USD'),
-            'email' => $user->email,
-            'name' => $user->name,
-            'datetime' => now(),
-        ]);
-    }
-
-    private function getPrice(Plan $plan, string $frequency): float
-    {
-        $prices = $plan->prices['USD'] ?? $plan->prices;
-
-        return (float) match ($frequency) {
-            'monthly' => $prices['monthly'] ?? 0,
-            'annual' => $prices['annual'] ?? 0,
-            'lifetime' => $prices['lifetime'] ?? 0,
-            default => $prices['monthly'] ?? 0,
-        };
-    }
 }
+
