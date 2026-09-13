@@ -88,10 +88,9 @@
             <div class="sm:col-span-2">
                 <dt class="text-xs font-medium text-zinc-500">{{ __('msg.nameservers') }}</dt>
                 <dd class="mt-1 text-sm">
-                    @if($domain->monitor_nameservers)
-                        {{-- 双格式兼容：新数据为 JSON 数组；旧数据为逗号分隔字符串（任务 #35-5） --}}
-                        @php($nsList = json_decode($domain->monitor_nameservers, true) ?? array_values(array_filter(array_map('trim', explode(',', $domain->monitor_nameservers)))))
-                        @foreach($nsList as $ns)
+                    @if(count($domain->nameservers_list) > 0)
+                        {{-- 双格式兼容收口在 Domain nameservers_list accessor（新 JSON 数组 / 旧逗号字符串，任务 #35-5）；blade 注释与内联表达式不可承载嵌套括号逻辑——PHP 8.3.30 下编译产物不可解析（详见模型注释） --}}
+                        @foreach($domain->nameservers_list as $ns)
                             <span class="mr-2 inline-flex items-center rounded bg-zinc-100 px-2 py-0.5 text-xs font-mono">{{ $ns }}</span>
                         @endforeach
                     @else
@@ -155,15 +154,14 @@
     </div>
 
     {{-- SEO 关键词排名监控（M30：回答「监控中之后去哪里看监控内容」） --}}
-    @php($monitorWebsite = $domain->website)
     <div class="mb-6 rounded-2xl border border-zinc-200 bg-white p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h2 class="text-lg font-semibold text-zinc-800">{{ __('msg.domain_seo_title') }}</h2>
                 <p class="mt-1 text-sm text-zinc-500">{{ __('msg.domain_seo_desc') }}</p>
             </div>
-            @if($monitorWebsite !== null && (int) $monitorWebsite->user_id === (int) auth()->user()->user_id)
-                <a href="{{ route('seo.keywords', ['website' => $monitorWebsite->website_id]) }}"
+            @if($domain->website !== null && (int) $domain->website->user_id === (int) auth()->user()->user_id)
+                <a href="{{ route('seo.keywords', ['website' => $domain->website->website_id]) }}"
                    class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
                     {{ __('msg.domain_seo_view') }}
                 </a>
