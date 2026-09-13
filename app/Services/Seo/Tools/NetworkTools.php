@@ -2,8 +2,10 @@
 
 namespace App\Services\Seo\Tools;
 
+use App\Services\GeoIp;
 use App\Services\Seo\AuditEngine;
 use App\Services\Seo\DomainMonitor;
+use App\Services\Seo\SslInspector;
 use App\Support\Typed;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -73,10 +75,43 @@ class NetworkTools
             return ['ok' => false, 'error' => 'IP 格式无效', 'data' => []];
         }
 
-        return ['ok' => true, 'data' => [
-            '反向解析' => Typed::nonEmpty(gethostbyaddr($ip), '无'),
-            '版本' => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false ? 'IPv4' : 'IPv6',
-        ]];
+        // 任务 #35-9：接入本地 GeoIp（MaxMind City Lite + ip2region 中国省市级）
+        // 此前只返回反向解析与 IP 版本，信息量过少
+        $geo = app(GeoIp::class)->lookup($ip);
+
+        $data = [
+            'IP 版本' => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false ? 'IPv4' : 'IPv6',
+            '反向解析' => Typed::nonEmpty(@gethostbyaddr($ip), '无'),
+            '大洲' => static::continentName($geo['continent_code']),
+            '国家/地区' => $geo['country_code'],
+            '省份/州' => $geo['region_name'],
+            '城市' => $geo['city_name'],
+            '经纬度' => ($geo['latitude'] !== null && $geo['longitude'] !== null)
+                ? $geo['latitude'].', '.$geo['longitude']
+                : null,
+        ];
+
+        // GeoIp 库未命中（内网 IP / 本地库缺失）的键不展示，避免一排空值
+        return ['ok' => true, 'data' => array_filter($data, fn ($v) => $v !== null)];
+    }
+
+    /** 大洲两位码 → 中文名（未识别时原样返回） */
+    protected static function continentName(?string $code): ?string
+    {
+        if ($code === null || $code === '') {
+            return null;
+        }
+
+        return match ($code) {
+            'AS' => '亚洲',
+            'EU' => '欧洲',
+            'NA' => '北美洲',
+            'SA' => '南美洲',
+            'AF' => '非洲',
+            'OC' => '大洋洲',
+            'AN' => '南极洲',
+            default => $code,
+        };
     }
 
     /**
@@ -91,36 +126,23 @@ class NetworkTools
             return ['ok' => false, 'error' => '请输入主机名', 'data' => []];
         }
 
-        $context = stream_context_create(['ssl' => ['capture_peer_cert' => true, 'verify_peer' => false, 'verify_peer_name' => false]]);
+        // 复用 SslInspector（品牌 / DV-OV-EV / SAN / 剩余天数），与域名监控 monitor_ssl 同源
+        $info = (new SslInspector)->inspect($host, 10);
 
-        $socket = @stream_socket_client("ssl://{$host}:443", $errorCode, $errorString, 10, STREAM_CLIENT_CONNECT, $context);
-
-        if ($socket === false) {
+        if ($info === null) {
             return ['ok' => false, 'error' => 'SSL 连接失败（443 端口不可达或证书握手失败）', 'data' => []];
         }
 
-        $params = stream_context_get_params($socket);
-        fclose($socket);
-
-        $certResource = data_get($params, 'options.ssl.peer_certificate');
-
-        if (! is_string($certResource)) {
-            return ['ok' => false, 'error' => '未捕获到证书', 'data' => []];
-        }
-
-        $parsed = openssl_x509_parse($certResource);
-        if ($parsed === false) {
-            return ['ok' => false, 'error' => '证书解析失败', 'data' => []];
-        }
-
-        $validTo = Typed::int($parsed['validTo_time_t'] ?? 0);
-
         return ['ok' => true, 'data' => [
-            '颁发给' => data_get($parsed, 'subject.CN') ?? '-',
-            '颁发者' => data_get($parsed, 'issuer.O') ?? (data_get($parsed, 'issuer.CN') ?? '-'),
-            '生效日期' => date('Y-m-d', Typed::int($parsed['validFrom_time_t'] ?? 0)),
-            '失效日期' => date('Y-m-d', $validTo),
-            '剩余天数' => (string) max(0, (int) floor(($validTo - time()) / 86400)),
+            '证书品牌' => $info['brand'],
+            '证书类型' => $info['type'],
+            '颁发者' => $info['issuer'] ?? '-',
+            '颁发给 (CN)' => $info['subject'] ?? '-',
+            '主体组织' => $info['organization'] ?? '-',
+            'SAN 域名数' => (string) count($info['san'] ?? []),
+            '生效日期' => $info['valid_from'] !== null ? substr((string) $info['valid_from'], 0, 10) : '-',
+            '失效日期' => $info['valid_to'] !== null ? substr((string) $info['valid_to'], 0, 10) : '-',
+            '剩余天数' => (string) ($info['days_left'] ?? '-'),
         ]];
     }
 

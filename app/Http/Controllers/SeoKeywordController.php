@@ -75,6 +75,14 @@ class SeoKeywordController extends Controller
 
         $validated['website_id'] = $this->ownWebsiteId($request, Typed::int($validated['website_id'] ?? 0));
 
+        // 任务 #35-7：无网站流程 —— 不关联网站的关键词必须给目标 URL，
+        // 否则 SERP 结果没有可匹配的 host（自动检查只会得到「未找到」）
+        if (Typed::int($validated['website_id']) <= 0 && trim(Typed::string($validated['target_url'] ?? '')) === '') {
+            return back()
+                ->withErrors(['target_url' => __('seo.target_host_required')])
+                ->withInput();
+        }
+
         if (! $limits->checkLimit($this->user(), 'seo_keywords_limit')) {
             return back()->withErrors(['keyword' => __('seo.keywords_quota_exceeded')]);
         }

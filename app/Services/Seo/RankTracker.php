@@ -41,6 +41,12 @@ class RankTracker
             $host = static::hostOfTarget($keyword->target_url);
         }
 
+        // 任务 #35-7：既不关联网站也无目标 URL 的关键词无法匹配排名，
+        // 抛异常让调用方计为失败（而非误记一条「未找到」快照污染趋势）
+        if ($host === '') {
+            throw new \RuntimeException('keyword_target_host_missing');
+        }
+
         $results = $this->fetchOrganicResults($keyword);
 
         $position = null;

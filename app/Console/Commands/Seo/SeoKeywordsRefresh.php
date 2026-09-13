@@ -5,6 +5,7 @@ namespace App\Console\Commands\Seo;
 use App\Models\SeoKeyword;
 use App\Services\Seo\RankTracker;
 use App\Support\Settings;
+use App\Support\Typed;
 use Illuminate\Console\Command;
 use Throwable;
 
@@ -21,6 +22,8 @@ class SeoKeywordsRefresh extends Command
     protected int $checked = 0;
 
     protected int $failed = 0;
+
+    protected int $skipped = 0;
 
     public function handle(RankTracker $tracker): int
     {
@@ -48,6 +51,14 @@ class SeoKeywordsRefresh extends Command
                         continue;
                     }
 
+                    // 任务 #35-7：无网站且无目标 URL 的老数据跳过（check 会抛
+                    // keyword_target_host_missing，静默跳过避免错误日志刷屏）
+                    if (Typed::int($keyword->website_id) <= 0 && trim(Typed::string($keyword->target_url)) === '') {
+                        $this->skipped++;
+
+                        continue;
+                    }
+
                     try {
                         $tracker->check($keyword);
                         $this->checked++;
@@ -58,7 +69,7 @@ class SeoKeywordsRefresh extends Command
                 }
             });
 
-        $this->info("关键词排名刷新：{$this->checked} 成功，{$this->failed} 失败。");
+        $this->info("关键词排名刷新：{$this->checked} 成功，{$this->failed} 失败，{$this->skipped} 跳过（无关联网站且无目标 URL）。");
 
         return self::SUCCESS;
     }

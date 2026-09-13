@@ -66,7 +66,10 @@
                    class="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm">
             <button type="submit" class="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white">{{ __('seo.add_keyword') }}</button>
         </div>
+        {{-- 任务 #35-7：无网站流程说明 —— 不关联网站也能跟踪，但必须给目标 URL 以匹配排名 --}}
+        <p class="mt-2 text-xs text-zinc-400">{{ __('seo.no_website_hint') }}</p>
         @error('keyword')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+        @error('target_url')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
     </form>
 
 

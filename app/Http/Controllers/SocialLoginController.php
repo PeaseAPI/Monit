@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SocialAccount;
 use App\Models\User;
 use App\Services\Social\ChineseSocialProvider;
 use App\Services\Social\FeishuProvider;
@@ -97,8 +98,14 @@ class SocialLoginController extends Controller
     /**
      * 跳转到社交登录授权页面
      */
-    public function redirect(string $provider): RedirectResponse
+    public function redirect(Request $request, string $provider): RedirectResponse
     {
+        // 账户页「社交登录」绑定模式：登录态下带 ?bind=1 进入授权，
+        // 回调后写入 social_accounts 而非登录（见 callback/callbackChinese 绑定分支）
+        if (Auth::check() && $request->boolean('bind')) {
+            session(['social_bind_provider' => $provider]);
+        }
+
         // 国内社交登录提供商
         if (isset($this->chineseProviders[$provider])) {
             return $this->redirectChinese($provider);
@@ -202,6 +209,11 @@ class SocialLoginController extends Controller
             return redirect()->route('login')->withErrors(['oauth' => __('auth.oauth_no_email')]);
         }
 
+        // 绑定分支：登录态下进入的授权流程 → 挂到当前账户而非登录
+        if (session('social_bind_provider') === $provider && Auth::check()) {
+            return $this->bindAccount($provider, $userInfo);
+        }
+
         return $this->loginOrRegister($provider, $userInfo);
     }
 
@@ -251,6 +263,11 @@ class SocialLoginController extends Controller
         // 如果没有邮箱，用 provider+id 构造一个虚拟邮箱
         if (($userInfo['email'] ?? '') === '') {
             $userInfo['email'] = $provider.'_'.Typed::string($userInfo['id']).'@social.login';
+        }
+
+        // 绑定分支：登录态下进入的授权流程 → 挂到当前账户而非登录
+        if (session('social_bind_provider') === $provider && Auth::check()) {
+            return $this->bindAccount($provider, $userInfo);
         }
 
         return $this->loginOrRegister($provider, $userInfo);
@@ -304,6 +321,85 @@ class SocialLoginController extends Controller
         }
 
         return $config;
+    }
+
+    /**
+     * 解除社交账号绑定（账户页「社交登录」标签操作列）
+     * 防锁死：社交注册用户（source=provider）持有的是随机密码、不知情可改；
+     * 若未绑定手机号且这是最后一个社交身份，解除即永久失去账户入口 → 拒绝并提示。
+     */
+    public function unbind(string $provider): RedirectResponse
+    {
+        $user = Auth::user();
+
+        $account = SocialAccount::where('user_id', $user->user_id)
+            ->where('provider', $provider)
+            ->first();
+
+        if ($account === null) {
+            return redirect()->to(route('account.index').'#tab-social')
+                ->with('error', __('account.social_not_bound'));
+        }
+
+        $remaining = SocialAccount::where('user_id', $user->user_id)
+            ->where('provider', '!=', $provider)
+            ->count();
+        // 邮箱注册（source 为 direct/空）知道自己的密码，可随时改密重登
+        $hasPassword = in_array($user->source, [null, '', 'direct'], true);
+        $hasPhone = (bool) $user->phone;
+
+        if (! $hasPhone && $remaining === 0 && ! $hasPassword) {
+            return redirect()->to(route('account.index').'#tab-social')
+                ->with('error', __('account.social_lock_guard'));
+        }
+
+        $account->delete();
+
+        return redirect()->to(route('account.index').'#tab-social')
+            ->with('success', __('account.social_unbind_success'));
+    }
+
+    /**
+     * 回调绑定分支：把授权到的第三方身份挂到当前登录账户
+     *
+     * @param  array<string, mixed>  $userInfo
+     */
+    protected function bindAccount(string $provider, array $userInfo): RedirectResponse
+    {
+        session()->forget('social_bind_provider');
+
+        $providerUserId = Typed::string($userInfo['id'] ?? '');
+        if ($providerUserId === '') {
+            return redirect()->to(route('account.index').'#tab-social')
+                ->with('error', __('account.social_bind_failed'));
+        }
+
+        $email = strtolower(Typed::string($userInfo['email'] ?? ''));
+        // 国内 provider 无邮箱时构造的虚拟邮箱（{provider}_{id}@social.login）仅作登录用途，不入绑定表
+        $realEmail = str_ends_with($email, '@social.login') ? null : $email;
+
+        // 该第三方身份已被其他 Monit 账号绑定时拒绝（provider_user_id 全局唯一）
+        $taken = SocialAccount::where('provider', $provider)
+            ->where('provider_user_id', $providerUserId)
+            ->first();
+        if ($taken !== null && $taken->user_id !== Auth::id()) {
+            return redirect()->to(route('account.index').'#tab-social')
+                ->with('error', __('account.social_bind_taken'));
+        }
+
+        SocialAccount::updateOrCreate(
+            ['user_id' => Auth::id(), 'provider' => $provider],
+            [
+                'provider_user_id' => $providerUserId,
+                'nickname' => Typed::stringOrNull($userInfo['name'] ?? null),
+                'email' => $realEmail,
+                'avatar' => Typed::stringOrNull($userInfo['avatar'] ?? null),
+                'datetime' => now(),
+            ]
+        );
+
+        return redirect()->to(route('account.index').'#tab-social')
+            ->with('success', __('account.social_bind_success'));
     }
 
     /**

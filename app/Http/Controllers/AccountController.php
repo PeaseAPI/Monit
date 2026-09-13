@@ -6,6 +6,7 @@ use App\Models\Code;
 use App\Services\Sms\SmsService;
 use App\Services\TotpService;
 use App\Services\WebhookService;
+use App\Models\SocialAccount;
 use App\Support\Settings;
 use App\Support\Typed;
 use Illuminate\Http\JsonResponse;
@@ -42,9 +43,15 @@ class AccountController extends Controller
             }
         }
 
+        // 已绑定的社交身份（provider → SocialAccount），供「社交登录」标签绑定表展示
+        $socialAccounts = SocialAccount::where('user_id', $this->user()->user_id)
+            ->get()
+            ->keyBy('provider');
+
         return view('account.index', [
             'user' => $this->user()->load('plan'),
             'socialProviders' => $socialProviders,
+            'socialAccounts' => $socialAccounts,
         ]);
     }
 

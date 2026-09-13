@@ -28,6 +28,8 @@
             {{ __('account.tab_billing') }}</button>
         <button type="button" data-account-tab="security" class="account-tab-btn flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition">
             {{ __('account.tab_security') }}</button>
+        <button type="button" data-account-tab="social" class="account-tab-btn flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition">
+            {{ __('account.tab_social') }}</button>
     </div>
 
     {{-- ========== 标签：基础资料 ========== --}}
@@ -72,11 +74,12 @@
                 @if($user->source && $user->source !== 'direct')
                     <p class="mt-1 text-xs text-emerald-600">{{ __('account.social_source', ['provider' => ucfirst($user->source)]) }}</p>
                 @endif
-                <div class="mt-2 flex flex-wrap gap-2">
+                <div class="mt-2 flex flex-wrap items-center gap-2">
                     @forelse($socialProviders ?? [] as $provider => $label)
-                        <a href="{{ route('social-login.redirect', $provider) }}"
-                           class="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-brand-400 hover:text-brand-600">
-                            {{ $label }}
+                        @php($boundSocial = $socialAccounts->get($provider))
+                        <a href="{{ route('social-login.redirect', ['provider' => $provider, 'bind' => 1]) }}"
+                           class="rounded-lg border px-3 py-1.5 text-xs font-medium transition {{ $boundSocial ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-zinc-200 text-zinc-600 hover:border-brand-400 hover:text-brand-600' }}">
+                            {{ $label }}{{ $boundSocial ? ' · '.__('account.bound') : '' }}
                         </a>
                     @empty
                         <p class="text-xs text-zinc-400">{{ __('account.social_none_enabled') }}</p>
@@ -84,6 +87,9 @@
                             <a href="{{ route('admin.settings.index') }}" class="w-full text-xs font-medium text-brand-600 hover:underline">{{ __('account.social_admin_hint') }}</a>
                         @endif
                     @endforelse
+                    <button type="button" data-account-tab-jump="social"
+                        class="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition hover:bg-brand-100">
+                        {{ __('account.social_manage') }} →</button>
                 </div>
                 <p class="mt-2 text-xs text-zinc-400">{{ __('account.social_hint') }}</p>
             </div>
@@ -319,6 +325,58 @@
     </div>{{-- /tab:security --}}
     </div>
 
+    {{-- ========== 标签：社交登录（绑定帐号信息 / 详情 / 绑定时间 / 状态 / 操作） ========== --}}
+    <div data-account-panel="social" class="account-tab-panel hidden">
+        <div class="card mt-6">
+            <div class="card-header">{{ __('account.social_title') }}</div>
+            <p class="px-6 pt-3 text-xs leading-relaxed text-zinc-500">{{ __('account.social_desc') }}</p>
+            <div class="mt-3 overflow-x-auto">
+                <table class="w-full min-w-[560px] text-sm">
+                    <thead class="bg-zinc-50 text-left text-xs text-zinc-500">
+                        <tr>
+                            <th class="px-6 py-3 font-medium">{{ __('account.social_col_account') }}</th>
+                            <th class="px-6 py-3 font-medium">{{ __('account.social_col_detail') }}</th>
+                            <th class="px-6 py-3 font-medium">{{ __('account.social_col_time') }}</th>
+                            <th class="px-6 py-3 font-medium">{{ __('account.social_col_status') }}</th>
+                            <th class="px-6 py-3 font-medium">{{ __('account.social_col_action') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-100">
+                        @forelse($socialProviders ?? [] as $provider => $label)
+                            @php($boundSocial = $socialAccounts->get($provider))
+                            <tr>
+                                <td class="px-6 py-3.5 font-medium text-zinc-800">{{ $label }}</td>
+                                <td class="break-all px-6 py-3.5 text-xs text-zinc-500">
+                                    @if($boundSocial){{ $boundSocial->nickname ?: ($boundSocial->email ?: 'ID '.$boundSocial->provider_user_id) }}@else — @endif
+                                </td>
+                                <td class="px-6 py-3.5 text-xs text-zinc-500">{{ $boundSocial?->datetime?->format('Y-m-d H:i') ?? '—' }}</td>
+                                <td class="px-6 py-3.5">
+                                    <span class="rounded-full px-2.5 py-0.5 text-xs {{ $boundSocial ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500' }}">
+                                        {{ $boundSocial ? __('account.social_status_bound') : __('account.social_status_unbound') }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-3.5">
+                                    @if($boundSocial)
+                                        <form method="POST" action="{{ route('account.social.unbind', ['provider' => $provider]) }}"
+                                              onsubmit="return confirm(this.dataset.msg)" data-msg="{{ __('account.social_unbind_confirm') }}">@csrf @method('DELETE')
+                                            <button class="text-xs font-medium text-red-600 hover:underline">{{ __('account.social_unbind_btn') }}</button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('social-login.redirect', ['provider' => $provider, 'bind' => 1]) }}"
+                                           class="text-xs font-medium text-brand-600 hover:underline">{{ __('account.social_bind_btn') }}</a>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" class="px-6 py-6 text-center text-sm text-zinc-400">{{ __('account.social_none_bound') }}</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <p class="border-t border-zinc-100 px-6 py-3 text-xs text-zinc-400">{{ __('account.social_manage_hint') }}</p>
+        </div>
+    </div>
+
     {{-- 手机号绑定弹窗（#9：必须放在所有 tab panel 之外 —— 原先埋在隐藏的 security 面板里，profile 页的绑定按钮打开时因祖先 display:none 永远不可见；两处入口（profile/security）共用。短信未开通时不渲染，避免弹窗 script 空引用） --}}
     @if(\App\Services\Sms\SmsService::scenarioEnabled('phone_bind'))
         @include('account.partials.phone-bind-modal')
@@ -339,7 +397,15 @@
         }
 
         btns.forEach(function (b) { b.addEventListener('click', function () { activate(b.dataset.accountTab); history.replaceState(null, '', '#tab-' + b.dataset.accountTab); }); });
-        activate((location.hash.match(/^#tab-(profile|billing|security)$/) || [])[1] || 'profile');
+        activate((location.hash.match(/^#tab-(profile|billing|security|social)$/) || [])[1] || 'profile');
+
+        // 其他标签内的跳转按钮（如「管理社交账号绑定」）
+        document.querySelectorAll('[data-account-tab-jump]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                activate(b.dataset.accountTabJump);
+                history.replaceState(null, '', '#tab-' + b.dataset.accountTabJump);
+            });
+        });
     })();
     </script>
 </div>

@@ -293,6 +293,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/account/twofa/enable', [AccountController::class, 'twofaEnable'])->name('account.twofa.enable');
     Route::delete('/account/twofa', [AccountController::class, 'twofaDisable'])->name('account.twofa.disable');
     Route::delete('/account', [AccountController::class, 'destroy'])->name('account.destroy');
+    Route::delete('/account/social/{provider}', [SocialLoginController::class, 'unbind'])->name('account.social.unbind');
 
     // 网站管理
     Route::get('/websites', [WebsiteController::class, 'index'])->name('websites.index');

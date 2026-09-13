@@ -89,7 +89,9 @@
                 <dt class="text-xs font-medium text-zinc-500">{{ __('msg.nameservers') }}</dt>
                 <dd class="mt-1 text-sm">
                     @if($domain->monitor_nameservers)
-                        @foreach(json_decode($domain->monitor_nameservers, true) ?? [] as $ns)
+                        {{-- 双格式兼容：新数据为 JSON 数组；旧数据为逗号分隔字符串（任务 #35-5） --}}
+                        @php($nsList = json_decode($domain->monitor_nameservers, true) ?? array_values(array_filter(array_map('trim', explode(',', $domain->monitor_nameservers)))))
+                        @foreach($nsList as $ns)
                             <span class="mr-2 inline-flex items-center rounded bg-zinc-100 px-2 py-0.5 text-xs font-mono">{{ $ns }}</span>
                         @endforeach
                     @else
@@ -105,8 +107,28 @@
                         @if(!empty($ssl))
                             <dl class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 <div>
+                                    <dt class="text-xs text-zinc-400">{{ __('msg.ssl_brand') }}</dt>
+                                    <dd class="text-sm">{{ $ssl['brand'] ?? ($ssl['issuer'] ?? '—') }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-zinc-400">{{ __('msg.ssl_type') }}</dt>
+                                    <dd class="text-sm">{{ $ssl['type'] ?? '—' }}</dd>
+                                </div>
+                                <div>
                                     <dt class="text-xs text-zinc-400">{{ __('msg.ssl_issuer') }}</dt>
                                     <dd class="text-sm">{{ $ssl['issuer'] ?? '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-zinc-400">{{ __('msg.ssl_subject') }}</dt>
+                                    <dd class="text-sm">{{ $ssl['subject'] ?? '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-zinc-400">{{ __('msg.ssl_organization') }}</dt>
+                                    <dd class="text-sm">{{ $ssl['organization'] ?? '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-zinc-400">{{ __('msg.ssl_san_count') }}</dt>
+                                    <dd class="text-sm">{{ isset($ssl['san']) && is_array($ssl['san']) ? count($ssl['san']) : '—' }}</dd>
                                 </div>
                                 <div>
                                     <dt class="text-xs text-zinc-400">{{ __('msg.ssl_valid_from') }}</dt>
@@ -115,6 +137,10 @@
                                 <div>
                                     <dt class="text-xs text-zinc-400">{{ __('msg.ssl_valid_to') }}</dt>
                                     <dd class="text-sm">{{ ($ssl['valid_to'] ?? null) ? \Carbon\Carbon::parse($ssl['valid_to'])->format('Y-m-d') : '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-zinc-400">{{ __('msg.ssl_days_left') }}</dt>
+                                    <dd class="text-sm {{ isset($ssl['days_left']) && (int) $ssl['days_left'] < 30 ? 'font-semibold text-red-600' : '' }}">{{ $ssl['days_left'] ?? '—' }}</dd>
                                 </div>
                             </dl>
                         @else

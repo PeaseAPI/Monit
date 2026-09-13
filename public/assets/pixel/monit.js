@@ -389,6 +389,16 @@
 
                 self._stopFn = window.rrweb.record({
                     emit: function (event) {
+                        // 任务 #35-3：只按访客视口录制。rrweb 的 Meta 事件（type 4）
+                        // 默认携带整份文档的 width/height（长页可达数千 px），
+                        // 回放器按该尺寸渲染 → 长页缩成一条、远超实际视口。
+                        // 此处改写为真实视口尺寸，回放即以视口呈现；
+                        // 滚动行为由 incrementalSnapshot 的 scroll 事件自然保留。
+                        // checkoutEveryNms 每 10s 重发 Meta，此钩子对每次都生效。
+                        if (event.type === 4 && event.data) {
+                            if (window.innerWidth) event.data.width = window.innerWidth;
+                            if (window.innerHeight) event.data.height = window.innerHeight;
+                        }
                         // Capture the first full-snapshot event (type 2) for heatmap use
                         if (!self._lastFullSnapshot && event.type === 2) {
                             self._lastFullSnapshot = event;

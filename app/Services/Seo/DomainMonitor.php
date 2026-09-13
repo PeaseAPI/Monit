@@ -238,7 +238,11 @@ class DomainMonitor
             'monitor_last_check_at' => now(),
             'monitor_expiration_date' => $result['expiration_date'] ?? $domain->monitor_expiration_date,
             'monitor_registrar' => $result['registrar'] ?? null,
-            'monitor_nameservers' => isset($result['nameservers']) ? implode(', ', $result['nameservers']) : null,
+            // 任务 #35-5：统一 JSON 数组存储（旧数据为逗号分隔字符串，视图端双格式兼容）；
+            // RDAP/whois 缺失 NS 时直接问权威 DNS 兜底
+            'monitor_nameservers' => $this->nameserversPayload($result['nameservers'] ?? null, $domain->host),
+            // 任务 #35-6：SSL 证书此前从未写入（monitor_ssl 恒为空 → 详情页永远显示 —）
+            'monitor_ssl' => $this->sslPayload($domain->host),
         ]);
 
         if (! $result['ok'] || $domain->monitor_expiration_date === null) {
@@ -246,6 +250,43 @@ class DomainMonitor
         }
 
         return (int) now()->startOfDay()->diffInDays($domain->monitor_expiration_date, false);
+    }
+
+    /**
+     * NS 存储载荷：优先 whois/RDAP 结果，缺失时兜底 DNS NS 记录；JSON 数组字符串或 null
+     *
+     * @param  array<int, mixed>|null  $nameservers
+     */
+    protected function nameserversPayload(?array $nameservers, string $host): ?string
+    {
+        $ns = array_values(array_unique(array_filter(array_map(
+            fn ($n) => strtolower(rtrim(Typed::string($n), '.')),
+            $nameservers ?? []
+        ))));
+
+        if ($ns === []) {
+            // 新 gTLD 的 RDAP 响应常缺 nameservers：直接问权威 DNS 的 NS 记录
+            $records = @dns_get_record($host.'.', DNS_NS);
+            $ns = collect($records ?: [])
+                ->pluck('target')
+                ->map(fn ($t) => strtolower(rtrim(Typed::string($t), '.')))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+        }
+
+        return $ns === [] ? null : json_encode($ns);
+    }
+
+    /**
+     * SSL 存储载荷：443 直连抓证书（品牌 / DV-OV-EV / 主体 / 有效期 / 剩余天数）；不可达时 null
+     */
+    protected function sslPayload(string $host): ?string
+    {
+        $info = (new SslInspector)->inspect($host);
+
+        return $info === null ? null : json_encode($info);
     }
 
     protected function query(string $server, string $domain): ?string
