@@ -11,7 +11,8 @@ use Throwable;
 
 /**
  * 关键词排名定时刷新：扫描 check_interval 到期的关键词并查询 SERP
- * 前置：后台 seo.audits_is_enabled 总开关 + seo.serpapi_api_key 已配置
+ * 前置：后台 seo.audits_is_enabled 总开关；SerpApi 未配置时自动走
+ * RankTracker 内置 Bing/百度抓取兜底（任务 #36-7），Google 引擎失败计入 failed
  */
 class SeoKeywordsRefresh extends Command
 {
@@ -29,12 +30,6 @@ class SeoKeywordsRefresh extends Command
     {
         if (! filter_var(Settings::get('seo.audits_is_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             $this->info('SEO 模块已停用（seo.audits_is_enabled），跳过。');
-
-            return self::SUCCESS;
-        }
-
-        if (! RankTracker::configured()) {
-            $this->info('未配置 seo.serpapi_api_key，跳过自动排名刷新。');
 
             return self::SUCCESS;
         }
@@ -65,6 +60,11 @@ class SeoKeywordsRefresh extends Command
                     } catch (Throwable $e) {
                         report($e);
                         $this->failed++;
+                    }
+
+                    // 内置抓取模式下的礼貌节流，降低被搜索引擎反爬命中的概率
+                    if (! RankTracker::configured()) {
+                        usleep(600000);
                     }
                 }
             });

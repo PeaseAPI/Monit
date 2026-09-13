@@ -6,6 +6,8 @@ use App\Services\GeoIp;
 use App\Services\Seo\AuditEngine;
 use App\Services\Seo\DomainMonitor;
 use App\Services\Seo\SslInspector;
+use App\Support\CountryNames;
+use App\Support\Ip2Region;
 use App\Support\Typed;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -76,16 +78,22 @@ class NetworkTools
         }
 
         // 任务 #35-9：接入本地 GeoIp（MaxMind City Lite + ip2region 中国省市级）
-        // 此前只返回反向解析与 IP 版本，信息量过少
+        // 任务 #36-9：国家显示中文名+国旗（对标 chinaz）；补运营商与 ASN——
+        // 中国 IP 用 ip2region 第 4 段（电信/联通/移动/云厂商），海外回退 Team Cymru
         $geo = app(GeoIp::class)->lookup($ip);
+        $countryCode = $geo['country_code'];
 
         $data = [
             'IP 版本' => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false ? 'IPv4' : 'IPv6',
             '反向解析' => Typed::nonEmpty(@gethostbyaddr($ip), '无'),
             '大洲' => static::continentName($geo['continent_code']),
-            '国家/地区' => $geo['country_code'],
+            '国家/地区' => $countryCode !== null
+                ? trim(CountryNames::name($countryCode, app()->getLocale()).' '.CountryNames::flag($countryCode)).' ('.$countryCode.')'
+                : null,
             '省份/州' => $geo['region_name'],
             '城市' => $geo['city_name'],
+            '运营商' => Ip2Region::isp($ip) ?? static::cymruAsnName($ip),
+            'ASN' => static::cymruAsnNumber($ip),
             '经纬度' => ($geo['latitude'] !== null && $geo['longitude'] !== null)
                 ? $geo['latitude'].', '.$geo['longitude']
                 : null,
@@ -93,6 +101,70 @@ class NetworkTools
 
         // GeoIp 库未命中（内网 IP / 本地库缺失）的键不展示，避免一排空值
         return ['ok' => true, 'data' => array_filter($data, fn ($v) => $v !== null)];
+    }
+
+    /**
+     * Team Cymru ASN 反查：IP → AS 号（origin / origin6 TXT 记录），不可达返回 null
+     */
+    protected static function cymruAsnNumber(string $ip): ?string
+    {
+        return static::cymruQuery($ip, 0);
+    }
+
+    /**
+     * Team Cymru ASN 反查：IP → AS 机构名（asn.cymru.com TXT 第 2 字段）
+     */
+    protected static function cymruAsnName(string $ip): ?string
+    {
+        return static::cymruQuery($ip, 1);
+    }
+
+    /**
+     * Cymru 查询统一入口：$field=0 取 AS 号，$field=1 取 AS 名
+     *
+     * origin TXT 形如「9808 | 222.222.0.0/16 | CN | ripencc | 2001-04-25」，
+     * asn TXT 形如「AS9808 | CHINA UNICOM China Hebei Province Backbone, CN」。
+     * dns_get_record 无超时参数，依赖系统 resolver 默认超时，与 dnsLookup 工具同前提。
+     */
+    protected static function cymruQuery(string $ip, int $field): ?string
+    {
+        $isV6 = str_contains($ip, ':');
+
+        if ($isV6) {
+            $nibbles = strrev(bin2hex((string) @inet_pton($ip)));
+            $reverse = implode('.', str_split($nibbles));
+            $zone = 'origin6.asn.cymru.com';
+        } else {
+            $reverse = implode('.', array_reverse(explode('.', $ip)));
+            $zone = 'origin.asn.cymru.com';
+        }
+
+        if ($reverse === '') {
+            return null;
+        }
+
+        $records = @dns_get_record($reverse.'.'.$zone, DNS_TXT);
+        $txt = Typed::string($records[0]['txt'] ?? '');
+
+        if ($txt === '') {
+            return null;
+        }
+
+        $asn = preg_replace('/[^0-9].*$/', '', trim((string) (explode('|', $txt)[0] ?? '')));
+
+        if ($asn === null || $asn === '') {
+            return null;
+        }
+
+        if ($field === 0) {
+            return 'AS'.$asn;
+        }
+
+        $asRecords = @dns_get_record($asn.'.asn.cymru.com', DNS_TXT);
+        $asTxt = Typed::string($asRecords[0]['txt'] ?? '');
+        $name = trim((string) (explode('|', $asTxt)[1] ?? ''));
+
+        return $name !== '' ? $name : null;
     }
 
     /** 大洲两位码 → 中文名（未识别时原样返回） */

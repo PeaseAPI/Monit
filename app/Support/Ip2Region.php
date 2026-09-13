@@ -41,6 +41,45 @@ class Ip2Region
      */
     public static function lookup(?string $ip): ?array
     {
+        $region = static::searchRegion($ip);
+
+        return $region === null ? null : static::parseRegion($region);
+    }
+
+    /**
+     * 查询 IP 的运营商/机构（xdb 第 5 段中的 ISP 字段）
+     *
+     * 中国段为 电信/联通/移动/阿里云/腾讯云 等中文 ISP 名；海外段多为
+     * ISP/机构英文名（库内记录质量参差，缺失占位「0」一律返回 null）。
+     * 任务 #36-9：ip_lookup 工具运营商行数据源。
+     */
+    public static function isp(?string $ip): ?string
+    {
+        $region = static::searchRegion($ip);
+
+        if ($region === null) {
+            return null;
+        }
+
+        return static::cleanField(explode('|', $region)[3] ?? '0');
+    }
+
+    /**
+     * 重置进程内 searcher 实例（xdb 文件更新后调用，测试亦用）
+     */
+    public static function flush(): void
+    {
+        static::$searcher = null;
+        static::$searcherPath = null;
+    }
+
+    /**
+     * 查询单个 IP 并返回原始 region 记录串（「国家|省份|城市|ISP|国家码」）
+     *
+     * 返回 null 的情形：IP 无效/内网保留段、库未部署、查询失败、记录为空。
+     */
+    protected static function searchRegion(?string $ip): ?string
+    {
         if (($ip === null || $ip === '') || filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
             return null;
         }
@@ -57,22 +96,7 @@ class Ip2Region
             return null;
         }
 
-        $region = static::searchSafe($searcher, $ip);
-
-        if ($region === null) {
-            return null;
-        }
-
-        return static::parseRegion($region);
-    }
-
-    /**
-     * 重置进程内 searcher 实例（xdb 文件更新后调用，测试亦用）
-     */
-    public static function flush(): void
-    {
-        static::$searcher = null;
-        static::$searcherPath = null;
+        return static::searchSafe($searcher, $ip);
     }
 
     /**
@@ -83,7 +107,7 @@ class Ip2Region
     protected static function parseRegion(string $region): ?array
     {
         $parts = explode('|', $region);
-        $country = trim($parts[0]);
+        $country = static::cleanField($parts[0] ?? '0');
         $province = static::cleanField($parts[1] ?? '0');
         $city = static::cleanField($parts[2] ?? '0');
         $countryCode = strtoupper(Typed::string(static::cleanField($parts[4] ?? '0')));

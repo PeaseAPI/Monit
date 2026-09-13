@@ -4,8 +4,9 @@
 <div class="max-w-7xl">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-bold text-zinc-900">{{ __('seo.keywords_title') }}</h1>
-        @unless ($autoEnabled)
-            <span class="rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-700">{{ __('seo.serpapi_not_configured_note') }}</span>
+        {{-- 任务 #36-7：内置 Bing/百度抓取兜底后自动查询恒可用，SerpApi 仅影响 Google 引擎 --}}
+        @unless ($serpConfigured)
+            <span class="rounded-full bg-sky-50 px-3 py-1 text-xs text-sky-700">{{ __('seo.auto_builtin_note') }}</span>
         @endunless
     </div>
 

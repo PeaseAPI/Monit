@@ -51,7 +51,10 @@ class SeoKeywordController extends Controller
             'keywords' => $keywords,
             'summary' => $summary,
             'websites' => Website::where('user_id', $this->user()->user_id)->orderBy('host')->get(['website_id', 'host']),
-            'autoEnabled' => RankTracker::configured(),
+            // 任务 #36-7：自动查询不再依赖 SerpApi（内置 Bing/百度抓取兜底恒可用），
+            // serpConfigured 仅用于信息性提示（配置 SerpApi 可增加 Google 支持）
+            'autoEnabled' => true,
+            'serpConfigured' => RankTracker::configured(),
             'recentRanks' => $recentRanks,
         ]);
     }
@@ -110,14 +113,16 @@ class SeoKeywordController extends Controller
             'is_enabled' => true,
         ]);
 
-        // 用户反馈：首次添加应立刻获取一次排名（SerpApi 已配置时同步查询；
-        // 失败不影响添加流程，后续 cron 每小时扫描 / 手动「立即刷新」可补齐）
-        if (RankTracker::configured()) {
-            try {
-                app(RankTracker::class)->check($keyword);
-            } catch (Throwable $e) {
-                report($e);
-            }
+        // 用户反馈 #36-7：首次添加立即自动查询一次——SerpApi 已配置走官方 API，
+        // 未配置走内置 Bing/百度抓取兜底（不再依赖第三方服务才能出首条快照）。
+        // 失败不影响添加流程（cron 每小时扫描 /「立即刷新」可补齐），但给出
+        // 明确提示而非静默成功，避免用户以为已出排名。
+        try {
+            app(RankTracker::class)->check($keyword);
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->with('success', __('seo.keyword_added_pending'));
         }
 
         return back()->with('success', __('seo.keyword_added'));
@@ -142,17 +147,14 @@ class SeoKeywordController extends Controller
     }
 
     /**
-     * 立即刷新排名（需 SerpApi 已配置）
+     * 立即刷新排名（任务 #36-7：不再要求 SerpApi——内置 Bing/百度抓取兜底恒可用；
+     * Google 引擎在服务器不可达时报 rank_check_failed，可稍后重试或手动录入）
      *
      * @return RedirectResponse
      */
     public function refresh(Request $request, SeoKeyword $keyword, RankTracker $tracker)
     {
         $this->authorizeOwn($request, $keyword);
-
-        if (! RankTracker::configured()) {
-            return back()->withErrors(['keyword' => __('seo.serpapi_not_configured')]);
-        }
 
         try {
             $rank = $tracker->check($keyword);
