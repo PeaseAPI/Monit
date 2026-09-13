@@ -9,6 +9,11 @@
         <input type="text" name="name" value="{{ old('name', $code->name) }}" required class="form-input"></div>
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.code_code') }}</label>
         <input type="text" name="code" value="{{ old('code', $code->code ?? ($codeValue ?? '')) }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 font-mono text-sm uppercase"></div>
+    @unless($code->exists)
+    <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.code_quantity') }}</label>
+        <input type="number" name="quantity" min="1" max="100" value="{{ old('quantity', 1) }}" class="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm">
+        <p class="mt-1 text-xs text-zinc-400">{{ __('admin.code_quantity_hint') }}</p></div>
+    @endunless
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.code_type') }}</label>
         <select name="type" class="form-input">
             <option value="discount" @selected(old('type', $code->type ?? 'discount'))>{{ __('admin.code_type_discount') }}</option>

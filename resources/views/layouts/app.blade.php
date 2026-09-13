@@ -224,19 +224,22 @@
                 <div class="ml-auto flex items-center gap-1.5">
                     {{-- 帮助中心 + 工单（三十八轮：自侧栏上移至顶栏，通知铃铛左侧） --}}
                     <a href="{{ route('help') }}" title="{{ __('nav.help') }}"
-                       class="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700">
+                       class="flex h-10 items-center gap-1.5 rounded-xl px-2.5 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
+                        <span class="hidden text-sm font-medium md:inline">{{ __('nav.help') }}</span>
                     </a>
                     <a href="{{ route('tickets.index') }}" title="{{ __('nav.tickets') }}"
-                       class="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700">
+                       class="flex h-10 items-center gap-1.5 rounded-xl px-2.5 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
+                        <span class="hidden text-sm font-medium md:inline">{{ __('nav.tickets') }}</span>
                     </a>
                     {{-- 通知铃铛 --}}
                     <a href="{{ route('notifications.index') }}" title="{{ __('nav.notifications') }}"
-                       class="relative flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700">
+                       class="relative flex h-10 items-center gap-1.5 rounded-xl px-2.5 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg>
+                        <span class="hidden text-sm font-medium md:inline">{{ __('nav.notifications') }}</span>
                         @if ($unreadNotifications > 0)
-                            <span class="absolute right-1.5 top-1.5 rounded-full bg-rose-500 px-1.5 text-[10px] font-semibold leading-4 text-white">{{ $unreadNotifications > 99 ? '99+' : $unreadNotifications }}</span>
+                            <span class="absolute right-1 top-1 rounded-full bg-rose-500 px-1.5 text-[10px] font-semibold leading-4 text-white">{{ $unreadNotifications > 99 ? '99+' : $unreadNotifications }}</span>
                         @endif
                     </a>
 

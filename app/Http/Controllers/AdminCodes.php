@@ -8,6 +8,7 @@ use App\Support\Typed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -39,12 +40,40 @@ class AdminCodes extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validated($request);
-        $validated['code'] = $validated['code'] ?? Str::upper(Str::random(16));
 
-        Code::create([...$validated, 'datetime' => now()]);
+        // 批量创建：quantity > 1 时忽略手工码，逐个生成唯一随机码（用户反馈 #40-6）
+        $quantity = (int) $request->input('quantity', 1);
+        $quantity = ($quantity >= 1 && $quantity <= 100) ? $quantity : 1;
+        $batch = $quantity > 1;
+
+        for ($i = 0; $i < $quantity; $i++) {
+            $attributes = $validated;
+            $attributes['code'] = $batch
+                ? $this->uniqueCode()
+                : ($validated['code'] ?? Str::upper(Str::random(16)));
+            $attributes['datetime'] = now();
+
+            Code::create($attributes);
+        }
+
+        $message = $batch
+            ? trans('msg.code_created_batch', ['count' => $quantity])
+            : __('msg.code_created');
 
         return redirect()->route('admin.codes.index')
-            ->with('success', __('msg.code_created'));
+            ->with('success', $message);
+    }
+
+    /**
+     * 生成全局唯一的随机兑换码（16 位大写字母数字；唯一索引的双保险）
+     */
+    protected function uniqueCode(): string
+    {
+        do {
+            $code = Str::upper(Str::random(16));
+        } while (Code::where('code', $code)->exists());
+
+        return $code;
     }
 
     /**
@@ -82,7 +111,7 @@ class AdminCodes extends Controller
     {
         $validated = Typed::arr($request->validate([
             'name' => ['required', 'string', 'max:256'],
-            'code' => ['nullable', 'string', 'max:64'],
+            'code' => ['nullable', 'string', 'max:64', Rule::unique('codes', 'code')->ignore($request->route('codeId'), 'code_id')],
             'type' => ['required', 'in:plan,discount'],
             'plan_id' => ['nullable', 'required_if:type,plan', 'string', 'max:64'],
             'days' => ['nullable', 'integer', 'min:0'],

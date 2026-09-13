@@ -98,7 +98,7 @@
 
 {{-- rrweb-player 自托管 + 初始化（国内 CDN 访问不稳定，改用同源静态资源） --}}
 <link rel="stylesheet" href="{{ asset('assets/pixel/rrweb-player.min.css') }}?v=20260912">
-<script src="{{ asset('assets/pixel/rrweb-player.min.js') }}"></script>
+<script src="{{ asset('assets/pixel/rrweb-player.min.js') }}?v=20260912"></script>
 <script>
 // 安全清洗：置空快照中所有 <script> 节点的内容与外链/内嵌文档
 // （与 heatmaps 页 sanitizeRrwebEvents 保持一致，防快照脚本在回放 iframe 中执行）

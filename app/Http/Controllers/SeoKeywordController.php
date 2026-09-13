@@ -147,6 +147,25 @@ class SeoKeywordController extends Controller
     }
 
     /**
+     * 排名查询失败的用户文案：按异常原因分类（百度反爬 / Google 不可达 / 通用），
+     * 给出可行出路（换 Bing 引擎 / 配置 SerpApi / 手动录入）而非笼统的「稍后重试」
+     */
+    protected function rankFailureMessage(Throwable $e): string
+    {
+        $reason = $e->getMessage();
+
+        if (str_starts_with($reason, 'serp_scrape_blocked:baidu')) {
+            return __('seo.rank_blocked_baidu');
+        }
+
+        if (str_starts_with($reason, 'serp_scrape_unreachable:google')) {
+            return __('seo.rank_unreachable_google');
+        }
+
+        return __('seo.rank_check_failed');
+    }
+
+    /**
      * 立即刷新排名（任务 #36-7：不再要求 SerpApi——内置 Bing/百度抓取兜底恒可用；
      * Google 引擎在服务器不可达时报 rank_check_failed，可稍后重试或手动录入）
      *
@@ -161,7 +180,7 @@ class SeoKeywordController extends Controller
         } catch (Throwable $e) {
             report($e);
 
-            return back()->withErrors(['keyword' => __('seo.rank_check_failed')]);
+            return back()->withErrors(['keyword' => $this->rankFailureMessage($e)]);
         }
 
         $position = $rank->position;
