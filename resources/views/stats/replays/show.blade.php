@@ -108,11 +108,23 @@ function sanitizeRrwebEvents(events) {
         const tag = String(node.tagName || '').toLowerCase();
         if (node.type === 2 && tag === 'script') {
             node.childNodes = [];
-            if (node.attrs) { node.attrs.src = ''; node.attrs.srcdoc = ''; }
+            if (node.attrs) {
+                // 必须 delete 移除属性键而非置空字符串：置空会产生 src=""，
+                // rrweb rebuild 时 setAttribute('src','') 被浏览器解析为当前
+                // 文档 URL（about:blank 继承父文档 = 回放页自身），于是把整
+                // 页 HTML 当脚本请求执行 → 被 sandbox（无 allow-scripts）拦
+                // 截报 "Blocked script execution in '.../replays/N'"。delete
+                // 后 rrweb 不再设置该属性；内联脚本也已清空 childNodes。
+                delete node.attrs.src;
+                delete node.attrs.srcdoc;
+            }
             return;
         }
         if (node.type === 2 && tag === 'iframe' && node.attrs) {
-            node.attrs.srcdoc = '';
+            // 同理 delete：iframe 重建后若保留 src，浏览器会重新加载原始文
+            // 档（同源=统计污染，跨域=无谓流量），内容由子节点快照重建
+            delete node.attrs.srcdoc;
+            delete node.attrs.src;
         }
         const kids = node.childNodes;
         if (Array.isArray(kids)) { for (let i = 0; i < kids.length; i++) strip(kids[i]); }
