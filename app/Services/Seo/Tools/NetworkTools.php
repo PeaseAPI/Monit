@@ -79,7 +79,8 @@ class NetworkTools
 
         // 任务 #35-9：接入本地 GeoIp（MaxMind City Lite + ip2region 中国省市级）
         // 任务 #36-9：国家显示中文名+国旗（对标 chinaz）；补运营商与 ASN——
-        // 中国 IP 用 ip2region 第 4 段（电信/联通/移动/云厂商），海外回退 Team Cymru
+        // 优先 ip2region 第 4 段（中国=电信/联通/移动，海外多为机构英文名），
+        // 海外缺失时回退 ip-api.com（大陆可达）→ Team Cymru（海外部署场景）
         $geo = app(GeoIp::class)->lookup($ip);
         $countryCode = $geo['country_code'];
 
@@ -92,8 +93,8 @@ class NetworkTools
                 : null,
             '省份/州' => $geo['region_name'],
             '城市' => $geo['city_name'],
-            '运营商' => Ip2Region::isp($ip) ?? static::cymruAsnName($ip),
-            'ASN' => static::cymruAsnNumber($ip),
+            '运营商' => Ip2Region::isp($ip) ?? static::ipApiValue($ip, 'isp') ?? static::cymruAsnName($ip),
+            'ASN' => static::ipApiValue($ip, 'as') ?? static::cymruAsnNumber($ip),
             '经纬度' => ($geo['latitude'] !== null && $geo['longitude'] !== null)
                 ? $geo['latitude'].', '.$geo['longitude']
                 : null,
@@ -109,6 +110,30 @@ class NetworkTools
     protected static function cymruAsnNumber(string $ip): ?string
     {
         return static::cymruQuery($ip, 0);
+    }
+
+    /**
+     * ip-api.com 免费查询（大陆服务器可达的 ASN/ISP 回退源——Team Cymru 的
+     * DNS TXT 与 whois:43 在大陆网络普遍不可达，实测被拦截）
+     *
+     * 返回 as（形如「AS15169 Google LLC」）/ isp 字段；status=success 才采用，
+     * 失败 / 超时 / 限速（免费版 45 次/分钟）静默返回 null 回退 Cymru。
+     */
+    protected static function ipApiValue(string $ip, string $field): ?string
+    {
+        try {
+            $response = Http::timeout(5)->get('http://ip-api.com/json/'.$ip, ['fields' => 'status,'.$field]);
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (! $response->successful() || Typed::string($response->json('status')) !== 'success') {
+            return null;
+        }
+
+        $value = trim(Typed::string($response->json($field)));
+
+        return $value !== '' ? $value : null;
     }
 
     /**
