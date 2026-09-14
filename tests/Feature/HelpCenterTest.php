@@ -139,12 +139,13 @@ class HelpCenterTest extends TestCase
         $this->seed(HelpCenterSeeder::class);
         $this->seed(HelpCenterSeeder::class); // 重复执行不产生重复数据
 
-        $this->assertSame(10, HelpCategory::count());
-        $this->assertSame(45, HelpArticle::count());
+        // 43d42a90 新增「第三方服务接入」分类(+1 分类/+9 篇)后,断言未同步:10/45 → 11/54
+        $this->assertSame(11, HelpCategory::count());
+        $this->assertSame(54, HelpArticle::count());
 
         // 未分类之外的每篇文章都有归属分类
-        $this->assertSame(45, HelpArticle::whereNotNull('category_id')->count());
-        $this->assertSame(45, HelpArticle::where('is_published', true)->count());
+        $this->assertSame(54, HelpArticle::whereNotNull('category_id')->count());
+        $this->assertSame(54, HelpArticle::where('is_published', true)->count());
 
         // 前台首页展示分类与文章
         $this->get('/help')

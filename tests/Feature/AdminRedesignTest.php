@@ -104,7 +104,8 @@ class AdminRedesignTest extends TestCase
     {
         $this->actingAs($this->adminUser());
 
-        $response = $this->get(route('admin.settings.index'));
+        // 设置页 3.0：单 tab 渲染，maps 表单在 maps tab
+        $response = $this->get(route('admin.settings.index', ['tab' => 'maps']));
         $response->assertOk()
             ->assertSee(__('admin.settings_maps'))
             ->assertSee('name="provider"', false)

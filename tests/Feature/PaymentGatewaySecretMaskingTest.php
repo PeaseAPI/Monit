@@ -65,7 +65,8 @@ class PaymentGatewaySecretMaskingTest extends TestCase
     {
         $admin = $this->makeAdmin();
 
-        $response = $this->actingAs($admin)->get('/admin/settings');
+        // 设置页 3.0:单 tab 渲染,掩码断言针对网关密钥 tab
+        $response = $this->actingAs($admin)->get('/admin/settings?tab=payment_gateways');
 
         $response->assertOk();
         $html = (string) $response->getContent();

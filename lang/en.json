@@ -638,6 +638,8 @@
   "admin.settings_health": "Health",
   "admin.settings_internal_notifications": "Internal Notifications",
   "admin.settings_main": "General",
+  "admin.settings_main_features": "Feature Toggles",
+  "admin.settings_main_display": "Display & Performance",
   "admin.settings_maps": "Maps",
   "admin.settings_offload": "Storage Offload",
   "admin.settings_payment": "Payment",

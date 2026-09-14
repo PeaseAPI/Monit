@@ -638,6 +638,8 @@
   "admin.settings_health": "Kesihatan",
   "admin.settings_internal_notifications": "Internal Notifications",
   "admin.settings_main": "Utama",
+  "admin.settings_main_features": "Suis Ciri",
+  "admin.settings_main_display": "Paparan & Prestasi",
   "admin.settings_maps": "Peta",
   "admin.settings_offload": "Storage Offload",
   "admin.settings_payment": "Pembayaran",

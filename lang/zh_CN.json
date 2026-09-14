@@ -638,6 +638,8 @@
   "admin.settings_health": "健康检查",
   "admin.settings_internal_notifications": "站内通知",
   "admin.settings_main": "常规",
+  "admin.settings_main_features": "功能开关",
+  "admin.settings_main_display": "展示与性能",
   "admin.settings_maps": "地图",
   "admin.settings_offload": "存储设置",
   "admin.settings_payment": "支付",

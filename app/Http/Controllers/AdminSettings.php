@@ -35,19 +35,36 @@ class AdminSettings extends Controller
      */
     public function index(Request $request)
     {
-        $settings = $this->allSettings();
+        // 设置页 3.0：URL 驱动、单 tab 渲染——一次只组装/渲染当前 tab。
+        // 此前整页把 33 个 panel 全部渲染进 DOM（HTML ~296KB，靠 JS 隐藏切换），
+        // 页面又长又重；现改为只渲染当前 tab，切换即导航（可前进后退/分享/新标签）。
+        $tab = $request->query('tab', 'main');
 
-        // 「支付网关密钥」组不存 settings 表：当前值直接读 .env（EnvWriter）
-        $settings['payment_gateways'] = app(EnvWriter::class)
-            ->readMany(PaymentGatewayCatalog::keys());
+        // 合法 tab = 持久化设置组(allSettings)+ 只读运维面板(cache/health/support)
+        if (! in_array($tab, array_merge(array_keys($this->allSettings()), ['cache', 'health', 'support']), true)) {
+            $tab = 'main';
+        }
 
-        // business 为持久化设置组（allSettings 已含）；cache/health/support
-        // 为只读运维面板（原系统独立功能页），数据在控制器组装，不接受表单保存
-        $settings['cache'] = $this->cachePanel();
-        $settings['health'] = $this->healthPanel();
-        $settings['support'] = $this->supportPanel();
+        $settings = [];
 
-        return view('admin.settings.index', compact('settings'))->with('adminNav', 'settings');
+        if ($tab === 'payment_gateways') {
+            // 「支付网关密钥」组不存 settings 表：当前值直接读 .env（EnvWriter）
+            $settings['payment_gateways'] = app(EnvWriter::class)
+                ->readMany(PaymentGatewayCatalog::keys());
+        } elseif ($tab === 'cache') {
+            // cache/health/support 为只读运维面板（原系统独立功能页），
+            // 数据在控制器组装，不接受表单保存
+            $settings['cache'] = $this->cachePanel();
+        } elseif ($tab === 'health') {
+            $settings['health'] = $this->healthPanel();
+        } elseif ($tab === 'support') {
+            $settings['support'] = $this->supportPanel();
+        } else {
+            // main_features / main_display 与 main 共享 main.* 存储（见 storageGroup）
+            $settings[$tab] = $this->getGroup($this->storageGroup($tab));
+        }
+
+        return view('admin.settings.index', compact('settings', 'tab'))->with('adminNav', 'settings');
     }
 
     /**
@@ -99,7 +116,9 @@ class AdminSettings extends Controller
 
         $validated = Typed::arr($validator->validated());
 
-        // 未勾选的复选框不会提交，显式置为 false 以支持"取消勾选后保存"
+        // 未勾选的复选框不会提交，显式置为 false 以支持"取消勾选后保存"。
+        // 基于**当前提交组**的规则补偿：main 拆分后的子 tab 只含自己的字段，
+        // 不会把其他子 tab 未提交的开关误写成 false
         foreach (array_keys(array_filter($rules, fn ($rule) => str_contains(Typed::string($rule), 'boolean'))) as $field) {
             $validated[$field] = $request->boolean($field);
         }
@@ -123,12 +142,24 @@ class AdminSettings extends Controller
             $validated = $this->handleBrandingUploads($request, $validated);
         }
 
-        $this->saveSettings($group, $validated);
+        $this->saveSettings($this->storageGroup($group), $validated);
 
         // 同时清 Cache 与进程内静态缓存（Settings::flush）
         Settings::flush();
 
         return $this->settingsRedirect($group)->with('success', __('msg.settings_saved', ['group' => $group]));
+    }
+
+    /**
+     * UI 分组 → 存储分组的映射。
+     *
+     * main 拆分成 main / main_features / main_display 三个选项卡后，
+     * 三个 tab 仍读写同一批 main.* 键：数据零迁移，运行时消费方
+     * （前台/定时任务/插件）照常读 main.*，无需任何配套改动。
+     */
+    protected function storageGroup(string $uiGroup): string
+    {
+        return str_starts_with($uiGroup, 'main_') ? 'main' : $uiGroup;
     }
 
     /**
@@ -353,8 +384,14 @@ class AdminSettings extends Controller
      */
     protected function allSettings(): array
     {
+        // main 拆分的两个子 tab 与 main 共享同一存储组（main.* 键），
+        // 读一次复用三份，避免重复查询
+        $main = $this->getGroup('main');
+
         return [
-            'main' => $this->getGroup('main'),
+            'main' => $main,
+            'main_features' => $main, // 功能开关/首页区块/维护模式（存储组 main）
+            'main_display' => $main,  // 列表与分页/主题样式/图表缓存（存储组 main）
             'users' => $this->getGroup('users'),
             'payment' => $this->getGroup('payment'),
             'payment_gateways' => [], // 当前值在 index() 中从 .env 读取（EnvWriter）
@@ -430,45 +467,53 @@ class AdminSettings extends Controller
                 'notification_email' => 'nullable|email|max:256',
                 'inbound_email' => 'nullable|email|max:256',
             ],
+            // main 常规 tab：站点基础 + 重定向与法律（partials/main；存储组 main.*）
             'main' => [
                 'site_title' => 'required|string|max:256',
                 'site_description' => 'nullable|string|max:1024',
                 'default_language' => 'required|string|max:10',
+                'default_timezone' => 'nullable|string|max:64',
+                'title_separator' => 'nullable|string|max:8',
+                'index_url' => 'nullable|string|max:512',
+                'referrer_policy' => 'nullable|string|max:64',
+                'not_found_url' => 'nullable|string|max:512',
+                'terms_and_conditions_url' => 'nullable|string|max:512',
+                'privacy_policy_url' => 'nullable|string|max:512',
+                'sitemap_url' => 'nullable|string|max:512',
+                // 顺手补：og_image 字段此前在 partial 有、规则缺失，保存时被静默忽略
+                'og_image' => 'nullable|string|max:512',
+            ],
+            // main 功能开关子 tab：功能开关/首页区块/维护模式（partials/main_features；存储组 main.*）
+            'main_features' => [
                 'registration_is_enabled' => 'boolean',
-                'maintenance_is_enabled' => 'boolean',
-                'seo_is_enabled' => 'boolean',
-                'iframe_is_enabled' => 'boolean',
+                'api_is_enabled' => 'boolean',
                 'whitelabel_is_enabled' => 'boolean',
                 'force_https' => 'boolean',
-                'api_is_enabled' => 'boolean',
+                'seo_is_enabled' => 'boolean',
+                'iframe_is_enabled' => 'boolean',
                 'ai_crawlers_is_enabled' => 'boolean',
-                // ↓ 原版对标补充（66 分析 / AltumCode）
-                'default_timezone' => 'nullable|string|max:64',
-                'avatar_size_limit' => 'nullable|integer|min:16|max:20480',
-                'default_theme_style' => 'nullable|string|in:light,dark',
-                'theme_style_change_is_enabled' => 'boolean',
                 'auto_language_detection_is_enabled' => 'boolean',
                 'breadcrumbs_is_enabled' => 'boolean',
-                'display_pagination_when_no_pages' => 'boolean',
-                'default_results_per_page' => 'nullable|integer|min:5|max:100',
-                'default_order_type' => 'nullable|string|in:ASC,DESC',
                 'display_index_plans' => 'boolean',
                 'display_index_testimonials' => 'boolean',
                 'display_index_faq' => 'boolean',
                 'display_index_latest_blog_posts' => 'boolean',
-                'index_url' => 'nullable|string|max:512',
+                'maintenance_is_enabled' => 'boolean',
                 'maintenance_title' => 'nullable|string|max:256',
                 'maintenance_description' => 'nullable|string|max:2048',
                 'maintenance_button_text' => 'nullable|string|max:64',
                 'maintenance_button_url' => 'nullable|string|max:512',
-                'referrer_policy' => 'nullable|string|max:64',
-                'title_separator' => 'nullable|string|max:8',
-                'not_found_url' => 'nullable|string|max:512',
-                'terms_and_conditions_url' => 'nullable|string|max:512',
-                'privacy_policy_url' => 'nullable|string|max:512',
+            ],
+            // main 展示与性能子 tab：列表与分页/主题样式/图表缓存（partials/main_display；存储组 main.*）
+            'main_display' => [
+                'display_pagination_when_no_pages' => 'boolean',
+                'default_results_per_page' => 'nullable|integer|min:5|max:100',
+                'default_order_type' => 'nullable|string|in:ASC,DESC',
+                'avatar_size_limit' => 'nullable|integer|min:16|max:20480',
+                'default_theme_style' => 'nullable|string|in:light,dark',
+                'theme_style_change_is_enabled' => 'boolean',
                 'chart_cache' => 'nullable|integer|min:0|max:10080',
                 'chart_days' => 'nullable|integer|min:1|max:365',
-                'sitemap_url' => 'nullable|string|max:512',
             ],
             // SEO 功能设置（后台 seo 组；上游：设置页 partials/seo；下游：SeoFeatureEnabled
             // 中间件 / AuditEngine / SeoToolController / 定时任务 Seo/* 命令）

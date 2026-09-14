@@ -52,7 +52,8 @@ class PaymentGatewaySettingsTest extends TestCase
     {
         $admin = $this->makeUser(['email' => 'admin@m25.dev', 'type' => 1]);
 
-        $this->actingAs($admin)->get('/admin/settings')
+        // 设置页 3.0:单 tab 渲染,网关密钥表单在 payment_gateways tab
+        $this->actingAs($admin)->get('/admin/settings?tab=payment_gateways')
             ->assertOk()
             ->assertSee('payment_gateways')
             ->assertSee('STRIPE_WEBHOOK_SECRET')

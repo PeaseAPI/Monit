@@ -7,10 +7,13 @@
 </div>
 
 @php
-    // 设置页 2.0：左侧竖向分组导航 + 右侧表单面板
+    // 设置页 3.0：URL 驱动（?tab=xxx），左侧分组导航为链接（可分享/新标签/前进后退），
+    // 一次只渲染当前 tab 的表单面板——页面不再一次塞下全部 33 个 panel
     $tabGroups = [
         __('admin.nav_section_overview') => [
             'main' => __('admin.settings_main'),
+            'main_features' => __('admin.settings_main_features'),
+            'main_display' => __('admin.settings_main_display'),
             'users' => __('admin.settings_users'),
             'content' => __('admin.settings_content'),
             'analytics' => __('admin.settings_analytics'),
@@ -53,43 +56,44 @@
             'support' => __('admin.settings_support'),
         ],
     ];
+
+    // 控制器已归一非法 tab → main
+    $currentTab = $tab;
+    // cache/health/support 为只读运维面板：不包保存表单
+    $readonlyTabs = ['cache', 'health', 'support'];
 @endphp
 
 <div class="flex flex-col gap-6 lg:flex-row">
-    {{-- 左：竖向 tab 导航（sticky） --}}
+    {{-- 左：竖向分组导航（sticky，链接式：可分享/新标签/前进后退） --}}
     <nav class="w-full shrink-0 lg:sticky lg:top-24 lg:w-60" id="settings-tabs">
         <div class="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
             @foreach ($tabGroups as $groupLabel => $tabs)
                 <p class="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-widest text-zinc-400 first:pt-3">{{ $groupLabel }}</p>
-                @foreach ($tabs as $tab => $label)
-                    <button type="button" onclick="switchTab(this.dataset.tab)"
-                        class="settings-tab flex w-full items-center justify-between border-l-2 px-4 py-2 text-left text-sm font-medium transition {{ $loop->parent->first && $loop->first ? 'border-brand-600 bg-brand-50/70 text-brand-700' : 'border-transparent text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900' }}"
-                        data-tab="{{ $tab }}">
+                @foreach ($tabs as $tabKey => $label)
+                    <a href="{{ route('admin.settings.index', ['tab' => $tabKey]) }}"
+                        @class([
+                            'settings-tab flex w-full items-center border-l-2 px-4 py-2 text-left text-sm font-medium transition',
+                            'border-brand-600 bg-brand-50/70 text-brand-700' => $tabKey === $currentTab,
+                            'border-transparent text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900' => $tabKey !== $currentTab,
+                        ])>
                         <span class="truncate">{{ $label }}</span>
-                    </button>
+                    </a>
                 @endforeach
             @endforeach
         </div>
     </nav>
 
-    {{-- 右：表单面板 --}}
+    {{-- 右：当前 tab 的表单面板（仅渲染一个，页面短而快） --}}
     <div class="min-w-0 flex-1">
-        @php
-            $currentTab = old('group', request()->query('tab', 'main'));
-            // cache/health/support 为只读运维面板：不包保存表单
-            $readonlyTabs = ['cache', 'health', 'support'];
-        @endphp
-
-        @foreach(['main','users','content','analytics','seo','maps','tickets','branding','custom','custom_images','ads','cookie_consent','socials','announcements','payment','payment_gateways','business','plan_free','plan_guest','plan_custom','affiliate','smtp','sms','ai','captcha','email_notifications','internal_notifications','webhooks','offload','cron','cache','health','support'] as $tab)
-        <div class="settings-panel hidden" id="panel-{{ $tab }}">
-            @if(in_array($tab, $readonlyTabs, true))
-                @include("admin.settings.partials.{$tab}", ['settings' => $settings[$tab] ?? []])
+        <div class="settings-panel" id="panel-{{ $currentTab }}">
+            @if(in_array($currentTab, $readonlyTabs, true))
+                @include("admin.settings.partials.{$currentTab}", ['settings' => $settings[$currentTab] ?? []])
             @else
             <form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-6" enctype="multipart/form-data">
                 @csrf @method('PUT')
-                <input type="hidden" name="group" value="{{ $tab }}">
+                <input type="hidden" name="group" value="{{ $currentTab }}">
 
-                @include("admin.settings.partials.{$tab}", ['settings' => $settings[$tab] ?? []])
+                @include("admin.settings.partials.{$currentTab}", ['settings' => $settings[$currentTab] ?? []])
 
                 {{-- 独立保存按钮（用户反馈 #19：弃用 sticky 底部大条，改为表单内常规右对齐按钮） --}}
                 <div class="flex justify-end border-t border-zinc-100 pt-5">
@@ -100,34 +104,6 @@
             </form>
             @endif
         </div>
-        @endforeach
     </div>
 </div>
-
-<script>
-function switchTab(tab) {
-    document.querySelectorAll('.settings-tab').forEach(el => {
-        el.classList.remove('border-brand-600', 'bg-brand-50/70', 'text-brand-700');
-        el.classList.add('border-transparent', 'text-zinc-600');
-    });
-    document.querySelectorAll('.settings-panel').forEach(el => el.classList.add('hidden'));
-
-    const activeTab = document.querySelector(`[data-tab="${tab}"]`);
-    if (activeTab) {
-        activeTab.classList.add('border-brand-600', 'bg-brand-50/70', 'text-brand-700');
-        activeTab.classList.remove('border-transparent', 'text-zinc-600');
-        activeTab.scrollIntoView({ block: 'nearest' });
-    }
-    const panel = document.getElementById(`panel-${tab}`);
-    if (panel) panel.classList.remove('hidden');
-
-    const url = new URL(window.location);
-    url.searchParams.set('tab', tab);
-    history.replaceState({}, '', url);
-}
-
-// Initialize based on URL
-const urlTab = new URL(window.location).searchParams.get('tab') || 'main';
-switchTab(urlTab);
-</script>
 @endsection

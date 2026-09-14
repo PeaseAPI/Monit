@@ -34,7 +34,9 @@ class RouteIntegrityTest extends TestCase
             ->name('/\.(blade\.php|php)$/');
 
         foreach ($finder as $file) {
-            preg_match_all("/route\(\s*'([a-zA-Z0-9_.\-]+)'/", $file->getContents(), $m);
+            // 负向断言排除 $request->route('param') 这类「路由参数」引用——
+            // 它取的是当前路由的参数名而非路由名（AdminCodes codeId 假阳性）
+            preg_match_all("/(?<![-\\w>$])route\\(\\s*'([a-zA-Z0-9_.\\-]+)'/", $file->getContents(), $m);
 
             foreach ($m[1] as $name) {
                 if (str_starts_with($name, 'admin.plugins.')) {

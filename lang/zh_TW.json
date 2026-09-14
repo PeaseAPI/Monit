@@ -638,6 +638,8 @@
   "admin.settings_health": "健康檢查",
   "admin.settings_internal_notifications": "站內通知",
   "admin.settings_main": "常規",
+  "admin.settings_main_features": "功能開關",
+  "admin.settings_main_display": "展示與效能",
   "admin.settings_maps": "地圖",
   "admin.settings_offload": "存儲設定",
   "admin.settings_payment": "支付",

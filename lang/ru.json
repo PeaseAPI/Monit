@@ -638,6 +638,8 @@
   "admin.settings_health": "Состояние",
   "admin.settings_internal_notifications": "Внутренние уведомления",
   "admin.settings_main": "Основные",
+  "admin.settings_main_features": "Переключатели функций",
+  "admin.settings_main_display": "Вид и производительность",
   "admin.settings_maps": "Карты",
   "admin.settings_offload": "Хранилище",
   "admin.settings_payment": "Платежи",

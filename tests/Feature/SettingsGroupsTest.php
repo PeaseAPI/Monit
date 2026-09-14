@@ -37,23 +37,46 @@ class SettingsGroupsTest extends TestCase
     {
         $admin = $this->makeUser(['email' => 'admin@taskc.dev', 'type' => 1]);
 
+        // 设置页 3.0:默认 tab=main 只渲染 main 面板;其余 tab 通过导航链接访问
         $this->actingAs($admin)->get('/admin/settings')
             ->assertOk()
+            ->assertSee('id="panel-main"', false)
+            // 导航链接包含全部 tab(main 拆分的两个子 tab 也在)
+            ->assertSee('tab=main_features', false)
+            ->assertSee('tab=main_display', false)
+            ->assertSee('tab=business', false)
+            ->assertSee('tab=cache', false)
+            ->assertSee('tab=health', false)
+            ->assertSee('tab=support', false)
+            // 死 tab 不应出现在导航链接中(防回归)
+            ->assertDontSee('tab=pwa', false)
+            ->assertDontSee('tab=email_shield', false)
+            ->assertDontSee('tab=image_optimizer', false)
+            ->assertDontSee('tab=dynamic_og_images', false)
+            ->assertDontSee('tab=push_notifications', false);
+
+        // 各具体 tab 独立渲染(单 panel)
+        $this->actingAs($admin)->get('/admin/settings?tab=business')
+            ->assertOk()
             ->assertSee('id="panel-business"', false)
-            ->assertSee('id="panel-cache"', false)
-            ->assertSee('id="panel-health"', false)
-            ->assertSee('id="panel-support"', false)
             ->assertSee('品牌名称（发票抬头）')
-            ->assertSee('清空缓存')
-            ->assertSee('产品版本')
-            ->assertSee('发票信息')
-            // 配置源统一专项：五个死配置组 tab 已移除（运行时读 plugins 表，
-            // settings 死配置永不生效），断言不存在以防回归
-            ->assertDontSee('id="panel-pwa"', false)
-            ->assertDontSee('id="panel-email_shield"', false)
-            ->assertDontSee('id="panel-image_optimizer"', false)
-            ->assertDontSee('id="panel-dynamic_og_images"', false)
-            ->assertDontSee('id="panel-push_notifications"', false);
+            ->assertSee('发票信息');
+
+        $this->actingAs($admin)->get('/admin/settings?tab=cache')
+            ->assertOk()
+            ->assertSee('id="panel-cache"', false)
+            ->assertSee('清空缓存');
+
+        $this->actingAs($admin)->get('/admin/settings?tab=health')
+            ->assertOk()
+            ->assertSee('id="panel-health"', false)
+            ->assertSee('缓存驱动');
+
+        // 「产品版本」属于 support 面板（原全页渲染时无法区分归属）
+        $this->actingAs($admin)->get('/admin/settings?tab=support')
+            ->assertOk()
+            ->assertSee('id="panel-support"', false)
+            ->assertSee('产品版本');
     }
 
     /* ---------------- business 组保存 ---------------- */
@@ -89,8 +112,8 @@ class SettingsGroupsTest extends TestCase
         $this->assertSame('MON-', Settings::get('business.invoice_nr_prefix'));
         $this->assertSame('VAT', Settings::get('business.tax_type'));
 
-        // 保存后设置页回显
-        $this->actingAs($admin)->get('/admin/settings')
+        // 保存后设置页回显（设置页 3.0:单 tab 渲染）
+        $this->actingAs($admin)->get('/admin/settings?tab=business')
             ->assertOk()
             ->assertSee('蒙尼特科技')
             ->assertSee('91110000MA01XXXXXX');
@@ -129,7 +152,7 @@ class SettingsGroupsTest extends TestCase
     {
         $admin = $this->makeUser(['email' => 'admin@taskc.dev', 'type' => 1]);
 
-        $this->actingAs($admin)->get('/admin/settings')
+        $this->actingAs($admin)->get('/admin/settings?tab=seo')
             ->assertOk()
             ->assertSee('id="panel-seo"', false)
             ->assertSee('SEO 审计')
@@ -165,8 +188,8 @@ class SettingsGroupsTest extends TestCase
         $this->assertSame('45,14,3', Settings::get('seo.domain_monitor_alert_days'));
         $this->assertSame('90', Settings::get('seo.archives_retention_days'));
 
-        // 保存后设置页回显
-        $this->actingAs($admin)->get('/admin/settings')
+        // 保存后设置页回显（设置页 3.0:单 tab 渲染）
+        $this->actingAs($admin)->get('/admin/settings?tab=seo')
             ->assertOk()
             ->assertSee('MonitBot/2.0')
             ->assertSee('45,14,3');

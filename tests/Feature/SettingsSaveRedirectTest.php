@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Support\Settings;
+use Database\Seeders\HelpCenterSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
@@ -35,7 +36,7 @@ class SettingsSaveRedirectTest extends TestCase
         ]);
 
         // 帮助文章存于 DB（模拟新标签打开「详细申请教程」目标页）
-        $this->seed(\Database\Seeders\HelpCenterSeeder::class);
+        $this->seed(HelpCenterSeeder::class);
 
         // Settings 有进程内静态缓存，跨测试会残留上一用例读到的值
         Settings::flush();
@@ -118,23 +119,24 @@ class SettingsSaveRedirectTest extends TestCase
     #[Test]
     public function all_settings_panels_have_top_level_sections_matched_with_source(): void
     {
-        // 一次渲染整页(33 个 panel 全在 DOM 中),对每个 panel 断言:
+        // 设置页 3.0：URL 驱动单 tab 渲染——逐 tab GET 渲染,对每个 panel 断言:
         // 顶层 section 数 == partial 源码 <section 开标签数(嵌套错位即失败)
-        $html = (string) $this->actingAs($this->admin)
-            ->get('/admin/settings')
-            ->assertOk()
-            ->getContent();
-
-        $dom = new \DOMDocument();
-        libxml_use_internal_errors(true);
-        $dom->loadHTML($html);
-        libxml_clear_errors();
-        $xpath = new \DOMXPath($dom);
-
+        // main 拆分后共 35 个 tab(原 33 + main_features + main_display)
         $readonlyTabs = ['cache', 'health', 'support'];
         $mismatches = [];
 
-        foreach (['main', 'users', 'content', 'analytics', 'seo', 'maps', 'tickets', 'branding', 'custom', 'custom_images', 'ads', 'cookie_consent', 'socials', 'announcements', 'payment', 'payment_gateways', 'business', 'plan_free', 'plan_guest', 'plan_custom', 'affiliate', 'smtp', 'sms', 'ai', 'captcha', 'email_notifications', 'internal_notifications', 'webhooks', 'offload', 'cron', 'cache', 'health', 'support'] as $tab) {
+        foreach (['main', 'main_features', 'main_display', 'users', 'content', 'analytics', 'seo', 'maps', 'tickets', 'branding', 'custom', 'custom_images', 'ads', 'cookie_consent', 'socials', 'announcements', 'payment', 'payment_gateways', 'business', 'plan_free', 'plan_guest', 'plan_custom', 'affiliate', 'smtp', 'sms', 'ai', 'captcha', 'email_notifications', 'internal_notifications', 'webhooks', 'offload', 'cron', 'cache', 'health', 'support'] as $tab) {
+            $html = (string) $this->actingAs($this->admin)
+                ->get('/admin/settings?tab='.$tab)
+                ->assertOk()
+                ->getContent();
+
+            $dom = new \DOMDocument;
+            libxml_use_internal_errors(true);
+            $dom->loadHTML($html);
+            libxml_clear_errors();
+            $xpath = new \DOMXPath($dom);
+
             $partial = resource_path("views/admin/settings/partials/{$tab}.blade.php");
             $source = (string) file_get_contents($partial);
             $expected = preg_match_all('/<section\b/i', $source);
@@ -143,7 +145,7 @@ class SettingsSaveRedirectTest extends TestCase
             $query = in_array($tab, $readonlyTabs, true)
                 ? "//div[@id=\"panel-{$tab}\"]/div/section"
                 : "//div[@id=\"panel-{$tab}\"]/form/div/section";
-            $actual = $xpath->query($query)->length;
+            $actual = $this->xpathCount($xpath, $query);
 
             if ($actual !== $expected) {
                 $mismatches[] = "{$tab}: DOM 顶层 section={$actual}, 源码={$expected}";
@@ -161,34 +163,58 @@ class SettingsSaveRedirectTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         libxml_use_internal_errors(true);
         $dom->loadHTML($html);
         libxml_clear_errors();
         $xpath = new \DOMXPath($dom);
 
         // 1) 无任何 <a>/<label> 吞掉表单或保存按钮（浏览器错误恢复类 bug 免疫）
-        $swallowed = $xpath->query('//a[.//form] | //a[.//button[@type="submit"]] | //label[.//form] | //label[.//button[@type="submit"]]');
-        $this->assertSame(0, $swallowed->length, '存在被 <a>/<label> 吞并的表单/保存按钮');
+        $this->assertSame(0,
+            $this->xpathCount($xpath, '//a[.//form] | //a[.//button[@type="submit"]] | //label[.//form] | //label[.//button[@type="submit"]]'),
+            '存在被 <a>/<label> 吞并的表单/保存按钮');
 
         // 2) seo 面板：3 个顶层 section（修复前 section2/3 错误嵌在 section1 内）
-        $this->assertSame(3, $xpath->query('//div[@id="panel-seo"]/form/div/section')->length);
+        $this->assertSame(3, $this->xpathCount($xpath, '//div[@id="panel-seo"]/form/div/section'));
 
         // 3) sitemap/domain monitor 两个 checkbox 归位于第一个 section 内
         $this->assertSame(
             1,
-            $xpath->query('//div[@id="panel-seo"]/form/div/section[1]//input[@name="sitemap_monitor_is_enabled"]')->length,
+            $this->xpathCount($xpath, '//div[@id="panel-seo"]/form/div/section[1]//input[@name="sitemap_monitor_is_enabled"]'),
             'sitemap_monitor_is_enabled 未在第一个 section 内'
         );
         $this->assertSame(
             1,
-            $xpath->query('//div[@id="panel-seo"]/form/div/section[1]//input[@name="domain_monitor_is_enabled"]')->length,
+            $this->xpathCount($xpath, '//div[@id="panel-seo"]/form/div/section[1]//input[@name="domain_monitor_is_enabled"]'),
             'domain_monitor_is_enabled 未在第一个 section 内'
         );
 
         // 4) serpapi 字段旁的帮助文章链接在新标签打开
-        $docLink = $xpath->query('//div[@id="panel-seo"]//a[@href="'.route('help.article', 'serpapi-key').'"]');
-        $this->assertSame(1, $docLink->length);
-        $this->assertSame('_blank', $docLink->item(0)?->attributes->getNamedItem('target')?->nodeValue);
+        $docLinkQuery = '//div[@id="panel-seo"]//a[@href="'.route('help.article', 'serpapi-key').'"]';
+        $this->assertSame(1, $this->xpathCount($xpath, $docLinkQuery));
+        $docLink = $this->firstElement($xpath, $docLinkQuery);
+        $this->assertInstanceOf(\DOMElement::class, $docLink);
+        $this->assertSame('_blank', $docLink->attributes->getNamedItem('target')?->nodeValue);
+    }
+
+    /**
+     * DOMXPath::query 的 false 兼容计数（PHPStan L10：DOMNodeList|false 联合）
+     */
+    protected function xpathCount(\DOMXPath $xpath, string $query): int
+    {
+        $nodes = $xpath->query($query);
+
+        return $nodes === false ? 0 : $nodes->length;
+    }
+
+    /**
+     * 取首个 DOM 节点（空结果返回 null）
+     */
+    protected function firstElement(\DOMXPath $xpath, string $query): ?\DOMNode
+    {
+        $nodes = $xpath->query($query);
+        $node = ($nodes === false || $nodes->length === 0) ? null : $nodes->item(0);
+
+        return $node instanceof \DOMNode ? $node : null;
     }
 }
