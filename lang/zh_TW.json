@@ -2866,6 +2866,7 @@
   "stats.replay_events": "工作階段事件",
   "stats.replay_list": "重播列表",
   "stats.replay_loading": "加載重播資料中...",
+  "stats.replay_static_hint": "該會話僅記錄了一個頁面快照（訪客未產生任何交互），回放顯示為靜態畫面。",
   "stats.replay_page": "頁麵",
   "stats.replay_pause": "暫停",
   "stats.replay_play": "播放",

@@ -398,6 +398,16 @@
                         if (event.type === 4 && event.data) {
                             if (window.innerWidth) event.data.width = window.innerWidth;
                             if (window.innerHeight) event.data.height = window.innerHeight;
+                            // 防脏值兜底：竖屏手机视口高宽比物理上不会超过 ~2.4，
+                            // 个别页面脚本会篡改 innerHeight（会话 149 实测 375x4800），
+                            // 导致回放画面被拉成超高窄条。超限时回退布局视口高度，
+                            // 仍不合法则按 iPhone 视口比例估算。
+                            if (event.data.width > 0 && event.data.height / event.data.width > 2.6) {
+                                var _ch = document.documentElement && document.documentElement.clientHeight;
+                                event.data.height = (_ch > 0 && _ch / event.data.width <= 2.6)
+                                    ? _ch
+                                    : Math.round(event.data.width * 2.17);
+                            }
                         }
                         // Capture the first full-snapshot event (type 2) for heatmap use
                         if (!self._lastFullSnapshot && event.type === 2) {

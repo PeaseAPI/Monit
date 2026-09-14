@@ -7,7 +7,7 @@
         <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
             <h1 class="text-2xl font-bold text-zinc-900">{{ __('stats.session_detail') }} <span class="font-mono text-sm text-zinc-400">{{ $session->session_uuid }}</span></h1>
             <div class="flex items-center gap-4 text-sm text-zinc-500">
-                <span>{{ __('stats.click_date') }}：<time class="font-medium text-zinc-700">{{ optional($session->date)->format('Y-m-d H:i') ?? '—' }}</time></span>
+                <span>{{ __('stats.click_date') }}：{!! stat_time($session->date ?? null, 'Y-m-d H:i', 'font-medium text-zinc-700') !!}</span>
                 <span class="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">{{ $session->total_events }} {{ __('stats.events') }}</span>
             </div>
         </div>

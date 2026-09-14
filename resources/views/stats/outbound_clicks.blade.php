@@ -16,7 +16,7 @@
                     @endif
                 </td>
                 <td class="px-6 py-3 font-medium">{{ number_format($c->count ?? 1) }}</td>
-                <td class="px-6 py-3 text-zinc-500">{{ $c->last_click ? \Carbon\Carbon::parse($c->last_click)->format('Y-m-d H:i') : '-' }}</td>
+                <td class="px-6 py-3 text-zinc-500">{!! stat_time($c->last_click ?? null, 'Y-m-d H:i') !!}</td>
             </tr>
             @empty<tr><td class="px-6 py-8 text-center text-zinc-500" colspan="3">{{ __('stats.no_data') }}</td></tr>@endforelse
         </tbody></table>

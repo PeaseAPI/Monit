@@ -2866,6 +2866,7 @@
   "stats.replay_events": "Acara Sesi",
   "stats.replay_list": "Replay List",
   "stats.replay_loading": "Loading replay data...",
+  "stats.replay_static_hint": "Sesi ini hanya merakamkan satu gambar halaman (pelawat tidak membuat sebarang interaksi), jadi main semula menunjukkan bingkai statik.",
   "stats.replay_page": "Page",
   "stats.replay_pause": "Pause",
   "stats.replay_play": "Play",

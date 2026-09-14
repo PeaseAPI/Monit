@@ -350,6 +350,23 @@
         });
     </script>
 
+    {{-- 统计时间本地化：服务端按账号时区渲染初值（data-utc 为 UTC 基准），
+         此处统一折算为浏览器本地时区（查看者默认语言地区）；解析失败保留原值 --}}
+    <script>
+        (function () {
+            var p2 = function (n) { return (n < 10 ? '0' : '') + n; };
+            var tzName = '';
+            try { tzName = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+            document.querySelectorAll('time[data-utc]').forEach(function (el) {
+                var d = new Date(el.getAttribute('data-utc'));
+                if (isNaN(d.getTime())) return;
+                el.textContent = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
+                    ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds());
+                if (tzName && !el.title) el.title = tzName;
+            });
+        })();
+    </script>
+
     @include('parts.cookie_consent')
     @include('parts.brand_footer_scripts')
     @stack('scripts')

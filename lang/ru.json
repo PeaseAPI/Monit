@@ -2866,6 +2866,7 @@
   "stats.replay_events": "События сессии",
   "stats.replay_list": "Replay List",
   "stats.replay_loading": "Loading replay data...",
+  "stats.replay_static_hint": "В этой сессии записан только снимок страницы (посетитель не совершал действий), поэтому воспроизведение показывает статичный кадр.",
   "stats.replay_page": "Page",
   "stats.replay_pause": "Pause",
   "stats.replay_play": "Play",

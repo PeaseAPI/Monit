@@ -19,7 +19,7 @@
             </div>
             <div>
                 <dt class="text-xs font-medium text-zinc-500">{{ __('stats.replay_time') }}</dt>
-                <dd class="mt-1 text-sm text-zinc-600">{{ $replay->datetime?->format('Y-m-d H:i:s') }}</dd>
+                <dd class="mt-1 text-sm text-zinc-600">{!! stat_time($replay->datetime) !!}</dd>
             </div>
             @if($visitor)
             <div>
@@ -63,7 +63,7 @@
                     <td class="px-6 py-3 text-zinc-400">{{ $i + 1 }}</td>
                     <td class="px-6 py-3 max-w-xs truncate" title="{{ $event->path }}">{{ $event->title ?? $event->path ?? '—' }}</td>
                     <td class="px-6 py-3"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $event->type === 'pageview' ? 'bg-blue-50 text-blue-700' : 'bg-zinc-100 text-zinc-600' }}">{{ $event->type }}</span></td>
-                    <td class="px-6 py-3 text-zinc-500">{{ $event->date?->format('H:i:s') }}</td>
+                    <td class="px-6 py-3 text-zinc-500">{!! stat_time($event->date, 'H:i:s') !!}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -163,6 +163,16 @@ function sanitizeRrwebEvents(events) {
                 empty.style.display = '';
                 return;
             }
+            // 单帧会话提示：无任何交互事件（type 3）说明访客落地即离开，回放
+            // 只有一个静态快照（观感如同“一张截图”），显式提示避免被误认为
+            // 播放器故障（如会话 149 仅 Meta+FullSnapshot 两个事件）
+            if (!events.some(function (e) { return e && e.type === 3; })) {
+                const hint = document.createElement('div');
+                hint.className = 'mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800';
+                hint.textContent = @js(__('stats.replay_static_hint'));
+                container.parentElement.insertBefore(hint, container);
+            }
+
             // 控制条统一使用 rrweb-player 自带底栏（进度/时间/倍速/播放暂停齐全），
             // 不再叠加自定义按钮——修复播放键与时间戳重叠、控制区拥挤问题
             const playerRoot = document.createElement('div');
@@ -183,9 +193,16 @@ function sanitizeRrwebEvents(events) {
                 for (let i = 0; i < events.length; i++) {
                     const ev = events[i];
                     if (ev && ev.type === 4 && ev.data && ev.data.width > 0 && ev.data.height > 0) {
-                        const scale = Math.min(container.clientWidth / ev.data.width, 1);
-                        playerWidth = Math.round(ev.data.width * scale);
-                        playerHeight = Math.min(1000, Math.round(ev.data.height * scale));
+                        let vw = ev.data.width, vh = ev.data.height;
+                        // 脏 Meta 防御：竖屏手机视口高宽比物理上不会超过 ~2.4，超过说明
+                        // Meta 高度是文档高度或被页面脚本篡改的值（会话 149 实测
+                        // 375x4800，旧版采集脚本未改写 Meta），直接采用会把画面拉成
+                        // 超高窄条——用户观感即“手机全屏截图、分辨率不正常”。按
+                        // iPhone 视口比例（~2.17）回退，历史脏数据安全。
+                        if (vh / vw > 2.6) vh = Math.round(vw * 2.17);
+                        const scale = Math.min(container.clientWidth / vw, 1);
+                        playerWidth = Math.round(vw * scale);
+                        playerHeight = Math.min(1000, Math.round(vh * scale));
                         break;
                     }
                 }

@@ -2866,6 +2866,7 @@
   "stats.replay_events": "Падзеі сеанса",
   "stats.replay_list": "Replay List",
   "stats.replay_loading": "Loading replay data...",
+  "stats.replay_static_hint": "This session only recorded a single page snapshot (the visitor made no interactions), so the replay shows a static frame.",
   "stats.replay_page": "Page",
   "stats.replay_pause": "Pause",
   "stats.replay_play": "Play",

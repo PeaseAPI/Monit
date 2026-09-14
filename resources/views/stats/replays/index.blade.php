@@ -33,7 +33,7 @@
                     <td class="px-6 py-3 text-sm">{{ $r->visitor?->os_name ?? '—' }}</td>
                     <td class="px-6 py-3 text-sm">{{ \App\Support\CountryNames::flag($r->visitor?->country_code) . ' ' . \App\Support\CountryNames::name($r->visitor?->country_code, app()->getLocale()) }}@if($r->visitor?->city_name)<span class="text-zinc-400"> · {{ $r->visitor->city_name }}</span>@endif</td>
                     <td class="px-6 py-3"><a href="{{ route('stats.replays.show', [$website->website_id, $r->replay_id]) }}" class="text-brand-600 hover:underline">{{ __('stats.view_replay') }}</a></td>
-                    <td class="px-6 py-3 text-zinc-500">{{ $r->datetime?->format('Y-m-d H:i:s') }}</td>
+                    <td class="px-6 py-3 text-zinc-500">{!! stat_time($r->datetime) !!}</td>
                 </tr>
                 @empty
                 <tr><td class="px-6 py-8 text-center text-zinc-500" colspan="7">{{ __('stats.no_replays') }}</td></tr>

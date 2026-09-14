@@ -7,8 +7,8 @@
         <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
             <h1 class="text-2xl font-bold text-zinc-900">{{ __('stats.visitor_detail') }} <span class="font-mono text-lg text-zinc-400">{{ $profile['label'] }}</span></h1>
             <div class="flex items-center gap-4 text-sm text-zinc-500">
-                <span>{{ __('stats.first_seen') }}：<time class="font-medium text-zinc-700">{{ optional($profile['first_date'])->format('Y-m-d H:i') ?? '—' }}</time></span>
-                <span>{{ __('stats.last_seen') }}：<time class="font-medium text-zinc-700">{{ optional($profile['last_date'])->format('Y-m-d H:i') ?? '—' }}</time></span>
+                <span>{{ __('stats.first_seen') }}：{!! stat_time($profile['first_date'] ?? null, 'Y-m-d H:i', 'font-medium text-zinc-700') !!}</span>
+                <span>{{ __('stats.last_seen') }}：{!! stat_time($profile['last_date'] ?? null, 'Y-m-d H:i', 'font-medium text-zinc-700') !!}</span>
                 <span class="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">{{ $profile['total_events'] }} {{ __('stats.events') }}</span>
             </div>
         </div>

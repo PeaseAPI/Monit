@@ -2866,6 +2866,7 @@
   "stats.replay_events": "会话事件",
   "stats.replay_list": "回放列表",
   "stats.replay_loading": "加载回放数据中...",
+  "stats.replay_static_hint": "该会话仅记录了一个页面快照（访客未产生任何交互），回放显示为静态画面。",
   "stats.replay_page": "页面",
   "stats.replay_pause": "暂停",
   "stats.replay_play": "播放",
