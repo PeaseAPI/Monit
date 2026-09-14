@@ -26,6 +26,13 @@
  * 组件层：后台设置表单 / 通用按钮 / 富文本 / API 文档卡片
  * （settings 各 partial、cron、blog/page、api docs 共用的类名）
  * ------------------------------------------------------------------------- */
+/* 明确仅浅色主题：阻止浏览器「强制深色/自动反转」(force dark) 重写配色。
+   本站无暗色适配，深色侧栏(zinc-950)被反转成浅底后白字变灰（左上角站名看不清）、
+   下拉/弹层对比度崩坏（导航“没有下拉”）；声明 light only 后浏览器不再自动反转 */
+html {
+    color-scheme: light only;
+}
+
 @layer components {
     .form-label {
         @apply mb-1.5 block text-sm font-medium text-zinc-700;

@@ -19,6 +19,6 @@
         <span class="flex {{ $class }} items-center justify-center rounded-xl bg-gradient-to-br {{ $dark ? 'from-brand-400 to-brand-600' : 'from-brand-500 to-brand-700' }} text-base font-bold text-white">{{ mb_substr($name, 0, 1) }}</span>
     @endif
     @if ($showText)
-        <span class="{{ $textClass }} font-semibold">{{ $name }}</span>
+        <span class="{{ $textClass }} font-semibold {{ $dark ? 'text-zinc-100' : 'text-zinc-900' }}">{{ $name }}</span>
     @endif
 </{{ $tag }}>

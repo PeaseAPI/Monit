@@ -185,6 +185,26 @@ class AccountController extends Controller
     }
 
     /**
+     * 修改用户名（用户反馈：登录方式卡「名称」行内联修改）。
+     * 敏感操作：与改密/关 2FA 一致，须验证当前登录密码（current_password 规则）。
+     *
+     * @return RedirectResponse
+     */
+    public function rename(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'current_password' => ['required', 'current_password'],
+        ]);
+
+        $user = $this->user();
+        $user->name = $validated['name'];
+        $user->save();
+
+        return back()->with('success', __('account.rename_success'));
+    }
+
+    /**
      * 修改密码
      *
      * @return RedirectResponse

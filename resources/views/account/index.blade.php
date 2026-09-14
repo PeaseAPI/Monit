@@ -1,7 +1,7 @@
 @extends('layouts.app', ['nav' => 'account'])
 @section('title', __('nav.account'))
 @section('content')
-<div class="max-w-2xl">
+<div class="mx-auto max-w-2xl">
     {{-- 页头：头像 + 身份信息 --}}
     <div class="flex items-center gap-4">
         @if ($user->avatar)
@@ -74,6 +74,32 @@
                     <p class="text-sm font-medium text-zinc-800">{{ __('account.name_label') }}</p>
                     <p class="text-xs text-zinc-500">{{ $user->name }}</p>
                 </div>
+                <button type="button"
+                    onclick="var f=document.getElementById('rename-form'); f.classList.toggle('hidden'); if(!f.classList.contains('hidden')) f.querySelector('input[type=text]').focus();"
+                    class="shrink-0 rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 transition hover:border-brand-400 hover:text-brand-600">
+                    {{ __('account.rename_btn') }}</button>
+            </div>
+            {{-- 修改用户名：敏感操作，须验证登录密码（错误时自动展开） --}}
+            @php($renameOpen = $errors->hasAny(['name', 'current_password']))
+            <div id="rename-form" class="{{ $renameOpen ? '' : 'hidden' }} border-t border-zinc-100 bg-zinc-50/60 px-6 py-4">
+                <form method="POST" action="{{ route('account.rename') }}" class="space-y-3">@csrf
+                    <div>
+                        <label class="form-label" for="rename-name">{{ __('account.rename_new_name') }}</label>
+                        <input id="rename-name" type="text" name="name" value="{{ old('name', $user->name) }}" maxlength="255" class="form-input" required>
+                        @error('name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="form-label" for="rename-password">{{ __('account.current_password') }}</label>
+                        <input id="rename-password" type="password" name="current_password" class="form-input" autocomplete="current-password" required>
+                        <p class="mt-1 text-xs text-zinc-400">{{ __('account.rename_password_hint') }}</p>
+                        @error('current_password')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('account.rename_save') }}</button>
+                        <button type="button" onclick="document.getElementById('rename-form').classList.add('hidden')"
+                            class="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-white">{{ __('account.rename_cancel') }}</button>
+                    </div>
+                </form>
             </div>
             <div class="flex items-center justify-between gap-4 px-6 py-3.5">
                 <div>
@@ -132,12 +158,9 @@
         </div>
     </div>
 
-    {{-- 个人资料（用户名 / 登录邮箱；头像已上移至独立卡片，防钓鱼码移至「安全」标签） --}}
+    {{-- 个人资料（用户名 / 登录邮箱；头像已上移至独立卡片，防钓鱼码移至「安全」标签；
+         用户反馈：卡片标题移除，用户名修改收敛至「登录方式」卡内联表单） --}}
     <form method="POST" action="{{ route('account.update') }}" enctype="multipart/form-data" class="card mt-6">@csrf @method('PUT')
-        <div class="card-header flex items-center gap-2">
-            <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.118a7.5 7.5 0 0 1 15 0A17 17 0 0 1 12 21.75c-2.676 0-5.216-.584-7.5-1.632Z"/></svg>
-            {{ __('account.profile_api_desc') }}
-        </div>
         <div class="space-y-4 p-6">
             <div><label class="form-label" for="acc-name">{{ __('account.name_label') }}</label><input id="acc-name" type="text" name="name" value="{{ old('name', $user->name) }}" class="form-input"></div>
             <div><label class="form-label" for="acc-email">{{ __('account.email_label') }}</label><input id="acc-email" type="email" name="email" value="{{ old('email', $user->email) }}" class="form-input"></div>
@@ -210,7 +233,11 @@
             {{ __('account.api_key') }}
         </div>
         <div class="flex flex-wrap items-center gap-3 p-6">
-            <code class="flex-1 truncate rounded-xl bg-zinc-100 px-3 py-2.5 text-xs text-zinc-600">{{ $user->api_key ?? __('account.not_set') }}</code>
+            {{-- 用户反馈：完整显示（break-all 替代 truncate）+ 一键复制 --}}
+            <code id="api-key-code" class="min-w-0 flex-1 break-all rounded-xl bg-zinc-100 px-3 py-2.5 text-xs leading-relaxed text-zinc-600">{{ $user->api_key ?? __('account.not_set') }}</code>
+            @if($user->api_key)
+            <button type="button" onclick="monitCopyApiKey(this)" class="shrink-0 rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:border-brand-400 hover:text-brand-600">{{ __('account.api_copy') }}</button>
+            @endif
             {{-- PUT 动作用 button 提交表单：a href=PUT路由 在无 JS/爬虫场景会 405/404（全站巡检实锤） --}}
             <button type="button" onclick="document.getElementById('api-regen').submit();" class="rounded-xl border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 transition hover:bg-brand-50">{{ __('account.regenerate') }}</button>
             @if($user->api_key)
@@ -408,6 +435,32 @@
     @if(\App\Services\Sms\SmsService::scenarioEnabled('phone_bind'))
         @include('account.partials.phone-bind-modal')
     @endif
+
+    {{-- API 密钥复制（clipboard 优先，老浏览器回退 execCommand） --}}
+    <script>
+    function monitCopyApiKey(btn) {
+        var text = ((document.getElementById('api-key-code') || {}).textContent || '').trim();
+        if (!text) return;
+        var done = function () {
+            var t = btn.textContent;
+            btn.textContent = {{ \Illuminate\Support\Js::from(__('account.api_copied'))->toHtml() }};
+            setTimeout(function () { btn.textContent = t; }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(function () { monitCopyFallback(text); done(); });
+        } else { monitCopyFallback(text); done(); }
+    }
+    function monitCopyFallback(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+    }
+    </script>
 
     {{-- 头像预览（Safari 26+ 已移除 URL.createObjectURL：优先 Blob URL，不可用时回退 FileReader dataURL） --}}
     <script>

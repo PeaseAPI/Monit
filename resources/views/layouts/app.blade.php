@@ -19,7 +19,7 @@
                 <x-brand-logo dark href="{{ route('dashboard') }}" text-class="text-lg" />
             </div>
 
-            <nav class="mt-2 flex-1 space-y-1 px-3">
+            <nav class="mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto px-3">
                 {{--
                     Nav items (active highlight)
                     $nav = 'dashboard'|'websites'

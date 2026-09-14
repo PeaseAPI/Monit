@@ -286,6 +286,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/account/logs', [AccountController::class, 'logs'])->name('account.logs');
     Route::put('/account', [AccountController::class, 'update'])->name('account.update');
     Route::put('/account/password', [AccountController::class, 'updatePassword'])->name('account.update-password');
+    Route::post('/account/rename', [AccountController::class, 'rename'])->name('account.rename');
     Route::post('/account/phone/bind', [AccountController::class, 'phoneBind'])->name('account.phone.bind');
     Route::put('/account/api-key', [AccountController::class, 'regenerateApiToken'])->name('account.regenerate_api_key');
     Route::delete('/account/api-key', [AccountController::class, 'revokeApiToken'])->name('account.revoke_api_key');
