@@ -93,7 +93,8 @@
             <h3 class="text-lg font-semibold">{{ __('help.contact_banner_title') }}</h3>
             <p class="mt-1 text-sm text-white/75">{{ __('help.contact_banner_desc') }}</p>
         </div>
-        <a href="{{ route('contact') }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-medium text-brand-700 transition hover:bg-brand-50">{{ __('help.contact_banner_cta') }}</a>
+        {{-- 用户反馈：联系我们应直达「提交工单」，而非访客留言页 --}}
+        <a href="{{ route('tickets.create') }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-medium text-brand-700 transition hover:bg-brand-50">{{ __('help.contact_banner_cta') }}</a>
     </div>
 </div>
 

@@ -92,7 +92,8 @@
                 <div class="mt-4 rounded-2xl bg-gradient-to-br from-brand-600 to-indigo-700 p-5 text-white">
                     <p class="text-sm font-semibold">{{ __('help.contact_banner_title') }}</p>
                     <p class="mt-1.5 text-xs leading-relaxed text-white/75">{{ __('help.contact_banner_desc') }}</p>
-                    <a href="{{ route('contact') }}" class="mt-3 inline-block rounded-xl bg-white px-4 py-2 text-xs font-medium text-brand-700 transition hover:bg-brand-50">{{ __('help.contact_banner_cta') }}</a>
+                    {{-- 用户反馈：联系我们应直达「提交工单」，而非访客留言页 --}}
+                    <a href="{{ route('tickets.create') }}" class="mt-3 inline-block rounded-xl bg-white px-4 py-2 text-xs font-medium text-brand-700 transition hover:bg-brand-50">{{ __('help.contact_banner_cta') }}</a>
                 </div>
             </div>
         </aside>
