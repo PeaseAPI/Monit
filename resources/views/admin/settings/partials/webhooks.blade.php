@@ -49,10 +49,9 @@
             <p class="form-hint">{{ __('settings.webhooks.t_f9c0af') }}</p>
         </div>
     </div>
-</div>
 
-{{-- 原版对标补充：事件开关与密钥（AltumCode webhooks） --}}
-<section class="settings-section mt-6">
+    {{-- 原版对标补充：事件开关与密钥（AltumCode webhooks） --}}
+    <section class="settings-section mt-6">
     <div class="settings-section-header">
         <div>
             <h3 class="settings-section-title">{{ __('settings.webhooks.t_0141c2') }}</h3>
@@ -97,5 +96,6 @@
         </div>
     </div>
 </section>
+</div>
 
 

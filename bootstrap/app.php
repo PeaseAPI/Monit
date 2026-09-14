@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\AlignPreviousUrlWithReferer;
 use App\Http\Middleware\ApplyPlatformHeaders;
 use App\Http\Middleware\AuthenticateApiKey;
 use App\Http\Middleware\CheckMaintenance;
@@ -62,6 +63,9 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsureUserActive::class,
             SetLocale::class,
             ApplyPlatformHeaders::class,
+            // POST 时把 session url.previous 对齐为 Referer：避免多标签页（新标签打开
+            // 站内文档等）污染 back() 的回跳目标（设置保存曾被 302 到帮助文章页）
+            AlignPreviousUrlWithReferer::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -46,6 +46,24 @@
                 </details>
                 <p class="form-hint">{{ __('settings.seo.t_0e744e') }}</p>
             </div>
+            <label class="settings-field-row">
+                <span class="min-w-0">
+                    <span class="settings-field-row-label">{{ __('settings.seo.t_b3deff') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.seo.t_5f7629') }}</span>
+                </span>
+                <input type="checkbox" name="sitemap_monitor_is_enabled" value="1" class="input-toggle"
+                    {{ filter_var($settings['seo.sitemap_monitor_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+            </label>
+            <label class="settings-field-row">
+                <span class="min-w-0">
+                    <span class="settings-field-row-label">{{ __('settings.seo.t_26331c') }}</span>
+                    <span class="settings-field-row-hint">{{ __('settings.seo.t_6ab078') }}</span>
+                </span>
+                <input type="checkbox" name="domain_monitor_is_enabled" value="1" class="input-toggle"
+                    {{ filter_var($settings['seo.domain_monitor_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+            </label>
+        </div>
+    </section>
     <section class="settings-section">
         <div class="settings-section-header">
             <div>
@@ -107,22 +125,3 @@
         </div>
     </section>
 </div>
-
-            <label class="settings-field-row">
-                <span class="min-w-0">
-                    <span class="settings-field-row-label">{{ __('settings.seo.t_b3deff') }}</span>
-                    <span class="settings-field-row-hint">{{ __('settings.seo.t_5f7629') }}</span>
-                </span>
-                <input type="checkbox" name="sitemap_monitor_is_enabled" value="1" class="input-toggle"
-                    {{ filter_var($settings['seo.sitemap_monitor_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            </label>
-            <label class="settings-field-row">
-                <span class="min-w-0">
-                    <span class="settings-field-row-label">{{ __('settings.seo.t_26331c') }}</span>
-                    <span class="settings-field-row-hint">{{ __('settings.seo.t_6ab078') }}</span>
-                </span>
-                <input type="checkbox" name="domain_monitor_is_enabled" value="1" class="input-toggle"
-                    {{ filter_var($settings['seo.domain_monitor_is_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            </label>
-        </div>
-    </section>

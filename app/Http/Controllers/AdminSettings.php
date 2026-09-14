@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -58,7 +59,8 @@ class AdminSettings extends Controller
 
         // 校验分组是否合法（必须存在于 allSettings 清单中）
         if (! in_array($group, array_keys($this->allSettings()), true)) {
-            return back()->withErrors(['error' => __('msg.invalid_settings_group')]);
+            // 显式回设置页（不带 tab）而非 back()：避免 session previousUrl 污染（见 settingsRedirect 注释）
+            return redirect()->route('admin.settings.index')->withErrors(['error' => __('msg.invalid_settings_group')]);
         }
 
         // 支付网关密钥：白名单键写入 .env（而非 settings 表）
@@ -78,16 +80,24 @@ class AdminSettings extends Controller
             // 同时清 Cache 与进程内静态缓存（Settings::flush）
             Settings::flush();
 
-            return back()->with('success', __('msg.settings_saved', ['group' => $group]));
+            return $this->settingsRedirect($group)->with('success', __('msg.settings_saved', ['group' => $group]));
         }
 
         $rules = $this->getValidationRules($group);
 
         if ($rules === []) {
-            return back()->withErrors(['error' => __('msg.invalid_settings_group')]);
+            return redirect()->route('admin.settings.index')->withErrors(['error' => __('msg.invalid_settings_group')]);
         }
 
-        $validated = Typed::arr($request->validate($rules));
+        // 手动校验而非 $request->validate()：ValidationException 的重定向同样走
+        // previousUrl/Referer，会被「新标签页打开的站内文档」污染（保存被带去文章页）。
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return $this->settingsRedirect($group)->withErrors($validator)->withInput();
+        }
+
+        $validated = Typed::arr($validator->validated());
 
         // 未勾选的复选框不会提交，显式置为 false 以支持"取消勾选后保存"
         foreach (array_keys(array_filter($rules, fn ($rule) => str_contains(Typed::string($rule), 'boolean'))) as $field) {
@@ -118,7 +128,20 @@ class AdminSettings extends Controller
         // 同时清 Cache 与进程内静态缓存（Settings::flush）
         Settings::flush();
 
-        return back()->with('success', __('msg.settings_saved', ['group' => $group]));
+        return $this->settingsRedirect($group)->with('success', __('msg.settings_saved', ['group' => $group]));
+    }
+
+    /**
+     * 保存后的回跳目标：显式回到设置页对应选项卡。
+     *
+     * 不用 back()：框架 back() 优先读 session 的 url.previous，而每个站内 GET
+     * （含「新标签页打开的站内文档」，如设置页的「详细申请教程 →」帮助文章）
+     * 都会刷新它——用户从设置页新标签打开教程后直接点保存，会被 302 到文章页
+     * （数据实际已保存，但体验上像保存失败）。显式回跳彻底免疫多标签页污染。
+     */
+    protected function settingsRedirect(string $group): RedirectResponse
+    {
+        return redirect()->route('admin.settings.index', ['tab' => $group]);
     }
 
     /**
@@ -182,7 +205,14 @@ class AdminSettings extends Controller
                 : 'nullable|string|max:4096';
         }
 
-        $validated = Typed::arr($request->validate($rules));
+        // 手动校验（同 update()：避开 ValidationException 的 previousUrl 重定向）
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return $this->settingsRedirect('payment_gateways')->withErrors($validator)->withInput();
+        }
+
+        $validated = Typed::arr($validator->validated());
 
         // 只处理白名单键（validate 已按规则键过滤）
         $writer = app(EnvWriter::class);
@@ -222,7 +252,7 @@ class AdminSettings extends Controller
             // config:clear 失败不阻断保存（无缓存环境下无害）
         }
 
-        return back()->with('success', __('msg.settings_saved', ['group' => 'payment_gateways']));
+        return $this->settingsRedirect('payment_gateways')->with('success', __('msg.settings_saved', ['group' => 'payment_gateways']));
     }
 
     /**
@@ -241,7 +271,8 @@ class AdminSettings extends Controller
 
         Settings::flush();
 
-        return back()->with('success', __('msg.cache_cleared'));
+        // 缓存清理按钮位于「缓存」只读面板，显式回该面板而非 back()（previousUrl 污染）
+        return redirect()->route('admin.settings.index', ['tab' => 'cache'])->with('success', __('msg.cache_cleared'));
     }
 
     /**
