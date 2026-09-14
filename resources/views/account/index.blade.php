@@ -203,9 +203,10 @@
         </div>
         <div class="flex flex-wrap items-center gap-3 p-6">
             <code class="flex-1 truncate rounded-xl bg-zinc-100 px-3 py-2.5 text-xs text-zinc-600">{{ $user->api_key ?? __('account.not_set') }}</code>
-            <a href="{{ route('account.regenerate_api_key') }}" onclick="event.preventDefault();document.getElementById('api-regen').submit();" class="rounded-xl border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 transition hover:bg-brand-50">{{ __('account.regenerate') }}</a>
+            {{-- PUT 动作用 button 提交表单：a href=PUT路由 在无 JS/爬虫场景会 405/404（全站巡检实锤） --}}
+            <button type="button" onclick="document.getElementById('api-regen').submit();" class="rounded-xl border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 transition hover:bg-brand-50">{{ __('account.regenerate') }}</button>
             @if($user->api_key)
-            <a href="{{ route('account.revoke_api_key') }}" onclick="event.preventDefault();document.getElementById('api-revoke').submit();" class="rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50">{{ __('account.revoke') }}</a>
+            <button type="button" onclick="document.getElementById('api-revoke').submit();" class="rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50">{{ __('account.revoke') }}</button>
             @endif
         </div>
         <form id="api-regen" method="POST" action="{{ route('account.regenerate_api_key') }}">@csrf @method('PUT')</form>

@@ -175,17 +175,21 @@ class SeoKeywordController extends Controller
     {
         $this->authorizeOwn($request, $keyword);
 
+        // 显式跳回列表页：back() 依赖 Referer/会话 previousUrl，
+        // 缺失时回退行为不确定（用户侧 500 反馈的防御修复）
+        $toList = fn () => redirect()->route('seo.keywords');
+
         try {
             $rank = $tracker->check($keyword);
         } catch (Throwable $e) {
             report($e);
 
-            return back()->withErrors(['keyword' => $this->rankFailureMessage($e)]);
+            return $toList()->withErrors(['keyword' => $this->rankFailureMessage($e)]);
         }
 
         $position = $rank->position;
 
-        return back()->with('success', __('seo.rank_checked', ['position' => is_scalar($position) ? (string) $position : __('seo.not_ranked')]));
+        return $toList()->with('success', __('seo.rank_checked', ['position' => is_scalar($position) ? (string) $position : __('seo.not_ranked')]));
     }
 
     /**

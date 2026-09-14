@@ -56,14 +56,24 @@ class HeatmapScreenshot
 
     /**
      * 截图的公开访问 URL（未生成返回 null）
+     *
+     * 附文件 mtime 作 ?v= 版本参数：截图文件名固定且 nginx 对 jpg 下发
+     * cache-control max-age=30d，「重新截图」重写同名文件后浏览器仍会用
+     * 缓存旧图（中文方格修复后用户侧不刷新的根因）——mtime 变则 URL 变，
+     * 强制回源取新图；未变时 URL 稳定，仍享受长缓存。
      */
     public function url(Heatmap $heatmap, string $device): ?string
     {
-        if (! $this->exists($heatmap, $device)) {
+        $absolute = $this->absolutePath($heatmap, $device);
+
+        if (! is_file($absolute)) {
             return null;
         }
 
-        return asset('uploads/heatmap-shots/'.$heatmap->website_id.'/'.$this->fileName($heatmap, $device));
+        $version = (string) @filemtime($absolute);
+
+        return asset('uploads/heatmap-shots/'.$heatmap->website_id.'/'.$this->fileName($heatmap, $device))
+            .($version !== '' ? '?v='.$version : '');
     }
 
     /**
