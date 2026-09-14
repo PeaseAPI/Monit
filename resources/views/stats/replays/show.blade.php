@@ -114,17 +114,24 @@ function sanitizeRrwebEvents(events) {
             // 按 id 保留节点使后续 mutation 引用不失效），重建文档零 script。
             node.tagName = 'template';
             node.childNodes = [];
-            if (node.attrs) {
-                delete node.attrs.src;
-                delete node.attrs.srcdoc;
+            // rrweb 序列化节点的属性字段是 attributes（1.x schema 实测如此）；
+            // 此前误读 attrs 导致 delete 空转——script 靠 template 变形兜底
+            // 无害，但下方 iframe 分支因此整个失效。双字段兼容防旧数据。
+            const attrs = node.attributes || node.attrs;
+            if (attrs) {
+                delete attrs.src;
+                delete attrs.srcdoc;
             }
             return;
         }
-        if (node.type === 2 && tag === 'iframe' && node.attrs) {
+        if (node.type === 2 && tag === 'iframe') {
             // 同理 delete：iframe 重建后若保留 src，浏览器会重新加载原始文
             // 档（同源=统计污染，跨域=无谓流量），内容由子节点快照重建
-            delete node.attrs.srcdoc;
-            delete node.attrs.src;
+            const attrs = node.attributes || node.attrs;
+            if (attrs) {
+                delete attrs.srcdoc;
+                delete attrs.src;
+            }
         }
         const kids = node.childNodes;
         if (Array.isArray(kids)) { for (let i = 0; i < kids.length; i++) strip(kids[i]); }
