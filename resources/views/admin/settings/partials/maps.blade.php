@@ -17,6 +17,7 @@
                 <input type="text" name="baidu_key" value="{{ $settings['maps.baidu_key'] ?? '' }}" placeholder="{{ __('settings.maps.baidu_key_placeholder') }}"
             class="form-input" autocomplete="off">
         <p class="mt-1.5 text-xs text-zinc-400">{{ __('admin.maps_baidu_key_hint') }}</p>
+        <p class="mt-1 text-xs"><a href="{{ route('help.article', 'maps-keys') }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ __('admin.settings_doc_link') }} &rarr;</a></p>
     </div>
 
     <div>
@@ -24,6 +25,7 @@
         <input type="text" name="google_key" value="{{ $settings['maps.google_key'] ?? '' }}" placeholder="API Key"
             class="form-input" autocomplete="off">
         <p class="mt-1.5 text-xs text-zinc-400">{{ __('admin.maps_google_key_hint') }}</p>
+        <p class="mt-1 text-xs"><a href="{{ route('help.article', 'maps-keys') }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ __('admin.settings_doc_link') }} &rarr;</a></p>
     </div>
 
     <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-700">

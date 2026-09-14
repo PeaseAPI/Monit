@@ -1,5 +1,6 @@
 <div class="space-y-6">
     <p class="text-sm text-zinc-500">{{ __('settings.sms.t_fce244') }}</p>
+    <p class="text-sm"><a href="{{ route('help.article', 'sms-providers-keys') }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ __('admin.settings_doc_link') }} &rarr;</a></p>
 
     <div class="space-y-4">
         <label class="flex items-center gap-2">

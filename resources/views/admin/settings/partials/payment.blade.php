@@ -43,6 +43,7 @@
     <div class="flex items-center gap-3"><input type="checkbox" name="user_plan_expiry_reminder" value="1" {{ old('user_plan_expiry_reminder', ($settings['payment.user_plan_expiry_reminder'] ?? 'false') === 'true') ? 'checked' : '' }}><label class="text-sm">{{ __('settings.payment.t_867e06') }}</label></div>
 
     <h3 class="pt-4 text-base font-semibold">Stripe</h3>
+    <p class="text-xs"><a href="{{ route('help.article', 'payment-gateways-keys') }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ __('admin.settings_doc_link') }} &rarr;</a></p>
     <div class="flex items-center gap-3"><input type="checkbox" name="stripe_is_enabled" value="1" {{ old('stripe_is_enabled', ($settings['payment.stripe_is_enabled'] ?? 'false') === 'true') ? 'checked' : '' }}><label class="text-sm">{{ __('admin.enabled') }}</label></div>
     <div><label class="block text-sm text-zinc-600">Publishable Key</label><input type="text" name="stripe_publishable_key" value="{{ old('stripe_publishable_key', $settings['payment.stripe_publishable_key'] ?? '') }}" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"></div>
     <div><label class="block text-sm text-zinc-600">Secret Key</label><input type="password" name="stripe_secret_key" value="{{ old('stripe_secret_key', $settings['payment.stripe_secret_key'] ?? '') }}" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"></div>

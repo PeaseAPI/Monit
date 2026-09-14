@@ -4,6 +4,7 @@
             <div>
                 <h3 class="settings-section-title">{{ __('settings.smtp.t_9b5683') }}</h3>
                 <p class="settings-section-desc">{{ __('settings.smtp.t_e5d7d9') }}</p>
+                <p class="mt-1 text-sm"><a href="{{ route('help.article', 'smtp-email-keys') }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ __('admin.settings_doc_link') }} &rarr;</a></p>
             </div>
         </div>
         <div class="settings-section-body">

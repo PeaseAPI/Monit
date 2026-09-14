@@ -1358,6 +1358,288 @@ HTML,
                     ],
                 ],
             ],
+            // ============================================================
+            // 十一、第三方服务接入（外部密钥申请指南）
+            // ============================================================
+            [
+                'url' => 'third-party-services', 'title' => '第三方服务接入', 'icon' => 'key',
+                'articles' => [
+                    [
+                        'url' => 'serpapi-key',
+                        'title' => 'SerpApi 密钥：关键词排名自动查询',
+                        'desc' => 'SerpApi 的用途、注册获取 API Key 的完整步骤、后台配置位置与配额计费说明。',
+                        'content' => <<<'HTML'
+<p>「关键词排名追踪」支持每日/每周<strong>自动查询</strong>关键词在搜索引擎中的排名。系统内置了 Bing（全球/中国站）与百度的免费抓取引擎；如需覆盖 <strong>Google</strong> 及更高的查询稳定性，可接入 <a href="https://serpapi.com" target="_blank" rel="noopener">SerpApi</a>（专业 SERP 数据服务）。留空 SerpApi 密钥时，Google 排名查询不可用，Bing/百度不受影响。</p>
+<h2>第 1 步：注册 SerpApi 账户</h2>
+<ol class="doc-steps">
+<li>打开 <a href="https://serpapi.com/users/sign_up" target="_blank" rel="noopener">serpapi.com/users/sign_up</a>，使用邮箱或 Google 账户注册。</li>
+<li>注册即获得<strong>免费套餐</strong>：每月 100 次搜索配额，无需绑定信用卡，足够小规模站点的日常排名追踪。</li>
+</ol>
+<h2>第 2 步：获取 API Key</h2>
+<ol class="doc-steps">
+<li>登录后进入 <a href="https://serpapi.com/manage-api-key" target="_blank" rel="noopener">serpapi.com/manage-api-key</a>（Dashboard → API Key）。</li>
+<li>页面显示一串 64 位十六进制密钥，点击 <strong>Copy</strong> 复制。密钥仅此处完整显示，请妥善保存。</li>
+</ol>
+<h2>第 3 步：填入 Monit 后台</h2>
+<ol class="doc-steps">
+<li>进入 <strong>管理后台 → 系统设置 → SEO 工具</strong>。</li>
+<li>找到「SerpApi 密钥（关键词排名自动查询）」输入框，粘贴密钥后保存。</li>
+</ol>
+<p>保存后无需重启：下一次排名自动刷新（cron <code>monit:seo-keywords-refresh</code>）即会走 SerpApi 查询 Google 排名。</p>
+<div class="doc-note doc-note--info"><p><strong>配额与计费：</strong>免费套餐每月 100 次查询；关键词数量 × 刷新频率决定月消耗量（如 30 个关键词每日刷新 ≈ 900 次/月）。超出配额需在 SerpApi 控制台升级付费套餐，配额不足时查询会返回配额错误并在日志中记录，不影响其他功能。</p></div>
+<div class="doc-note doc-note--warn"><p><strong>密钥安全：</strong>API Key 等同于你的 SerpApi 账户配额凭证，请勿外泄；仅管理员可见的设置页中保管。若怀疑泄露，在 SerpApi Dashboard 点击 Reset Key 重新生成并回填。</p></div>
+<h2>常见问题</h2>
+<details class="doc-faq"><summary>配置后 Google 排名仍为空？</summary><p>检查密钥是否完整复制（64 位、无空格）；在服务器执行 <code>php artisan monit:seo-keywords-refresh</code> 手动触发一次，日志中出现 <code>serpapi_</code> 前缀异常即为 SerpApi 侧返回的错误，按提示处理。</p></details>
+<details class="doc-faq"><summary>内置引擎和 SerpApi 什么关系？</summary><p>内置引擎免费抓取 Bing 与百度（无需任何密钥），SerpApi 用于 Google 与更高稳定性需求；两者互为补充，均已配置时按关键词指定的搜索引擎自动选择。</p></details>
+<details class="doc-faq"><summary>SerpApi 支持哪些搜索引擎？</summary><p>Google、Bing、Baidu、Yahoo 等 20+ 引擎，Monit 当前按关键词配置的引擎调度（google 优先走 SerpApi，bing/baidu 默认走内置引擎）。</p></details>
+HTML,
+                    ],
+                    [
+                        'url' => 'oauth-social-keys',
+                        'title' => '社交登录：各平台 OAuth 密钥申请',
+                        'desc' => 'Google、GitHub、Facebook 等 8 家海外平台与 QQ、微信、微博等 5 家国内平台的 Client ID / App Secret 申请步骤与回调地址配置。',
+                        'content' => <<<'HTML'
+<p>「系统设置 → 社交登录」可为登录/注册页开启第三方账户快捷登录。每个平台需要两样东西：<strong>Client ID（App ID）</strong> 与 <strong>Client Secret（App Secret）</strong>，均在该平台的开放平台/开发者后台创建应用后获得。设置页每个平台卡片已直接给出官方申请入口与<strong>回调地址</strong>（一键复制，填到平台应用配置里）。</p>
+<h2>通用流程</h2>
+<ol class="doc-steps">
+<li>在平台开放后台创建应用，填写应用名称、域名/网站地址。</li>
+<li>把 Monit 后台显示的<strong>回调地址</strong>（形如 <code>https://你的域名/auth/social/callback/平台名</code>）填入平台的「授权回调地址 / Redirect URI」。</li>
+<li>创建完成后复制 Client ID 与 Client Secret，回填 Monit 后台并勾选「启用」。</li>
+</ol>
+<h2>海外平台</h2>
+<h3>Google</h3><p><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">console.cloud.google.com/apis/credentials</a> → 配置 OAuth 同意屏幕 → 创建凭据 → OAuth 客户端 ID（类型选 Web 应用）→ 填入回调地址。审核发布状态选「外部/测试」即可先用测试账号验证。</p>
+<h3>GitHub</h3><p><a href="https://github.com/settings/developers" target="_blank" rel="noopener">github.com/settings/developers</a> → New OAuth App → Homepage URL 填站点首页、回调填回调地址 → 注册后生成 Client ID，点 Generate a new client secret。</p>
+<h3>Facebook</h3><p><a href="https://developers.facebook.com/apps" target="_blank" rel="noopener">developers.facebook.com/apps</a> → 创建应用（类型 Business/消费者）→ 添加「Facebook 登录」产品 → Settings → Basic 查看 App ID / App Secret → Facebook Login 设置里加回调地址。公开使用需通过应用审核。</p>
+<h3>Discord</h3><p><a href="https://discord.com/developers/applications" target="_blank" rel="noopener">discord.com/developers/applications</a> → New Application → OAuth2 → Add Redirect 填回调地址 → 复制 Client ID / Client Secret。</p>
+<h3>LinkedIn</h3><p><a href="https://www.linkedin.com/developers/apps" target="_blank" rel="noopener">linkedin.com/developers/apps</a> → Create app → 关联公司页面后添加「Sign In with LinkedIn using OpenID Connect」产品 → Auth 页查看 Client ID / Secret 并填回调。</p>
+<h3>Microsoft</h3><p><a href="https://portal.azure.com" target="_blank" rel="noopener">portal.azure.com</a> → Azure AD → 应用注册 → 新注册 → 重定向 URI 填回调地址 → 证书和密码 → 新客户端密码即为 Secret，应用程序（客户端）ID 为 Client ID。</p>
+<h3>Apple</h3><p><a href="https://developer.apple.com/account" target="_blank" rel="noopener">developer.apple.com</a> → Certificates, Identifiers &amp; Profiles → Identifiers 创建 Service ID → 配置回调地址 → 创建 Key（Sign in with Apple）下载密钥。需付费开发者账户。</p>
+<h3>X（Twitter）</h3><p><a href="https://developer.twitter.com" target="_blank" rel="noopener">developer.twitter.com</a> → Projects &amp; Apps → User authentication settings → 开启 OAuth 2.0 填回调地址 → Keys and tokens 查看 Client ID / Client Secret。</p>
+<h2>国内平台</h2>
+<h3>QQ 互联</h3><p><a href="https://connect.qq.com" target="_blank" rel="noopener">connect.qq.com</a> → 应用管理 → 创建应用（需备案域名）→ 回调地址填写 → 获得 APP ID / APP Key。</p>
+<h3>微信（开放平台）</h3><p><a href="https://open.weixin.qq.com" target="_blank" rel="noopener">open.weixin.qq.com</a> → 管理中心 → 网站应用（需企业资质与开发者认证）→ 授权回调域填顶级域名 → AppID / AppSecret。</p>
+<h3>微博</h3><p><a href="https://open.weibo.com" target="_blank" rel="noopener">open.weibo.com</a> → 我的应用 → 创建应用 → 高级信息里填 OAuth2.0 授权回调页 → App Key / App Secret。</p>
+<h3>Gitee</h3><p><a href="https://gitee.com/oauth/applications" target="_blank" rel="noopener">gitee.com/oauth/applications</a> → 创建应用 → 回调地址填写 → 获得 Client ID / Client Secret（个人开发者免费，审核快）。</p>
+<h3>飞书</h3><p><a href="https://open.feishu.cn/app" target="_blank" rel="noopener">open.feishu.cn/app</a> → 创建企业自建应用 → 安全设置添加重定向 URL → 凭证与基础信息查看 App ID / App Secret，并申请「获取登录用户信息」权限。</p>
+<div class="doc-note doc-note--tip"><p><strong>提示：</strong>国内平台普遍要求已备案域名与企业资质（微信最严格）；海外平台多数即开即用。回调地址必须与后台展示的完全一致（含 https 与平台路径），不一致会报 redirect_uri 错误。</p></div>
+HTML,
+                    ],
+                    [
+                        'url' => 'captcha-keys',
+                        'title' => '人机验证密钥：reCAPTCHA / hCaptcha / Turnstile / GeeTest',
+                        'desc' => '四家人机验证服务的密钥申请步骤、密钥填写位置与启用页面的建议。',
+                        'content' => <<<'HTML'
+<p>在「系统设置 → 人机验证」选择验证类型并为注册、登录、找回密码、联系表单启用验证码，可有效拦截垃圾注册与爆破。每种类型都需要一对 <strong>Site Key（站点密钥，公开）</strong>与 <strong>Secret Key（服务端密钥，保密）</strong>，从对应服务商后台免费获取。</p>
+<div class="doc-note doc-note--info"><p>各服务商的专属密钥字段留空时，自动回退顶部的通用 Site Key / Secret Key；只用一家服务时填通用字段即可。</p></div>
+<h2>Google reCAPTCHA（v2 勾选框 / v3 评分）</h2>
+<ol class="doc-steps">
+<li>打开 <a href="https://www.google.com/recaptcha/admin/create" target="_blank" rel="noopener">google.com/recaptcha/admin/create</a> 并登录 Google 账户。</li>
+<li>标签随意填写；类型选 <strong>v2「进行人机身份验证」复选框</strong>或 <strong>v3</strong>；域名栏填 Monit 站点域名（不带协议，如 <code>example.com</code>）。</li>
+<li>提交后得到 Site Key（<code>6L…</code> 开头）与 Secret Key，分别填入后台。</li>
+</ol>
+<h2>hCaptcha</h2>
+<ol class="doc-steps">
+<li>注册 <a href="https://dashboard.hcaptcha.com/signup" target="_blank" rel="noopener">dashboard.hcaptcha.com</a>（免费档即够用）。</li>
+<li>左侧 <strong>Sites</strong> → Add Site → 填入域名，创建后进入 <strong>Settings</strong> 复制 Site Key；<strong>Settings → Secret Key</strong> 页复制 Secret。</li>
+</ol>
+<h2>Cloudflare Turnstile</h2>
+<ol class="doc-steps">
+<li>登录 Cloudflare Dashboard → 左侧 <a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" rel="noopener">Turnstile</a> → <strong>Add site</strong>。</li>
+<li>填名称与主机名（可多个域名）、选择托管模式（Managed 推荐），创建后即显示 <code>0x…</code> 开头的 Site Key 与 Secret Key。</li>
+</ol>
+<h2>极验 GeeTest（国内友好）</h2>
+<ol class="doc-steps">
+<li>注册 <a href="https://auth.geetest.com" target="_blank" rel="noopener">auth.geetest.com</a> 并实名认证 → 控制台 → <strong>行为验证</strong> → 新建验证。</li>
+<li>业务场景选「登录/注册保护」，创建后获得 <strong>Captcha ID</strong> 与 <strong>Captcha Key</strong>，分别填入后台对应的 GeeTest ID / GeeTest Key 字段。</li>
+</ol>
+<h2>常见问题</h2>
+<details class="doc-faq"><summary>验证码不显示？</summary><p>核对服务商控制台里登记的域名与站点访问域名完全一致（含子域名规则）；浏览器控制台若报 domain mismatch 即为此原因。</p></details>
+<details class="doc-faq"><summary>v3 得分低导致验证总失败？</summary><p>v3 按行为打分，新建域名初始分数偏低，正常使用几天后回升；也可临时切换回 v2 勾选框。</p></details>
+HTML,
+                    ],
+                    [
+                        'url' => 'payment-gateways-keys',
+                        'title' => '支付渠道密钥：Stripe / PayPal / Razorpay / 微信 / 支付宝',
+                        'desc' => '各支付渠道的商户申请、密钥获取位置与后台/服务器配置方式。',
+                        'content' => <<<'HTML'
+<p>「系统设置 → 支付」支持多种收款渠道。Stripe 与 PayPal 的密钥直接填在后台；Razorpay、微信支付、支付宝的部分凭据按页面提示保存在服务器 <code>.env</code>。所有渠道均需先在其官方平台注册商户/开发者账户。</p>
+<h2>Stripe</h2>
+<ol class="doc-steps">
+<li>注册 <a href="https://dashboard.stripe.com/register" target="_blank" rel="noopener">dashboard.stripe.com</a> 并完成商户信息（需支持的国家/地区）。</li>
+<li>后台右上角「开发者 → <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener">API 密钥</a>」：测试模式有 <code>pk_test_</code> / <code>sk_test_</code>；验证商户后切换 <strong>Live</strong> 拿到 <code>pk_live_</code> / <code>sk_live_</code>。</li>
+<li>Publishable Key 与 Secret Key 分别填入 Monit 后台 Stripe 区块并启用。</li>
+</ol>
+<h2>PayPal</h2>
+<ol class="doc-steps">
+<li>注册 <a href="https://developer.paypal.com" target="_blank" rel="noopener">developer.paypal.com</a>（用 PayPal 商家账户登录）。</li>
+<li>Apps &amp; Credentials → 切到 <strong>Live</strong> → Create App → 创建后展示 <strong>Client ID</strong> 与 <strong>Secret</strong>。</li>
+<li>填入后台 PayPal 区块并启用；沙箱测试可先用默认的 Sandbox 应用。</li>
+</ol>
+<h2>Razorpay（印度）</h2>
+<ol class="doc-steps">
+<li>注册 <a href="https://dashboard.razorpay.com" target="_blank" rel="noopener">dashboard.razorpay.com</a> → Settings → API Keys → Generate Key。</li>
+<li><strong>Key ID</strong> 填入后台 Razorpay 字段；Key Secret 按配置源优先级保存在服务器 <code>.env</code>（<code>config/services.php</code> 的 <code>razorpay.key_id / key_secret</code>）。</li>
+</ol>
+<h2>微信支付</h2>
+<p>在 <a href="https://pay.weixin.qq.com" target="_blank" rel="noopener">pay.weixin.qq.com</a> 开通商户号并申请「Native 支付」产品后，凭据经服务器 <code>.env</code> 配置（API v2）：</p>
+<pre><code>WECHAT_PAY_APP_ID=公众号/开放平台 AppID
+WECHAT_PAY_MCH_ID=商户号
+WECHAT_PAY_API_KEY=APIv2 密钥（商户平台→账户中心→API 安全）</code></pre>
+<h2>支付宝</h2>
+<p>在 <a href="https://open.alipay.com" target="_blank" rel="noopener">open.alipay.com</a> 创建「网页/移动应用」并签约「电脑网站支付」后，生成 RSA2 密钥对，凭据经服务器 <code>.env</code> 配置：</p>
+<pre><code>ALIPAY_APP_ID=开放平台应用 APPID
+ALIPAY_PRIVATE_KEY=应用私钥（RSA2）
+ALIPAY_PUBLIC_KEY=支付宝公钥（密钥工具/开放平台查看）</code></pre>
+<div class="doc-note doc-note--warn"><p><strong>注意：</strong>支付宝填的是「支付宝公钥」（非你的应用公钥）；密钥用官方密钥工具生成后，应用公钥要先在开放平台配置并查看生成的支付宝公钥。修改 <code>.env</code> 后执行 <code>php artisan config:clear</code> 生效。</p></div>
+HTML,
+                    ],
+                    [
+                        'url' => 'sms-providers-keys',
+                        'title' => '短信服务密钥：阿里云短信 / 腾讯云短信',
+                        'desc' => '开通短信服务、申请签名与模板、创建访问密钥（AccessKey / SecretId）的完整步骤。',
+                        'content' => <<<'HTML'
+<p>「系统设置 → 短信」支持阿里云短信与腾讯云短信两家服务商，用于注册、登录、找回密码、绑定手机等场景的验证码短信。两家均需先<strong>申请短信签名</strong>与<strong>模板</strong>（国内短信须实名审核，通常要求企业资质），再创建 API 访问密钥填入后台。</p>
+<h2>阿里云短信</h2>
+<ol class="doc-steps">
+<li>登录 <a href="https://www.aliyun.com" target="_blank" rel="noopener">阿里云</a> → 开通短信服务（<a href="https://sms.console.aliyun.com" target="_blank" rel="noopener">sms.console.aliyun.com</a>）。</li>
+<li>国内消息 → <strong>签名管理</strong>：申请签名（建议用网站名称，企业用户需上传资质），等待审核。</li>
+<li>国内消息 → <strong>模板管理</strong>：申请验证码模板，类型选「验证码」，模板示例：<code>您的验证码为${code}，有效期10分钟。</code>审核通过后得到模板 Code（形如 <code>SMS_123456789</code>）。</li>
+<li>创建访问密钥：控制台 <strong>RAM 访问控制</strong> → 用户 → 创建用户（勾选 OpenAPI 调用）→ 授权 <code>AliyunDysmsFullAccess</code> → 生成 <strong>AccessKey ID</strong> 与 <strong>AccessKey Secret</strong>（Secret 仅创建时可见）。</li>
+<li>后台「短信 → 阿里云短信」填 AccessKey ID / AccessKey Secret / 签名名称 / 模板 Code，服务商选阿里云并启用。</li>
+</ol>
+<h2>腾讯云短信</h2>
+<ol class="doc-steps">
+<li>登录 <a href="https://cloud.tencent.com" target="_blank" rel="noopener">腾讯云</a> → 开通短信（<a href="https://console.cloud.tencent.com/smsv2" target="_blank" rel="noopener">console.cloud.tencent.com/smsv2</a>），首次进入按提示创建 <strong>SmsSdkAppId（应用）</strong>，形如 <code>1400000000</code>。</li>
+<li>国内短信 → <strong>签名管理</strong>：提交签名（网站/公众号/企业名），等待审核。</li>
+<li>国内短信 → <strong>正文模板管理</strong>：申请验证码模板（<code>您的验证码为{1}，{2}分钟内有效。</code>），通过后得到模板 ID（形如 <code>2012345</code>）。</li>
+<li>创建访问密钥：控制台 <strong>访问管理 CAM → API 密钥管理</strong> → 新建密钥，得到 <strong>SecretId</strong> 与 <strong>SecretKey</strong>。</li>
+<li>后台「短信 → 腾讯云短信」填 SecretId / SecretKey / SdkAppId / 签名名称 / 模板 ID，服务商选腾讯云并启用。</li>
+</ol>
+<div class="doc-note doc-note--warn"><p><strong>资费与合规：</strong>国内验证码短信按条计费（约 0.04~0.05 元/条），需预充值；签名/模板审核通常 2 小时~2 个工作日。个人主体可申请的签名类型受限，企业主体通过率更高。发送频率与额度在系统设置中可再限流。</p></div>
+<div class="doc-note doc-note--tip"><p><strong>调试：</strong>服务商选「log」时不发真实短信、验证码写入日志，用于本地开发。</p></div>
+HTML,
+                    ],
+                    [
+                        'url' => 'smtp-email-keys',
+                        'title' => 'SMTP 邮件服务器：常用邮箱授权码获取',
+                        'desc' => 'SMTP 参数含义与 QQ 邮箱、163、Gmail、阿里云邮件推送的授权码/密码获取步骤。',
+                        'content' => <<<'HTML'
+<p>Monit 的注册激活、密码找回、通知等邮件通过「系统设置 → SMTP」发送。SMTP 需要 6 项参数：<strong>主机地址、端口、加密方式、用户名、密码（多为「授权码」而非登录密码）、发件人地址</strong>。多数免费邮箱不允许直接用登录密码发信，需在邮箱设置里生成专用<strong>授权码</strong>。</p>
+<h2>QQ 邮箱（smtp.qq.com）</h2>
+<ol class="doc-steps">
+<li>网页版 QQ 邮箱 → 设置 → 账户 → 找到「POP3/IMAP/SMTP…服务」→ 开启 <strong>IMAP/SMTP 服务</strong>。</li>
+<li>按提示短信验证后，页面生成一个 <strong>16 位授权码</strong>（弹窗仅显示一次，注意保存）。</li>
+<li>后台填写：主机 <code>smtp.qq.com</code>、端口 <code>465</code>、加密 SSL、用户名 = 完整 QQ 邮箱地址、密码 = 授权码、发件地址 = 同一邮箱。</li>
+</ol>
+<h2>网易 163/126（smtp.163.com）</h2>
+<ol class="doc-steps">
+<li>邮箱设置 → POP3/SMTP/IMAP → 开启 <strong>SMTP 服务</strong>，弹出<strong>授权密码</strong>窗口时保存（仅显示一次）。</li>
+<li>后台填写：主机 <code>smtp.163.com</code>、端口 <code>465</code>、加密 SSL、用户名/发件 = 完整邮箱、密码 = 授权码。163 要求发件地址与账号一致。</li>
+</ol>
+<h2>Gmail（smtp.gmail.com）</h2>
+<ol class="doc-steps">
+<li>Google 账户开启<strong>两步验证</strong> → 账户安全 → 应用专用密码（App Passwords）→ 生成一个 16 位应用密码。</li>
+<li>后台填写：主机 <code>smtp.gmail.com</code>、端口 <code>465</code>、加密 SSL、用户名 = Gmail 地址、密码 = 应用专用密码（不是登录密码）。</li>
+</ol>
+<h2>阿里云邮件推送 / 腾讯云 SES（生产推荐）</h2>
+<p>免费邮箱每天发信量小（几十封）且易被判垃圾；正式环境建议用专业邮件服务，如阿里云邮件推送（<a href="https://dm.aliyun.com" target="_blank" rel="noopener">dm.aliyun.com</a>）：开通 → 创建发信域名并配置 SPF/DKIM 解析 → 创建发件地址 → SMTP 密码在发件地址详情页设置。参数：主机 <code>smtpdm.aliyun.com</code>、端口 <code>465</code>、加密 SSL、用户名/发件 = 发信地址。</p>
+<div class="doc-note doc-note--warn"><p><strong>常见坑：</strong>① 云服务器普遍封禁 25 端口，务必用 465(SSL) 或 587(TLS)；② 「密码」栏填的是授权码/应用密码，不是邮箱登录密码；③ 发件人地址需与 SMTP 账号一致，否则被拒；④ 配置后用「发送测试邮件」验证，失败查看管理后台日志中的 SMTP 报错。</p></div>
+HTML,
+                    ],
+                    [
+                        'url' => 'object-storage-keys',
+                        'title' => '对象存储密钥：阿里云 OSS / 腾讯云 COS / S3 兼容',
+                        'desc' => '把附件与上传文件转存到云对象存储：Bucket 创建、访问密钥（AccessKey / SecretId）申请与 Endpoint 说明。',
+                        'content' => <<<'HTML'
+<p>「系统设置 → 对象存储（Offload）」可将用户头像、上传附件等转存到云存储并配合 CDN 加速，降低本机磁盘与带宽压力。按所选驱动准备四样东西：<strong>Bucket、访问密钥对、地域（Region）、Endpoint</strong>（S3 兼容服务）。</p>
+<h2>阿里云 OSS</h2>
+<ol class="doc-steps">
+<li>控制台 <a href="https://oss.console.aliyun.com" target="_blank" rel="noopener">oss.console.aliyun.com</a> → 创建 Bucket（建议「公共读」便于 CDN 分发，读写权限按需）。</li>
+<li>控制台 <strong>RAM 访问控制</strong> → 用户 → 创建用户（勾选 OpenAPI 调用）→ 授权 <code>AliyunOSSFullAccess</code> → 生成 <strong>AccessKey ID / AccessKey Secret</strong>（Secret 仅创建时可见，务必保存）。</li>
+<li>后台填 AccessKey ID / Secret / Bucket 名称 / Endpoint（如 <code>https://oss-cn-hangzhou.aliyuncs.com</code>，内网机器可用内网 Endpoint 免流费）。</li>
+</ol>
+<h2>腾讯云 COS</h2>
+<ol class="doc-steps">
+<li>控制台 <a href="https://console.cloud.tencent.com/cos" target="_blank" rel="noopener">console.cloud.tencent.com/cos</a> → 创建存储桶（所属地域记下，如 <code>ap-guangzhou</code>）。</li>
+<li>控制台 <strong>访问管理 CAM → API 密钥管理</strong> → 新建密钥 → 获得 <strong>SecretId / SecretKey</strong>（建议创建子账号并授予 COS 权限后生成，最小权限原则）。</li>
+<li>后台填 SecretId / SecretKey / Bucket（形如 <code>app-1250000000</code>）/ 地域；可选填 CDN 加速域名。</li>
+</ol>
+<h2>AWS S3 / MinIO / 其他 S3 兼容（R2、DigitalOcean Spaces 等）</h2>
+<ol class="doc-steps">
+<li>S3：AWS 控制台 → IAM → Users → 创建用户 → 生成 <strong>Access Key</strong> → 附加 <code>AmazonS3FullAccess</code>（或仅限目标 Bucket 的最小策略）→ 创建 Bucket 并记下 Region。</li>
+<li>MinIO / R2 / Spaces：在各自控制台创建 Bucket 与 Access Key/Secret，把服务提供的 S3 端点填入 Endpoint（如 Cloudflare R2 为 <code>https://&lt;account&gt;.r2.cloudflarestorage.com</code>）。</li>
+<li>后台 S3 区块填 Key / Secret / Bucket / Region / Endpoint，驱动选对应项。</li>
+</ol>
+<div class="doc-note doc-note--info"><p><strong>配置源优先级：</strong>本设置组 → Offload 插件页设置 → 服务器 <code>.env</code> 环境变量，三层回落。填完可点击「测试连接」验证（若提供）；保存后新上传文件即走云存储，历史文件不受影响。</p></div>
+<div class="doc-note doc-note--warn"><p><strong>密钥安全：</strong>访问密钥等同账户写权限，务必用 RAM/CAM 子账号并只授予对应存储的权限，避免使用主账号密钥；泄露后在控制台禁用并轮换。</p></div>
+HTML,
+                    ],
+                    [
+                        'url' => 'maps-keys',
+                        'title' => '地图服务密钥：百度地图 AK / Google Maps Key',
+                        'desc' => '统计报表地理分布地图的切换与密钥申请：内置 SVG 地图免费无依赖，百度/谷歌地图需各自申请 Key。',
+                        'content' => <<<'HTML'
+<p>「系统设置 → 地图服务」控制统计报表中<strong>访客地理分布</strong>的底图。默认的<strong>内置 SVG 世界地图开箱即用、无任何外部依赖</strong>；若需要更精细的地图交互，可切换百度地图（适合大陆访问）或 Google 地图（适合海外访问），两者都需要申请密钥。</p>
+<h2>百度地图 AK</h2>
+<ol class="doc-steps">
+<li>注册并登录 <a href="https://lbsyun.baidu.com" target="_blank" rel="noopener">百度地图开放平台 lbsyun.baidu.com</a> → 控制台 → <strong>应用管理 → 我的应用 → 创建应用</strong>。</li>
+<li>应用类型选 <strong>「浏览器端」</strong>；启用服务勾选「JavaScript API」；Referer 白名单填 <code>*.你的域名.com</code>。</li>
+<li>创建成功后得到 <strong>AK</strong>（32 位字符串），填入后台「百度地图 AK」字段。</li>
+</ol>
+<div class="doc-note doc-note--info"><p>个人开发者认证后即有免费配额（个人版浏览器端每日调用量足够统计报表使用）；企业认证可提高配额。</p></div>
+<h2>Google Maps API Key</h2>
+<ol class="doc-steps">
+<li>登录 <a href="https://console.cloud.google.com" target="_blank" rel="noopener">Google Cloud Console</a>（需绑卡，但 Maps 每月有免费额度，小流量通常够用）。</li>
+<li>API 和服务 → 库 → 启用 <strong>Maps JavaScript API</strong>。</li>
+<li>API 和服务 → <strong>凭据 → 创建凭据 → API 密钥</strong>；建议立刻「限制密钥」：应用限制选 HTTP 引荐来源网址（填 <code>*.你的域名.com/*</code>），API 限制只勾 Maps JavaScript API。</li>
+<li>把 Key 填入后台「Google 地图 Key」字段。</li>
+</ol>
+<h2>常见问题</h2>
+<details class="doc-faq"><summary>切换后地图区域空白？</summary><p>九成是域名白名单/密钥限制不匹配：核对 Key 绑定的 Referer 与站点实际域名一致；浏览器控制台会给出明确的错误码（如 INVALID_REQUEST、referer 不允许）。</p></details>
+<details class="doc-faq"><summary>大陆访客用 Google 地图很慢？</summary><p>Google 地图服务在大陆不可稳定访问，面向大陆用户的站点建议选百度地图或保持内置 SVG 地图。</p></details>
+HTML,
+                    ],
+                    [
+                        'url' => 'ai-api-keys',
+                        'title' => 'AI 助手密钥：阿里百炼 / 腾讯混元 / 火山方舟 / OpenAI 兼容',
+                        'desc' => 'AI 功能的服务商与 API Key 申请：SEO 审计建议、AI 洞察、关键词建议的模型接入配置。',
+                        'content' => <<<'HTML'
+<p>「系统设置 → AI 助手」为大模型能力配置接入，启用后用于：<strong>SEO 审计的中文优化建议、统计页 AI 洞察、关键词建议</strong>。系统统一走 OpenAI 兼容协议（<code>{base_url}/chat/completions</code>），支持四类服务商，凭据保存在数据库设置中（不落 .env）。</p>
+<h2>阿里百炼（通义千问 DashScope）</h2>
+<ol class="doc-steps">
+<li>登录 <a href="https://bailian.console.aliyun.com" target="_blank" rel="noopener">bailian.console.aliyun.com</a>，开通模型服务（新用户通常有免费额度）。</li>
+<li>右上角头像 → <strong>API-KEY 管理 → 创建 API-KEY</strong>，复制 <code>sk-…</code> 密钥。</li>
+<li>后台：服务商选「阿里百炼」、API Key 粘贴；默认端点 <code>https://dashscope.aliyuncs.com/compatible-mode/v1</code>、默认模型 <code>qwen-plus</code>（无需改动，也可按需覆盖）。</li>
+</ol>
+<h2>腾讯混元</h2>
+<ol class="doc-steps">
+<li>登录 <a href="https://console.cloud.tencent.com/hunyuan" target="_blank" rel="noopener">console.cloud.tencent.com/hunyuan</a> 开通混元大模型。</li>
+<li>页面内 <strong>API Key 管理 → 创建 API Key</strong>，复制密钥。</li>
+<li>后台：服务商选「腾讯混元」、粘贴 API Key；默认端点 <code>https://api.hunyuan.cloud.tencent.com/v1</code>、默认模型 <code>hunyuan-turbos-latest</code>。</li>
+</ol>
+<h2>火山方舟（豆包）</h2>
+<ol class="doc-steps">
+<li>登录 <a href="https://console.volcengine.com/ark" target="_blank" rel="noopener">console.volcengine.com/ark</a> → 开通方舟 → 左侧 <strong>API Key 管理 → 创建 API Key</strong>。</li>
+<li>在「在线推理」页确保已开通要用的模型（或创建推理接入点）；模型名可填模型 ID 或接入点 ID（<code>ep-…</code>）。</li>
+<li>后台：服务商选「火山方舟」、粘贴 API Key；默认端点 <code>https://ark.cn-beijing.volces.com/api/v3</code>、默认模型 <code>doubao-1-5-pro-32k-250115</code>。</li>
+</ol>
+<h2>自定义 OpenAI 兼容端点（DeepSeek / Kimi / GLM / OpenAI 等）</h2>
+<p>服务商选「自定义 OpenAI 兼容端点」后需手动填 <strong>Base URL、API Key、模型名</strong> 三项：</p>
+<table>
+<thead><tr><th>服务商</th><th>API Key 获取</th><th>Base URL</th><th>模型示例</th></tr></thead>
+<tbody>
+<tr><td>DeepSeek</td><td><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com/api_keys</a>（需充值）</td><td><code>https://api.deepseek.com/v1</code></td><td><code>deepseek-chat</code></td></tr>
+<tr><td>OpenAI</td><td><a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a></td><td><code>https://api.openai.com/v1</code></td><td><code>gpt-4o-mini</code></td></tr>
+<tr><td>Moonshot Kimi</td><td><a href="https://platform.moonshot.cn" target="_blank" rel="noopener">platform.moonshot.cn</a></td><td><code>https://api.moonshot.cn/v1</code></td><td><code>moonshot-v1-8k</code></td></tr>
+<tr><td>智谱 GLM</td><td><a href="https://open.bigmodel.cn" target="_blank" rel="noopener">open.bigmodel.cn</a> → API 密钥</td><td><code>https://open.bigmodel.cn/api/paas/v4</code></td><td><code>glm-4-air</code></td></tr>
+</tbody>
+</table>
+<div class="doc-note doc-note--warn"><p><strong>费用提示：</strong>以上服务按 Token 计费（部分有免费额度），API Key 即计费凭证，请勿泄露；怀疑泄露时在对应平台作废旧 Key 并重新生成回填。</p></div>
+<div class="doc-note doc-note--info"><p><strong>验证：</strong>保存后在 SEO 审计报告页点「生成 AI 建议」，若报错会显示服务商返回信息（如余额不足、Key 无效），按提示处理即可。</p></div>
+HTML,
+                    ],
+                ],
+            ],
         ];
     }
 }

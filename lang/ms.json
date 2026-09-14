@@ -3687,5 +3687,6 @@
   "seo.option.allow": "Custom rules",
   "seo.option.block": "Block entire site",
   "seo.settings_disabled_tools_hint": "Slugs of tools to disable (one per line or comma separated). Leave empty to enable all; newly added tools appear automatically.",
-  "seo.settings_disabled_tools_list": "Show all currently available tool slugs"
+  "seo.settings_disabled_tools_list": "Show all currently available tool slugs",
+  "admin.settings_doc_link": "Panduan lengkap (Pusat Bantuan)"
 }

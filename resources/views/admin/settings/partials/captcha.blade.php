@@ -1,5 +1,6 @@
 <div class="space-y-6">
     <p class="text-sm text-zinc-500">{{ __('settings.captcha.t_2e0c72') }}</p>
+    <p class="text-sm"><a href="{{ route('help.article', 'captcha-keys') }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ __('admin.settings_doc_link') }} &rarr;</a></p>
 
     <div class="grid grid-cols-1 gap-4">
         <div>

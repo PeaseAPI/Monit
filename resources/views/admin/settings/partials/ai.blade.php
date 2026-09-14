@@ -26,7 +26,8 @@
 
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.ai_api_key') }}</label>
         <input type="password" name="ai_api_key" value="{{ old('ai_api_key', $settings['ai.ai_api_key'] ?? '') }}" class="form-input" autocomplete="new-password">
-        <p class="mt-1 text-xs text-zinc-400">{{ __('admin.ai_api_key_hint') }}</p></div>
+        <p class="mt-1 text-xs text-zinc-400">{{ __('admin.ai_api_key_hint') }}</p>
+        <p class="mt-1 text-xs"><a href="{{ route('help.article', 'ai-api-keys') }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ __('admin.settings_doc_link') }} &rarr;</a></p></div>
 
     <div><label class="block text-sm font-medium text-zinc-700">{{ __('admin.ai_model') }}</label>
         <input type="text" name="ai_model" value="{{ old('ai_model', $settings['ai.ai_model'] ?? '') }}" class="form-input" placeholder="{{ $providers[old('ai_provider', $settings['ai.ai_provider'] ?? 'log')]['default_model'] ?? '' }}">

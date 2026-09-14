@@ -81,6 +81,7 @@
                 <label class="form-label">{{ __('settings.seo.t_3fa9aa') }}</label>
                 <input type="text" name="serpapi_api_key" class="form-input font-mono text-[13px]" value="{{ old('serpapi_api_key', $settings['seo.serpapi_api_key'] ?? '') }}" autocomplete="off">
                 <p class="form-hint">{{ __('settings.seo.t_b79c80') }}</p>
+                <p class="form-hint"><a href="{{ route('help.article', 'serpapi-key') }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ __('admin.settings_doc_link') }} &rarr;</a></p>
             </div>
         </div>
     </section>

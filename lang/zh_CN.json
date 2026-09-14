@@ -3687,5 +3687,6 @@
   "seo.option.allow": "按目录规则",
   "seo.option.block": "全站禁止抓取",
   "seo.settings_disabled_tools_hint": "填入要停用的工具 slug（每行或逗号分隔），留空表示全部开放；新增工具会自动出现在工具中心。",
-  "seo.settings_disabled_tools_list": "查看当前全部可用工具 slug"
+  "seo.settings_disabled_tools_list": "查看当前全部可用工具 slug",
+  "admin.settings_doc_link": "详细申请教程（帮助中心）"
 }

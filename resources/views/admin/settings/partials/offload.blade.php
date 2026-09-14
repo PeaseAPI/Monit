@@ -1,6 +1,7 @@
 <div class="space-y-6">
     <p class="text-sm text-zinc-500">{{ __('settings.offload.t_f6ef68') }}</p>
     <p class="text-xs text-zinc-400">{{ __('settings.offload.config_source_hint') }}</p>
+    <p class="text-sm"><a href="{{ route('help.article', 'object-storage-keys') }}" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">{{ __('admin.settings_doc_link') }} &rarr;</a></p>
 
     <div class="space-y-4">
         <div>

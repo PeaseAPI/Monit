@@ -32,6 +32,7 @@
             .'<p>'.__('admin.socials_provider_desc', ['provider' => $label]).'</p>'
             .'<p class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">'
             .'<a href="'.e($providerMeta[$provider]['url'] ?? '#').'" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">'.__('admin.socials_get_key').' &rarr;</a>'
+            .'<a href="'.e(route('help.article', 'oauth-social-keys')).'" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">'.__('admin.settings_doc_link').' &rarr;</a>'
             .'<span>'.__('admin.socials_callback_url').': <code class="rounded bg-white px-1.5 py-0.5 text-[11px] text-zinc-600 select-all">'.e(route('social-login.callback', $provider)).'</code></span>'
             .'</p></div>';
     };
