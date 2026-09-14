@@ -160,8 +160,11 @@
                 <h2 class="text-lg font-semibold text-zinc-800">{{ __('msg.domain_seo_title') }}</h2>
                 <p class="mt-1 text-sm text-zinc-500">{{ __('msg.domain_seo_desc') }}</p>
             </div>
-            @if($domain->website !== null && (int) $domain->website->user_id === (int) auth()->user()->user_id)
-                <a href="{{ route('seo.keywords', ['website' => $domain->website->website_id]) }}"
+            {{-- linkedWebsite()：显式 domain_id 外键优先，回退按 host 匹配本人网站
+                 （先建站后加域名监控的场景此前恒显「未关联」，无法直达关键词监控） --}}
+            @php($linkedWebsite = $domain->linkedWebsite())
+            @if($linkedWebsite !== null)
+                <a href="{{ route('seo.keywords', ['website' => $linkedWebsite->website_id]) }}"
                    class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
                     {{ __('msg.domain_seo_view') }}
                 </a>

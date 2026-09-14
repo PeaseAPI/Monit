@@ -5,24 +5,28 @@
     <x-stats-header :website="$website" :title="__('stats.realtime')" />
     <p class="mb-6 text-sm text-zinc-500">{{ __('stats.realtime_desc') }}</p>
 
-    <div class="rounded-2xl border border-zinc-200 bg-white p-10 text-center">
-        <div class="flex items-center justify-center gap-3">
-            <span class="relative flex h-3 w-3">
-                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                <span class="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
-            </span>
-            <span id="realtime-count" class="text-6xl font-bold text-zinc-900">{{ $count }}</span>
+    {{-- 实时大数字卡（51.la 对标：核心指标居中大号呈现） --}}
+    <div class="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+        <div class="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-brand-50/80 to-transparent"></div>
+        <div class="relative p-10 text-center">
+            <div class="flex items-center justify-center gap-3">
+                <span class="relative flex h-3 w-3">
+                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
+                </span>
+                <span id="realtime-count" class="text-6xl font-bold tracking-tight text-zinc-900 tabular-nums">{{ $count }}</span>
+            </div>
+            <p class="mt-3 text-sm font-medium text-zinc-500">{{ __('stats.online_visitors') }}</p>
+            <p class="mt-1 text-xs text-zinc-400" id="realtime-updated" data-url="{{ route_path('stats.realtime.data', $website->website_id) }}">{{ now()->toDateTimeString() }}</p>
         </div>
-        <p class="mt-3 text-sm text-zinc-500">{{ __('stats.online_visitors') }}</p>
-        <p class="mt-1 text-xs text-zinc-400" id="realtime-updated" data-url="{{ route('stats.realtime.data', $website->website_id) }}">{{ now()->toDateTimeString() }}</p>
     </div>
 
     @if(! empty($overview))
     <div class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div class="rounded-2xl border border-zinc-200 bg-white p-5"><p class="text-sm text-zinc-500">{{ __('stats.pageviews') }}</p><p class="mt-1 text-2xl font-bold text-zinc-900">{{ $overview['pageviews'] ?? 0 }}</p></div>
-        <div class="rounded-2xl border border-zinc-200 bg-white p-5"><p class="text-sm text-zinc-500">{{ __('stats.visitors') }}</p><p class="mt-1 text-2xl font-bold text-zinc-900">{{ $overview['visitors'] ?? 0 }}</p></div>
-        <div class="rounded-2xl border border-zinc-200 bg-white p-5"><p class="text-sm text-zinc-500">{{ __('stats.sessions') }}</p><p class="mt-1 text-2xl font-bold text-zinc-900">{{ $overview['sessions'] ?? 0 }}</p></div>
-        <div class="rounded-2xl border border-zinc-200 bg-white p-5"><p class="text-sm text-zinc-500">{{ __('stats.bounce_rate') }}</p><p class="mt-1 text-2xl font-bold text-zinc-900">{{ $overview['bounce_rate'] ?? '0%' }}</p></div>
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"><p class="text-sm text-zinc-500">{{ __('stats.pageviews') }}</p><p class="mt-1 text-2xl font-bold text-zinc-900 tabular-nums">{{ $overview['pageviews'] ?? 0 }}</p></div>
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"><p class="text-sm text-zinc-500">{{ __('stats.visitors') }}</p><p class="mt-1 text-2xl font-bold text-zinc-900 tabular-nums">{{ $overview['visitors'] ?? 0 }}</p></div>
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"><p class="text-sm text-zinc-500">{{ __('stats.sessions') }}</p><p class="mt-1 text-2xl font-bold text-zinc-900 tabular-nums">{{ $overview['sessions'] ?? 0 }}</p></div>
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"><p class="text-sm text-zinc-500">{{ __('stats.bounce_rate') }}</p><p class="mt-1 text-2xl font-bold text-zinc-900 tabular-nums">{{ $overview['bounce_rate'] ?? '0%' }}</p></div>
     </div>
     @endif
 </div>
@@ -31,14 +35,16 @@
     (function () {
         var url = document.getElementById('realtime-updated').dataset.url;
         function tick() {
-            fetch(url, { headers: { 'Accept': 'application/json' } })
-                .then(function (r) { return r.json(); })
+            fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.ok ? r.json() : null; })
                 .then(function (data) {
+                    if (! data) return;
                     document.getElementById('realtime-count').textContent = data.count;
                     document.getElementById('realtime-updated').textContent = data.updated_at;
                 })
                 .catch(function () {});
         }
+        tick();
         setInterval(tick, 5000);
     })();
 </script>

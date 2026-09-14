@@ -45,11 +45,12 @@ class LandingEnhancementTest extends TestCase
     public function test_locale_switch_persists_across_requests(): void
     {
         // 白名单语言：写入 session，中间件 setLocale 生效
+        // （文案用导航项 Pricing：评价区块精简移除后依然稳定的英文文本）
         $this->get('/locale/en')->assertRedirect();
         $response = $this->get('/');
         $response->assertOk()
             ->assertSee('lang="en"', false)
-            ->assertSee('Trusted by growing teams');
+            ->assertSee(__('landing.nav_pricing'));
 
         // 切回中文
         $this->get('/locale/zh_CN')->assertRedirect();
@@ -93,11 +94,13 @@ class LandingEnhancementTest extends TestCase
             ->assertSee(__('landing.trial_days_note', ['days' => 7]));
     }
 
-    public function test_landing_shows_testimonials(): void
+    public function test_landing_testimonials_section_removed(): void
     {
+        // UI 精简（51.la 对标）：评价区块已从 landing 页移除——
+        // 本用例锁定该决策，防止旧区块被误回填
         $this->get('/')->assertOk()
-            ->assertSee(__('landing.testimonials_title'))
-            ->assertSee(__('landing.testimonial_1_author'));
+            ->assertDontSee(__('landing.testimonials_title'))
+            ->assertDontSee(__('landing.testimonial_1_author'));
     }
 
     public function test_production_seeder_imports_real_config(): void

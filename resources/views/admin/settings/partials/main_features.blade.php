@@ -99,14 +99,6 @@
             </label>
             <label class="settings-field-row">
                 <span class="min-w-0">
-                    <span class="settings-field-row-label">{{ __('settings.main.t_125062') }}</span>
-                    <span class="settings-field-row-hint">{{ __('settings.main.t_ec81ae') }}</span>
-                </span>
-                <input type="checkbox" name="display_index_testimonials" value="1" class="input-toggle"
-                    {{ filter_var($settings['main.display_index_testimonials'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
-            </label>
-            <label class="settings-field-row">
-                <span class="min-w-0">
                     <span class="settings-field-row-label">{{ __('settings.main.t_f83cb4') }}</span>
                     <span class="settings-field-row-hint">{{ __('settings.main.t_54fc96') }}</span>
                 </span>

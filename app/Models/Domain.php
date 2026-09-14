@@ -67,6 +67,33 @@ class Domain extends Model
     }
 
     /**
+     * 域名可关联的平台网站（域名详情页 SEO 关键词监控入口的门控依据）。
+     *
+     * 两级匹配：
+     *  1. 显式外键 websites.domain_id = 本域名（自定义域建站场景），且归属者一致；
+     *  2. 回退按 host 匹配本域名归属者的网站（Website.host 存储时已去 www.
+     *     前缀，matchesHost 内亦做归一化）——「先建站、后加域名监控」的常见
+     *     流程不会写 domain_id，仅靠显式外键会让入口恒显「未关联平台网站」。
+     *
+     * host 匹配严格限定 user_id = 本域名归属者，杜绝撞名时跨租户引用他人网站。
+     *
+     * @return Website|null
+     */
+    public function linkedWebsite(): ?Website
+    {
+        $explicit = $this->website;
+
+        if ($explicit !== null && (int) $explicit->user_id === (int) $this->user_id) {
+            return $explicit;
+        }
+
+        return Website::query()
+            ->where('user_id', $this->user_id)
+            ->get()
+            ->first(fn (Website $website) => $website->matchesHost($this->host));
+    }
+
+    /**
      * NS 列表（任务 #35-5 双格式兼容：新数据为 JSON 数组、旧数据为逗号分隔字符串）
      *
      * 注意：此逻辑勿用 blade `@php(...)` 内联表达式承载——嵌套括号表达式经

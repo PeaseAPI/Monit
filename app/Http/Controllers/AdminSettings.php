@@ -495,7 +495,6 @@ class AdminSettings extends Controller
                 'auto_language_detection_is_enabled' => 'boolean',
                 'breadcrumbs_is_enabled' => 'boolean',
                 'display_index_plans' => 'boolean',
-                'display_index_testimonials' => 'boolean',
                 'display_index_faq' => 'boolean',
                 'display_index_latest_blog_posts' => 'boolean',
                 'maintenance_is_enabled' => 'boolean',

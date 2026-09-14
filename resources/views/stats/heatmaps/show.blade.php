@@ -96,7 +96,7 @@
 @php
     // @json 指令参数须为简单变量：复杂表达式（含 "]), " 序列）会被 Blade 编译器错误截断产出损坏 PHP
     $mapMeta = [
-        'snapshot_url' => route('stats.heatmaps.snapshot', [$website->website_id, $heatmap->heatmap_id]),
+        'snapshot_url' => route_path('stats.heatmaps.snapshot', [$website->website_id, $heatmap->heatmap_id]),
         'device' => $device,
         'no_data_text' => __('stats.no_click_data'),
         'no_scroll_data_text' => __('stats.no_scroll_data'),

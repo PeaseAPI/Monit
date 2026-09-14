@@ -97,7 +97,7 @@ async function sendPhoneBindCode() {
     const btn = document.getElementById('phone-send-code-btn');
     btn.disabled = true;
     try {
-        const response = await fetch(@json(route('sms.send')), {
+        const response = await fetch(@json(route_path('sms.send')), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({ phone: phone, purpose: 'phone_bind' }),
@@ -124,7 +124,7 @@ async function submitPhoneBind() {
     const btn = document.getElementById('phone-bind-submit-btn');
     btn.disabled = true;
     try {
-        const response = await fetch(@json(route('account.phone.bind')), {
+        const response = await fetch(@json(route_path('account.phone.bind')), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({ phone: phone, sms_code: code }),

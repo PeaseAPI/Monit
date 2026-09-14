@@ -59,7 +59,7 @@
                 <h3 class="text-sm font-semibold text-brand-700">✨ {{ __('stats.ai_insight') }}</h3>
                 <p class="mt-1 text-xs text-zinc-400">{{ __('stats.ai_insight_desc') }}</p>
             </div>
-            <button type="button" id="ai-insight-btn" data-url="{{ route('stats.ai_insight', $website->website_id) }}" data-range="{{ $range }}"
+            <button type="button" id="ai-insight-btn" data-url="{{ route_path('stats.ai_insight', $website->website_id) }}" data-range="{{ $range }}"
                 data-text-idle="{{ __('stats.ai_insight_generate') }}" data-text-loading="{{ __('stats.ai_insight_loading') }}"
                 data-text-failed="{{ __('stats.ai_insight_failed') }}" data-text-disabled="{{ __('stats.ai_insight_disabled') }}"
                 class="rounded-xl bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">

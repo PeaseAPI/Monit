@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LightweightEvent;
 use App\Models\SessionEvent;
+use App\Models\SessionReplay;
 use App\Models\VisitorSession;
 use App\Models\Website;
 use App\Models\WebsiteVisitor;
@@ -15,6 +16,7 @@ use App\Support\Csv;
 use App\Support\LocaleNames;
 use App\Support\TimezoneNames;
 use App\Support\Typed;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -684,6 +686,7 @@ class StatsController extends Controller
 
     /**
      * 单访客详情（规格书 §6.2.2：/visitor）
+     * 会话分组时间线 + 回放关联入口（对标 51.LA 访问明细/屏幕录制）
      *
      * @return View
      */
@@ -714,6 +717,7 @@ class StatsController extends Controller
             $profile = [
                 'label' => substr($visitorId, 0, 8).'…',
                 'country_code' => $first->country_code,
+                'region_name' => $first->region_name,
                 'city_name' => $first->city_name,
                 'ip' => null,
                 'os_name' => $first->os_name,
@@ -724,34 +728,43 @@ class StatsController extends Controller
                 'first_date' => $first->date,
                 'last_date' => $last->date,
                 'total_events' => $events->count(),
+                'total_sessions' => null,
+                'total_replays' => 0,
+                'entry_path' => $first->path,
+                'exit_path' => $last->path,
                 'first_referrer' => $events->firstWhere('referrer_host')?->referrer_host,
             ];
 
-            $timeline = $events->map(fn ($e) => [
-                'date' => $e->date,
-                'type' => $e->type,
-                'path' => $e->path,
-                'referrer_host' => $e->referrer_host,
-            ]);
+            $sessions = [[
+                'session_id' => null,
+                'date' => $first->date,
+                'duration' => $this->secondsBetween($first->date, $last->date),
+                'total_events' => $events->count(),
+                'replay_id' => null,
+                'events' => $this->buildTimeline($events),
+            ]];
 
-            return view('stats.visitor_detail', compact('website', 'profile', 'timeline'));
+            return view('stats.visitor_detail', compact('website', 'profile', 'sessions'));
         }
 
-        // Advanced：visitor_id → 会话事件时间线
+        // Advanced：visitor_id → 会话分组时间线 + 回放关联（存在录制才有回放入口）
         $visitor = WebsiteVisitor::where('website_id', $website->website_id)
             ->findOrFail((int) $visitorId);
 
-        $allEvents = VisitorSession::where('visitor_id', $visitor->visitor_id)
+        $visitorSessions = VisitorSession::where('visitor_id', $visitor->visitor_id)
             ->with('events')
-            ->get()
-            ->flatMap->events
-            ->sortBy('event_id')
-            ->take(500)
-            ->values();
+            ->orderByDesc('date')
+            ->get();
+
+        $replaysBySession = SessionReplay::where('visitor_id', $visitor->visitor_id)
+            ->pluck('replay_id', 'session_id');
+
+        $allEvents = $visitorSessions->flatMap->events->sortBy('event_id')->values();
         /** @var Collection<int, SessionEvent> $allEvents */
         $profile = [
             'label' => '#'.$visitor->visitor_id,
             'country_code' => $visitor->country_code,
+            'region_name' => $visitor->region_name,
             'city_name' => $visitor->city_name,
             'ip' => $website->ip_tracking_is_enabled ? $visitor->ip : null,
             'os_name' => $visitor->os_name,
@@ -762,17 +775,68 @@ class StatsController extends Controller
             'first_date' => $allEvents->first()?->date,
             'last_date' => $allEvents->last()?->date,
             'total_events' => $allEvents->count(),
+            'total_sessions' => $visitorSessions->count(),
+            'total_replays' => $replaysBySession->count(),
+            'entry_path' => $allEvents->first()?->path,
+            'exit_path' => $allEvents->last()?->path,
             'first_referrer' => $allEvents->firstWhere('referrer_host')?->referrer_host,
         ];
 
-        $timeline = $allEvents->map(fn ($e) => [
-            'date' => $e->date,
-            'type' => $e->type,
-            'path' => $e->path,
-            'referrer_host' => $e->referrer_host,
-        ]);
+        // 会话分组展示上限：最近 10 个会话（合计提示见视图）
+        $sessions = $visitorSessions
+            ->take(10)
+            ->map(fn (VisitorSession $s): array => [
+                'session_id' => $s->session_id,
+                'date' => $s->date,
+                'duration' => $this->secondsBetween($s->events->min('date'), $s->events->max('date')),
+                'total_events' => $s->events->count(),
+                'replay_id' => $replaysBySession->get($s->session_id),
+                'events' => $this->buildTimeline($s->events->sortBy('event_id')->take(100)->values()),
+            ])
+            ->values();
 
-        return view('stats.visitor_detail', compact('website', 'profile', 'timeline'));
+        return view('stats.visitor_detail', compact('website', 'profile', 'sessions'));
+    }
+
+    /**
+     * 事件集合 → 时间线行（相邻事件计算停留秒数）
+     *
+     * @param  Collection<int, SessionEvent|LightweightEvent> $events
+     * @return array<int, array{date: mixed, type: ?string, path: ?string, referrer_host: ?string, gap: ?int}>
+     */
+    private function buildTimeline(Collection $events): array
+    {
+        $rows = [];
+        $previousDate = null;
+
+        foreach ($events as $event) {
+            $rows[] = [
+                'date' => $event->date,
+                'type' => $event->type,
+                'path' => $event->path,
+                'referrer_host' => $event->referrer_host,
+                'gap' => $previousDate !== null ? $this->secondsBetween($previousDate, $event->date) : null,
+            ];
+            $previousDate = $event->date;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * 两个时间点之间的秒数（任一为空或解析失败返回 null）
+     */
+    private function secondsBetween(mixed $from, mixed $to): ?int
+    {
+        if ($from === null || $to === null) {
+            return null;
+        }
+
+        try {
+            return (int) abs(Carbon::parse($to)->diffInSeconds(Carbon::parse($from)));
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

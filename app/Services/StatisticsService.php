@@ -8,9 +8,11 @@ use App\Models\OutboundClick;
 use App\Models\SessionEvent;
 use App\Models\VisitorSession;
 use App\Models\Website;
+use App\Support\Settings;
 use App\Support\Typed;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -145,6 +147,64 @@ final class StatisticsService
      | 核心指标
      --------------------------------------------------------------------- */
 
+    /* ---------------------------------------------------------------------
+     | 图表缓存（后台设置「图表缓存分钟数」main.chart_cache）
+     --------------------------------------------------------------------- */
+
+    /**
+     * 构建缓存键：方法 + 网站 +起止日期 + 过滤器/参数指纹
+     */
+    protected function cacheKey(string $method, array $args): string
+    {
+        return sprintf(
+            'stats:%s:%d:%s~%s:%s',
+            $method,
+            $this->website->website_id,
+            $this->startDate->format('Ymd'),
+            $this->endDate->format('Ymd'),
+            md5(serialize([$this->filters, $args]))
+        );
+    }
+
+    /**
+     * 图表缓存时长（分钟）；0 = 关闭缓存
+     *
+     * 后台「系统设置 → 图表缓存分钟数」（settings 键 main.chart_cache）
+     * 长期存在但从未被消费——这里是其唯一消费点：统计页大量聚合查询
+     * 以此 TTL 走缓存，设置 >0 即可显著降低统计页查询压力。
+     */
+    protected function cacheTtl(): int
+    {
+        return (int) Settings::get('main.chart_cache', 30);
+    }
+
+    /**
+     * 读取缓存；命中返回缓存值，未命中返回 null
+     * （调用形如 `if (($hit = $this->cacheFetch(...)) !== null) return $hit;`）
+     */
+    protected function cacheFetch(string $method, array $args): mixed
+    {
+        if ($this->cacheTtl() <= 0 || app()->environment('testing')) {
+            return null;
+        }
+
+        return Cache::get($this->cacheKey($method, $args));
+    }
+
+    /**
+     * 写入缓存并原样返回值，便于 `return $this->cacheStore(...)` 收口
+     */
+    protected function cacheStore(string $method, array $args, mixed $value): mixed
+    {
+        $ttl = $this->cacheTtl();
+
+        if ($ttl > 0 && ! app()->environment('testing')) {
+            Cache::put($this->cacheKey($method, $args), $value, now()->addMinutes(min($ttl, 1440)));
+        }
+
+        return $value;
+    }
+
     /**
      * 概览：PV / UV / 会话 / 跳出率 / 平均停留时长
      *
@@ -152,6 +212,9 @@ final class StatisticsService
      */
     public function overview(): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
         if ($this->isLightweight) {
             $lwQuery = LightweightEvent::query()
                 ->where('website_id', $this->website->website_id)
@@ -199,19 +262,37 @@ final class StatisticsService
             ->selectRaw('AVG((SELECT MAX(se.date) FROM sessions_events se WHERE se.session_id = visitors_sessions.session_id) - visitors_sessions.date) as avg_duration')
             ->value('avg_duration');
 
-        return [
+        return $this->cacheStore(__METHOD__, func_get_args(), [
             'pageviews' => $pageviews,
             'visitors' => $visitors,
             'sessions' => $sessionCount,
             'bounce_rate' => $bounceRate,
             'avg_duration' => ((bool) $avgDuration) ? Typed::int($avgDuration) : 0,
-        ];
+        ]);
     }
 
     /**
      * 实时在线：5 分钟内有事件的独立访客（规格书 §5.1）
+     *
+     * 实时页每 5 秒轮询一次，单独走 5 秒微缓存避免打爆数据库。
      */
     public function realtime(): int
+    {
+        if (app()->environment('testing')) {
+            return $this->realtimeQuery();
+        }
+
+        return (int) Cache::remember(
+            'stats:realtime:'.$this->website->website_id,
+            now()->addSeconds(5),
+            fn (): int => $this->realtimeQuery()
+        );
+    }
+
+    /**
+     * 实时在线实际查询（realtime() 的缓存回源）
+     */
+    protected function realtimeQuery(): int
     {
         $since = now()->subMinutes(5);
 
@@ -236,6 +317,10 @@ final class StatisticsService
      */
     public function dailySeries(): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         if ($this->isLightweight) {
             $rows = LightweightEvent::query()
                 ->where('website_id', $this->website->website_id)
@@ -270,7 +355,7 @@ final class StatisticsService
             ];
         }
 
-        return $series;
+        return $this->cacheStore(__METHOD__, func_get_args(), $series);
     }
 
     /**
@@ -281,6 +366,10 @@ final class StatisticsService
      */
     public function breakdown(string $dimension, int $limit = 10): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $allowed = ['path', 'referrer_host', 'utm_source', 'utm_medium', 'utm_campaign',
             'continent_code', 'country_code', 'city_name', 'device_type', 'os_name',
             'browser_name', 'browser_language', 'screen_resolution', 'theme',
@@ -333,10 +422,10 @@ final class StatisticsService
             }
         }
 
-        return collect($rows)->map(fn ($row) => [
+        return $this->cacheStore(__METHOD__, func_get_args(), collect($rows)->map(fn ($row) => [
             'key' => Typed::string($row->k ?? __('stats.unknown')),
             'count' => Typed::int($row->total),
-        ])->all();
+        ])->all());
     }
 
     /**
@@ -346,6 +435,10 @@ final class StatisticsService
      */
     public function cityRegionBreakdown(int $limit = 50): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         if ($this->isLightweight) {
             $lwB = LightweightEvent::query()
                 ->where('website_id', $this->website->website_id)
@@ -371,10 +464,10 @@ final class StatisticsService
                 ->get();
         }
 
-        return collect($rows)->map(fn ($row) => [
+        return $this->cacheStore(__METHOD__, func_get_args(), collect($rows)->map(fn ($row) => [
             'key' => Typed::string($row->k ?? __('stats.unknown')),
             'count' => Typed::int($row->total),
-        ])->all();
+        ])->all());
     }
 
     /**
@@ -384,6 +477,10 @@ final class StatisticsService
      */
     public function breakdownWithUtm(string $dimension, int $limit = 50): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         if ($dimension !== 'referrer_host') {
             return $this->breakdown($dimension, $limit);
         }
@@ -410,13 +507,13 @@ final class StatisticsService
                 ->get();
         }
 
-        return collect($rows)->map(fn ($row) => [
+        return $this->cacheStore(__METHOD__, func_get_args(), collect($rows)->map(fn ($row) => [
             'key' => (string) ($row->k ?? __('stats.direct_access')),
             'count' => $row->total,
             'utm_source' => $row->utm_source,
             'utm_medium' => $row->utm_medium,
             'utm_campaign' => $row->utm_campaign,
-        ])->all();
+        ])->all());
     }
 
     /**
@@ -426,6 +523,10 @@ final class StatisticsService
      */
     public function topVisitors(int $limit = 50): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         if ($this->isLightweight) {
             // LW：轻量单表按 visitor_uuid 聚合（访客明细与旅程）
             $rows = DB::table('lightweight_events')
@@ -477,11 +578,12 @@ final class StatisticsService
                 MIN(sessions_events.date) as first_date,
                 MAX(sessions_events.date) as last_date,
                 SUBSTRING_INDEX(GROUP_CONCAT(sessions_events.referrer_host ORDER BY sessions_events.event_id SEPARATOR '\t'), '\t', 1) as first_referrer")
-            ->orderByDesc('total_events')
+            ->orderByDesc('websites_visitors.visitor_id')
+            ->orderByDesc('websites_visitors.last_date')
             ->limit($limit)
             ->get();
 
-        return collect($rows)->map(fn ($row) => [
+        return $this->cacheStore(__METHOD__, func_get_args(), collect($rows)->map(fn ($row) => [
             'visitor_id' => Typed::int($row->visitor_id),
             'visitor_uuid' => strtolower(Typed::string($row->visitor_uuid)),
             'country_code' => $row->country_code,
@@ -495,7 +597,7 @@ final class StatisticsService
             'first_date' => $row->first_date,
             'last_date' => $row->last_date,
             'first_referrer' => $row->first_referrer,
-        ])->all();
+        ])->all());
     }
 
     /**
@@ -505,6 +607,10 @@ final class StatisticsService
      */
     public function goalsConversions(): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $goals = $this->website->goals()
             ->where('is_enabled', true)
             ->get();
@@ -526,7 +632,7 @@ final class StatisticsService
             ];
         }
 
-        return $conversions;
+        return $this->cacheStore(__METHOD__, func_get_args(), $conversions);
     }
 
     /**
@@ -536,6 +642,10 @@ final class StatisticsService
      */
     public function utmAnalysis(): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $dimensions = ['utm_source', 'utm_medium', 'utm_campaign'];
         $results = [];
 
@@ -554,7 +664,7 @@ final class StatisticsService
 
         usort($results, fn ($a, $b) => $b['count'] - $a['count']);
 
-        return array_slice($results, 0, 30);
+        return $this->cacheStore(__METHOD__, func_get_args(), array_slice($results, 0, 30));
     }
 
     /* ---------------------------------------------------------------------
@@ -631,6 +741,10 @@ final class StatisticsService
      */
     public function hourlySeries(): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $hourExpr = "date_format(date, '%H')";
 
         if ($this->isLightweight) {
@@ -666,7 +780,7 @@ final class StatisticsService
             ];
         }
 
-        return $series;
+        return $this->cacheStore(__METHOD__, func_get_args(), $series);
     }
 
     /**
@@ -676,6 +790,10 @@ final class StatisticsService
      */
     public function landingPages(int $limit = 10): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
 
         $rows = $base
@@ -688,7 +806,7 @@ final class StatisticsService
             ->limit($limit)
             ->get();
 
-        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => $row->total])->all();
+        return $this->cacheStore(__METHOD__, func_get_args(), collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => $row->total])->all());
     }
 
     /**
@@ -698,6 +816,10 @@ final class StatisticsService
      */
     public function exitPages(int $limit = 10): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         if ($this->isLightweight) {
             return [];
         }
@@ -712,7 +834,7 @@ final class StatisticsService
             ->limit($limit)
             ->get();
 
-        return collect($rows)->map(fn ($row) => ['key' => Typed::string($row->k), 'count' => Typed::int($row->total)])->all();
+        return $this->cacheStore(__METHOD__, func_get_args(), collect($rows)->map(fn ($row) => ['key' => Typed::string($row->k), 'count' => Typed::int($row->total)])->all());
     }
 
     /**
@@ -722,6 +844,10 @@ final class StatisticsService
      */
     public function searchTerms(int $limit = 10): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
 
         $rows = $base
@@ -758,11 +884,11 @@ final class StatisticsService
         $items = array_values($merged);
         usort($items, fn ($a, $b) => $b['count'] - $a['count']);
 
-        return array_slice(array_map(fn ($m) => [
+        return $this->cacheStore(__METHOD__, func_get_args(), array_slice(array_map(fn ($m) => [
             'key' => $m['term'],
             'engines' => implode(' / ', array_keys($m['engines'])),
             'count' => $m['count'],
-        ], $items), 0, $limit);
+        ], $items), 0, $limit));
     }
 
     /**
@@ -794,6 +920,10 @@ final class StatisticsService
      */
     public function channels(): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
 
         $rows = $base
@@ -825,7 +955,7 @@ final class StatisticsService
             }
         }
 
-        return $result;
+        return $this->cacheStore(__METHOD__, func_get_args(), $result);
     }
 
     /**
@@ -836,6 +966,10 @@ final class StatisticsService
      */
     public function loyalty(): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         if ($this->isLightweight) {
             return ['new_visitors' => 0, 'returning_visitors' => 0, 'frequency' => [], 'depth' => [], 'duration' => []];
         }
@@ -928,13 +1062,13 @@ final class StatisticsService
             $buckets
         );
 
-        return [
+        return $this->cacheStore(__METHOD__, func_get_args(), [
             'new_visitors' => $newVisitors,
             'returning_visitors' => $returning,
             'frequency' => $toItems($freqBuckets),
             'depth' => $toItems($depthBuckets),
             'duration' => $toItems($durationBuckets),
-        ];
+        ]);
     }
 
     /* ---------------------------------------------------------------------
@@ -949,6 +1083,10 @@ final class StatisticsService
      */
     public function weekdaySeries(): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $dowExpr = '(DAYOFWEEK(date) - 1)';
 
         if ($this->isLightweight) {
@@ -991,7 +1129,7 @@ final class StatisticsService
             ];
         }
 
-        return $series;
+        return $this->cacheStore(__METHOD__, func_get_args(), $series);
     }
 
     /** AI 引荐域名归一表（原版 ai_referrers，扩展 gemini）：子域/别名 → 规范域 */
@@ -1046,6 +1184,10 @@ final class StatisticsService
      */
     public function referralCategories(int $limit = 30): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
 
         $rows = $base
@@ -1121,11 +1263,11 @@ final class StatisticsService
             ), 0, $limit);
         };
 
-        return [
+        return $this->cacheStore(__METHOD__, func_get_args(), [
             'social' => $toItems($social),
             'search' => $toItems($search),
             'ai' => $toItems($ai),
-        ];
+        ]);
     }
 
     /**
@@ -1135,6 +1277,10 @@ final class StatisticsService
      */
     public function referrerPaths(string $host, int $limit = 50): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
 
         $rows = $base
@@ -1148,7 +1294,7 @@ final class StatisticsService
             ->limit($limit)
             ->get();
 
-        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => $row->total])->all();
+        return $this->cacheStore(__METHOD__, func_get_args(), collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => $row->total])->all());
     }
 
     /**
@@ -1158,6 +1304,10 @@ final class StatisticsService
      */
     public function utmDrilldown(string $source, int $limit = 50): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $base = $this->isLightweight ? LightweightEvent::query() : SessionEvent::query();
 
         $rows = $base
@@ -1171,12 +1321,12 @@ final class StatisticsService
             ->limit($limit)
             ->get();
 
-        return collect($rows)->map(fn ($row) => [
+        return $this->cacheStore(__METHOD__, func_get_args(), collect($rows)->map(fn ($row) => [
             'key' => $row->m.' × '.$row->c,
             'medium' => $row->m,
             'campaign' => (string) $row->c,
             'count' => $row->total,
-        ])->all();
+        ])->all());
     }
 
     /**
@@ -1186,6 +1336,10 @@ final class StatisticsService
      */
     public function outboundClickPaths(string $host, int $limit = 50): array
     {
+        if (($hit = $this->cacheFetch(__METHOD__, func_get_args())) !== null) {
+            return $hit;
+        }
+
         $rows = OutboundClick::query()
             ->where('website_id', $this->website->website_id)
             ->whereBetween('datetime', [$this->startDate, $this->endDate])
@@ -1196,6 +1350,6 @@ final class StatisticsService
             ->limit($limit)
             ->get();
 
-        return collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => $row->total])->all();
+        return $this->cacheStore(__METHOD__, func_get_args(), collect($rows)->map(fn ($row) => ['key' => (string) $row->k, 'count' => $row->total])->all());
     }
 }
