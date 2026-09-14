@@ -18,7 +18,16 @@
             </div>
             <div class="text-right">
                 <p class="text-sm font-semibold text-zinc-900">{{ number_format((float) $payment->total_amount, 2) }} {{ $payment->currency }}</p>
-                                <span class="mt-1 inline-block rounded-lg px-2 py-0.5 text-xs font-medium {{ $payment->status ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">{{ $payment->status ? __('payments.status_completed') : __('payments.status_pending') }}</span>
+                @if($payment->status)
+                    <span class="mt-1 inline-block rounded-lg px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700">{{ __('payments.status_completed') }}</span>
+                @else
+                    <span class="mt-1 inline-block rounded-lg px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700">{{ __('payments.status_pending') }}</span>
+                    {{-- 待处理订单：继续支付（按原处理器重新发起，不新建订单） --}}
+                    <a href="{{ route('payments.resume', $payment) }}"
+                       class="mt-2 block rounded-xl bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-700">
+                        {{ __('payments.resume_action') }}
+                    </a>
+                @endif
             </div>
         </div>
         @empty

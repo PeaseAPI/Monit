@@ -35,10 +35,46 @@
     {{-- ========== 标签：基础资料 ========== --}}
     <div data-account-panel="profile" class="account-tab-panel">
 
+    {{-- 头像（用户反馈：置于「登录方式」上方；独立表单可直接上传/移除，
+         hidden 回传 name/email 以满足 account.update 的必填校验且不改动这两个字段） --}}
+    <form method="POST" action="{{ route('account.update') }}" enctype="multipart/form-data" class="card mt-6">@csrf @method('PUT')
+        <input type="hidden" name="name" value="{{ $user->name }}">
+        <input type="hidden" name="email" value="{{ $user->email }}">
+        <div class="card-header">{{ __('account.avatar_label') }}</div>
+        @php($avatarMax = (int) (\App\Support\Settings::get('main.avatar_size_limit') ?: 512))
+        <div class="flex flex-wrap items-center gap-4 p-6">
+            <img id="avatar-preview" src="{{ $user->avatar }}" alt="" class="h-14 w-14 shrink-0 rounded-2xl bg-zinc-100 object-cover ring-2 ring-zinc-200" @if(! $user->avatar) style="display:none" @endif>
+            <span id="avatar-fallback" class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-xl font-bold text-white shadow-sm" @if($user->avatar) style="display:none" @endif>
+                {{ mb_substr($user->name, 0, 1) }}
+            </span>
+            <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-3">
+                    <input id="acc-avatar" type="file" name="avatar" accept="image/*"
+                           class="text-sm text-zinc-500 file:mr-3 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-brand-700 hover:file:bg-brand-100"
+                           onchange="monitAvatarPreview(this)">
+                    <button type="submit" class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('account.avatar_upload') }}</button>
+                    @if ($user->avatar)
+                        <label class="flex items-center gap-1.5 text-sm text-red-600">
+                            <input type="checkbox" name="avatar_remove" value="1" class="rounded border-zinc-300 text-red-600 focus:ring-red-500">
+                            {{ __('account.avatar_remove') }}
+                        </label>
+                    @endif
+                </div>
+                <p class="mt-1 text-xs text-zinc-400">{{ __('account.avatar_hint', ['size' => $avatarMax]) }}</p>
+            </div>
+        </div>
+    </form>
+
     {{-- 登录方式（用户反馈 #14：绑定邮箱 / 账户 ID / 第三方社交登录一栏可见） --}}
     <div class="card mt-6">
         <div class="card-header">{{ __('account.signin_methods') }}</div>
         <div class="divide-y divide-zinc-100">
+            <div class="flex items-center justify-between gap-4 px-6 py-3.5">
+                <div>
+                    <p class="text-sm font-medium text-zinc-800">{{ __('account.name_label') }}</p>
+                    <p class="text-xs text-zinc-500">{{ $user->name }}</p>
+                </div>
+            </div>
             <div class="flex items-center justify-between gap-4 px-6 py-3.5">
                 <div>
                     <p class="text-sm font-medium text-zinc-800">{{ __('account.user_id_label') }}</p>
@@ -96,43 +132,15 @@
         </div>
     </div>
 
-    {{-- 个人资料（含头像上传 / 防钓鱼码，对标 monit.cn /account） --}}
+    {{-- 个人资料（用户名 / 登录邮箱；头像已上移至独立卡片，防钓鱼码移至「安全」标签） --}}
     <form method="POST" action="{{ route('account.update') }}" enctype="multipart/form-data" class="card mt-6">@csrf @method('PUT')
         <div class="card-header flex items-center gap-2">
             <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.118a7.5 7.5 0 0 1 15 0A17 17 0 0 1 12 21.75c-2.676 0-5.216-.584-7.5-1.632Z"/></svg>
             {{ __('account.profile_api_desc') }}
         </div>
         <div class="space-y-4 p-6">
-            {{-- 头像 --}}
-            @php($avatarMax = (int) (\App\Support\Settings::get('main.avatar_size_limit') ?: 512))
-            <div class="flex flex-wrap items-center gap-4">
-                <img id="avatar-preview" src="{{ $user->avatar }}" alt="" class="h-14 w-14 shrink-0 rounded-2xl bg-zinc-100 object-cover ring-2 ring-zinc-200" @if(! $user->avatar) style="display:none" @endif>
-                <span id="avatar-fallback" class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-xl font-bold text-white shadow-sm" @if($user->avatar) style="display:none" @endif>
-                    {{ mb_substr($user->name, 0, 1) }}
-                </span>
-                <div class="min-w-0 flex-1">
-                    <label class="form-label" for="acc-avatar">{{ __('account.avatar_label') }}</label>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <input id="acc-avatar" type="file" name="avatar" accept="image/*"
-                               class="text-sm text-zinc-500 file:mr-3 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-brand-700 hover:file:bg-brand-100"
-                               onchange="var f=this.files[0];if(f){var p=document.getElementById('avatar-preview');p.src=URL.createObjectURL(f);p.style.display='';document.getElementById('avatar-fallback').style.display='none'}">
-                        @if ($user->avatar)
-                            <label class="flex items-center gap-1.5 text-sm text-red-600">
-                                <input type="checkbox" name="avatar_remove" value="1" class="rounded border-zinc-300 text-red-600 focus:ring-red-500">
-                                {{ __('account.avatar_remove') }}
-                            </label>
-                        @endif
-                    </div>
-                    <p class="mt-1 text-xs text-zinc-400">{{ __('account.avatar_hint', ['size' => $avatarMax]) }}</p>
-                </div>
-            </div>
             <div><label class="form-label" for="acc-name">{{ __('account.name_label') }}</label><input id="acc-name" type="text" name="name" value="{{ old('name', $user->name) }}" class="form-input"></div>
             <div><label class="form-label" for="acc-email">{{ __('account.email_label') }}</label><input id="acc-email" type="email" name="email" value="{{ old('email', $user->email) }}" class="form-input"></div>
-            <div>
-                <label class="form-label" for="acc-antiphishing">{{ __('account.anti_phishing_label') }}</label>
-                <input id="acc-antiphishing" type="text" name="anti_phishing_code" maxlength="64" value="{{ old('anti_phishing_code', $user->anti_phishing_code) }}" class="form-input" placeholder="{{ __('account.anti_phishing_placeholder') }}">
-                <p class="mt-1 text-xs text-zinc-400">{{ __('account.anti_phishing_hint') }}</p>
-            </div>
             <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:ring-2 focus:ring-brand-500/40 focus:outline-none">{{ __('account.update_profile') }}</button>
         </div>
     </form>
@@ -271,6 +279,24 @@
     </div>
     @endif
 
+    {{-- 防钓鱼码（用户反馈：从「个人资料」移入「安全」；解释清楚用途） --}}
+    <div class="card mt-6">
+        <div class="card-header">{{ __('account.anti_phishing_label') }}</div>
+        <div class="p-6">
+            <p class="text-sm text-zinc-500">{{ __('account.anti_phishing_hint') }}</p>
+            <form method="POST" action="{{ route('account.update') }}" class="mt-4 space-y-3">@csrf @method('PUT')
+                {{-- hidden 回传当前 name/email：account.update 主表单必填，此处不改动它们 --}}
+                <input type="hidden" name="name" value="{{ $user->name }}">
+                <input type="hidden" name="email" value="{{ $user->email }}">
+                <div>
+                    <label class="form-label" for="acc-antiphishing">{{ __('account.anti_phishing_label') }}</label>
+                    <input id="acc-antiphishing" type="text" name="anti_phishing_code" maxlength="64" value="{{ old('anti_phishing_code', $user->anti_phishing_code) }}" class="form-input" placeholder="{{ __('account.anti_phishing_placeholder') }}">
+                </div>
+                <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">{{ __('account.update_profile') }}</button>
+            </form>
+        </div>
+    </div>
+
     {{-- 两步验证（规格书 §12.4） --}}
     <div class="card mt-6">
         <div class="card-header flex items-center gap-2">
@@ -382,6 +408,30 @@
     @if(\App\Services\Sms\SmsService::scenarioEnabled('phone_bind'))
         @include('account.partials.phone-bind-modal')
     @endif
+
+    {{-- 头像预览（Safari 26+ 已移除 URL.createObjectURL：优先 Blob URL，不可用时回退 FileReader dataURL） --}}
+    <script>
+    window.monitAvatarPreview = function (input) {
+        var f = input.files && input.files[0];
+        if (!f) return;
+        var p = document.getElementById('avatar-preview');
+        var fb = document.getElementById('avatar-fallback');
+        if (!p) return;
+        var url = null;
+        try {
+            if (window.URL && typeof URL.createObjectURL === 'function') url = URL.createObjectURL(f);
+        } catch (e) { url = null; }
+        if (url) {
+            p.src = url;
+        } else {
+            var reader = new FileReader();
+            reader.onload = function () { p.src = reader.result; };
+            reader.readAsDataURL(f);
+        }
+        p.style.display = '';
+        if (fb) fb.style.display = 'none';
+    };
+    </script>
 
     {{-- 标签页切换（hash 记忆 + 首个默认） --}}
     <script>

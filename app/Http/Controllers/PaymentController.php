@@ -327,6 +327,54 @@ class PaymentController extends Controller
         return view('payments.history', compact('payments'));
     }
 
+    /**
+     * 继续支付待处理订单（支付记录页「继续支付」入口）
+     * 归属校验（防 IDOR）后按原处理器重新发起：与 checkout 相同的分发逻辑，
+     * 复用现有订单记录（不新建），网关侧重新生成会话/二维码/跳转参数。
+     *
+     * @return View|RedirectResponse|Response
+     */
+    public function resume(Request $request, Payment $payment): View|RedirectResponse|Response
+    {
+        abort_unless($payment->user_id === $this->user()->user_id, 403);
+
+        if (! self::paymentEnabled()) {
+            abort(404);
+        }
+
+        // 已完成订单无需继续，直接回到支付记录
+        if ((bool) $payment->status) {
+            return redirect()->route('payments.history');
+        }
+
+        return match (Typed::string($payment->payment_processor)) {
+            'stripe' => $this->redirectToStripe($payment),
+            'paypal' => $this->redirectToPayPal($payment),
+            'razorpay' => $this->redirectToRazorpay($payment),
+            'mollie' => $this->redirectToMollie($payment),
+            'paystack' => $this->redirectToPaystack($payment),
+            'offline' => $this->handleOffline($payment),
+            'wechat' => $this->redirectToWeChatPay($payment),
+            'alipay' => $this->redirectToAlipay($payment),
+            default => $this->resumeGenericProcessor($payment, Typed::string($payment->payment_processor)),
+        };
+    }
+
+    /**
+     * 通用托管结算型处理器的继续支付（需回补套餐与计费周期上下文）
+     */
+    protected function resumeGenericProcessor(Payment $payment, string $processor): View|RedirectResponse
+    {
+        $plan = $payment->plan_id ? Plan::query()->find($payment->plan_id) : null;
+
+        if ($plan === null) {
+            return back()->withErrors(['processor' => __('payment.unsupported_processor')]);
+        }
+
+        return $this->redirectToGenericProcessor($this->user(), $plan, $payment, $processor, Typed::string($payment->frequency));
+    }
+
+
     /* -----------------------------------------------------------------
      | 私有方法
      ----------------------------------------------------------------- */

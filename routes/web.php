@@ -487,6 +487,8 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/payments/redeem-code', [PaymentController::class, 'redeemCode'])->name('payments.redeem.submit');
     Route::post('/payments/{payment}/proof', [PaymentController::class, 'uploadProof'])->name('payments.proof');
     Route::get('/payments/history', [PaymentController::class, 'history'])->name('payments.history');
+    // 待处理订单继续支付（支付记录页入口；按原处理器重新发起）
+    Route::get('/payments/{payment}/pay', [PaymentController::class, 'resume'])->name('payments.resume');
 
     // 工单系统（A4：用户在线提交/查看/回复/关闭）
     Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
